@@ -16,6 +16,7 @@ export default {
   },
   enhanceApp({ app, router, siteData }) {
     // ...
+    //app.component('Event', Event)
   },
   setup() {
     const route = useRoute() 
