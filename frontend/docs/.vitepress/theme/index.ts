@@ -6,6 +6,8 @@ import { onMounted, watch, nextTick } from 'vue'
 import { useRoute } from 'vitepress'
 import mediumZoom from 'medium-zoom'
 import './style.css'
+import Tools from '../components/Tools.vue'
+import ArticlesPage from '../components/ArticlesPage.vue'
 
 export default {
   extends: DefaultTheme,
@@ -16,7 +18,8 @@ export default {
   },
   enhanceApp({ app, router, siteData }) {
     // ...
-    //app.component('Event', Event)
+    app.component('Tools', Tools)
+    app.component('ArticlesPage',ArticlesPage)
   },
   setup() {
     const route = useRoute() 
