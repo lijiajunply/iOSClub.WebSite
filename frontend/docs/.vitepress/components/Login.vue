@@ -1,23 +1,21 @@
 <template>
     <div
-        class="page-flex min-h-screen flex justify-center items-center p-4 bg-gradient-to-br from-blue-50 via-gray-50 to-indigo-50">
-        <div class="login-container">
+        class="page-flex min-h-screen flex justify-center items-center p-4">
+        <div class="login-container bg-white/30 dark:bg-black/30">
             <div class="logo-container">
                 <div class="logo">iOS</div>
-                <h2 class="text-2xl font-bold text-gray-800 mb-1">登录到iMember</h2>
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-1">登录到iMember</h2>
             </div>
             <form @submit.prevent="handleSubmit" class="space-y-6">
                 <div class="item">
-                    <label class="block text-gray-700 text-sm font-medium mb-1">
+                    <label class="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-1">
                         姓名
-                        <span class="text-red-500">*</span>
                     </label>
                     <input v-model="loginData.name" class="apple-input" placeholder="请输入您的姓名" required>
                 </div>
                 <div class="item">
-                    <label class="block text-gray-700 text-sm font-medium mb-1">
+                    <label class="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-1">
                         学号
-                        <span class="text-red-500">*</span>
                     </label>
                     <input v-model="loginData.id" class="apple-input" placeholder="请输入您的学号" required>
                 </div>
@@ -33,9 +31,9 @@
                             登录
                         </span>
                     </button>
-                    <p class="text-gray-600 mt-4 text-sm">
+                    <p class="text-gray-600 dark:text-gray-300 mt-4 text-sm">
                         还没有账户？
-                        <a href="/signup" class="signup-link">立即注册!</a>
+                        <a href="/signup" class="text-blue-600 dark:text-blue-400 signup-link">立即注册!</a>
                     </p>
                 </div>
             </form>
@@ -97,7 +95,6 @@ const handleSubmit = () => {
 <style>
 .login-container {
     backdrop-filter: blur(10px);
-    background-color: rgba(255, 255, 255, 0.7);
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
     padding: 2rem;
     border-radius: 1rem;
@@ -111,7 +108,6 @@ const handleSubmit = () => {
 }
 
 .apple-input {
-    border: 1px solid #d1d5db;
     transition: all 0.3s ease;
     width: 100%;
     line-height: 1.15;
@@ -151,14 +147,12 @@ const handleSubmit = () => {
 }
 
 .signup-link {
-    color: #2563eb;
     font-weight: 500;
     text-decoration: none;
     transition: color 0.2s;
 }
 
 .signup-link:hover {
-    color: #1e40af;
     text-decoration: underline;
 }
 

@@ -1,8 +1,8 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-md w-full space-y-8 bg-white bg-opacity-70 backdrop-blur-lg rounded-xl shadow-xl p-8">
+  <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8 bg-white/30 dark:bg-black/30 bg-opacity-70 backdrop-blur-lg rounded-xl shadow-xl p-8">
       <div class="text-center">
-        <h2 class="text-3xl font-bold text-gray-900">注册</h2>
+        <h2 class="text-3xl font-bold text-gray-900 dark:text-gray-100">注册</h2>
         <p class="mt-1 text-sm text-gray-500">
           {{ stepDescriptions[currentStep] }}
         </p>
@@ -17,7 +17,7 @@
       >
         <!-- 步骤1: 基本信息 -->
         <div v-if="currentStep === 0" class="space-y-4">
-          <n-form-item label="姓名" path="userName">
+          <n-form-item label="姓名" path="userName" class="dark:text-gray-100">
             <n-input
               v-model:value="formData.userName"
               placeholder="请输入您的姓名"
