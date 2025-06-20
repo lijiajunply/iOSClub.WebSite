@@ -6,4 +6,4 @@ riderModule.iml
 *.db
 DepartmentFile/
 
-.key/
+keys/
