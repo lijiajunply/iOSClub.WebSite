@@ -12,6 +12,7 @@ import '//at.alicdn.com/t/c/font_4612528_md4hjwjgcb.js'
 import IconFont from '../components/IconFont.vue'
 import Login from '../components/Login.vue'
 import Signup from '../components/Signup.vue'
+import History from '../components/History.vue'
 
 export default {
   extends: DefaultTheme,
@@ -27,6 +28,7 @@ export default {
     app.component('IconFont',IconFont)
     app.component('Login',Login)
     app.component('Signup',Signup)
+    app.component('History',History)
   },
   setup() {
     const route = useRoute() 

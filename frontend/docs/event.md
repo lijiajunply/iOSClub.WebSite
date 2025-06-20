@@ -33,7 +33,7 @@ const cards = [
     <a :href="card.url" target="_blank" class="block h-full">
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 h-full hover:shadow-xl transition-shadow duration-300">
         <h2 class="text-xl font-semibold mb-2 text-gray-800 dark:text-white">{{ card.title }}</h2>
-        <p class="text-gray-600 dark:text-gray-300">{{ card.content }}</p>
+        <p class="text-gray-600 dark:text-gray-300 mt-4">{{ card.content }}</p>
       </div>
     </a>
   </div>
