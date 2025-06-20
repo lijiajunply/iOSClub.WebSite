@@ -21,7 +21,7 @@ const cards = [
 <div class="flex flex-col items-center">
   <img src="/Centre/AppleLogo.jpg" class="w-40 md:w-60 lg:w-80 my-6" alt="Apple Logo" />
   
-  <span class="clip text-transparent text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
+  <span class="text-clip text-transparent text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
     iOS Club 社团活动
   </span>
   
@@ -38,12 +38,3 @@ const cards = [
     </a>
   </div>
 </div>
-
-<style scoped>
-  .clip {
-    background: var(--vp-home-hero-name-background);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: var(--vp-home-hero-name-color);
-  }
-</style>

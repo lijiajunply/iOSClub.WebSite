@@ -79,7 +79,8 @@ export default withMermaid({
     },
 
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/vuejs/vitepress' }
+      { icon: 'gitee', link: 'https://gitee.com/XAUATiOSClub' },
+      { icon: 'github', link: 'https://github.com/XAUAT-iOSClub' }
     ]
   },
   markdown: {

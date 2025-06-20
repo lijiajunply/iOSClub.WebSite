@@ -9,16 +9,16 @@ layout: page
       <img
         src="/Centre/History.jpg"
         alt="iOS Club历史"
-        class="w-[40%] max-w-xl mx-auto"
+        class="h-30 max-w-xl mx-auto"
       />
       <!-- 渐变标题 -->
       <div class="flex justify-center items-center my-6">
-        <h1 class="text-gradient text-4xl md:text-5xl font-bold">
-          iOS Club的历史
+        <h1 class="text-cilp text-4xl md:text-5xl font-bold">
+          iOS Club 社团历史
         </h1>
       </div>
       <!-- 引用语 -->
-      <p class="text-secondary text-xl md:text-2xl font-semibold italic">
+      <p class="text-xl text-gray-500 font-medium">
         "历史是时代的见证"
       </p>
     </div>

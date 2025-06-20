@@ -67,7 +67,7 @@ const projects = [
         target="_blank"
         class="transition-transform duration-300 hover:scale-[1.02] hover:shadow-lg"
       >
-        <div class="card rounded-xl p-6 bg-gray-50 border-none h-48 flex flex-col justify-between">
+        <div class="card rounded-xl p-6 bg-gray-50 border-none h-48">
           <h3 class="text-xl font-bold">{{ item.title }}</h3>
           <p class="text-gray-500 mt-2">{{ item.content }}</p>
         </div>

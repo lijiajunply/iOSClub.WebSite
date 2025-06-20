@@ -8,6 +8,10 @@ import mediumZoom from 'medium-zoom'
 import './style.css'
 import Tools from '../components/Tools.vue'
 import ArticlesPage from '../components/ArticlesPage.vue'
+import '//at.alicdn.com/t/c/font_4612528_md4hjwjgcb.js'
+import IconFont from '../components/IconFont.vue'
+import Login from '../components/Login.vue'
+import Signup from '../components/Signup.vue'
 
 export default {
   extends: DefaultTheme,
@@ -20,6 +24,9 @@ export default {
     // ...
     app.component('Tools', Tools)
     app.component('ArticlesPage',ArticlesPage)
+    app.component('IconFont',IconFont)
+    app.component('Login',Login)
+    app.component('Signup',Signup)
   },
   setup() {
     const route = useRoute() 

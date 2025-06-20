@@ -3,10 +3,10 @@
     <!-- 标题区 -->
     <div class="text-center mb-12">
       <div class="flex justify-center">
-        <img src="/Centre/Article.jpg" alt="Article header" class="mb-6 rounded-xl shadow-lg" />
+        <img src="/Centre/Article.jpg" alt="Article header" class="mb-6" />
       </div>
       <h1 class="font-bold text-4xl mb-4">
-        <span class="bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-600">
+        <span class="text-clip text-transparent text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
           iOS Club 技术博客
         </span>
       </h1>
@@ -17,13 +17,13 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
       <div v-for="article in rssModels" :key="article.url" class="group">
         <a :href="article.url" target="_blank" rel="noopener">
-          <div class="h-full bg-gray-50 rounded-xl overflow-hidden p-6 transition-all duration-300 group-hover:shadow-xl group-hover:scale-[1.02]">
+          <div class="h-full bg-gray-50 dark:bg-gray-800 rounded-xl overflow-hidden p-6 transition-all duration-300 group-hover:shadow-xl group-hover:scale-[1.02]">
             <div class="flex flex-col items-center justify-center h-full">
-              <h3 class="text-xl font-bold mb-4 text-center">{{ article.title }}</h3>
+              <h3 class="text-xl text-gray-800 dark:text-gray-100 font-bold mb-4 text-center">{{ article.title }}</h3>
               <img 
                 :src="article.image || '/placeholder.png'" 
                 :alt="article.title" 
-                class="w-full max-w-xs object-contain"
+                class="w-full max-w-xs object-contain mb-4 rounded-lg"
               />
             </div>
           </div>
@@ -51,7 +51,7 @@
           :href="entry.link[0].href"
           target="_blank" 
           rel="noopener"
-          class="block p-3 rounded-lg transition-all duration-200 hover:bg-gray-50 hover:shadow-sm"
+          class="block p-3 rounded-lg transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-800 hover:shadow-sm"
         >
           <div class="flex justify-between items-center">
             <span class="text-lg">{{ entry.title }}</span>

@@ -1,7 +1,11 @@
 <!-- 在 docs/.vitepress/theme/components/Tools.vue -->
 <template>
   <div class="page-container py-8">
-    <h1 class="text-center mb-8 text-3xl font-bold">iOS App - 西建大iOS Club</h1>
+    <div class="text-center mb-12">
+      <span class="text-clip text-transparent text-3xl md:text-4xl lg:text-4xl font-bold">
+          iOS App - 西建大iOS Club
+        </span>
+    </div>
     
     <div class="flex justify-center">
       <div class="w-full max-w-4xl">
@@ -15,7 +19,7 @@
               class="tool-link"
               :title="link.description"
             >
-              <div class="flex items-center justify-between p-4 rounded-xl hover:shadow-md transition-all">
+              <div class="flex items-center justify-between p-4 rounded-xl transition-all">
                 <div class="flex items-center">
                   <div v-if="link.icon" class="mr-3">
                     <img 
@@ -24,18 +28,14 @@
                       alt="Icon" 
                       class="w-6 h-6 rounded object-cover"
                     />
-                    <i 
-                      v-else 
-                      :class="`iconfont icon-${link.icon}`" 
-                      class="text-xl text-blue-500"
-                    ></i>
+                    <IconFont v-else :type="`#icon-${link.icon}`" class="w-6 h-6 rounded object-cover"/>
                   </div>
                   <div v-else class="mr-3">
                     <div class="flex items-center justify-center bg-gray-200 rounded w-6 h-6">
                       <i class="iconfont icon-link text-xs"></i>
                     </div>
                   </div>
-                  <span class="btn-title text-lg font-medium">{{ link.name }}</span>
+                  <span class="btn-title font-medium">{{ link.name }}</span>
                 </div>
                 <span class="btn-description text-sm ml-2">{{ link.description }}</span>
               </div>
@@ -60,6 +60,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import IconFont from '../components/IconFont.vue'
 
 // 定义类型
 const linkModel = {
