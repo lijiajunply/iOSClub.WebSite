@@ -1,10 +1,14 @@
-<script setup>
-</script>
-
 <template>
-
+  <n-config-provider>
+    <n-dialog-provider>
+      <n-message-provider>
+        <router-view/>
+      </n-message-provider>
+    </n-dialog-provider>
+  </n-config-provider>
 </template>
 
-<style scoped>
-
-</style>
+<script setup lang="ts">
+import {NMessageProvider,NDialogProvider,NConfigProvider} from 'naive-ui'
+import {RouterView} from 'vue-router'
+</script>

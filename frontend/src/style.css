@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 /* 基本配置 */
 :root {
     font-family: PingFang SC, Helvetica, sans-serif !important;
