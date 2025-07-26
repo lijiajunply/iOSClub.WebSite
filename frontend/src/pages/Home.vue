@@ -1,15 +1,15 @@
 <template>
-  <div>
-    <!-- 隐藏的音频播放器 -->
-    <audio
-        :ref="audioPlayer"
-        class="hidden"
-        @ended="onAudioEnded"
-    >
-      <source src="../assets/other/纳新录音.m4a" type="audio/mpeg" />
-    </audio>
+  <!-- 隐藏的音频播放器 -->
+  <audio
+      :ref="audioPlayer"
+      class="hidden"
+      @ended="onAudioEnded"
+  >
+    <source src="../assets/other/纳新录音.m4a" type="audio/mpeg"/>
+  </audio>
 
-    <div @wheel="handleFirstWheel" class="min-h-screen">
+  <div @wheel="handleFirstWheel" class="">
+    <div class="min-h-screen">
       <n-grid x-gap="12" cols="8" class="p-10" item-responsive>
         <n-gi span="8 700:3" class="flex items-center justify-center">
           <div class="w-3/4 text-center">
@@ -26,13 +26,13 @@
               />
               <n-space justify="center">
                 <n-button text @click="previousLyric">
-                  <n-icon size="22" :component="CaretBack" />
+                  <n-icon size="22" :component="CaretBack"/>
                 </n-button>
                 <n-button text @click="togglePlay">
-                  <n-icon size="22" :component="isPlaying ? PauseCircleOutline : PlayCircleOutline" />
+                  <n-icon size="22" :component="isPlaying ? PauseCircleOutline : PlayCircleOutline"/>
                 </n-button>
                 <n-button text @click="nextLyric">
-                  <n-icon size="22" :component="CaretForward" />
+                  <n-icon size="22" :component="CaretForward"/>
                 </n-button>
               </n-space>
             </div>
@@ -51,7 +51,8 @@
               "Stay hungry, stay foolish"
             </p>
           </div>
-          <div class="text-2xl lg:text-4xl font-bold text-center lg:text-left text-gray-700 mt-4 lg:mt-0 block lg:hidden">
+          <div
+              class="text-2xl lg:text-4xl font-bold text-center lg:text-left text-gray-700 mt-4 lg:mt-0 hidden md:block">
             西安建筑科技大学iOS众创空间俱乐部
           </div>
           <div class="hidden lg:block mt-8">
@@ -68,64 +69,45 @@
           </div>
         </n-gi>
       </n-grid>
-
-      <div
-          :class="[
-          'transition-opacity duration-300',
-          'block lg:hidden',
-          isMobile || percent >= 70 ? 'opacity-100' : 'opacity-0'
-        ]"
-          :style="{ opacity: !isMobile ? (percent - 30) / 30 : 1 }"
-      >
-        <h2 class="text-2xl font-bold text-center mb-8">关于我们</h2>
-        <n-grid x-gap="12" y-gap="12" cols="3" class="px-10 pb-10" item-responsive>
-          <n-gi
-              v-for="(card, index) in cards"
-              :key="index"
-              span="3 800:1"
-          >
-            <a
-                :href="card.url"
-                target="_blank"
-                class="block"
-            >
-              <n-card hoverable class="card-hover h-52 bg-gray-100">
-                <div class="text-2xl mb-3">{{ card.icon }}</div>
-                <h3 class="text-lg font-semibold mb-2">{{ card.title }}</h3>
-                <p class="text-gray-600">{{ card.content }}</p>
-              </n-card>
-            </a>
-          </n-gi>
-        </n-grid>
-      </div>
     </div>
 
-    <!-- 移动端卡片 -->
-<!--    <n-grid x-gap="12" y-gap="12" cols="3" class="px-10 pb-10 lg:hidden" item-responsive>-->
-<!--      <n-gi-->
-<!--          v-for="(card, index) in cards"-->
-<!--          :key="index"-->
-<!--          span="3 800:1"-->
-<!--      >-->
-<!--        <a-->
-<!--            :href="card.url"-->
-<!--            target="_blank"-->
-<!--            class="block"-->
-<!--        >-->
-<!--          <n-card hoverable class="card-hover h-52 bg-gray-100">-->
-<!--            <div class="text-2xl mb-3">{{ card.icon }}</div>-->
-<!--            <h3 class="text-lg font-semibold mb-2">{{ card.title }}</h3>-->
-<!--            <p class="text-gray-600">{{ card.content }}</p>-->
-<!--          </n-card>-->
-<!--        </a>-->
-<!--      </n-gi>-->
-<!--    </n-grid>-->
+    <div
+        :class="[
+          'transition-opacity duration-300',
+          'block min-h-screen',
+          isMobile || percent >= 70 ? 'opacity-100' : ''
+        ]"
+        :style="{ opacity: !isMobile ? (percent - 30) / 30 : 1 }"
+    >
+      <div class="text-3xl font-bold text-center mb-8 hidden md:block">关于我们</div>
+      <br/>
+      <br/>
+      <n-grid x-gap="20" y-gap="24" cols="3" class="px-10 pb-10" item-responsive>
+        <n-gi
+            v-for="(card, index) in cards"
+            :key="index"
+            span="3 800:1"
+        >
+          <a
+              :href="card.url"
+              target="_blank"
+              class="block"
+          >
+            <div class="card-hover  h-52 bg-gray-100">
+              <div class="text-2xl mb-3">{{ card.icon }}</div>
+              <h3 class="text-lg font-semibold mb-2">{{ card.title }}</h3>
+              <p class="text-gray-600">{{ card.content }}</p>
+            </div>
+          </a>
+        </n-gi>
+      </n-grid>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
-import { NGrid, NGi, NProgress, NSpace, NButton, NIcon, NCard } from 'naive-ui'
+import {ref, onMounted, onUnmounted} from 'vue'
+import {NGrid, NGi, NProgress, NSpace, NButton, NIcon} from 'naive-ui'
 
 import {
   PlayCircleOutline,
@@ -208,7 +190,6 @@ const handleFirstWheel = (event) => {
   }
 
   percent.value += event.deltaY * 0.1
-  console.log(percent.value)
   if (percent.value < 30) percent.value = 30
   if (percent.value > 100) percent.value = 100
 }
@@ -270,7 +251,7 @@ onUnmounted(() => {
 }
 
 .lyric-item {
-  @apply w-full rounded-lg text-xl font-normal transition-all duration-200 p-2 mb-2;
+  @apply w-full rounded-lg text-xl font-normal transition-all duration-200 p-2 mb-1;
 }
 
 .lyric-item:hover {
@@ -282,7 +263,7 @@ onUnmounted(() => {
 }
 
 .card-hover {
-  @apply transition-transform duration-200;
+  @apply transition-transform duration-200 p-4 rounded-lg text-gray-900;
 }
 
 .card-hover:hover {

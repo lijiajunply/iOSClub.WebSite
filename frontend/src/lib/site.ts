@@ -15,7 +15,8 @@ export const NavigateTo = (url: string, webUrl: string) => {
     }
 }
 
-export const jsSaveAsFile = (filename: string, byteBase64: any) => {
+// 保存文件
+export const jsSaveAsFile = (filename: string, byteBase64: string) => {
     const link = document.createElement('a');
     link.download = filename;
     link.href = "data:application/octet-stream;base64," + byteBase64;
