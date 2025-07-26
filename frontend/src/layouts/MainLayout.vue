@@ -1,6 +1,6 @@
 <template>
   <n-layout class="min-h-screen">
-    <n-layout-header class="bg-white" style="height: auto">
+    <n-layout-header class="bg-gray-300" style="height: auto">
       <div class="flex items-center justify-between px-4 py-3">
         <!-- Logo and Title -->
         <router-link to="/" class="flex items-center gap-4">
@@ -46,13 +46,14 @@
             </n-button>
           </n-dropdown>
 
-          <!-- Login/Register Button -->
+          <!-- Login/Register Button：仅在非 Login 页显示 -->
           <n-button
-              type="primary"
-              class="rounded-lg ml-5"
-              @click="() => router.push('/Login')"
+              v-if="!isLoginPage" 
+          type="primary"
+          class="rounded-lg ml-5"
+          @click="() => router.push('/Login')"
           >
-            登录/注册
+          登录/注册
           </n-button>
         </n-space>
 
@@ -77,17 +78,19 @@
           class="pt-2.5 animate-fade-in"
       >
         <n-menu
-            :options="menuOptions"
+            :options="filteredMenuOptions"
             accordion
             @update:value="handleMenuSelect"
         />
       </div>
 
-      <!-- Main Content -->
-      <div v-else>
+      <!-- Main Content: 始终显示页面内容 -->
+      <div>
         <slot />
       </div>
     </n-layout-content>
+
+
 
     <n-layout-footer class="text-center py-4">
       <p class="mb-2">
@@ -122,7 +125,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { NLayout, NLayoutHeader, NLayoutContent, NLayoutFooter,
   NButton, NDropdown, NSpace, NMenu, NIcon, NDivider } from 'naive-ui'
@@ -130,6 +133,11 @@ import { MenuOutline } from '@vicons/ionicons5'
 
 const router = useRouter()
 const drawerVisible = ref(false)
+
+// 计算属性：判断当前是否为 Login 页
+const isLoginPage = computed(() => {
+  return router.currentRoute.value.path === '/Login'
+})
 
 // Dropdown options for desktop menu
 const aboutUsOptions = [
@@ -174,7 +182,7 @@ const communityOptions = [
   }
 ]
 
-// Mobile menu options
+// Mobile menu options（原始）
 const menuOptions = [
   {
     label: '首页',
@@ -196,6 +204,14 @@ const menuOptions = [
   }
 ]
 
+// 过滤后的移动端菜单：Login 页隐藏“登录/注册”项
+const filteredMenuOptions = computed(() => {
+  if (isLoginPage.value) {
+    return menuOptions.filter(item => item.key !== '/Login')
+  }
+  return menuOptions
+})
+
 // Handle dropdown selection
 const handleSelect = (key) => {
   router.push(key)
@@ -211,6 +227,7 @@ const handleMenuSelect = (key) => {
 </script>
 
 <style scoped>
+@import "tailwindcss";
 /* Dropdown menu custom styles */
 :deep(.n-dropdown-menu) {
   background-color: #ffffff;
