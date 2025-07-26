@@ -1,4 +1,5 @@
 import {createRouter, createWebHistory} from 'vue-router';
+import {useAuthorizationStore} from "./stores/Authorization.ts";
 
 const routes = [
     {
@@ -12,7 +13,18 @@ const routes = [
                 meta: {title: "首页 - 西建大 iOS Club"},
                 component: () => import('./pages/Home.vue'),
             },
-
+            {
+                path: '',
+                name: 'Home',
+                meta: {title: "首页 - 西建大 iOS Club"},
+                component: () => import('./pages/Home.vue'),
+            },
+            {
+                path: '/login',
+                name: 'Login',
+                meta: {title: "登录到您的iMember - 西建大 iOS Club"},
+                component: () => import('./pages/Login.vue'),
+            }
         ]
     },
     {
@@ -42,7 +54,9 @@ router.beforeEach((to, _, next) => {
         document.title = to.meta.title
     }
 
-    const isAdmin = true
+    const authorizationStore = useAuthorizationStore()
+
+    const isAdmin = authorizationStore.isAuthenticated
     if (typeof to.meta.isNeedAdmin === 'boolean' && to.meta.isNeedAdmin && !isAdmin) {
         next({path: '/NotFound'})
     }
