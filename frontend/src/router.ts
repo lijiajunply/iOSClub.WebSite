@@ -24,6 +24,12 @@ const routes = [
                 name: 'Login',
                 meta: {title: "登录到您的iMember - 西建大 iOS Club"},
                 component: () => import('./pages/Login.vue'),
+            },
+            {
+                path: '/event',
+                name: 'Event',
+                meta: {title: "社团活动 - 西建大 iOS Club"},
+                component: () => import('./pages/Event.vue'),
             }
         ]
     },
