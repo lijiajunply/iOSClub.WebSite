@@ -14,10 +14,10 @@ const routes = [
                 component: () => import('./pages/Home.vue'),
             },
             {
-                path: '',
-                name: 'Home',
-                meta: {title: "首页 - 西建大 iOS Club"},
-                component: () => import('./pages/Home.vue'),
+                path: '/projects',
+                name: 'Projects',
+                meta: {title: "社团项目 - 西建大 iOS Club"},
+                component: () => import('./pages/Projects.vue'),
             },
             {
                 path: '/login',
