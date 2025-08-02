@@ -30,6 +30,11 @@ const routes = [
                 name: 'Event',
                 meta: {title: "社团活动 - 西建大 iOS Club"},
                 component: () => import('./pages/Event.vue'),
+            },
+            {
+                path: '/article',
+                name: 'Article',
+                component: () => import('./pages/Article.vue'),
             }
         ]
     },

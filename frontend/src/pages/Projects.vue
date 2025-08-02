@@ -1,48 +1,56 @@
 <template>
-  <div class="project-page">
-    <div class="header-section text-center">
-      <img
-          src="@/assets/Centre/AppleLogo.jpg"
-          alt="iOS Club Logo"
-          class="logo-image mx-auto"
-      />
-      <div class="flex justify-center items-center">
-        <div class="gradient-text">iOS Club 社团项目</div>
-      </div>
-      <p class="secondary-text font-22">创造世界的新方式</p>
-    </div>
-    
-    <div class="flex justify-center items-center">
-      <div class="block grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-4/5 my-11">
-        <div
-            v-for="(item, index) in cards"
-            :key="item.title"
-        class="col-span-1"
-        >
-        <a :href="item.url" target="_blank">
-          <div class="card hover:shadow-lg transition-all duration-300 rounded-lg bg-white p-6 h-52 flex flex-col">
-            <h2 class="text-xl md:text-2xl font-bold text-gray-800 
-                transition-colors 
-                group-hover:text-transparent 
-                group-hover:bg-clip-text 
-                group-hover:bg-gradient-to-r 
-                group-hover:from-pink-500 
-                group-hover:to-teal-500"
-            >
-              {{ item.title }}
-            </h2>
-            <p class="mt-2 text-gray-600 line-clamp-3 transition-opacity group-hover:opacity-80">
-              {{ item.content }}
-            </p>
+  <PageStart title="iOS Club 社团项目" subtitle="创造世界的新方式"
+             gradient-class="bg-gradient-to-r from-orange-500 via-pink-500 to-pink-600" :img="appleLogo"/>
+
+  <div class="flex justify-center items-center py-16">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-6xl px-6">
+      <div
+          v-for="(item, index) in cards"
+          :key="index"
+          class="group"
+      >
+        <a :href="item.url" target="_blank" class="block">
+          <div class="relative bg-white/80 backdrop-blur-md rounded-2xl p-8 h-64
+                      border border-gray-200/60 shadow-sm
+                      hover:shadow-xl hover:shadow-gray-200/40 hover:border-gray-300/60
+                      hover:-translate-y-1 hover:bg-white/90
+                      transition-all duration-300 ease-out">
+
+            <!-- 装饰性渐变 -->
+            <div class="absolute inset-0 rounded-2xl bg-gradient-to-br
+                        from-purple-500/5 via-transparent to-pink-500/5
+                        opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
+            <div class="relative h-full flex flex-col">
+              <h2 class="text-2xl font-medium text-gray-900 mb-4
+                         group-hover:text-transparent group-hover:bg-clip-text
+                         group-hover:bg-gradient-to-r group-hover:from-purple-600
+                         group-hover:to-pink-600 transition-all duration-300">
+                {{ item.title }}
+              </h2>
+
+              <p class="text-gray-600 leading-relaxed line-clamp-3 flex-grow">
+                {{ item.content }}
+              </p>
+
+              <!-- 箭头指示器 -->
+              <div class="mt-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                </svg>
+              </div>
+            </div>
           </div>
         </a>
       </div>
     </div>
   </div>
-  </div>
 </template>
 
 <script setup>
+import PageStart from "@/components/PageStart.vue";
+import appleLogo from '../assets/Centre/AppleLogo.jpg'
+
 const cards = [
   {
     title: "Old8Lang",
@@ -93,62 +101,5 @@ const cards = [
 </script>
 
 <style scoped>
-.project-page {
-  padding: 2rem 1rem;
-}
-
-.header-section {
-  margin: 30px 0;
-}
-
-.logo-image {
-  width: 40%;
-  max-width: 300px;
-}
-
-.gradient-text {
-  background: linear-gradient(90deg, #ff6b00, #ff0066); 
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  font-size: 36px;
-  font-weight: bold;
-  margin: 20px 0;
-}
-
-.secondary-text {
-  color: #666;
-}
-
-.font-22 {
-  font-size: 22px;
-}
-
-.card {
-  margin: 10px;
-  height: 200px; 
-  border-radius: 10px;
-  background: #ffffff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06); 
-  transition: all 0.3s ease; 
-  will-change: transform, box-shadow;
-  transform: translateZ(0); 
-}
-
-.card:hover {
-  transform: translateY(-5px); 
-  box-shadow: 0 10px 20px rgba(0,0,0,0.1); 
-  border-color: #e0fbfc;
-}
-
-
-@media (min-width: 768px) {
-  .grid-cols-2 {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-@media (min-width: 1024px) {
-  .grid-cols-3 {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
+@reference 'tailwindcss';
 </style>

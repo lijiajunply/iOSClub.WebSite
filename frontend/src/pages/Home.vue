@@ -1,7 +1,7 @@
 <template>
   <!-- 隐藏的音频播放器 -->
   <audio
-      :ref="audioPlayer"
+      ref="audioPlayer"
       class="hidden"
       @ended="onAudioEnded"
   >
@@ -9,7 +9,7 @@
   </audio>
 
   <div @wheel="handleFirstWheel" class="">
-    <div class="min-h-screen">
+    <div class="md:min-h-screen">
       <n-grid x-gap="12" cols="8" class="p-10" item-responsive>
         <n-gi span="8 700:3" class="flex items-center justify-center">
           <div class="w-3/4 text-center">
@@ -26,13 +26,13 @@
               />
               <n-space justify="center">
                 <n-button text @click="previousLyric">
-                  <n-icon size="22" :component="CaretBack"/>
+                  <n-icon size="32" :component="CaretBack"/>
                 </n-button>
                 <n-button text @click="togglePlay">
-                  <n-icon size="22" :component="isPlaying ? PauseCircleOutline : PlayCircleOutline"/>
+                  <n-icon size="32" :component="isPlaying ? PauseCircleOutline : PlayCircleOutline"/>
                 </n-button>
                 <n-button text @click="nextLyric">
-                  <n-icon size="22" :component="CaretForward"/>
+                  <n-icon size="32" :component="CaretForward"/>
                 </n-button>
               </n-space>
             </div>
@@ -40,7 +40,7 @@
         </n-gi>
 
         <n-gi span="8 700:5" class="flex flex-col justify-center">
-          <div class="gradient-text text-4xl lg:text-5xl font-bold text-center lg:text-left mb-4">
+          <div class="gradient-text text-4xl lg:text-5xl font-bold text-center lg:text-left mb-4 pt-2" >
             iOS Club of XAUAT
           </div>
           <div class="block lg:hidden">
@@ -93,9 +93,9 @@
               target="_blank"
               class="block"
           >
-            <div class="card-hover  h-52 bg-gray-100">
+            <div class="card-hover h-52 bg-gray-100">
               <div class="text-2xl mb-3">{{ card.icon }}</div>
-              <h3 class="text-lg font-semibold mb-2">{{ card.title }}</h3>
+              <h3 class="text-lg font-semibold mb-2 text-gray-800">{{ card.title }}</h3>
               <p class="text-gray-600">{{ card.content }}</p>
             </div>
           </a>
@@ -121,7 +121,7 @@ const percent = ref(30)
 const lyricIndex = ref(0)
 const isPlaying = ref(false)
 const isMobile = ref(false)
-const audioPlayer = ref(null)
+let audioPlayer = null
 
 // 歌词数据
 const lyrics = [
@@ -211,14 +211,14 @@ const previousLyric = () => {
 const togglePlay = async () => {
   isPlaying.value = !isPlaying.value
   if (isPlaying.value) {
-    await audioPlayer.value?.play()
+    await audioPlayer?.play()
   } else {
-    audioPlayer.value?.pause()
+    audioPlayer?.pause()
   }
 }
 
 const onAudioEnded = () => {
-  audioPlayer.value?.play() // 自动重播
+  audioPlayer?.play() // 自动重播
 }
 
 const isLyricActive = (index) => {
@@ -241,10 +241,10 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-@reference 'tailwindcss'
+@reference 'tailwindcss';
 
 .gradient-text {
-  background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+  background: -webkit-linear-gradient(-64deg, #f9bf65, #ffab6b, #ff9977, #fc8986, #ef7e95, #e47da6, #d37fb5, #bf83c1, #ab8dcf, #9597d8, #7fa0dc, #6ca7da);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -263,7 +263,7 @@ onUnmounted(() => {
 }
 
 .card-hover {
-  @apply transition-transform duration-200 p-4 rounded-lg text-gray-900;
+  @apply transition-transform duration-200 p-6 rounded-lg;
 }
 
 .card-hover:hover {
