@@ -140,7 +140,7 @@
           <div class="flex flex-wrap justify-center gap-4 text-sm">
             <a
                 href="https://cn.xauat.edu.cn/"
-                class="footer-link hidden sm:inline-flex items-center gap-1"
+                class="footer-link hidden sm:inline-flex items-center gap-1 apple-link"
                 target="_blank"
                 rel="noopener"
             >
@@ -149,7 +149,7 @@
             <span class="text-gray-400 hidden sm:inline">·</span>
             <a
                 href="https://beian.miit.gov.cn/"
-                class="footer-link"
+                class="footer-link apple-link"
                 target="_blank"
                 rel="noopener"
             >
@@ -158,7 +158,7 @@
             <span class="text-gray-400 hidden sm:inline">·</span>
             <a
                 href="https://gitee.com/XAUATiOSClub"
-                class="footer-link hidden sm:inline-flex items-center gap-1"
+                class="footer-link hidden sm:inline-flex items-center gap-1 apple-link"
                 target="_blank"
                 rel="noopener"
             >
@@ -390,7 +390,6 @@ const handleSelect = (key) => {
 
 .footer-link:hover {
   color: #0052cc;
-  text-decoration: underline;
 }
 
 /* Dropdown customization */

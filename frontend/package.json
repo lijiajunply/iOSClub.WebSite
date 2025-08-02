@@ -17,6 +17,7 @@
     "markdown-it": "^14.1.0",
     "markdown-it-anchor": "^9.2.0",
     "markdown-it-attrs": "^4.3.1",
+    "markdown-it-container": "^4.0.0",
     "markdown-it-expand-tabs": "^1.0.13",
     "markdown-it-footnote": "^4.0.0",
     "markdown-it-imsize": "^2.0.1",
@@ -25,12 +26,15 @@
     "markdown-it-sub": "^2.0.0",
     "markdown-it-sup": "^2.0.0",
     "markdown-it-task-lists": "^2.1.1",
+    "mermaid": "^11.9.0",
     "pinia": "^3.0.3",
+    "prismjs": "^1.30.0",
     "tailwindcss": "^4.1.11",
     "vue": "^3.5.17",
     "vue-router": "^4.5.1"
   },
   "devDependencies": {
+    "@types/markdown-it-container": "^2.0.10",
     "@types/markdown-it-footnote": "^3.0.4",
     "@vitejs/plugin-vue": "^6.0.0",
     "@vue/tsconfig": "^0.7.0",

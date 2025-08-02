@@ -32,9 +32,15 @@ const routes = [
                 component: () => import('./pages/Event.vue'),
             },
             {
-                path: '/article',
-                name: 'Article',
-                component: () => import('./pages/Article.vue'),
+                path: '/',
+                component: () => import('./layouts/WordLayout.vue'),
+                children: [
+                    {
+                        path: 'article/:id',
+                        name: 'Article',
+                        component: () => import('./pages/Article.vue'),
+                    }
+                ]
             }
         ]
     },

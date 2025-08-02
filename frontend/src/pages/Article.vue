@@ -1,94 +1,61 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-    <n-layout class="min-h-screen">
-      <n-layout has-sider class="flex-1">
-        <!-- 左侧文章列表 -->
-        <n-layout-sider
-            bordered
-            collapse-mode="width"
-            :collapsed-width="0"
-            :native-scrollbar="false"
-            class="bg-white/60 backdrop-blur-sm"
-            v-if="selectedArticle"
-        >
-          <div class="p-4">
-            <n-menu :options="menuItems"/>
-          </div>
-        </n-layout-sider>
-
-        <!-- 右侧文章详情 -->
-        <n-layout-content class="relative">
-          <div v-if="selectedArticle">
-            <!-- 文章头部 -->
-            <div class="p-8 mb-6">
-              <div class="mb-6">
-                <div class="text-xl lg:text-4xl font-bold text-gray-900 leading-tight mb-4">
-                  {{ selectedArticle.title }}
-                </div>
-                <div class="flex items-center space-x-6 text-gray-500 text-sm">
-                  <span class="flex items-center">
-                    <n-icon size="16" class="mr-2">
-                      <CalendarOutlined/>
-                    </n-icon>
-                    {{ selectedArticle.date }}
-                  </span>
-                  <span class="flex items-center">
-                    <n-icon size="16" class="mr-2">
-                      <EyeFilled/>
-                    </n-icon>
-                    {{ selectedArticle.watch }} 次阅读
-                  </span>
-                </div>
-              </div>
-
-              <div class="p-8">
-                <div class="prose prose-lg max-w-none">
-                  <MarkdownComponent :content="selectedArticle.content"/>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 空状态 -->
-          <div v-else class="flex items-center justify-center h-full">
-            <div class="text-center">
-              <n-icon size="64" class="text-gray-300 mb-4">
-                <svg viewBox="0 0 24 24">
-                  <path fill="currentColor"
-                        d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/>
-                </svg>
-              </n-icon>
-              <p class="text-gray-500 text-lg">请选择一篇文章阅读</p>
-            </div>
-          </div>
-        </n-layout-content>
-      </n-layout>
-    </n-layout>
-  </div>
+  <MarkdownComponent :content="selectedArticle"/>
 </template>
 
 <script setup lang="ts">
 import {ref} from 'vue'
-import {
-  NLayout,
-  NLayoutSider,
-  NLayoutContent,
-  NMenu,
-  NIcon,
-  type MenuOption,
-} from 'naive-ui'
-
-// import {ArticleService, type ArticleModel} from "../services/ArticleService.js";
-import {CalendarOutlined, EyeFilled} from "@vicons/antd";
 import MarkdownComponent from "../components/MarkdownComponent.vue";
 
-const menuItems = ref<MenuOption[]>([])
-
 const selectedArticle = ref<any>({
-  title: '',
+  title: '从南山到南山：众创空间的旅途',
   date: '',
   watch: 0,
-  content: ``,
+  content: `
+2025 年 4 月 7 日，iOS Club 再一次拥有了自己的活动室，虽然更应该称其为仓库。
+
+这是一间很小的教室，还被四个社团给 “瓜分”了。不过好在足够我们放下目前拥有的所有物资了。
+
+![](https://fastly.jsdelivr.net/gh/bucketio/img5@main/2025/04/23/1745341430313-31c2bf8e-1ac9-45a9-9f5b-dedb322ad91d.jpg)
+
+故事讲到这里看似是在画上句号了，但是 iOS 怎么可能闲着没事干发这样一篇文章呢？事实就是，我们并不是第一次拥有活动室了。
+
+这个故事恐怕得从 18 年的冬天开始讲起了。
+
+## iOS Club 的 众创空间
+
+18 年的冬天，那个时候学校和校园苹果店合作，在苹果店的隔壁搞了个学生活动室。是的，那个活动室就叫众创空间。你甚至可以把社团历史追朔到活动室建成的那一天 —— 毕竟这也算 “前身”了。
+
+后面呢，19 年成立的 iOS Club 页理所应当的继承了那个活动室。其实如果见过老的社团官网以及老的宣传推文的人应该都见过那个教室的模样 —— 一个白墙的房间，对称着摆了几张小桌子，然后便是些椅子，好像要把整个房间给挤满了。就是那么一个小小的房间。
+
+![](https://fastly.jsdelivr.net/gh/bucketio/img3@main/2025/04/23/1745341204558-199e5b07-6372-4680-8f71-b320bb0e20fd.png)
+
+说实话我从来没有亲身进过那个教室，我也的确想象不出来 19 年 iOS 初代成员用那个教室的情景 —— 甚至都没见过他们。目前来说，理论上去过那个教室的最小的，今年也要毕业了。的确如此，故事的转折就在 21 年的 9 月。
+
+## 别了，南山！
+
+当时的韩晨超和武清云刚接管社团不久，学校便开始建设校史馆了，而这个校史馆的地址就在活动室那栋楼。因此活动室就这么没了。当时的韩晨超还特地写了篇文章来记录这一过程：
+
+但是好景不长，过了一年之后，紫阁那边又不让我们放物资了。当时的新任社长邵涧泽找了一切的关系：从信控到机电，从南山社联到图书馆，最后才把物资给放到了工训楼的一间教室里，这一待就是两三年。
+
+## 再次见面，南山！
+
+然后就是今年的 4 月 7 号，经过了长达四年的时间，我们终于回到了南山。当然肯定是回不到校史馆了。但好在，我们的众创空间终于又回来了。
+
+当然这次，相较于 21 年搬家时的物资，有很多都坏了，当然也新添了很多东西 —— 例如我们的服务器。
+
+之前因为很多原因，服务器无法使用。现在换到南山来了之后，终于也是能用了。
+
+![](https://fastly.jsdelivr.net/gh/bucketio/img13@main/2025/04/23/1745342307382-dea609cb-9762-4f2a-8cc2-5c6d2d930705.jpg)
+
+## 别了 ......
+
+关于这个活动室，我是真没有什么情感 —— 毕竟我来的时候校史馆都盖好了。唯一和原址的一点交集就是我当时体检的时候，做 X 光片是在校史馆里。排队的时候隐约的看到过。但是当我们时隔多年，终于又有了新的活动室，实在是既兴奋又有点感慨。
+
+很多时候感觉自从上了大三之后，心态真的老了很多 —— 开始不停的回忆起过去两年在 iOS Club 的历程。甚至现在连情侣的秀恩爱行为都已经没有任何感觉了，只是觉得 “年轻” 真好。我很多时候都会想，那些初代的社员看到我们现在的样子，会是什么样子，同时也在想，未来的社团会是什么样子，会有人记得我们曾经在社团所留下的痕迹吗？
+
+或许是 “老” 了，或许是同一轮月亮，却照到了不同的时光里。
+
+其实这篇文章我写了好几遍，写的我都没动力了。直到今天我看到了学校公众号发了个关于校史馆预约参观的推文。那一刻思绪万千 —— 学校的百年校史里装着的，何尝没有我们的历史呢？`,
 })
 </script>
 

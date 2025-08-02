@@ -40,7 +40,7 @@
         </n-gi>
 
         <n-gi span="8 700:5" class="flex flex-col justify-center">
-          <div class="gradient-text text-4xl lg:text-5xl font-bold text-center lg:text-left mb-4 pt-2" >
+          <div class="gradient-text text-4xl lg:text-5xl font-bold text-center lg:text-left mb-4 pt-2">
             iOS Club of XAUAT
           </div>
           <div class="block lg:hidden">
@@ -153,13 +153,13 @@ const cards = [
     icon: "🤝",
     title: "和iOS Club一起结伴同行",
     content: "不管是零基础的小白还是大神，只要你有兴趣，这里就是你的天堂",
-    url: "/Articles"
+    url: "/Blog"
   },
   {
     icon: "🌐",
     title: "iOS Club,不止iOS",
     content: "我们不止只有iOS，西建大iOS Club是一个跨专业与课堂的数码编程爱好者社团",
-    url: "OtherOrg"
+    url: "/OtherOrg"
   },
   {
     icon: "😀",
