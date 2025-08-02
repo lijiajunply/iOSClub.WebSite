@@ -1,6 +1,6 @@
 ﻿using System.Xml.Serialization;
 
-namespace iOSClub.WebAPI.Models;
+namespace iOSClub.Data.ShowModels;
 
 [XmlRoot(ElementName = "entry")]
 public class Entry

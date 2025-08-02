@@ -1,5 +1,6 @@
 using iOSClub.Data;
 using iOSClub.Data.DataModels;
+using iOSClub.Data.ShowModels;
 using iOSClub.WebAPI.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

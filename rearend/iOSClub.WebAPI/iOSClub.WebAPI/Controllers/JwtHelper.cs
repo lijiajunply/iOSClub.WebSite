@@ -1,12 +1,13 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using iOSClub.WebAPI.Models;
+using iOSClub.Data.ShowModels;
+using iOSClub.DataApi.Services;
 using Microsoft.IdentityModel.Tokens;
 
 namespace iOSClub.WebAPI.Controllers;
 
-public class JwtHelper(IConfiguration configuration)
+public class JwtHelper(IConfiguration configuration) : IJwtHelper
 {
     public string GetMemberToken(MemberModel model)
     {

@@ -1,6 +1,7 @@
 using System.Text;
 using iOSClub.Data;
 using iOSClub.Data.DataModels;
+using iOSClub.DataApi.Services;
 using iOSClub.WebAPI.Controllers;
 using iOSClub.WebAPI.IdentityModels;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -47,7 +48,9 @@ builder.Services.AddCors(options =>
     });
 });
 
-builder.Services.AddSingleton(new JwtHelper(builder.Configuration));
+
+
+builder.Services.AddScoped<IJwtHelper,JwtHelper>();
 builder.Services.AddScoped<TokenActionFilter>();
 builder.Services.AddHttpClient();
 

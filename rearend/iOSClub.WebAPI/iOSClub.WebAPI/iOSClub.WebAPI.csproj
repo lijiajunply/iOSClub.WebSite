@@ -25,6 +25,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\iOSClub.DataApi\iOSClub.DataApi.csproj" />
       <ProjectReference Include="..\iOSClub.Data\iOSClub.Data.csproj" />
     </ItemGroup>
 
