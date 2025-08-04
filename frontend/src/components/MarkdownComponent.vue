@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import {nextTick, onMounted, ref, watch, computed} from "vue";
 import {NAnchor, NAnchorLink, NIcon} from 'naive-ui'
 // import {ArticleService, type ArticleModel} from "../services/ArticleService.js";
@@ -19,14 +19,17 @@ import mermaid from 'mermaid'
 import Prism from "prismjs"
 import "prismjs/themes/prism-tomorrow.min.css"
 
-const props = defineProps({
-  content: {
-    title: String,
-    date: String,
-    watch: Number,
-    content: String
-  }
-})
+interface ArticleProps {
+  title: string;
+  date: string;
+  watch: number;
+  content: string;
+}
+
+const props = withDefaults(defineProps<ArticleProps>(), {
+  watch: 0, // 默认值
+  // 其他字段的默认值...
+});
 
 // 存储标题结构
 const headings = ref([])
@@ -187,16 +190,19 @@ watch(() => props.content, async (newValue) => {
     }
 )
 
-onMounted(async () => {
-  if (!md || !props.content.content) return '';
-
-  try {
-    html.value = await render(props.content.content);
-  } catch (error) {
-    console.error('Error rendering markdown:', error);
-    html.value = props.content.content;
-  }
-})
+watch(
+    () => props.content,
+    async (newArticle) => {
+      if (!newArticle || !newArticle.content) return;
+      try {
+        html.value = await render(newArticle.content);
+      } catch (error) {
+        console.error('渲染 markdown 失败:', error);
+        html.value = newArticle.content;
+      }
+    },
+    { immediate: true } // 初始化时立即执行
+);
 
 // 递归渲染导航链接
 const renderAnchorLinks = (items, depth = 0) => {

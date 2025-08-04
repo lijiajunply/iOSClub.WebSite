@@ -101,6 +101,10 @@ const menuOptions = [
       {
         label: '邵韩之治',
         key: '/Article/History-Shao Han\'s Reign'
+      },
+      {
+        label: '活动室变迁',
+        key: '/Article/History-Room'
       }
     ]
   }
@@ -108,6 +112,7 @@ const menuOptions = [
 
 const handleSelect = (key) => {
   emit('menu-item-click', key)
+  router.push(key)
 }
 </script>
 

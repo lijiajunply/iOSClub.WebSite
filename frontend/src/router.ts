@@ -30,18 +30,18 @@ const routes = [
                 name: 'Event',
                 meta: {title: "社团活动 - 西建大 iOS Club"},
                 component: () => import('./pages/Event.vue'),
-            },
-            {
-                path: '/',
-                component: () => import('./layouts/WordLayout.vue'),
-                children: [
-                    {
-                        path: 'article/:id',
-                        name: 'Article',
-                        component: () => import('./pages/Article.vue'),
-                    }
-                ]
             }
+        ]
+    },
+    {
+        path: '/',
+        component: () => import('./layouts/WordLayout.vue'),
+        children: [
+            {
+                path: 'article/:id',
+                name: 'Article',
+                component: () => import('./pages/Article/Room.vue'),
+            },
         ]
     },
     {
