@@ -54,7 +54,7 @@ md.use(markdownItAnchor, {
 md.use(markdownitFootnote)
 md.use(markdownitTaskList, {label: false, labelAfter: false})
 md.use(markdownitAttrs, {
-  allowedAttributes: ['id', 'class', 'target']
+  allowedAttributes: ['id', 'class', 'target', 'src'] 
 })
 
 md.use(mdExpandTabs)
