@@ -36,6 +36,12 @@ const routes = [
                 name: 'History',
                 meta: {title: "社团历史 - 西建大 iOS Club"},
                 component: () => import('./pages/History.vue'),
+            },
+            {
+                path: '/Tools',
+                name: 'Tools',
+                meta: {title: "社团应用 - 西建大 iOS Club"},
+                component: () => import('./pages/Tools.vue'),
             }
         ]
     },

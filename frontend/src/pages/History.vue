@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-gray-50">
     <!-- 主要内容区 -->
     <div class="container mx-auto px-4 max-w-7xl">
-      <!-- 头部区域 - 与活动页面保持一致 -->
+      <!-- 头部区域  -->
       <PageStart
           title="iOS Club 的历史"
           subtitle="历史是时代的见证"
@@ -10,7 +10,7 @@
           gradient-class="bg-gradient-to-r from-blue-600 to-green-500"
       />
 
-      <!-- 内容卡片区域 - 与活动页面布局一致 -->
+      <!-- 内容卡片区域 -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pb-16 ml-4 mr-4">
         <n-card
             v-for="(item, index) in cards"
@@ -38,8 +38,7 @@
         </n-card>
       </div>
     </div>
-
-    <!-- 背景装饰 - 与活动页面保持一致的视觉效果 -->
+    
     <div class="fixed top-0 left-0 w-full h-full pointer-events-none overflow-hidden -z-10">
       <div class="absolute -top-40 -right-40 w-80 h-80 bg-blue-100 rounded-full blur-3xl opacity-30 animate-float"></div>
       <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-green-100 rounded-full blur-3xl opacity-30 animate-float-delayed"></div>
@@ -53,12 +52,10 @@ import { NCard } from 'naive-ui'
 import { useRouter } from 'vue-router'
 import PageStart from "@/components/PageStart.vue";
 
-// 导入图片资源
 import historyImage from '../assets/Centre/History.jpg';
 
 const router = useRouter()
 
-// 历史卡片数据，增加了imageUrl字段与活动页面保持一致
 const cards = ref([
   {
     imageUrl: '', // 可以替换为实际图片路径
@@ -86,7 +83,6 @@ const cards = ref([
   }
 ]);
 
-// 卡片点击处理函数，与活动页面保持一致
 const handleCardClick = (item) => {
   if (item.url) {
     router.push(item.url);
@@ -95,7 +91,6 @@ const handleCardClick = (item) => {
 </script>
 
 <style scoped>
-/* 动画定义 - 与活动页面保持一致 */
 @keyframes slide-up {
   from {
     opacity: 0;
@@ -129,7 +124,6 @@ const handleCardClick = (item) => {
   animation: float 6s ease-in-out 3s infinite;
 }
 
-/* NaiveUI 卡片自定义样式 - 与活动页面保持一致 */
 :deep(.n-card) {
   border: none;
   border-radius: 20px;
