@@ -3,7 +3,7 @@ import {useAuthorizationStore} from "./stores/Authorization.ts";
 
 const routes = [
     {
-        path: "/",
+        path: "",
         name: "main",
         component: () => import("./layouts/MainLayout.vue"),   // 布局文件
         children: [
@@ -14,45 +14,63 @@ const routes = [
                 component: () => import('./pages/Home.vue'),
             },
             {
-                path: '/projects',
+                path: 'projects',
                 name: 'Projects',
                 meta: {title: "社团项目 - 西建大 iOS Club"},
                 component: () => import('./pages/Projects.vue'),
             },
             {
-                path: '/login',
+                path: 'login',
                 name: 'Login',
                 meta: {title: "登录到您的iMember - 西建大 iOS Club"},
                 component: () => import('./pages/Login.vue'),
             },
             {
-                path: '/event',
+                path: 'event',
                 name: 'Event',
                 meta: {title: "社团活动 - 西建大 iOS Club"},
                 component: () => import('./pages/Event.vue'),
             },
             {
-                path: '/History',
+                path: 'History',
                 name: 'History',
                 meta: {title: "社团历史 - 西建大 iOS Club"},
                 component: () => import('./pages/History.vue'),
             },
             {
-                path: '/Tools',
+                path: 'Tools',
                 name: 'Tools',
                 meta: {title: "社团应用 - 西建大 iOS Club"},
                 component: () => import('./pages/Tools.vue'),
-            }
-        ]
-    },
-    {
-        path: '/',
-        component: () => import('./layouts/WordLayout.vue'),
-        children: [
+            },
             {
-                path: 'article/:id',
-                name: 'Article',
-                component: () => import('./pages/Article/Room.vue'),
+                path: '/',
+                component: () => import('./layouts/WordLayout.vue'),
+                children: [
+                    {
+                        path: 'article/:id',
+                        name: 'Article',
+                        component: () => import('./pages/Article.vue'),
+                    },
+                    {
+                        path: 'About',
+                        name: 'About',
+                        meta: {title: "关于我们 - 西建大 iOS Club"},
+                        component: () => import('./pages/Articles/About.vue'),
+                    },
+                    {
+                        path: 'OtherOrg',
+                        name: 'OtherOrg',
+                        meta: {title: "其他组织 - 西建大 iOS Club"},
+                        component: () => import('./pages/Articles/OtherOrg.vue'),
+                    },
+                    {
+                        path: 'Structure',
+                        name: 'Structure',
+                        meta: {title: "社团结构 - 西建大 iOS Club"},
+                        component: () => import('./pages/Articles/Structure.vue'),
+                    }
+                ]
             },
         ]
     },

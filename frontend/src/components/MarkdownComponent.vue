@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import {nextTick, onMounted, ref, watch, computed} from "vue";
+import {nextTick, ref, watch, computed} from "vue";
 import {NAnchor, NAnchorLink, NIcon} from 'naive-ui'
-// import {ArticleService, type ArticleModel} from "../services/ArticleService.js";
 import {CalendarOutlined, EyeFilled} from "@vicons/antd";
 
 import MarkdownIt from 'markdown-it'
@@ -15,27 +14,22 @@ import mdMark from 'markdown-it-mark'
 import markdownItAnchor from 'markdown-it-anchor'
 import markdownItContainer from 'markdown-it-container'
 
-import mermaid from 'mermaid'
+import markdownItMermaid from '@jsonlee_12138/markdown-it-mermaid';
 import Prism from "prismjs"
-import "prismjs/themes/prism-tomorrow.min.css"
 
-interface ArticleProps {
-  title: string;
-  date: string;
-  watch: number;
-  content: string;
-}
-
-const props = withDefaults(defineProps<ArticleProps>(), {
-  watch: 0, // 默认值
-  // 其他字段的默认值...
-});
+const props = defineProps({
+  content: {
+    default: () => ({
+      title: '',
+      date: '',
+      watch: 0,
+      content: ''
+    })
+  }
+})
 
 // 存储标题结构
 const headings = ref([])
-
-// 初始化 mermaid
-mermaid.initialize({startOnLoad: true})
 
 // 创建 markdown-it 实例
 const md = new MarkdownIt({
@@ -54,13 +48,14 @@ md.use(markdownItAnchor, {
 md.use(markdownitFootnote)
 md.use(markdownitTaskList, {label: false, labelAfter: false})
 md.use(markdownitAttrs, {
-  allowedAttributes: ['id', 'class', 'target', 'src'] 
+  allowedAttributes: ['id', 'class', 'target', 'src']
 })
 
 md.use(mdExpandTabs)
     .use(mdSup)
     .use(mdSub)
     .use(mdMark)
+    .use(markdownItMermaid({delay: 100}))
 
 // 配置自定义容器
 const containerOptions = [
@@ -86,7 +81,7 @@ containerOptions.forEach(({name, className}) => {
     render: (tokens, idx) => {
       const m = tokens[idx].info.trim().match(new RegExp(`^${name}\\s+(.*)$`))
       if (tokens[idx].nesting === 1) {
-        return `<div class="${className} custom-block"><p style="font-weight: bold">${md.utils.escapeHtml(m[1])}</p>\n`
+        return `<div class="${className} custom-block"><span style="font-weight: bold;font-size: 1rem;">${md.utils.escapeHtml(m[1])}</span>\n`
       } else {
         return '</div>\n'
       }
@@ -163,9 +158,6 @@ const render = async (markdown) => {
   await nextTick()
 
   // 初始化 mermaid 图表
-  await mermaid.run({
-    nodes: document.querySelectorAll('.language-mermaid'),
-  })
 
   // 代码高亮
   setTimeout(() => {
@@ -180,29 +172,9 @@ const html = ref('')
 
 watch(() => props.content, async (newValue) => {
       if (!md || !newValue) return '';
-
-      try {
-        html.value = await render(newValue);
-      } catch (error) {
-        console.error('Error rendering markdown:', error);
-        html.value = newValue;
-      }
-    }
+      html.value = await render(newValue.content);
+    }, {immediate: true}
 )
-
-watch(
-    () => props.content,
-    async (newArticle) => {
-      if (!newArticle || !newArticle.content) return;
-      try {
-        html.value = await render(newArticle.content);
-      } catch (error) {
-        console.error('渲染 markdown 失败:', error);
-        html.value = newArticle.content;
-      }
-    },
-    { immediate: true } // 初始化时立即执行
-);
 
 // 递归渲染导航链接
 const renderAnchorLinks = (items, depth = 0) => {
@@ -215,6 +187,7 @@ const renderAnchorLinks = (items, depth = 0) => {
 
 // 计算导航数据
 const anchorLinks = computed(() => renderAnchorLinks(headings.value))
+const date = computed(() => new Date(props.content.date).toDateString('YYYY-MM-dd'))
 
 </script>
 
@@ -232,7 +205,7 @@ const anchorLinks = computed(() => renderAnchorLinks(headings.value))
                     <n-icon size="16" class="mr-2">
                       <CalendarOutlined/>
                     </n-icon>
-                    {{ content.date }}
+                    {{ date }}
                   </span>
             <span class="flex items-center">
                     <n-icon size="16" class="mr-2">
@@ -254,7 +227,7 @@ const anchorLinks = computed(() => renderAnchorLinks(headings.value))
       </div>
 
       <!-- 导航栏 -->
-      <div class="sticky top-8 h-fit" v-if="headings.length > 0">
+      <div class="hidden md:flex sticky top-8 h-fit" v-if="headings.length > 0">
         <div class="pl-4">
           <h3 class="text-sm font-semibold mb-4">
             目录
@@ -302,6 +275,8 @@ const anchorLinks = computed(() => renderAnchorLinks(headings.value))
 </template>
 
 <style scoped>
+@import "prismjs/themes/prism-tomorrow.min.css";
+
 @reference 'tailwindcss';
 
 /* 导航栏样式 */
@@ -310,23 +285,12 @@ const anchorLinks = computed(() => renderAnchorLinks(headings.value))
 }
 
 :deep(.toc-anchor .n-anchor-link__title) {
-  @apply text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100;
+  @apply text-gray-400 hover:text-gray-900;
   @apply py-1 transition-colors duration-200;
 }
 
 :deep(.toc-anchor .n-anchor-link--active .n-anchor-link__title) {
   @apply text-blue-600 dark:text-blue-400 font-medium;
-}
-
-/* 响应式设计 */
-@media (max-width: 1280px) {
-  .w-64 {
-    display: none;
-  }
-
-  .flex-1 {
-    @apply pr-0;
-  }
 }
 
 /* 可以添加额外的样式 */
@@ -362,5 +326,26 @@ const anchorLinks = computed(() => renderAnchorLinks(headings.value))
   padding-left: 1rem;
   margin: 1rem 0;
   color: #6b7280;
+}
+
+.prose :deep(.custom-block){
+  border-radius: 8px;
+  line-height: 24px;
+  font-size: 14px;
+  color: rgba(60, 60, 67, .78);
+  margin-bottom: 10px;
+  padding: 16px 16px 8px 16px;
+}
+
+.prose :deep(.danger){
+  border-color: transparent;
+  color: rgba(60, 60, 67);
+  background-color: rgba(244, 63, 94, .14);
+}
+
+.prose :deep(.tip) {
+  border-color: transparent;
+  color: rgba(60, 60, 67);
+  background-color: rgba(100, 108, 255, .14);
 }
 </style>

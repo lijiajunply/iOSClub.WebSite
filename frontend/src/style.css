@@ -30,6 +30,13 @@ a, .btn-link {
 
 }
 
+.icon {
+    width: 1em; height: 1em;
+    vertical-align: -0.15em;
+    fill: currentColor;
+    overflow: hidden;
+}
+
 @media screen and (min-width: 768px) {
     .apple-card:hover {
         box-shadow: 0 0 10px #C0C0C0;

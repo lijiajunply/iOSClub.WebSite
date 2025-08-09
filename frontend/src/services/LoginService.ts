@@ -1,6 +1,8 @@
+import {Url} from './Url';
+
 export class LoginService {
     public static async login(username: string, password: string): Promise<any> {
-        return await fetch('https://localhost:7257/Login', {
+        return await fetch(`${Url}/Login`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

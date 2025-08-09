@@ -21,23 +21,31 @@
           <n-card hoverable class="w-full">
             <div class="flex items-center justify-between p-6">
               <div class="flex items-center gap-4">
+                <template v-if="!link.icon.startsWith('http')">
+                  <IconFont
+                      :type="`#icon-${link.icon}`"
+                      class="text-[28px]"
+                  />
+                </template>
+                <template v-else>
+                  <img
+                      :src="fixImageUrl(link.icon)"
+                      :style="{ height: '28px', width: '28px', borderRadius: '6px' }"
+                      :alt="`${link.name}的图标`"
+                      @error="(e) => handleImageError(e, link)"
+                      data-debug="image-icon"
+                  />
+                </template>
 
-                <!-- 统一使用图片图标 -->
-                <img
-                    :src="fixImageUrl(link.icon)"
-                    :style="{ height: '28px', width: '28px', borderRadius: '6px' }"
-                    :alt="`${link.name}的图标`"
-                    @error="(e) => handleImageError(e, link)"
-                    data-debug="image-icon"
-                />
-
-                <span class="text-xl font-semibold text-gray-900 group-hover:text-blue-600 transition-colors duration-300">
+                <span
+                    class="text-xl font-semibold text-gray-900 group-hover:text-blue-600 transition-colors duration-300">
                   {{ link.name }}
                 </span>
               </div>
               <span class="text-gray-600 group-hover:text-blue-500 transition-colors duration-300">
                 {{ link.description || '点击访问' }}
-                <svg class="w-5 h-5 ml-2 inline group-hover:translate-x-2 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-5 h-5 ml-2 inline group-hover:translate-x-2 transition-transform duration-300" fill="none"
+                     stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                 </svg>
               </span>
@@ -45,7 +53,8 @@
           </n-card>
         </a>
 
-        <div v-if="models.length === 0" class="empty-state animate-slide-up flex flex-col items-center justify-center p-16">
+        <div v-if="models.length === 0"
+             class="empty-state animate-slide-up flex flex-col items-center justify-center p-16">
           <img
               src="https://gw.alipayobjects.com/zos/antfincdn/ZHrcdLPrvN/empty.svg"
               alt="空状态"
@@ -57,104 +66,24 @@
     </div>
 
     <div class="fixed top-0 left-0 w-full h-full pointer-events-none overflow-hidden -z-10">
-      <div class="absolute -top-40 -right-40 w-80 h-80 bg-blue-100 rounded-full blur-3xl opacity-30 animate-float"></div>
-      <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-green-100 rounded-full blur-3xl opacity-30 animate-float-delayed"></div>
+      <div
+          class="absolute -top-40 -right-40 w-80 h-80 bg-blue-100 rounded-full blur-3xl opacity-30 animate-float"></div>
+      <div
+          class="absolute -bottom-40 -left-40 w-80 h-80 bg-green-100 rounded-full blur-3xl opacity-30 animate-float-delayed"></div>
     </div>
   </div>
 </template>
 
-<script setup>
-import { ref } from 'vue';
-import { NCard } from 'naive-ui';
+<script setup lang="ts">
+import '../lib/iconfont'
+import {ref, onMounted} from 'vue';
+import {NCard} from 'naive-ui';
 import PageStart from "@/components/PageStart.vue";
-
+import {LinkModel, ToolService} from "@/services/ToolService.js";
 import toolsImage from '../assets/Centre/AppleLogo.jpg';
+import IconFont from "@/components/IconFont.vue";
 
-// 本地静态数据（替代API请求）
-const localData = {
-  "key": "64efa33d787e9704abb775090af58749",
-  "name": "社团出品",
-  "description": "iOS Club 出品的App",
-  "icon": "pingguo",
-  "index": 3,
-  "links": [
-    {
-      "key": "04c8f1afa7e6d5e290182b796d43d1f1",
-      "name": "封面生成",
-      "icon": "https://coverview.xauat.site//assets/logo-BF5ZA9n8.png",
-      "url": "https://coverview.xauat.site/",
-      "description": "",
-      "index": 11
-    },
-    {
-      "key": "3e8174acec310b710f09e28fc1714dfb",
-      "name": "iLibrary",
-      "icon": "https://i.ibb.co/mwnQc9m/wenjianjia.png",
-      "url": "https://lib.xauat.site/",
-      "description": "iOS 电子图书馆",
-      "index": 11
-    },
-    {
-      "key": "5667f32125841ffeb438f2eeded793c2",
-      "name": "iOS AI",
-      "icon": "https://i.ibb.co/Z1NN8T8S/ai.png",
-      "url": "https://gpt.xauat.site",
-      "description": "iOS Club出品的AI产品",
-      "index": 1
-    },
-    {
-      "key": "60d2fb9eaa07897822e19605f83da28a",
-      "name": "AI API服务平台",
-      "icon": "https://i.ibb.co/hFcFvxc8/AI.png",
-      "url": "https://newapi.xauat.site/",
-      "description": "AI服务平台",
-      "index": 11
-    },
-    {
-      "key": "6b989a9c1b4fe096d41c45507cafd15c",
-      "name": "建大导航",
-      "icon": "https://i.ibb.co/B5YLGjDr/daohang.png",
-      "url": "https://link.xauat.site/",
-      "description": "将建大各种东西收集起来",
-      "index": 2
-    },
-    {
-      "key": "8e09dfebc9a6e77c8e7bc22745d053d2",
-      "name": "社团官网",
-      "icon": "https://i.ibb.co/xqnx3m1d/zhizhang.png",
-      "url": "https://www.xauat.site",
-      "description": "",
-      "index": 0
-    },
-    {
-      "key": "c446db8c329b0d603d904fb533b498d1",
-      "name": "建大百科",
-      "icon": "https://i.ibb.co/qYQNKZLy/wenjian-1.png", 
-      "url": "https://wiki.xauat.site",
-      "description": "囊括所有资源",
-      "index": 3
-    },
-    {
-      "key": "ed156e19af36ba921a792908fad165ac",
-      "name": "Markdown工具",
-      "icon": "https://i.ibb.co/SLXZw6N/wenjian.png", 
-      "url": "https://mark.xauat.site/",
-      "description": "Markdown转公众号",
-      "index": 4
-    },
-    {
-      "key": "922ec40253e088738c3e07f4243abbd9",
-      "name": "新生代培养计划",
-      "icon": "https://i.ibb.co/XQfXp5B/icon.png", 
-      "url": "https://plan.xauat.site/",
-      "description": "西建大 iOS Club 新生代培养计划",
-      "index": 8
-    }
-  ]
-};
-
-const models = ref(localData.links);
-const FALLBACK_ICON = toolsImage;
+const models = ref<LinkModel>([]);
 
 // 修复图片URL中的重复斜杠问题
 const fixImageUrl = (url) => {
@@ -163,18 +92,27 @@ const fixImageUrl = (url) => {
 
 // 图标加载失败时替换为备用图标
 const handleImageError = (event, link) => {
-  if (event.target.src === FALLBACK_ICON) return;
+  if (event.target.src === toolsImage) return;
 
   console.debug(`[${link.name}]图标加载失败，使用备用图标`, {
     failedUrl: event.target.src,
-    fallback: FALLBACK_ICON
+    fallback: toolsImage
   });
-  event.target.src = FALLBACK_ICON;
+  event.target.src = toolsImage;
 };
+
+onMounted(async () => {
+  const res = await ToolService.getTools();
+  models.value = res.links;
+  console.log(res.links)
+})
 </script>
 
 <style scoped>
 /* 移除字体图标相关样式（不再使用） */
+
+/* 在线链接服务仅供平台体验和调试使用，平台不承诺服务的稳定性，企业客户需下载字体包自行发布使用并做好备份。 */
+@import url('//at.alicdn.com/t/c/font_4612528_md4hjwjgcb.css');
 
 @keyframes slide-up {
   from {

@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@jsonlee_12138/markdown-it-mermaid": "^0.0.6",
     "@tailwindcss/typography": "^0.5.16",
     "@tailwindcss/vite": "^4.1.11",
     "@vicons/antd": "^0.13.0",
@@ -26,7 +27,6 @@
     "markdown-it-sub": "^2.0.0",
     "markdown-it-sup": "^2.0.0",
     "markdown-it-task-lists": "^2.1.1",
-    "mermaid": "^11.9.0",
     "pinia": "^3.0.3",
     "prismjs": "^1.30.0",
     "tailwindcss": "^4.1.11",
