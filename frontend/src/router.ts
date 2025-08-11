@@ -47,7 +47,7 @@ const routes = [
                 path: 'Blog',
                 name: 'Blog',
                 meta: {title: "社团文章 - 西建大 iOS Club"},
-                component: () => import('./pages/BLog.vue'),
+                component: () => import('./pages/Blog.vue'),
             },
             {
                 path: '/',

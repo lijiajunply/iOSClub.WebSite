@@ -1,4 +1,6 @@
 <template>
+  <meta name="referrer" content="never">
+  
   <div class="min-h-screen bg-gray-50">
     <!-- 主要内容区 -->
     <div class="container mx-auto px-4 max-w-7xl">
