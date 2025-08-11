@@ -228,7 +228,7 @@ const communityOptions = [
   },
   {
     label: '技术博客',
-    key: '/Articles'
+    key: '/Blog'
   },
   {
     label: 'iOS App',

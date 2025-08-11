@@ -44,6 +44,12 @@ const routes = [
                 component: () => import('./pages/Tools.vue'),
             },
             {
+                path: 'Blog',
+                name: 'Blog',
+                meta: {title: "社团文章 - 西建大 iOS Club"},
+                component: () => import('./pages/BLog.vue'),
+            },
+            {
                 path: '/',
                 component: () => import('./layouts/WordLayout.vue'),
                 children: [
