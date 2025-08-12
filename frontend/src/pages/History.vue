@@ -4,7 +4,7 @@
     <div class="container mx-auto px-4 max-w-7xl">
       <!-- 头部区域  -->
       <PageStart
-          title="iOS Club 的历史"
+          title="iOS Club 历史"
           subtitle="历史是时代的见证"
           :img="historyImage"
           gradient-class="bg-gradient-to-r from-blue-600 to-green-500"

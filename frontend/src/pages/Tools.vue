@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-gray-50">
     <div class="container mx-auto px-4 max-w-7xl">
       <PageStart
-          title="iOS App 工具集"
+          :title="isMobile ? 'iOS Club 工具' : 'iOS Club 社团工具'"
           subtitle="西建大iOS Club 出品"
           :img="toolsImage"
           gradient-class="bg-gradient-to-r from-blue-600 to-green-500"
@@ -42,8 +42,9 @@
                   {{ link.name }}
                 </span>
               </div>
+              <!-- 移动端隐藏描述文字，仅保留箭头图标 -->
               <span class="text-gray-600 group-hover:text-blue-500 transition-colors duration-300">
-                {{ link.description || '点击访问' }}
+                <span class="hidden sm:inline">{{ link.description || '点击访问' }}</span>
                 <svg class="w-5 h-5 ml-2 inline group-hover:translate-x-2 transition-transform duration-300" fill="none"
                      stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
@@ -85,6 +86,9 @@ import IconFont from "@/components/IconFont.vue";
 
 const models = ref<LinkModel>([]);
 
+// 检测是否为移动设备
+const isMobile = ref(window.innerWidth < 640);
+
 // 修复图片URL中的重复斜杠问题
 const fixImageUrl = (url) => {
   return url.replace(/([^:]\/)\/+/g, '$1');
@@ -109,9 +113,6 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-/* 移除字体图标相关样式（不再使用） */
-
-/* 在线链接服务仅供平台体验和调试使用，平台不承诺服务的稳定性，企业客户需下载字体包自行发布使用并做好备份。 */
 @import url('//at.alicdn.com/t/c/font_4612528_md4hjwjgcb.css');
 
 @keyframes slide-up {
@@ -168,5 +169,20 @@ a {
 img[src$="AppleLogo.jpg"] {
   background-color: #f0f0f0;
   padding: 2px;
+}
+
+/* 移动端优化调整 */
+@media (max-width: 640px) {
+  .flex.items-center.justify-between {
+    padding: 4px 12px;
+  }
+
+  .text-xl {
+    font-size: 16px;
+  }
+
+  .text-\[28px\] {
+    font-size: 22px;
+  }
 }
 </style>

@@ -1,12 +1,12 @@
 <template>
   <meta name="referrer" content="never">
-  
+
   <div class="min-h-screen bg-gray-50">
     <!-- 主要内容区 -->
     <div class="container mx-auto px-4 max-w-7xl">
       <!-- 头部区域 -->
       <PageStart
-          title="iOS Club 技术博客"
+          :title="isMobile ? 'iOS Club 博客' : 'iOS Club 技术博客'"
           subtitle="记录每一个思维的并发点"
           :img="articleHeaderImg"
           gradient-class="bg-gradient-to-r from-purple-600 to-pink-600"
@@ -71,21 +71,25 @@
         <n-spin size="large" />
       </div>
 
-      <!-- 更多订阅 -->
+      <!-- 更多订阅 - 优化后的版本 -->
       <div v-if="entries.length > 0" class="pb-16 ml-4 mr-4 mt-8">
-        <h2 class="text-3xl font-bold mb-8 text-gray-900">更多订阅</h2>
+        <h2 class="text-3xl font-bold mb-8 text-gray-900 relative inline-block">
+          更多订阅
+          <span class="absolute -bottom-2 left-0 w-1/2 h-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"></span>
+        </h2>
         <div class="space-y-4">
           <div
               v-for="(entry, index) in entries"
               :key="index"
-              class="subscription-item"
+              class="subscription-item animate-slide-up"
+              :style="`animation-delay: ${index * 80}ms`"
               @click="openLink(entry.link[0].href)"
           >
             <div class="flex justify-between items-center">
-              <span class="text-lg">
+              <span class="text-lg font-medium">
                 {{ entry.title }}
               </span>
-              <span class="text-gray-500 text-sm">
+              <span class="text-gray-500 text-sm bg-white/50 px-3 py-1 rounded-full backdrop-blur-sm">
                 {{ formatDate(entry.updated) }}
               </span>
             </div>
@@ -103,12 +107,15 @@
 </template>
 
 <script setup>
+// 脚本部分保持不变
 import { onMounted, ref } from 'vue';
 import { NEmpty, NSpin, NCard } from 'naive-ui';
 import PageStart from "@/components/PageStart.vue";
 
 // 导入头部图片
 import articleHeaderImg from '../assets/Centre/Article.jpg';
+
+const isMobile = ref(window.innerWidth < 640);
 
 // 数据响应式变量
 const rssArticles = ref([]);
@@ -303,24 +310,45 @@ onMounted(async () => {
   background: linear-gradient(135deg, #fafafa 0%, #f3f4f6 100%);
 }
 
-/* 订阅项样式保持不变 */
+/* 优化后的订阅项样式 */
 .subscription-item {
-  display: inline-block;
-  transition: .2s;
   cursor: pointer;
-  margin: 0 0 5px 5px;
   width: 100%;
-  border-radius: 10px;
-  padding: 15px;
-  border: none;
+  border-radius: 12px;
+  padding: 18px 20px;
+  margin: 0 0 6px 0;
   font-size: 18px;
   color: #1c1f23;
-  background: white;
+  /* 半透明背景与背景融合 */
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.9) 100%);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  overflow: hidden;
+  position: relative;
+}
+
+/* 添加与背景装饰呼应的微妙效果 */
+.subscription-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(to bottom, #9333ea, #ec4899);
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
 .subscription-item:hover {
-  background-color: #f3f5f7;
-  color: #1c1f23;
-  transform: scale(1.02);
+  transform: translateY(-4px) scale(1.005);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 1) 100%);
+}
+
+.subscription-item:hover::before {
+  opacity: 1;
 }
 </style>

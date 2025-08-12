@@ -1,55 +1,62 @@
 <template>
-  <PageStart title="iOS Club 社团项目" subtitle="创造世界的新方式"
-             gradient-class="bg-gradient-to-r from-orange-500 via-pink-500 to-pink-600" :img="appleLogo"/>
+  <PageStart
+      :title="isMobile ? 'iOS Club 项目' : 'iOS Club 社团项目'"
+      subtitle="创造世界的新方式"
+      gradient-class="bg-gradient-to-r from-orange-500 via-pink-500 to-pink-600"
+      :img="appleLogo"
+  />
 
-  <div class="flex justify-center items-center py-16">
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-6xl px-6">
+  <!-- 项目卡片容器 - 优化间距和布局 -->
+  <div class="flex justify-center items-center py-8 px-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-6xl">
       <div
           v-for="(item, index) in cards"
           :key="index"
-          class="group"
+          class="group cursor-pointer animate-slide-up"
+          :style="`animation-delay: ${index * 100}ms`"
+          @click="() => window.open(item.url, '_blank')"
       >
-        <a :href="item.url" target="_blank" class="block">
-          <div class="relative bg-white/80 backdrop-blur-md rounded-2xl p-8 h-64
-                      border border-gray-200/60 shadow-sm
-                      hover:shadow-xl hover:shadow-gray-200/40 hover:border-gray-300/60
-                      hover:-translate-y-1 hover:bg-white/90
-                      transition-all duration-300 ease-out">
-
-            <!-- 装饰性渐变 -->
-            <div class="absolute inset-0 rounded-2xl bg-gradient-to-br
-                        from-purple-500/5 via-transparent to-pink-500/5
-                        opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-
-            <div class="relative h-full flex flex-col">
-              <h2 class="text-2xl font-medium text-gray-900 mb-4
-                         group-hover:text-transparent group-hover:bg-clip-text
-                         group-hover:bg-gradient-to-r group-hover:from-purple-600
-                         group-hover:to-pink-600 transition-all duration-300">
-                {{ item.title }}
-              </h2>
-
-              <p class="text-gray-600 leading-relaxed line-clamp-3 flex-grow">
-                {{ item.content }}
-              </p>
-
-              <!-- 箭头指示器 -->
-              <div class="mt-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
-                </svg>
-              </div>
+        <div class="relative bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300">
+          <div class="p-6 space-y-4">
+            <h2 class="text-2xl font-semibold text-gray-900 group-hover:text-purple-600 transition-colors duration-300">
+              {{ item.title }}
+            </h2>
+            <p class="text-gray-600 leading-relaxed">
+              {{ item.content }}
+            </p>
+            <div class="flex items-center text-purple-600 font-medium">
+              <span>了解更多</span>
+              <svg class="w-5 h-5 ml-2 group-hover:translate-x-2 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+              </svg>
             </div>
           </div>
-        </a>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
+import { ref, onMounted, onUnmounted } from 'vue';
 import PageStart from "@/components/PageStart.vue";
 import appleLogo from '../assets/Centre/AppleLogo.jpg'
+
+// 检测是否为移动设备
+const isMobile = ref(window.innerWidth < 640);
+
+// 监听窗口大小变化
+const handleResize = () => {
+  isMobile.value = window.innerWidth < 640;
+};
+
+onMounted(() => {
+  window.addEventListener('resize', handleResize);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize);
+});
 
 const cards = [
   {
@@ -78,28 +85,24 @@ const cards = [
     url: "https://gitee.com/XAUATiOSClub/huaji-ledger"
   },
   {
-    title: "LuckyFish.Json",
-    content: "用C#开发的json解析器",
-    url: "https://gitee.com/XAUATiOSClub/LuckyFish.Json"
-  },
-  {
-    title: "建大Wiki小程序",
-    content: "采用 Uni - app 框架构建的Wiki小程序",
-    url: "https://gitee.com/XAUATiOSClub/uniapp-ioswiki"
-  },
-  {
-    title: "新生代培养计划",
-    content: "基于前端技术栈的培训方案",
-    url: "https://gitee.com/XAUATiOSClub/uniapp-ioswiki"
-  },
-  {
-    title: "XAUAT 自动评教脚本",
-    content: "基于 Tampermonkey 的用户脚本",
-    url: "https://gitee.com/XAUATiOSClub/Xauat-automatic-teaching-evaluation"
+    title: "西建导航",
+    content: "用SwiftUI开发的西建大校园导航App",
+    url: "https://gitee.com/XAUATiOSClub/XAUATNav"
   }
-];
+]
 </script>
 
 <style scoped>
-@reference 'tailwindcss';
+.animate-slide-up {
+  animation: slide-up 0.6s ease-out forwards;
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+@keyframes slide-up {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 </style>

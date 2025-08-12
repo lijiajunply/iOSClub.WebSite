@@ -2,8 +2,13 @@
   <div class="min-h-screen bg-gray-50">
     <!-- 主要内容区 -->
     <div class="container mx-auto px-4 max-w-7xl">
-      <!-- 头部区域 -->
-      <PageStart title="iOS Club 社团活动" subtitle="Think Different" :img="appleLogo" gradient-class="bg-gradient-to-r from-purple-600 to-pink-600"/>
+      <!-- 头部区域 - 移动端标题改为"iOS Club活动" -->
+      <PageStart
+          :title="isMobile ? 'iOS Club 活动' : 'iOS Club 社团活动'"
+          subtitle="Think Different"
+          :img="appleLogo"
+          gradient-class="bg-gradient-to-r from-purple-600 to-pink-600"
+      />
 
       <!-- 活动卡片区域 -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pb-16 ml-4 mr-4">
@@ -52,21 +57,37 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { NCard } from 'naive-ui'
-import { useRouter } from 'vue-router'
 import PageStart from "@/components/PageStart.vue";
 
 // 导入图片
 import appleLogo from '../assets/Centre/AppleLogo.jpg'
-
 import visionProImage from '../assets/other/vision_pro.jpg'
 import launchEventImage from '../assets/other/launch_event.jpg'
 import classImage from '../assets/other/class.jpg'
 import partyImage from '../assets/other/you_yuan_hui.jpg'
 
+// 移动端判断状态
+const isMobile = ref(false)
 
-const router = useRouter()
+// 检查窗口尺寸
+const checkScreenSize = () => {
+  // 小于768px视为移动端
+  isMobile.value = window.innerWidth <= 768
+}
+
+// 挂载时检查一次
+onMounted(() => {
+  checkScreenSize()
+  // 监听窗口大小变化
+  window.addEventListener('resize', checkScreenSize)
+})
+
+// 卸载时移除监听
+onUnmounted(() => {
+  window.removeEventListener('resize', checkScreenSize)
+})
 
 const cards = ref([
   {
