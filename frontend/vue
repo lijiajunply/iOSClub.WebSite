@@ -1,0 +1,101 @@
+<script lang="ts" setup>
+import { ref, reactive } from 'vue'
+
+// 表单数据类型定义
+interface FormState {
+  username: string
+  email: string
+  password: string
+  confirmPassword?: string
+}
+
+// 表单状态
+const form = reactive<FormState>({
+  username: '',
+  email: '',
+  password: '',
+  confirmPassword: ''
+})
+
+// 当前模式：'login' 或 'register'
+const currentMode = ref<'login' | 'register'>('login')
+
+// 表单验证逻辑（可扩展为更复杂规则）
+const isValidForm = () => {
+  if (currentMode.value === 'login') {
+    return form.email.length > 0 && form.password.length > 0
+  } else {
+    return (
+      form.username.length > 0 &&
+      form.email.length > 0 &&
+      form.password.length > 0 &&
+      form.confirmPassword === form.password
+    )
+  }
+}
+
+// 提交处理
+const handleSubmit = () => {
+  if (!isValidForm()) {
+    alert('请填写完整的表单！')
+    return
+  }
+
+  console.log(`提交 ${currentMode.value}:`, form)
+  // 此处可调用 API 登录或注册，如 axios.post('/api/login', form)
+}
+</script>
+
+<template>
+  <v-card class="mx-auto" max-width="400" elevation="6">
+    <v-tabs v-model="currentMode" fixed-tabs>
+      <v-tab value="login">登录</v-tab>
+      <v-tab value="register">注册</v-tab>
+    </v-tabs>
+
+    <v-card-text>
+      <v-form @submit.prevent="handleSubmit">
+        <v-text-field
+          v-model="form.username"
+          label="用户名"
+          :hide-details="currentMode === 'login'"
+          :required="currentMode === 'register'"
+          :disabled="currentMode === 'login'"
+          class="mb-3"
+        />
+        <v-text-field
+          v-model="form.email"
+          label="邮箱"
+          type="email"
+          :required="true"
+          class="mb-3"
+        />
+        <v-text-field
+          v-model="form.password"
+          label="密码"
+          type="password"
+          :required="true"
+          class="mb-3"
+        />
+        <v-text-field
+          v-if="currentMode === 'register'"
+          v-model="form.confirmPassword"
+          label="确认密码"
+          type="password"
+          :required="true"
+          class="mb-3"
+        />
+
+        <v-btn
+          type="submit"
+          block
+          color="primary"
+          :disabled="!isValidForm()"
+          :loading="false"
+        >
+          {{ currentMode === 'login' ? '登录' : '注册' }}
+        </v-btn>
+      </v-form>
+    </v-card-text>
+  </v-card>
+</template>
