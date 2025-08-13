@@ -33,9 +33,12 @@
           <n-checkbox v-model:checked:value="form.rememberMe">
             记住我
           </n-checkbox>
-          <a href="#" class="text-sm text-blue-600 dark:text-purple-400 hover:underline">
+          <router-link
+            to="/ForgotPassword"
+            class="text-sm text-blue-600 dark:text-purple-400 hover:underline"
+          >
             忘记密码？
-          </a>
+          </router-link>
         </div>
 
         <button
@@ -68,6 +71,11 @@ import { useRouter } from 'vue-router'
 import { NButton, NInput, NCheckbox, NForm, NFormItem } from 'naive-ui'
 
 const router = useRouter()
+
+const goToForgotPassword = () => {
+  router.push('/ForgotPassword')
+}
+
 const formRef = ref()
 const form = ref({
   email: '',
