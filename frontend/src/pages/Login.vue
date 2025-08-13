@@ -40,11 +40,14 @@
 
         <button
           @click="handleLogin"
+          :disabled="loading"
           block
           class="btn"
         >
-          登录
+          <span v-if="loading">登录中...</span>
+          <span v-else>登录</span>
         </button>
+        <div v-if="errorMsg" class="text-red-500 text-center mt-4">{{ errorMsg }}</div>
       </n-form>
 
       <div class="mt-6 text-center">
@@ -61,14 +64,18 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { NButton, NInput, NCheckbox, NForm, NFormItem } from 'naive-ui'
 
+const router = useRouter()
 const formRef = ref()
 const form = ref({
   email: '',
   password: '',
   rememberMe: false
 })
+const loading = ref(false)
+const errorMsg = ref('')
 
 const rules = {
   email: {
@@ -84,10 +91,32 @@ const rules = {
 }
 
 const handleLogin = () => {
-  formRef.value.validate((errors) => {
+  if (loading.value) return
+  formRef.value.validate(async (errors) => {
     if (!errors) {
-      // 登录逻辑
-      console.log('登录成功', form.value)
+      loading.value = true
+      errorMsg.value = ''
+      try {
+        const res = await fetch('/api/Member/Login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: form.value.email,
+            password: form.value.password
+          })
+        })
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}))
+          throw new Error(err.message || '登录失败')
+        }
+        const data = await res.json()
+        localStorage.setItem('token', data.token)
+        router.push('/')
+      } catch (err) {
+        errorMsg.value = err.message || '登录失败'
+      } finally {
+        loading.value = false
+      }
     }
   })
 }
