@@ -26,6 +26,18 @@ const routes = [
                 component: () => import('./pages/Login.vue'),
             },
             {
+                path: 'signup',
+                name: 'Signup',
+                meta: {title: "注册账号 - 西建大 iOS Club"},
+                component: () => import('./pages/Signup.vue'),
+            },
+            {
+                path: 'forgotpassword',
+                name: 'ForgotPassword',
+                meta: {title: "找回密码 - 西建大 iOS Club"},
+                component: () => import('./pages/ForgotPassword.vue'),
+            },
+            {
                 path: 'event',
                 name: 'Event',
                 meta: {title: "社团活动 - 西建大 iOS Club"},
