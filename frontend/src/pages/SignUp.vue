@@ -15,11 +15,11 @@
         <n-form-item path="studentId" label="学号">
           <n-input v-model:value="form.studentId" placeholder="请输入学号" />
         </n-form-item>
-        <n-form-item path="major" label="专业">
-          <n-input v-model:value="form.major" placeholder="请输入专业" />
+        <n-form-item path="major" label="学院">
+          <n-select v-model:value="form.major" :options="academyOptions" placeholder="请选择学院" />
         </n-form-item>
         <n-form-item path="political" label="政治面貌">
-          <n-input v-model:value="form.political" placeholder="如：群众/共青团员/中共预备党员/中共预备党员/其他社团组织成员" />
+          <n-select v-model:value="form.political" :options="politicalOptions" placeholder="请选择政治面貌" />
         </n-form-item>
         <n-form-item path="grade" label="年级">
           <n-input v-model:value="form.grade" placeholder="请输入年级，如2022" />
@@ -59,7 +59,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { NInput, NForm, NFormItem } from 'naive-ui'
+import { NInput, NForm, NFormItem, NSelect } from 'naive-ui'
 
 const router = useRouter()
 const formRef = ref()
@@ -77,10 +77,41 @@ const loading = ref(false)
 const errorMsg = ref('')
 const successMsg = ref('')
 
+// 全部学院选项
+const academyOptions = [
+  { label: '信息与控制工程学院', value: '信息与控制工程学院' },
+  { label: '理学院', value: '理学院' },
+  { label: '机电工程学院', value: '机电工程学院' },
+  { label: '管理学院', value: '管理学院' },
+  { label: '土木工程学院', value: '土木工程学院' },
+  { label: '环境与市政工程学院', value: '环境与市政工程学院' },
+  { label: '建筑设备科学与工程学院', value: '建筑设备科学与工程学院' },
+  { label: '材料科学与工程学院', value: '材料科学与工程学院' },
+  { label: '冶金工程学院', value: '冶金工程学院' },
+  { label: '资源工程学院', value: '资源工程学院' },
+  { label: '城市发展与现代交通学院', value: '城市发展与现代交通学院' },
+  { label: '文学院', value: '文学院' },
+  { label: '艺术学院', value: '艺术学院' },
+  { label: '建筑学院', value: '建筑学院' },
+  { label: '马克思主义学院', value: '马克思主义学院' },
+  { label: '公共管理学院', value: '公共管理学院' },
+  { label: '化学与化工学院', value: '化学与化工学院' },
+  { label: '体育学院', value: '体育学院' },
+  { label: '安德学院', value: '安德学院' },
+  { label: '未来技术学院', value: '未来技术学院' },
+  { label: '国际教育学院', value: '国际教育学院' },
+]
+const politicalOptions = [
+  { label: '群众', value: '群众' },
+  { label: '共青团员', value: '共青团员' },
+  { label: '中共预备党员', value: '中共预备党员' },
+  { label: '中共党员', value: '中共党员' },
+]
+
 const rules = {
   studentId: { required: true, message: '请输入学号', trigger: 'blur' },
-  major: { required: true, message: '请输入专业', trigger: 'blur' },
-  political: { required: true, message: '请输入政治面貌', trigger: 'blur' },
+  major: { required: true, message: '请选择学院', trigger: 'change' },
+  political: { required: true, message: '请选择政治面貌', trigger: 'change' },
   grade: { required: true, message: '请输入年级', trigger: 'blur' },
   className: { required: true, message: '请输入班级', trigger: 'blur' },
   phone: { required: true, message: '请输入电话号码', trigger: 'blur' },
