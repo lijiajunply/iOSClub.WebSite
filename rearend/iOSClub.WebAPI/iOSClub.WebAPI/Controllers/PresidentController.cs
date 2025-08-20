@@ -11,7 +11,7 @@ namespace iOSClub.WebAPI.Controllers;
 
 [Authorize(Roles = "Founder, President, Minister")]
 [TokenActionFilter]
-[Route("api/[controller]/[action]")]
+[Route("[controller]/[action]")]
 [ApiController]
 public class PresidentController(IDbContextFactory<iOSContext> factory)
     : ControllerBase

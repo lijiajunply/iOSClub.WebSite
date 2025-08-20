@@ -4,6 +4,8 @@ obj/
 riderModule.iml
 /_ReSharper.Caches/
 *.db
-DepartmentFile/
+*.db-shm
+*.db-wal
 
 keys/
+logs/

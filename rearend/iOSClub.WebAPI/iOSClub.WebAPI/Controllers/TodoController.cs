@@ -9,7 +9,7 @@ namespace iOSClub.WebAPI.Controllers;
 
 [Authorize]
 [TokenActionFilter]
-[Route("api/[controller]/[action]")]
+[Route("[controller]/[action]")]
 [ApiController]
 public class TodoController(
     IDbContextFactory<iOSContext> factory,

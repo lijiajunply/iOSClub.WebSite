@@ -10,7 +10,7 @@ using MemberModel = iOSClub.Data.ShowModels.MemberModel;
 
 namespace iOSClub.WebAPI.Controllers;
 
-[Route("api/[controller]/[action]")]
+[Route("[controller]/[action]")]
 [ApiController]
 public class MemberController(
     IDbContextFactory<iOSContext> factory,

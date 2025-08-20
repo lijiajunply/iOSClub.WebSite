@@ -9,7 +9,7 @@ namespace iOSClub.WebAPI.Controllers;
 
 [Authorize]
 [TokenActionFilter]
-[Route("api/[controller]")]
+[Route("[controller]")]
 [ApiController]
 public class DepartmentController(
     IDbContextFactory<iOSContext> factory,
