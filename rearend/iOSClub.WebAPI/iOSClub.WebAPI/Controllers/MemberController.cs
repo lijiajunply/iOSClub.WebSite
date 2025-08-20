@@ -1,10 +1,12 @@
 using iOSClub.Data;
 using iOSClub.Data.DataModels;
-using iOSClub.Data.ShowModels;
-using iOSClub.WebAPI.Models;
+using iOSClub.DataApi.ShowModels;
+using iOSClub.WebAPI.IdentityModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using LoginModel = iOSClub.Data.ShowModels.LoginModel;
+using MemberModel = iOSClub.Data.ShowModels.MemberModel;
 
 namespace iOSClub.WebAPI.Controllers;
 

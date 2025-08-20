@@ -59,4 +59,15 @@ public class StudentModel
                !string.IsNullOrEmpty(PhoneNum) &&
                UserId.Length == 10;
     }
+
+    public void Update(StudentModel model)
+    {
+        if (!string.IsNullOrEmpty(model.UserName)) UserName = model.UserName;
+        if (!string.IsNullOrEmpty(model.Academy)) Academy = model.Academy;
+        if (!string.IsNullOrEmpty(model.PoliticalLandscape)) PoliticalLandscape = model.PoliticalLandscape;
+        if (!string.IsNullOrEmpty(model.Gender)) Gender = model.Gender;
+        if (!string.IsNullOrEmpty(model.ClassName)) ClassName = model.ClassName;
+        if (!string.IsNullOrEmpty(model.PhoneNum)) PhoneNum = model.PhoneNum;
+        if (!string.IsNullOrEmpty(model.EMail)) EMail = model.EMail;
+    }
 }

@@ -1,8 +1,8 @@
 using System.Text;
 using iOSClub.Data;
 using iOSClub.Data.DataModels;
+using iOSClub.DataApi.Repositories;
 using iOSClub.DataApi.Services;
-using iOSClub.WebAPI.Controllers;
 using iOSClub.WebAPI.IdentityModels;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
@@ -14,11 +14,14 @@ using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+#region 控制器基本设置
 
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi(opt => { opt.AddDocumentTransformer<BearerSecuritySchemeTransformer>(); });
+
+#endregion
+
+#region 身份验证
 
 builder.Services.AddAuthorizationCore();
 builder.Services.AddAuthentication(options => { options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme; })
@@ -38,6 +41,10 @@ builder.Services.AddAuthentication(options => { options.DefaultScheme = JwtBeare
         };
     });
 
+#endregion
+
+#region 跨域设置
+
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
@@ -48,11 +55,9 @@ builder.Services.AddCors(options =>
     });
 });
 
+#endregion
 
-
-builder.Services.AddScoped<IJwtHelper,JwtHelper>();
-builder.Services.AddScoped<TokenActionFilter>();
-builder.Services.AddHttpClient();
+#region 数据库设置
 
 var sql = Environment.GetEnvironmentVariable("SQL", EnvironmentVariableTarget.Process);
 
@@ -78,6 +83,22 @@ else
         .PersistKeysToPostgres(sql, true);
 }
 
+#endregion
+
+#region 仓库和服务的依赖注入
+
+builder.Services.AddScoped<IArticleRepository, ArticleRepository>();
+builder.Services.AddScoped<IStudentRepository, StudentRepository>();
+
+builder.Services.AddScoped<ILoginService, LoginService>();
+builder.Services.AddScoped<IJwtHelper, JwtHelper>();
+
+#endregion
+
+// 剩下的
+builder.Services.AddScoped<TokenActionFilter>();
+builder.Services.AddHttpClient();
+
 
 var app = builder.Build();
 
@@ -87,6 +108,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+// 创建数据库
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -144,10 +166,9 @@ using (var scope = app.Services.CreateScope())
     await context.DisposeAsync();
 }
 
+// 别动
 app.UseHttpsRedirection();
-
 app.UseAuthorization();
-
 app.UseCors();
 app.MapControllers();
 app.MapScalarApiReference();

@@ -5,7 +5,7 @@ using iOSClub.Data.ShowModels;
 using iOSClub.DataApi.Services;
 using Microsoft.IdentityModel.Tokens;
 
-namespace iOSClub.WebAPI.Controllers;
+namespace iOSClub.WebAPI.IdentityModels;
 
 public class JwtHelper(IConfiguration configuration) : IJwtHelper
 {

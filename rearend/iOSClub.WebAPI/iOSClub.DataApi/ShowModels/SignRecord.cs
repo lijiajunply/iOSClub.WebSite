@@ -1,6 +1,6 @@
 ﻿
 
-namespace iOSClub.WebAPI.Models;
+namespace iOSClub.DataApi.ShowModels;
 
 public static class SignRecord
 {
