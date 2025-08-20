@@ -10,39 +10,33 @@
         </p>
       </div>
 
+
       <n-form :model="form" :rules="rules" ref="formRef">
-        <n-form-item path="email" label="学号">
-          <n-input
-            v-model:value="form.email"
-            placeholder="请输入学号"
-            class="rounded-lg transition-all duration-300 focus:ring-2 focus:ring-blue-500/50"
-          />
+        <n-form-item path="studentId" label="学号">
+          <n-input v-model:value="form.studentId" placeholder="请输入学号" />
         </n-form-item>
-
+        <n-form-item path="major" label="专业">
+          <n-input v-model:value="form.major" placeholder="请输入专业" />
+        </n-form-item>
+        <n-form-item path="political" label="政治面貌">
+          <n-input v-model:value="form.political" placeholder="如：群众/共青团员/中共预备党员/中共预备党员/其他社团组织成员" />
+        </n-form-item>
+        <n-form-item path="grade" label="年级">
+          <n-input v-model:value="form.grade" placeholder="请输入年级，如2022" />
+        </n-form-item>
+        <n-form-item path="className" label="班级">
+          <n-input v-model:value="form.className" placeholder="请输入班级" />
+        </n-form-item>
+        <n-form-item path="phone" label="电话号码">
+          <n-input v-model:value="form.phone" placeholder="请输入电话号码" />
+        </n-form-item>
         <n-form-item path="password" label="密码">
-          <n-input
-            v-model:value="form.password"
-            type="password"
-            placeholder="请输入密码"
-            class="rounded-lg transition-all duration-300 focus:ring-2 focus:ring-blue-500/50"
-          />
+          <n-input v-model:value="form.password" type="password" placeholder="请输入密码" />
         </n-form-item>
-
         <n-form-item path="confirmPassword" label="确认密码">
-          <n-input
-            v-model:value="form.confirmPassword"
-            type="password"
-            placeholder="请再次输入密码"
-            class="rounded-lg transition-all duration-300 focus:ring-2 focus:ring-blue-500/50"
-          />
+          <n-input v-model:value="form.confirmPassword" type="password" placeholder="请再次输入密码" />
         </n-form-item>
-
-        <button
-          @click="handleSignup"
-          :disabled="loading"
-          block
-          class="btn"
-        >
+        <button @click="handleSignup" :disabled="loading" block class="btn">
           <span v-if="loading">注册中...</span>
           <span v-else>注册</span>
         </button>
@@ -70,7 +64,12 @@ import { NInput, NForm, NFormItem } from 'naive-ui'
 const router = useRouter()
 const formRef = ref()
 const form = ref({
-  email: '',
+  studentId: '',
+  major: '',
+  political: '',
+  grade: '',
+  className: '',
+  phone: '',
   password: '',
   confirmPassword: ''
 })
@@ -79,16 +78,13 @@ const errorMsg = ref('')
 const successMsg = ref('')
 
 const rules = {
-  email: {
-    required: true,
-    message: '请输入您的学号',
-    trigger: 'blur'
-  },
-  password: {
-    required: true,
-    message: '请输入密码',
-    trigger: 'blur'
-  },
+  studentId: { required: true, message: '请输入学号', trigger: 'blur' },
+  major: { required: true, message: '请输入专业', trigger: 'blur' },
+  political: { required: true, message: '请输入政治面貌', trigger: 'blur' },
+  grade: { required: true, message: '请输入年级', trigger: 'blur' },
+  className: { required: true, message: '请输入班级', trigger: 'blur' },
+  phone: { required: true, message: '请输入电话号码', trigger: 'blur' },
+  password: { required: true, message: '请输入密码', trigger: 'blur' },
   confirmPassword: [
     { required: true, message: '请确认密码', trigger: 'blur' },
     {
@@ -113,7 +109,12 @@ const handleSignup = () => {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            email: form.value.email,
+            studentId: form.value.studentId,
+            major: form.value.major,
+            political: form.value.political,
+            grade: form.value.grade,
+            className: form.value.className,
+            phone: form.value.phone,
             password: form.value.password
           })
         })
