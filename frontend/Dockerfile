@@ -10,7 +10,7 @@ RUN npm config set registry https://registry.npmmirror.com \
 
 RUN npm update -g npm
 
-RUN npm install --verbose
+RUN npm install --verbose --network-concurrency 1 --no-fund --no-audit
 
 COPY . .
 
