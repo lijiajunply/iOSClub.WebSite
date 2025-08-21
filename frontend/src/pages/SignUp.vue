@@ -12,6 +12,9 @@
 
 
       <n-form :model="form" :rules="rules" ref="formRef">
+        <n-form-item path="name" label="姓名">
+          <n-input v-model:value="form.name" placeholder="请输入姓名" />
+        </n-form-item>
         <n-form-item path="studentId" label="学号">
           <n-input v-model:value="form.studentId" placeholder="请输入学号" />
         </n-form-item>
@@ -64,6 +67,7 @@ import { NInput, NForm, NFormItem, NSelect } from 'naive-ui'
 const router = useRouter()
 const formRef = ref()
 const form = ref({
+  name: '', 
   studentId: '',
   major: '',
   political: '',
@@ -116,6 +120,7 @@ const genderOptions = [
 ]
 
 const rules = {
+  name: { required: true, message: '请输入姓名', trigger: 'blur' }, 
   studentId: { required: true, message: '请输入学号', trigger: 'blur' },
   major: { required: true, message: '请选择学院', trigger: 'change' },
   political: { required: true, message: '请选择政治面貌', trigger: 'change' },
@@ -147,6 +152,7 @@ const handleSignup = () => {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            name: form.value.name, 
             studentId: form.value.studentId,
             major: form.value.major,
             political: form.value.political,
