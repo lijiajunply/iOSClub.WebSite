@@ -21,11 +21,11 @@
         <n-form-item path="political" label="政治面貌">
           <n-select v-model:value="form.political" :options="politicalOptions" placeholder="请选择政治面貌" />
         </n-form-item>
-        <n-form-item path="grade" label="年级">
-          <n-input v-model:value="form.grade" placeholder="请输入年级，如2022" />
+        <n-form-item path="gender" label="性别">
+          <n-select v-model:value="form.gender" :options="genderOptions" placeholder="请选择性别" />
         </n-form-item>
         <n-form-item path="className" label="班级">
-          <n-input v-model:value="form.className" placeholder="请输入班级" />
+          <n-input v-model:value="form.className" placeholder="请输入班级 如机电2401" />
         </n-form-item>
         <n-form-item path="phone" label="电话号码">
           <n-input v-model:value="form.phone" placeholder="请输入电话号码" />
@@ -67,7 +67,7 @@ const form = ref({
   studentId: '',
   major: '',
   political: '',
-  grade: '',
+  gender: '', 
   className: '',
   phone: '',
   password: '',
@@ -101,6 +101,7 @@ const academyOptions = [
   { label: '未来技术学院', value: '未来技术学院' },
   { label: '国际教育学院', value: '国际教育学院' },
 ]
+//全部政治面貌选项
 const politicalOptions = [
   { label: '群众', value: '群众' },
   { label: '共青团员', value: '共青团员' },
@@ -108,11 +109,17 @@ const politicalOptions = [
   { label: '中共党员', value: '中共党员' },
 ]
 
+// 新增性别选项
+const genderOptions = [
+  { label: '男', value: '男' },
+  { label: '女', value: '女' }
+]
+
 const rules = {
   studentId: { required: true, message: '请输入学号', trigger: 'blur' },
   major: { required: true, message: '请选择学院', trigger: 'change' },
   political: { required: true, message: '请选择政治面貌', trigger: 'change' },
-  grade: { required: true, message: '请输入年级', trigger: 'blur' },
+  gender: { required: true, message: '请选择性别', trigger: 'change' }, 
   className: { required: true, message: '请输入班级', trigger: 'blur' },
   phone: { required: true, message: '请输入电话号码', trigger: 'blur' },
   password: { required: true, message: '请输入密码', trigger: 'blur' },
@@ -143,7 +150,7 @@ const handleSignup = () => {
             studentId: form.value.studentId,
             major: form.value.major,
             political: form.value.political,
-            grade: form.value.grade,
+            gender: form.value.gender, 
             className: form.value.className,
             phone: form.value.phone,
             password: form.value.password
