@@ -17,9 +17,8 @@ RUN npm update -g npm
 # STEP 4: 安装重试工具
 RUN npm install -g retry-cli
 
-# STEP 5: 使用重试机制安装依赖
-RUN npx retry-cli --max-attempts 3 --delay 10000 \
-  npm install --verbose --no-fund --no-audit
+# STEP 5: 使用重试机制安装依赖（✅ 修正选项）
+RUN npx retry-cli --tries 3 --delay 10000 npm install --verbose --no-fund --no-audit
 
 # STEP 6: 复制其余源代码
 COPY . .
