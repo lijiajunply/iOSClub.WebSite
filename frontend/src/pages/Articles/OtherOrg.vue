@@ -170,3 +170,47 @@ const visible = ref(false)
     <n-image src="/other/teshe.jpg" />
   </n-image-group>
 </template>
+
+<style scoped>
+section {
+  margin-bottom: 36px;
+}
+section h2 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--n-text-color, #222);
+}
+section p {
+  margin: 10px 0 10px 0;
+  line-height: 1.9;
+  text-indent: 2em;
+  font-size: 1.08rem;
+}
+section ul {
+  margin: 12px 0 0 0;
+  padding-left: 1.5em;
+}
+section li {
+  margin-bottom: 10px;
+  line-height: 1.7;
+}
+.desktop-phone {
+  margin-bottom: 18px;
+}
+.n-divider {
+  margin: 32px 0 32px 0;
+}
+.n-image {
+  border-radius: 10px;
+  box-shadow: 0 2px 12px 0 rgba(0,0,0,0.08);
+}
+@media (max-width: 900px) {
+  section h2 {
+    font-size: 1.2rem;
+  }
+  section p {
+    font-size: 1rem;
+  }
+}
+</style>
