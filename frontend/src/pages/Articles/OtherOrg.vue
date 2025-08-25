@@ -14,6 +14,8 @@ import {
 } from 'naive-ui'
 import xiaomiImg from '../../assets/other/xiaomi.jpg'
 import huaweiImg from '../../assets/other/huawei.jpg'
+import aircraftImg from '../../assets/other/aircraft.jpg'
+import tesheImg from '../../assets/other/teshe.jpg'
 const visible = ref(false)
 </script>
 
@@ -94,7 +96,7 @@ const visible = ref(false)
             <n-image
               width="200"
               :preview-disabled="true"
-              src="D:\probject\iOS-Club-Website\frontend\src\assets\other\aircraft.jpg"
+              :src="aircraftImg"
               @click="visible = true"
               style="cursor:pointer"
             />
@@ -121,7 +123,7 @@ const visible = ref(false)
             <n-image
               width="200"
               :preview-disabled="true"
-              src="D:\probject\iOS-Club-Website\frontend\src\assets\other\teshe.jpg"
+              :src="tesheImg"
               @click="visible = true"
               style="cursor:pointer"
             />
