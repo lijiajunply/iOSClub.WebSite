@@ -110,7 +110,7 @@
 // 脚本部分保持不变
 import { onMounted, ref } from 'vue';
 import { NEmpty, NSpin, NCard } from 'naive-ui';
-import PageStart from "@/components/PageStart.vue";
+import PageStart from "../components/PageStart.vue";
 
 // 导入头部图片
 import articleHeaderImg from '../assets/Centre/Article.jpg';

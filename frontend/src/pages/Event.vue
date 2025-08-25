@@ -59,7 +59,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { NCard } from 'naive-ui'
-import PageStart from "@/components/PageStart.vue";
+import PageStart from "../components/PageStart.vue";
 
 // 导入图片
 import appleLogo from '../assets/Centre/AppleLogo.jpg'

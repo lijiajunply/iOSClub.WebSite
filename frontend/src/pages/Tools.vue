@@ -79,10 +79,10 @@
 import '../lib/iconfont'
 import {ref, onMounted} from 'vue';
 import {NCard} from 'naive-ui';
-import PageStart from "@/components/PageStart.vue";
-import {LinkModel, ToolService} from "@/services/ToolService.js";
+import PageStart from "../components/PageStart.vue";
+import {LinkModel, ToolService} from "../services/ToolService.js";
 import toolsImage from '../assets/Centre/AppleLogo.jpg';
-import IconFont from "@/components/IconFont.vue";
+import IconFont from "../components/IconFont.vue";
 
 const models = ref<LinkModel>([]);
 

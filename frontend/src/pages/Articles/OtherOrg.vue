@@ -9,8 +9,6 @@ import {
   NAnchor,
   NAnchorLink,
   NAffix,
-  NBreadcrumb,
-  NBreadcrumbItem
 } from 'naive-ui'
 import xiaomiImg from '../../assets/other/xiaomi.jpg'
 import huaweiImg from '../../assets/other/huawei.jpg'
@@ -21,17 +19,6 @@ const visible = ref(false)
 
 
 <template>
-  <PageTitle>其他组织 - 西建大iOS Club</PageTitle>
-
-  <n-breadcrumb style="margin-bottom: 10px" class="desktop-phone">
-    <n-breadcrumb-item>
-      <router-link to="/About">社团简介</router-link>
-    </n-breadcrumb-item>
-    <n-breadcrumb-item>
-      <router-link to="/OtherOrg">其他组织</router-link>
-    </n-breadcrumb-item>
-  </n-breadcrumb>
-
   <n-grid x-gap="16" y-gap="16" cols="24">
     <n-grid-item span="20">
       <section id="other">

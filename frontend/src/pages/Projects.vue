@@ -39,7 +39,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
-import PageStart from "@/components/PageStart.vue";
+import PageStart from "../components/PageStart.vue";
 import appleLogo from '../assets/Centre/AppleLogo.jpg'
 
 // 检测是否为移动设备

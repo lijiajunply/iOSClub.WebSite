@@ -50,7 +50,7 @@
 import { ref } from 'vue'
 import { NCard } from 'naive-ui'
 import { useRouter } from 'vue-router'
-import PageStart from "@/components/PageStart.vue";
+import PageStart from "../components/PageStart.vue";
 
 import historyImage from '../assets/Centre/History.jpg';
 
