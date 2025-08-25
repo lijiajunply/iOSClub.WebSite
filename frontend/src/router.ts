@@ -29,10 +29,10 @@ const routes = [
                 path: 'signup',
                 name: 'Signup',
                 meta: {title: "注册账号 - 西建大 iOS Club"},
-                component: () => import('./pages/Signup.vue'),
+                component: () => import('./pages/SignUp.vue'),
             },
             {
-                path: 'forgotpassword',
+                path: 'forgotPassword',
                 name: 'ForgotPassword',
                 meta: {title: "找回密码 - 西建大 iOS Club"},
                 component: () => import('./pages/ForgotPassword.vue'),
