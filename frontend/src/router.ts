@@ -27,7 +27,7 @@ const routes = [
             },
             {
                 path: 'signup',
-                name: 'Signup',
+                name: 'SignUp',
                 meta: {title: "注册账号 - 西建大 iOS Club"},
                 component: () => import('./pages/SignUp.vue'),
             },
