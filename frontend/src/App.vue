@@ -1,11 +1,13 @@
 <template>
-  <n-config-provider :theme="theme">
-    <n-dialog-provider>
-      <n-message-provider>
-        <router-view/>
-      </n-message-provider>
-    </n-dialog-provider>
-  </n-config-provider>
+  <div :class="{ 'dark': isDark }">
+    <n-config-provider :theme="theme">
+      <n-dialog-provider>
+        <n-message-provider>
+          <router-view/>
+        </n-message-provider>
+      </n-dialog-provider>
+    </n-config-provider>
+  </div>
 </template>
 
 <script setup lang="ts">

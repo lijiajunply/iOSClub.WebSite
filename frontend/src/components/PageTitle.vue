@@ -5,7 +5,7 @@
 </template>
 
 <script setup>
-// 可根据需要添加 props 或逻辑
+
 </script>
 
 <style scoped>
