@@ -79,8 +79,10 @@ const routes = [
                     {
                         path: 'OtherOrg',
                         name: 'OtherOrg',
-                        meta: {title: "其他组织 - 西建大 iOS Club"},
                         component: () => import('./pages/Articles/OtherOrg.vue'),
+                        meta: {
+                            title: '其他组织 - 西建大iOS Club'
+                        }
                     },
                     {
                         path: 'Structure',
