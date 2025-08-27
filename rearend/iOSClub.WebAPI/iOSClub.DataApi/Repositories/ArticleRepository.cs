@@ -43,7 +43,7 @@ public class ArticleRepository(IDbContextFactory<iOSContext> factory) : IArticle
             article.LastWriteTime = DateTime.Now;
             article.Title = model.Title;
             article.Identity = model.Identity;
-            article.Path = model.Path;
+            
         }
 
         return await context.SaveChangesAsync() == 1;

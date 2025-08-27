@@ -15,7 +15,8 @@ public class DepartmentModel : DataModel
     [Column(TypeName = "varchar(20)")]
     public string Name { get; set; } = "";
 
-    [Column(TypeName = "varchar(32)")] public string? Description { get; set; }
+    [Column(TypeName = "varchar(32)")]
+    public string? Description { get; set; }
 
     /// <summary>
     /// 部员

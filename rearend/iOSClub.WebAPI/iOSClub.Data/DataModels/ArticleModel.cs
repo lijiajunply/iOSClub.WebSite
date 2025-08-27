@@ -15,7 +15,7 @@ public class ArticleModel
     /// <summary>
     /// 标题
     /// </summary>
-    [Column(TypeName = "varchar(32)")]
+    [Column(TypeName = "MaxLen(32)")]
     public string Title { get; set; } = "";
 
     /// <summary>
