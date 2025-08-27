@@ -20,10 +20,10 @@ namespace iOSClub.Data.Migrations
             modelBuilder.Entity("ProjectModelStaffModel", b =>
                 {
                     b.Property<string>("ProjectsId")
-                        .HasColumnType("varchar(33)");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("StaffsUserId")
-                        .HasColumnType("varchar(10)");
+                        .HasColumnType("TEXT");
 
                     b.HasKey("ProjectsId", "StaffsUserId");
 
@@ -35,10 +35,10 @@ namespace iOSClub.Data.Migrations
             modelBuilder.Entity("StaffModelTaskModel", b =>
                 {
                     b.Property<string>("TasksId")
-                        .HasColumnType("varchar(33)");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("UsersUserId")
-                        .HasColumnType("varchar(10)");
+                        .HasColumnType("TEXT");
 
                     b.HasKey("TasksId", "UsersUserId");
 
@@ -50,21 +50,24 @@ namespace iOSClub.Data.Migrations
             modelBuilder.Entity("iOSClub.Data.DataModels.ArticleModel", b =>
                 {
                     b.Property<string>("Path")
-                        .HasColumnType("varchar(128)");
+                        .HasMaxLength(128)
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Content")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Identity")
-                        .HasColumnType("varchar(20)");
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime>("LastWriteTime")
-                        .HasColumnType("DATE");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasColumnType("MaxLen(32)");
+                        .HasMaxLength(32)
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Path");
 
@@ -74,14 +77,17 @@ namespace iOSClub.Data.Migrations
             modelBuilder.Entity("iOSClub.Data.DataModels.DepartmentModel", b =>
                 {
                     b.Property<string>("Name")
-                        .HasColumnType("varchar(20)");
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Description")
-                        .HasColumnType("varchar(32)");
+                        .HasMaxLength(32)
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Key")
                         .IsRequired()
-                        .HasColumnType("varchar(32)");
+                        .HasMaxLength(32)
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Name");
 
@@ -91,24 +97,29 @@ namespace iOSClub.Data.Migrations
             modelBuilder.Entity("iOSClub.Data.DataModels.ProjectModel", b =>
                 {
                     b.Property<string>("Id")
-                        .HasColumnType("varchar(33)");
+                        .HasMaxLength(32)
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("DepartmentName")
-                        .HasColumnType("varchar(20)");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasColumnType("varchar(512)");
+                        .HasMaxLength(512)
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("EndTime")
-                        .HasColumnType("varchar(20)");
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("StartTime")
-                        .HasColumnType("varchar(20)");
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasColumnType("varchar(20)");
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
@@ -120,17 +131,21 @@ namespace iOSClub.Data.Migrations
             modelBuilder.Entity("iOSClub.Data.DataModels.ResourceModel", b =>
                 {
                     b.Property<string>("Id")
-                        .HasColumnType("varchar(33)");
+                        .HasMaxLength(32)
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Description")
-                        .HasColumnType("varchar(512)");
+                        .HasMaxLength(512)
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("varchar(20)");
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Tag")
-                        .HasColumnType("varchar(50)");
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
@@ -140,18 +155,21 @@ namespace iOSClub.Data.Migrations
             modelBuilder.Entity("iOSClub.Data.DataModels.StaffModel", b =>
                 {
                     b.Property<string>("UserId")
-                        .HasColumnType("varchar(10)");
+                        .HasMaxLength(10)
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("DepartmentName")
-                        .HasColumnType("varchar(20)");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Identity")
                         .IsRequired()
-                        .HasColumnType("varchar(20)");
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("varchar(50)");
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
 
                     b.HasKey("UserId");
 
@@ -163,41 +181,50 @@ namespace iOSClub.Data.Migrations
             modelBuilder.Entity("iOSClub.Data.DataModels.StudentModel", b =>
                 {
                     b.Property<string>("UserId")
-                        .HasColumnType("varchar(10)");
+                        .HasMaxLength(10)
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Academy")
                         .IsRequired()
-                        .HasColumnType("varchar(50)");
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("ClassName")
                         .IsRequired()
-                        .HasColumnType("varchar(20)");
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("EMail")
-                        .HasColumnType("varchar(256)");
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Gender")
                         .IsRequired()
-                        .HasColumnType("varchar(2)");
+                        .HasMaxLength(2)
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime>("JoinTime")
-                        .HasColumnType("DATE");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
-                        .HasColumnType("varchar(256)");
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("PhoneNum")
                         .IsRequired()
-                        .HasColumnType("varchar(11)");
+                        .HasMaxLength(14)
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("PoliticalLandscape")
                         .IsRequired()
-                        .HasColumnType("varchar(10)");
+                        .HasMaxLength(10)
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("UserName")
                         .IsRequired()
-                        .HasColumnType("varchar(50)");
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
 
                     b.HasKey("UserId");
 
@@ -207,30 +234,35 @@ namespace iOSClub.Data.Migrations
             modelBuilder.Entity("iOSClub.Data.DataModels.TaskModel", b =>
                 {
                     b.Property<string>("Id")
-                        .HasColumnType("varchar(33)");
+                        .HasMaxLength(32)
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasColumnType("varchar(200)");
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("EndTime")
                         .IsRequired()
-                        .HasColumnType("varchar(20)");
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("ProjectId")
                         .IsRequired()
-                        .HasColumnType("varchar(33)");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("StartTime")
                         .IsRequired()
-                        .HasColumnType("varchar(20)");
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
 
                     b.Property<bool>("Status")
-                        .HasColumnType("boolean");
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasColumnType("varchar(20)");
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
@@ -242,30 +274,36 @@ namespace iOSClub.Data.Migrations
             modelBuilder.Entity("iOSClub.Data.DataModels.TodoModel", b =>
                 {
                     b.Property<string>("Id")
-                        .HasColumnType("varchar(33)");
+                        .HasMaxLength(32)
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasColumnType("varchar(200)");
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("EndTime")
                         .IsRequired()
-                        .HasColumnType("varchar(20)");
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("StartTime")
                         .IsRequired()
-                        .HasColumnType("varchar(20)");
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
 
                     b.Property<bool>("Status")
-                        .HasColumnType("boolean");
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("StudentId")
                         .IsRequired()
-                        .HasColumnType("varchar(10)");
+                        .HasMaxLength(10)
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasColumnType("varchar(20)");
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
