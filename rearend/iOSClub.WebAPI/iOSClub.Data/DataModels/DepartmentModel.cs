@@ -1,21 +1,20 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace iOSClub.Data.DataModels;
 
 public class DepartmentModel : DataModel
 {
-    [Column(TypeName = "varchar(32)")]
+    [MaxLength(32)]
     public string Key { get; set; } = "";
 
     /// <summary>
     /// 部门名称
     /// </summary>
     [Key]
-    [Column(TypeName = "varchar(20)")]
+    [MaxLength(20)]
     public string Name { get; set; } = "";
 
-    [Column(TypeName = "varchar(32)")]
+    [MaxLength(32)]
     public string? Description { get; set; }
 
     /// <summary>

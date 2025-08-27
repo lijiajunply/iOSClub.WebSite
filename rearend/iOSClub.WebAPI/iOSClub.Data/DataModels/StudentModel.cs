@@ -1,25 +1,22 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
 
 namespace iOSClub.Data.DataModels;
 
 public class StudentModel
 {
-    [Column(TypeName = "varchar(50)")] public string UserName { get; set; } = "";
+    [MaxLength(50)] public string UserName { get; set; } = "";
 
-    [Key]
-    [Column(TypeName = "varchar(10)")]
-    public string UserId { get; set; } = "";
+    [Key] [MaxLength(10)] public string UserId { get; set; } = "";
 
-    [Column(TypeName = "varchar(50)")] public string Academy { get; set; } = "";
-    [Column(TypeName = "varchar(10)")] public string PoliticalLandscape { get; set; } = "群众";
-    [Column(TypeName = "varchar(2)")] public string Gender { get; set; } = "";
-    [Column(TypeName = "varchar(20)")] public string ClassName { get; set; } = "";
-    [Column(TypeName = "varchar(11)")] public string PhoneNum { get; set; } = "";
-    [Column(TypeName = "DATE")] public DateTime JoinTime { get; set; } = DateTime.Today;
-    [Column(TypeName = "varchar(256)")] public string PasswordHash { get; set; } = "";
-    [Column(TypeName = "varchar(256)")] public string? EMail { get; set; }
+    [MaxLength(50)] public string Academy { get; set; } = "";
+    [MaxLength(10)] public string PoliticalLandscape { get; set; } = "群众";
+    [MaxLength(2)] public string Gender { get; set; } = "";
+    [MaxLength(20)] public string ClassName { get; set; } = "";
+    [MaxLength(14)] public string PhoneNum { get; set; } = "";
+    public DateTime JoinTime { get; set; } = DateTime.Today;
+    [MaxLength(256)] public string PasswordHash { get; set; } = "";
+    [MaxLength(256)] public string? EMail { get; set; }
 
     public override string ToString()
     {

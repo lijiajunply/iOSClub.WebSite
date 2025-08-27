@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
 namespace iOSClub.Data.DataModels;
@@ -8,13 +7,13 @@ public class ProjectModel : DataModel
 {
     [JsonIgnore]
     public DepartmentModel? Department { get; set; }
-    [Column(TypeName = "varchar(20)")] public string Title { get; set; } = "";
+    [MaxLength(20)] public string Title { get; set; } = "";
 
-    [Key] [Column(TypeName = "varchar(33)")]public string Id { get; set; } = "";
+    [Key] [MaxLength(32)]public string Id { get; set; } = "";
 
-    [Column(TypeName = "varchar(512)")] public string Description { get; set; } = "";
-    [Column(TypeName = "varchar(20)")] public string? StartTime { get; set; }
-    [Column(TypeName = "varchar(20)")] public string? EndTime { get; set; }
+    [MaxLength(512)] public string Description { get; set; } = "";
+    [MaxLength(20)] public string? StartTime { get; set; }
+    [MaxLength(20)] public string? EndTime { get; set; }
 
     public void Update(ProjectModel model)
     {
