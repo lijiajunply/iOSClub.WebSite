@@ -1,6 +1,7 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using iOSClub.Data;
 using iOSClub.Data.ShowModels;
 using iOSClub.DataApi.Services;
 using Microsoft.IdentityModel.Tokens;
@@ -28,5 +29,26 @@ public class JwtHelper(IConfiguration configuration) : IJwtHelper
             signingCredentials: signingCredentials
         );
         return new JwtSecurityTokenHandler().WriteToken(securityToken);
+    }
+
+    /// <summary>
+    /// 将数据进行哈希(MD5)加密
+    /// </summary>
+    /// <param name="model"></param>
+    /// <returns></returns>
+    private string GetStaffToken(MemberModel model)
+    {
+        return DataTool.StringToHash($"{model.UserName}/{model.UserId}");
+    }
+
+    /// <summary>
+    /// 验证Model是否符合此哈希值
+    /// </summary>
+    /// <param name="hash"></param>
+    /// <param name="model"></param>
+    /// <returns></returns>
+    public bool IsStaffContrastOK(string hash, MemberModel model)
+    {
+        return GetStaffToken(model) == hash;
     }
 }

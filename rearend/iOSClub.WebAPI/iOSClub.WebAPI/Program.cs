@@ -87,17 +87,17 @@ else
 
 #region 仓库和服务的依赖注入
 
+builder.Services.AddHttpClient();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<TokenActionFilter>();
+builder.Services.AddScoped<IJwtHelper, JwtHelper>();
+
 builder.Services.AddScoped<IArticleRepository, ArticleRepository>();
 builder.Services.AddScoped<IStudentRepository, StudentRepository>();
 
 builder.Services.AddScoped<ILoginService, LoginService>();
-builder.Services.AddScoped<IJwtHelper, JwtHelper>();
 
 #endregion
-
-// 剩下的
-builder.Services.AddScoped<TokenActionFilter>();
-builder.Services.AddHttpClient();
 
 
 var app = builder.Build();
