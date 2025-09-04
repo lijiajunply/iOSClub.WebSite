@@ -36,3 +36,4 @@ public class ArticleModel
     [MaxLength(20)]
     public string? Identity { get; set; }
 }
+    

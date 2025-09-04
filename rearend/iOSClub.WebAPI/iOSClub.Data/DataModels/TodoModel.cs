@@ -18,7 +18,7 @@ public class TodoModel : DataModel, ITodo
     public StudentModel Student { get; set; } = new();
 
     [MaxLength(10)] public string StudentId { get; set; } = "";
-    
+    public DateTime CreatedTime { get; set; } = DateTime.Now;
     public void Update(ITodo model)
     {
         if (!string.IsNullOrEmpty(model.Title)) Title = model.Title;
