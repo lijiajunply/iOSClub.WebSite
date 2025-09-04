@@ -4,28 +4,19 @@ using iOSClub.WebAPI.IdentityModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-
 namespace iOSClub.WebAPI.Controllers;
 
-[Authorize]
+[Authorize(Roles = "Founder, President, Minister")]
 [TokenActionFilter]
 [Route("[controller]")]
 [ApiController]
-public class StaffController : ControllerBase
+public class StaffController(IStaffRepository staffRepository, IHttpContextAccessor httpContextAccessor)
+    : ControllerBase
 {
-    private readonly IStaffRepository _staffRepository;
-    private readonly IHttpContextAccessor _httpContextAccessor;
-
-    public StaffController(IStaffRepository staffRepository, IHttpContextAccessor httpContextAccessor)
-    {
-        _staffRepository = staffRepository;
-        _httpContextAccessor = httpContextAccessor;
-    }
-
     // 获取当前用户信息（用于权限验证）
     private StaffModel? GetCurrentUser()
     {
-        return _httpContextAccessor.HttpContext?.User.GetStaff();
+        return httpContextAccessor.HttpContext?.User.GetStaff();
     }
 
     // 检查是否有管理权限（President 或 Minister）
@@ -62,7 +53,7 @@ public class StaffController : ControllerBase
         if (currentStaff == null || !HasManagementPermission(currentStaff))
             return Forbid();
 
-        var staffs = await _staffRepository.GetAllStaffAsync();
+        var staffs = await staffRepository.GetAllStaffAsync();
         return Ok(staffs);
     }
 
@@ -73,14 +64,14 @@ public class StaffController : ControllerBase
         if (currentStaff == null || !HasManagementPermission(currentStaff))
             return Forbid();
 
-        var staff = await _staffRepository.GetStaffByIdAsync(userId);
+        var staff = await staffRepository.GetStaffByIdAsync(userId);
         if (staff == null)
             return NotFound();
 
         return Ok(staff);
     }
-
-    [HttpPost("create")]
+    
+    [HttpPost("Create")]
     public async Task<ActionResult> CreateStaff([FromBody] StaffModel staff)
     {
         var currentStaff = GetCurrentUser();
@@ -91,14 +82,14 @@ public class StaffController : ControllerBase
         if (!CanModifyTarget(currentStaff, staff))
             return BadRequest("没有权限创建该级别的成员");
 
-        var result = await _staffRepository.CreateStaffAsync(staff);
+        var result = await staffRepository.CreateStaffAsync(staff);
         if (!result)
             return BadRequest("创建成员失败");
 
         return CreatedAtAction(nameof(GetStaff), new { userId = staff.UserId }, staff);
     }
 
-    [HttpPut("update/{userId}")]
+    [HttpPost("Update/{userId}")]
     public async Task<ActionResult> UpdateStaff(string userId, [FromBody] StaffModel staff)
     {
         var currentStaff = GetCurrentUser();
@@ -109,7 +100,7 @@ public class StaffController : ControllerBase
             return BadRequest("用户ID不匹配");
 
         // 获取目标成员信息
-        var targetStaff = await _staffRepository.GetStaffByIdAsync(userId);
+        var targetStaff = await staffRepository.GetStaffByIdAsync(userId);
         if (targetStaff == null)
             return NotFound();
 
@@ -117,14 +108,14 @@ public class StaffController : ControllerBase
         if (!CanModifyTarget(currentStaff, targetStaff))
             return BadRequest("没有权限修改该成员");
 
-        var result = await _staffRepository.UpdateStaffAsync(staff);
+        var result = await staffRepository.UpdateStaffAsync(staff);
         if (!result)
             return BadRequest("更新成员失败");
 
         return Ok();
     }
-
-    [HttpDelete("delete/{userId}")]
+    
+    [HttpGet("Delete/{userId}")]
     public async Task<ActionResult> DeleteStaff(string userId)
     {
         var currentStaff = GetCurrentUser();
@@ -132,7 +123,7 @@ public class StaffController : ControllerBase
             return Forbid();
 
         // 获取目标成员信息
-        var targetStaff = await _staffRepository.GetStaffByIdAsync(userId);
+        var targetStaff = await staffRepository.GetStaffByIdAsync(userId);
         if (targetStaff == null)
             return NotFound();
 
@@ -140,7 +131,7 @@ public class StaffController : ControllerBase
         if (!CanModifyTarget(currentStaff, targetStaff))
             return BadRequest("没有权限删除该成员");
 
-        var result = await _staffRepository.DeleteStaffAsync(userId);
+        var result = await staffRepository.DeleteStaffAsync(userId);
         if (!result)
             return BadRequest("删除成员失败");
 
@@ -154,7 +145,7 @@ public class StaffController : ControllerBase
         if (currentStaff == null || !HasManagementPermission(currentStaff))
             return Forbid();
 
-        var staffs = await _staffRepository.GetStaffsByIdentitiesAsync(identity);
+        var staffs = await staffRepository.GetStaffsByIdentitiesAsync(identity);
         return Ok(staffs);
     }
 
@@ -165,7 +156,7 @@ public class StaffController : ControllerBase
         if (currentStaff == null || !HasManagementPermission(currentStaff))
             return Forbid();
 
-        var result = await _staffRepository.ChangeStaffDepartmentAsync(userId, departmentName);
+        var result = await staffRepository.ChangeStaffDepartmentAsync(userId, departmentName);
         if (!result)
             return BadRequest("修改部门失败");
 
