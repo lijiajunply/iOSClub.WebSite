@@ -45,12 +45,20 @@
               </button>
             </n-dropdown>
 
-            <!-- Login/Register Button -->
+            <!-- Login/Register or Logout Button -->
             <button
+                v-if="!isCentreRoute"
                 class="apple-button-primary ml-4"
-                @click="() => router.push('/Login')"
+                @click="() => router.push('/login')"
             >
               登录/注册
+            </button>
+            <button
+                v-else
+                class="apple-button-primary ml-4"
+                @click="logout"
+            >
+              退出登录
             </button>
           </nav>
 
@@ -114,10 +122,18 @@
 
             <div class="pt-4 mt-4 border-t border-gray-200">
               <button
+                  v-if="!isCentreRoute"
                   class="apple-button-primary w-full"
-                  @click="() => { router.push('/Login'); drawerVisible = false }"
+                  @click="() => { router.push('/login'); drawerVisible = false }"
               >
                 登录/注册
+              </button>
+              <button
+                  v-else
+                  class="apple-button-primary w-full"
+                  @click="logout"
+              >
+                退出登录
               </button>
             </div>
           </div>
@@ -172,8 +188,9 @@
 </template>
 
 <script setup>
-import {ref, onMounted, onUnmounted} from 'vue'
-import {useRouter, RouterView} from 'vue-router'
+import {ref, onMounted, onUnmounted, computed} from 'vue'
+import {useRouter, useRoute, RouterView} from 'vue-router'
+import {useAuthorizationStore} from '../stores/Authorization.ts'
 import {
   NLayout, NLayoutHeader, NLayoutContent, NLayoutFooter,
   NDropdown, NIcon
@@ -181,12 +198,29 @@ import {
 import {MenuOutline} from '@vicons/ionicons5'
 
 const router = useRouter()
+const route = useRoute()
+const authorizationStore = useAuthorizationStore()
 const drawerVisible = ref(false)
 const isScrolled = ref(false)
+
+// 判断当前是否在Centre路由下
+const isCentreRoute = computed(() => {
+  return route.path.startsWith('/Centre')
+})
 
 // Handle scroll effect
 const handleScroll = () => {
   isScrolled.value = window.scrollY > 10
+}
+
+// 退出登录功能
+const logout = () => {
+  authorizationStore.logout()
+  drawerVisible.value = false
+  // 如果当前在Centre相关页面，跳转到首页
+  if (isCentreRoute.value) {
+    router.push('/')
+  }
 }
 
 onMounted(() => {

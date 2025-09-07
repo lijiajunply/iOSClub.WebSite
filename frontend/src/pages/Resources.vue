@@ -1,20 +1,24 @@
 <template>
   <div class="p-6">
-    <n-card title="资源管理" class="mb-6">
-      <template #header-extra>
-        <n-space>
-          <n-button type="primary" @click="showAddResourceModal">
-            添加资源
-          </n-button>
-          <n-button @click="fetchResources">
-            <template #icon>
-              <n-icon><Refresh /></n-icon>
-            </template>
-            刷新
-          </n-button>
-        </n-space>
+    <n-page-header subtitle="社团资源管理" @back="goBack">
+      <template #title>
+        <div class="text-2xl font-bold">社团资源</div>
       </template>
+      <template #extra>
+        <n-button type="primary" @click="showAddResourceModal">
+          添加资源
+        </n-button>
+      </template>
+      <template #avatar>
+        <n-avatar>
+          <n-icon>
+            <BookOutline />
+          </n-icon>
+        </n-avatar>
+      </template>
+    </n-page-header>
 
+    <n-card class="mt-6">
       <n-input
           v-model:value="searchTerm"
           placeholder="搜索资源..."
@@ -36,22 +40,52 @@
     </n-card>
 
     <!-- 添加/编辑资源模态框 -->
-    <n-modal v-model:show="showModal" preset="card" style="width: 600px;" :title="editingResource.id ? '编辑资源' : '添加资源'">
-      <n-form :model="editingResource" :rules="rules" ref="formRef">
+    <n-modal
+        v-model:show="showModal"
+        preset="card"
+        style="width: 600px;"
+        :title="editingResource.id ? '编辑资源' : '添加资源'"
+        @after-leave="resetForm"
+    >
+      <n-form
+          :model="editingResource"
+          :rules="rules"
+          ref="formRef"
+          label-placement="left"
+          label-width="80"
+      >
         <n-form-item label="资源名称" path="name">
-          <n-input v-model:value="editingResource.name" placeholder="请输入资源名称" />
+          <n-input
+              v-model:value="editingResource.name"
+              placeholder="请输入资源名称"
+          />
         </n-form-item>
         <n-form-item label="描述" path="description">
-          <n-input v-model:value="editingResource.description" placeholder="请输入资源描述" type="textarea" />
+          <n-input
+              v-model:value="editingResource.description"
+              placeholder="请输入资源描述"
+              type="textarea"
+              :autosize="{ minRows: 3, maxRows: 5 }"
+          />
         </n-form-item>
         <n-form-item label="标签" path="tag">
-          <n-dynamic-tags v-model:value="resourceTags" />
+          <n-dynamic-tags
+              v-model:value="resourceTags"
+              placeholder="请输入标签并按回车确认"
+          />
         </n-form-item>
       </n-form>
+
       <template #footer>
         <n-space justify="end">
           <n-button @click="showModal = false">取消</n-button>
-          <n-button type="primary" @click="saveResource">保存</n-button>
+          <n-button
+              type="primary"
+              @click="saveResource"
+              :loading="saving"
+          >
+            保存
+          </n-button>
         </n-space>
       </template>
     </n-modal>
@@ -59,44 +93,67 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
-import { useMessage } from 'naive-ui';
-import { Refresh, SearchOutline } from '@vicons/ionicons5';
-import type { DataTableColumns } from 'naive-ui';
+import { ref, computed, onMounted, watch, h } from 'vue'
+import { useRouter } from 'vue-router'
+import { useMessage } from 'naive-ui'
+import {
+  NPageHeader,
+  NCard,
+  NInput,
+  NDataTable,
+  NModal,
+  NForm,
+  NFormItem,
+  NButton,
+  NAvatar,
+  NIcon,
+  NSpace,
+  NDynamicTags,
+  useDialog
+} from 'naive-ui'
+import { BookOutline, SearchOutline } from '@vicons/ionicons5'
+import type { DataTableColumns } from 'naive-ui'
+import { useAuthorizationStore } from '../stores/Authorization'
 
 interface Resource {
-  id: string;
-  name: string;
-  description: string | null;
-  tag: string | null;
+  id: string
+  name: string
+  description: string | null
+  tag: string | null
 }
 
-const message = useMessage();
-const showModal = ref(false);
-const searchTerm = ref('');
-const formRef = ref();
+const router = useRouter()
+const message = useMessage()
+const dialog = useDialog()
+const authorizationStore = useAuthorizationStore()
+
+const showModal = ref(false)
+const searchTerm = ref('')
+const formRef = ref()
+const saving = ref(false)
+
 const editingResource = ref<Resource>({
   id: '',
   name: '',
   description: '',
   tag: ''
-});
+})
 
-const resourceTags = ref<string[]>([]);
+const resourceTags = ref<string[]>([])
 
 // 监听编辑资源的标签变化
 watch(() => editingResource.value.tag, (newTag) => {
   if (newTag) {
-    resourceTags.value = newTag.split(',').map(t => t.trim()).filter(t => t.length > 0);
+    resourceTags.value = newTag.split(',').map(t => t.trim()).filter(t => t.length > 0)
   } else {
-    resourceTags.value = [];
+    resourceTags.value = []
   }
-});
+})
 
 // 监听resourceTags变化，更新editingResource.tag
 watch(resourceTags, (newTags) => {
-  editingResource.value.tag = newTags.join(', ');
-}, { deep: true });
+  editingResource.value.tag = newTags.join(', ')
+}, { deep: true })
 
 const rules = {
   name: {
@@ -104,22 +161,22 @@ const rules = {
     message: '请输入资源名称',
     trigger: 'blur'
   }
-};
+}
 
-const resources = ref<Resource[]>([]);
+const resources = ref<Resource[]>([])
 
 // 计算过滤后的资源列表
 const filteredResources = computed(() => {
   if (!searchTerm.value) {
-    return resources.value;
+    return resources.value
   }
-  const term = searchTerm.value.toLowerCase();
+  const term = searchTerm.value.toLowerCase()
   return resources.value.filter(resource =>
       resource.name.toLowerCase().includes(term) ||
       (resource.description && resource.description.toLowerCase().includes(term)) ||
       (resource.tag && resource.tag.toLowerCase().includes(term))
-  );
-});
+  )
+})
 
 const columns: DataTableColumns<Resource> = [
   {
@@ -138,147 +195,186 @@ const columns: DataTableColumns<Resource> = [
     key: 'tag',
     width: 200,
     render: (row) => {
-      if (!row.tag) return '无标签';
-      const tags = row.tag.split(',').map(t => t.trim()).filter(t => t.length > 0);
-      return tags.map(tag =>
+      if (!row.tag) return '无标签'
+      const tags = row.tag.split(',').map(t => t.trim()).filter(t => t.length > 0)
+      return h('div', tags.map(tag =>
           h('n-tag', {
             style: { marginRight: '4px' },
             type: 'info',
             size: 'small'
           }, { default: () => tag })
-      );
+      ))
     }
   },
   {
     title: '操作',
     key: 'actions',
-    width: 150,
+    width: 200,
     render: (row) => {
-      return h('n-space', {}, [
-        h('n-button', {
-          text: true,
-          type: 'primary',
-          onClick: () => editResource(row)
-        }, { default: () => '编辑' }),
-        h('n-button', {
-          text: true,
-          type: 'error',
-          onClick: () => deleteResource(row)
-        }, { default: () => '删除' })
-      ]);
+      return h('n-space', { justify: 'center' }, [
+        h(
+            NButton,
+            {
+              type: 'primary',
+              size: 'small',
+              onClick: () => editResource(row)
+            },
+            { default: () => '编辑' }
+        ),
+        h(
+            NButton,
+            {
+              type: 'error',
+              size: 'small',
+              onClick: () => deleteResource(row)
+            },
+            { default: () => '删除' }
+        )
+      ])
     }
   }
-];
+]
 
 const pagination = {
   pageSize: 10
-};
+}
 
-// 获取资源列表
-const fetchResources = async () => {
-  try {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      message.error('未找到认证信息');
-      return;
-    }
+// 导航方法
+const goBack = () => {
+  router.push('/Centre')
+}
 
-    const response = await fetch('/api/Project/GetResources', {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      resources.value = data.map((item: any) => ({
-        id: item.id,
-        name: item.name,
-        description: item.description,
-        tag: item.tag
-      }));
-    } else {
-      message.error('获取资源列表失败');
-    }
-  } catch (error) {
-    console.error('获取资源列表时出错:', error);
-    message.error('获取资源列表时出错');
-  }
-};
-
-// 显示添加资源模态框
-const showAddResourceModal = () => {
+// 重置表单
+const resetForm = () => {
   editingResource.value = {
     id: '',
     name: '',
     description: '',
     tag: ''
-  };
-  resourceTags.value = [];
-  showModal.value = true;
-};
+  }
+  resourceTags.value = []
+}
+
+// 获取资源列表
+const fetchResources = async () => {
+  try {
+    const token = localStorage.getItem('Authorization')
+    if (!token) {
+      message.error('未找到认证信息')
+      return
+    }
+
+    const response = await fetch('https://www.xauat.site/api/Project/GetResources', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    })
+
+    if (response.ok) {
+      const data = await response.json()
+      resources.value = data.map((item: any) => ({
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        tag: item.tag
+      }))
+    } else if (response.status === 401) {
+      message.error('认证已过期，请重新登录')
+      authorizationStore.logout()
+      router.push('/login')
+    } else {
+      message.error('获取资源列表失败')
+    }
+  } catch (error) {
+    console.error('获取资源列表时出错:', error)
+    message.error('获取资源列表时出错')
+  }
+}
+
+// 显示添加资源模态框
+const showAddResourceModal = () => {
+  resetForm()
+  showModal.value = true
+}
 
 // 编辑资源
 const editResource = (resource: Resource) => {
-  editingResource.value = { ...resource };
-  showModal.value = true;
-};
+  editingResource.value = { ...resource }
+  showModal.value = true
+}
 
 // 保存资源（添加或更新）
 const saveResource = async () => {
   try {
-    await formRef.value?.validate();
+    await formRef.value?.validate()
 
-    const token = localStorage.getItem('token');
+    saving.value = true
+    const token = localStorage.getItem('Authorization')
     if (!token) {
-      message.error('未找到认证信息');
-      return;
+      message.error('未找到认证信息')
+      saving.value = false
+      return
     }
 
     // 准备数据
     const resourceData = {
       ...editingResource.value,
       tag: resourceTags.value.join(', ')
-    };
+    }
 
-    // 这里应该调用实际的API来保存资源
-    // 由于没有看到对应的API，暂时只做前端演示
-    message.success(editingResource.value.id ? '资源更新成功' : '资源添加成功');
-    showModal.value = false;
+    // 确定API端点和方法
+    let url = 'https://www.xauat.site/api/Project/CreateOrUpdateResource'
+    let method = 'POST'
 
-    // 重新获取资源列表
-    await fetchResources();
+    // 注意：由于没有看到专门的资源API，我们暂时使用模拟方式
+    // 实际项目中应该有对应的API端点
+
+    // 模拟API调用
+    setTimeout(() => {
+      message.success(editingResource.value.id ? '资源更新成功' : '资源添加成功')
+      showModal.value = false
+      saving.value = false
+      fetchResources()
+    }, 500)
   } catch (error) {
-    message.error('表单验证失败');
+    message.error('表单验证失败')
+    saving.value = false
   }
-};
+}
 
 // 删除资源
 const deleteResource = async (resource: Resource) => {
-  try {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      message.error('未找到认证信息');
-      return;
+  dialog.warning({
+    title: '确认删除',
+    content: `确定要删除资源 "${resource.name}" 吗？此操作不可撤销。`,
+    positiveText: '确定',
+    negativeText: '取消',
+    onPositiveClick: async () => {
+      try {
+        const token = localStorage.getItem('Authorization')
+        if (!token) {
+          message.error('未找到认证信息')
+          return
+        }
+
+        // 注意：由于没有看到专门的资源删除API，我们暂时使用模拟方式
+        setTimeout(() => {
+          message.success('资源删除成功')
+          fetchResources()
+        }, 500)
+      } catch (error) {
+        message.error('删除资源时出错')
+      }
     }
-
-    // 这里应该调用实际的API来删除资源
-    // 由于没有看到对应的API，暂时只做前端演示
-    message.success('资源删除成功');
-
-    // 重新获取资源列表
-    await fetchResources();
-  } catch (error) {
-    message.error('删除资源时出错');
-  }
-};
+  })
+}
 
 // 组件挂载时获取资源列表
 onMounted(() => {
-  fetchResources();
-});
+  fetchResources()
+})
 </script>
 
 <style scoped>

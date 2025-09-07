@@ -7,20 +7,21 @@ export const useAuthorizationStore = defineStore('AuthorizationId', {
     }),
     getters: {
         getAuthorization: (state) => state.Authorization,
-        isAuthenticated: (state) => !!state.Authorization
+        isAuthenticated: (state) => !!state.Authorization && state.Authorization.length > 0
     },
     actions: {
         // 修改token，并将token存入localStorage
         async login(user: any): Promise<boolean> {
             try {
-                const a = await LoginService.login(user.username, user.password)
-                if (!a) {
+                const result = await LoginService.login(user.username, user.password)
+                if (!result || !result.token) {
                     return false;
                 }
-                this.Authorization = a.token;
-                localStorage.setItem('Authorization', a.token);
+                this.Authorization = result.token;
+                localStorage.setItem('Authorization', result.token);
                 return true;
             } catch (e) {
+                console.error('登录错误:', e);
                 return false;
             }
         },

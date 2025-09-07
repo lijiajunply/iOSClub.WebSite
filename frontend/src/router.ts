@@ -1,11 +1,13 @@
 import {createRouter, createWebHistory} from 'vue-router';
 import {useAuthorizationStore} from "./stores/Authorization.ts";
+import MainLayout from "./layouts/MainLayout.vue";
+import CentreLayout from "./layouts/CentreLayout.vue";
 
 const routes = [
     {
         path: "",
         name: "main",
-        component: () => import("./layouts/MainLayout.vue"),   // 布局文件
+        component: MainLayout,
         children: [
             {
                 path: '',
@@ -60,133 +62,84 @@ const routes = [
                 name: 'Blog',
                 meta: {title: "社团文章 - 西建大 iOS Club"},
                 component: () => import('./pages/Blog.vue'),
-            },{
-                path: 'Centre',
-                name: 'AdminCentre',
-                meta: {title: "管理中心 - 西建大 iOS Club", isNeedAdmin: true},
-                component: () => import('./pages/Centre.vue'),
             },
             {
-                path: 'Member-data',
+                path: 'Centre',
+                name: 'Centre',
+                meta: {title: "您的iMember中心 - 西建大 iOS Club", requiresAuth: true},
+                component: () => import('./pages/Centre.vue'),
+            }
+        ]
+    },
+    {
+        path: '/Centre',
+        component: CentreLayout,
+        meta: {requiresAuth: true},
+        children: [
+            {
+                path: 'PersonalData',
+                name: 'PersonalData',
+                meta: {title: "个人数据 - 西建大 iOS Club"},
+                component: () => import('./pages/PersonalData.vue'),
+            },
+            {
+                path: 'MemberData',
                 name: 'MemberData',
-                meta: {title: "成员数据 - 西建大 iOS Club", isNeedAdmin: true},
+                meta: {title: "成员数据 - 西建大 iOS Club"},
                 component: () => import('./pages/MemberData.vue'),
             },
             {
                 path: 'Department',
                 name: 'Department',
-                meta: {title: "部门管理 - 西建大 iOS Club", isNeedAdmin: true},
-                component: () => import('./pages/Department.vue'),
-            },
-            {
-                path: 'Projects-data',
-                name: 'AdminProjects',
-                meta: {title: "项目管理 - 西建大 iOS Club", isNeedAdmin: true},
-                component: () => import('./pages/ProjectsData.vue'),
-            },
-            {
-                path: 'Personal-data',
-                name: 'AdminPersonalData',
-                meta: {title: "个人数据 - 西建大 iOS Club", isNeedAdmin: true},
-                component: () => import('./pages/PersonalData.vue'),
-            },
-            {
-                path: '/',
-                component: () => import('./layouts/WordLayout.vue'),
-                children: [
-                    {
-                        path: 'article/:id',
-                        name: 'Article',
-                        component: () => import('./pages/Article.vue'),
-                    },
-                    {
-                        path: 'About',
-                        name: 'About',
-                        meta: {title: "关于我们 - 西建大 iOS Club"},
-                        component: () => import('./pages/Articles/About.vue'),
-                    },
-                    {
-                        path: 'OtherOrg',
-                        name: 'OtherOrg',
-                        component: () => import('./pages/Articles/OtherOrg.vue'),
-                        meta: {
-                            title: '其他组织 - 西建大iOS Club'
-                        }
-                    },
-                    {
-                        path: 'Structure',
-                        name: 'Structure',
-                        meta: {title: "社团结构 - 西建大 iOS Club"},
-                        component: () => import('./pages/Articles/Structure.vue'),
-                    }
-                ]
-            },
-        ]
-    },
-    {
-        path: '/admin',
-        name: 'admin',
-        meta: {isNeedAdmin: true},
-        component: () => import('./layouts/AdminLayout.vue'),
-        children: [
-            {
-                path: 'Member-data',
-                name: 'AdminMemberData',
-                meta: {title: "成员数据 - 西建大 iOS Club", isNeedAdmin: true},
-                component: () => import('./pages/MemberData.vue'),
-            },
-            {
-                path: 'Department',
-                name: 'AdminDepartment',
-                meta: {title: "部门管理 - 西建大 iOS Club", isNeedAdmin: true},
+                meta: {title: "部门管理 - 西建大 iOS Club"},
                 component: () => import('./pages/Department.vue'),
             },
             {
                 path: 'Projects',
-                name: 'AdminProjects',
-                meta: {title: "项目管理 - 西建大 iOS Club", isNeedAdmin: true},
+                name: 'ProjectsData',
+                meta: {title: "项目管理 - 西建大 iOS Club"},
                 component: () => import('./pages/ProjectsData.vue'),
             },
             {
-                path: 'Personal-data',
-                name: 'AdminPersonalData',
-                meta: {title: "个人数据 - 西建大 iOS Club", isNeedAdmin: true},
-                component: () => import('./pages/PersonalData.vue'),
+                path: 'Resources',
+                name: 'Resources',
+                meta: {title: "资源管理 - 西建大 iOS Club"},
+                component: () => import('./pages/Resources.vue'),
             },
             {
-                path: 'Resources',
-                name: 'AdminResources',
-                meta: {title: "资源管理 - 西建大 iOS Club", isNeedAdmin: true},
-                component: () => import('./pages/Resources.vue'),
+                path: 'Admin',
+                name: 'Admin',
+                meta: {title: "其他数据 - 西建大 iOS Club"},
+                component: () => import('./pages/Admin.vue'),
+            },
+            {
+                path: 'Article',
+                name: 'Article',
+                meta: {title: "社团文章 - 西建大 iOS Club"},
+                component: () => import('./pages/CenterArticle.vue'),
             }
         ]
-    },
-    {
-        path: '/:catchAll(.*)',
-        name: 'NotFound',
-        meta: {title: "未能找到该页面"},
-        component: () => import('./pages/NotFount.vue'),
-    },
+    }
 ];
 
 const router = createRouter({
-    history: createWebHistory(""),
+    history: createWebHistory(),
     routes,
 });
 
-router.beforeEach((to, _, next) => {
-    if (to.meta.title && typeof to.meta.title === 'string') {//判断是否有标题
-        document.title = to.meta.title
+// Navigation guard
+router.beforeEach((to, from, next) => {
+    const authorizationStore = useAuthorizationStore();
+
+    // Set page title
+    document.title = to.meta.title || "西建大 iOS Club";
+
+    // Check if route requires authentication
+    if (to.meta.requiresAuth && !authorizationStore.isAuthenticated) {
+        next('/login');
+    } else {
+        next();
     }
-
-    const authorizationStore = useAuthorizationStore()
-
-    const isAdmin = authorizationStore.isAuthenticated
-    if (typeof to.meta.isNeedAdmin === 'boolean' && to.meta.isNeedAdmin && !isAdmin) {
-        next({path: '/NotFound'})
-    }
-    next()
-})
-
+});
 
 export default router;

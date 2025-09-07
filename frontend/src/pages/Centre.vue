@@ -1,8 +1,8 @@
-<template>
-  <div class="min-h-screen bg-gray-50">
-    <div class="container mx-auto px-4 max-w-7xl">
+让数据中心大大小和社团部门一样大：<template>
+  <div class="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 py-12 px-4">
+    <div class="max-w-7xl mx-auto">
       <!-- 头部区域 -->
-      <div class="text-center mb-12 pt-8">
+      <div class="text-center mb-12">
         <h1 class="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
           您的iMember中心
         </h1>
@@ -14,20 +14,20 @@
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         <!-- 个人信息卡片 -->
         <div class="lg:col-span-1">
-          <n-card hoverable class="rounded-2xl h-full">
-            <div class="flex flex-col items-center text-center">
+          <n-card hoverable class="rounded-2xl h-full shadow-lg transition-all duration-300 hover:shadow-xl">
+            <div class="flex flex-col items-center text-center py-6">
               <img
                   :src="getUserAvatar()"
                   :alt="userInfo.name"
-                  class="w-24 h-24 rounded-full mb-4"
+                  class="w-24 h-24 rounded-full mb-4 border-4 border-blue-100"
                   @error="handleImageError"
               />
               <h2 class="text-2xl font-bold">{{ userInfo.name }}</h2>
               <p class="text-gray-600">ID: {{ userInfo.id }}</p>
-              <p class="text-gray-800 font-medium">{{ userInfo.role }}</p>
+              <p class="text-gray-800 font-medium mt-1">{{ userInfo.role }}</p>
               <n-button
                   type="primary"
-                  class="mt-4"
+                  class="mt-4 rounded-full px-6"
                   @click="goToPersonalData"
               >
                 编辑信息
@@ -38,7 +38,7 @@
 
         <!-- iTool 工具卡片 -->
         <div class="lg:col-span-2">
-          <n-card hoverable class="rounded-2xl">
+          <n-card hoverable class="rounded-2xl shadow-lg transition-all duration-300 hover:shadow-xl">
             <template #header>
               <div>
                 <div class="font-bold text-2xl">iTool</div>
@@ -46,34 +46,35 @@
               </div>
             </template>
 
-            <div v-if="tools.length === 0" class="text-center py-4 text-gray-500">
-              社团还没加入iOS App
+            <div v-if="tools.length === 0" class="text-center py-8 text-gray-500">
+              <n-empty description="社团还没加入iOS App" />
             </div>
-            <div v-else class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
+            <div v-else class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 py-2">
               <div
                   v-for="(tool, index) in tools"
                   :key="index"
-                  class="flex flex-col items-center cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                  class="flex flex-col items-center cursor-pointer hover:bg-gray-50 p-3 rounded-xl transition-all duration-300 group"
                   @click="openTool(tool.url)"
               >
-                <div class="w-10 h-10 mb-2 flex items-center justify-center">
+                <div class="w-12 h-12 mb-2 flex items-center justify-center">
                   <template v-if="!tool.icon.startsWith('http')">
                     <IconFont
                         :type="`#icon-${tool.icon}`"
-                        class="text-[28px]"
+                        class="text-[32px] group-hover:text-blue-500 transition-colors"
                     />
                   </template>
                   <template v-else>
                     <img
                         :src="fixImageUrl(tool.icon)"
-                        :style="{ height: '28px', width: '28px', borderRadius: '6px' }"
+                        :style="{ height: '32px', width: '32px', borderRadius: '6px' }"
                         :alt="`${tool.name}的图标`"
                         @error="(e) => handleImageError(e, tool)"
                         data-debug="image-icon"
+                        class="group-hover:scale-110 transition-transform"
                     />
                   </template>
                 </div>
-                <span class="text-sm text-center truncate w-full">{{ tool.name }}</span>
+                <span class="text-sm text-center truncate w-full group-hover:text-blue-600 transition-colors">{{ tool.name }}</span>
               </div>
             </div>
           </n-card>
@@ -83,7 +84,7 @@
       <!-- 我的任务和社团资源 -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <!-- 我的任务 -->
-        <n-card hoverable class="rounded-2xl">
+        <n-card hoverable class="rounded-2xl shadow-lg transition-all duration-300 hover:shadow-xl">
           <template #header>
             <div>
               <div class="font-bold text-2xl">我的任务</div>
@@ -91,12 +92,12 @@
             </div>
           </template>
 
-          <div v-if="tasks.length === 0" class="text-center py-4 text-gray-500">
-            您的任务都已经完成了
+          <div v-if="tasks.length === 0" class="text-center py-8 text-gray-500">
+            <n-empty description="您的任务都已经完成了" />
           </div>
           <div v-else class="max-h-96 overflow-y-auto">
             <n-list>
-              <n-list-item v-for="task in tasks" :key="task.id">
+              <n-list-item v-for="task in tasks" :key="task.id" class="py-2">
                 <div class="flex justify-between items-center">
                   <div>
                     <div class="font-medium">{{ task.title }}</div>
@@ -112,7 +113,7 @@
         </n-card>
 
         <!-- 社团资源 -->
-        <n-card hoverable class="rounded-2xl">
+        <n-card hoverable class="rounded-2xl shadow-lg transition-all duration-300 hover:shadow-xl" @click="goToResources">
           <template #header>
             <div>
               <div class="font-bold text-2xl">社团资源</div>
@@ -120,16 +121,16 @@
             </div>
           </template>
 
-          <div v-if="resources.length === 0" class="text-center py-4 text-gray-500">
-            社团现在还没有资源
+          <div v-if="resources.length === 0" class="text-center py-8 text-gray-500">
+            <n-empty description="社团现在还没有资源" />
           </div>
           <div v-else class="max-h-96 overflow-y-auto">
             <n-list>
-              <n-list-item v-for="resource in resources" :key="resource.id" @click="goToResources" class="cursor-pointer hover:bg-gray-50">
+              <n-list-item v-for="resource in resources" :key="resource.id" @click="goToResources" class="cursor-pointer hover:bg-gray-50 py-2 rounded-lg">
                 <div>
                   <div class="font-medium">{{ resource.name }}</div>
                   <div class="text-sm text-gray-500">{{ resource.description }}</div>
-                  <div class="mt-1">
+                  <div class="mt-2">
                     <n-tag
                         v-for="tag in splitTags(resource.tag)"
                         :key="tag"
@@ -150,7 +151,7 @@
       <!-- 管理员视图 -->
       <div v-if="userInfo.isAdmin" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <!-- 社团部门 -->
-        <n-card hoverable class="rounded-2xl" @click="goToDepartment">
+        <n-card hoverable class="rounded-2xl shadow-lg transition-all duration-300 hover:shadow-xl" @click="goToDepartment">
           <template #header>
             <div>
               <div class="font-bold text-2xl">社团部门</div>
@@ -158,12 +159,12 @@
             </div>
           </template>
 
-          <div v-if="departments.length === 0" class="text-center py-4 text-gray-500">
-            社团现在还没有部门
+          <div v-if="departments.length === 0" class="text-center py-8 text-gray-500">
+            <n-empty description="社团现在还没有部门" />
           </div>
           <div v-else class="max-h-96 overflow-y-auto">
             <n-list>
-              <n-list-item v-for="department in departments" :key="department.name">
+              <n-list-item v-for="department in departments" :key="department.name" class="py-2">
                 <div>
                   <div class="font-medium">{{ department.name }}</div>
                   <div class="text-sm text-gray-500">{{ department.description }}</div>
@@ -174,41 +175,45 @@
         </n-card>
 
         <!-- 数据中心 -->
-        <n-card hoverable class="rounded-2xl" @click="goToMemberData">
-          <template #header>
-            <div>
-              <div class="font-bold text-2xl">数据中心</div>
-              <div class="text-gray-500 text-sm mt-1">展示社团数据</div>
-            </div>
-          </template>
+        <n-grid-item :span="2">
+          <router-link to="/Centre/Member-data">
+            <n-card hoverable class="rounded-2xl shadow-lg transition-all duration-300 hover:shadow-xl cursor-pointer">
+              <template #header>
+                <div>
+                  <div class="font-bold text-2xl">数据中心</div>
+                  <div class="text-gray-500 text-sm mt-1">展示社团数据</div>
+                </div>
+              </template>
 
-          <div class="grid grid-cols-2 gap-4">
-            <div class="text-center p-4 bg-blue-50 rounded-lg">
-              <div class="text-2xl font-bold">{{ statistics.members }}</div>
-              <div class="text-gray-600">当前成员</div>
-            </div>
-            <div class="text-center p-4 bg-green-50 rounded-lg">
-              <div class="text-2xl font-bold">{{ statistics.staffs }}</div>
-              <div class="text-gray-600">部员数量</div>
-            </div>
-            <div class="text-center p-4 bg-yellow-50 rounded-lg">
-              <div class="text-2xl font-bold">{{ statistics.projects }}</div>
-              <div class="text-gray-600">项目数量</div>
-            </div>
-            <div class="text-center p-4 bg-purple-50 rounded-lg">
-              <div class="text-2xl font-bold">{{ statistics.tasks }}</div>
-              <div class="text-gray-600">任务数量</div>
-            </div>
-            <div class="text-center p-4 bg-red-50 rounded-lg">
-              <div class="text-2xl font-bold">{{ statistics.resources }}</div>
-              <div class="text-gray-600">资源数量</div>
-            </div>
-            <div class="text-center p-4 bg-indigo-50 rounded-lg">
-              <div class="text-2xl font-bold">{{ statistics.departments }}</div>
-              <div class="text-gray-600">部门数量</div>
-            </div>
-          </div>
-        </n-card>
+              <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div class="text-center p-4 bg-blue-50 rounded-xl">
+                  <div class="text-2xl font-bold text-blue-600">{{ statistics.members }}</div>
+                  <div class="text-gray-600">当前成员</div>
+                </div>
+                <div class="text-center p-4 bg-green-50 rounded-xl">
+                  <div class="text-2xl font-bold text-green-600">{{ statistics.staffs }}</div>
+                  <div class="text-gray-600">部员数量</div>
+                </div>
+                <div class="text-center p-4 bg-yellow-50 rounded-xl">
+                  <div class="text-2xl font-bold text-yellow-600">{{ statistics.projects }}</div>
+                  <div class="text-gray-600">项目数量</div>
+                </div>
+                <div class="text-center p-4 bg-purple-50 rounded-xl">
+                  <div class="text-2xl font-bold text-purple-600">{{ statistics.tasks }}</div>
+                  <div class="text-gray-600">任务数量</div>
+                </div>
+                <div class="text-center p-4 bg-red-50 rounded-xl">
+                  <div class="text-2xl font-bold text-red-600">{{ statistics.resources }}</div>
+                  <div class="text-gray-600">资源数量</div>
+                </div>
+                <div class="text-center p-4 bg-indigo-50 rounded-xl">
+                  <div class="text-2xl font-bold text-indigo-600">{{ statistics.departments }}</div>
+                  <div class="text-gray-600">部门数量</div>
+                </div>
+              </div>
+            </n-card>
+          </router-link>
+        </n-grid-item>
       </div>
     </div>
   </div>
@@ -217,7 +222,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { NCard, NList, NListItem, NTag, NButton } from 'naive-ui'
+import { NCard, NList, NListItem, NTag, NButton, NEmpty } from 'naive-ui'
 import { useAuthorizationStore } from '../stores/Authorization'
 import '../lib/iconfont' // 导入图标库
 import IconFont from '../components/IconFont.vue'
@@ -306,22 +311,26 @@ const handleImageError = (event, tool) => {
 
 // 导航到个人数据页面
 const goToPersonalData = () => {
-  router.push('/admin/personal-data')
+  console.log('跳转到个人数据页面');
+  router.push('/Centre/PersonalData')
 }
 
 // 导航到资源页面
 const goToResources = () => {
-  router.push('/admin/resources')
+  console.log('跳转到资源页面');
+  router.push('/Centre/Resources')
 }
 
 // 导航到部门页面
 const goToDepartment = () => {
-  router.push('/admin/department')
+  console.log('跳转到部门页面');
+  router.push('/Centre/Department')
 }
 
 // 导航到成员数据页面
 const goToMemberData = () => {
-  router.push('/admin/member-data')
+  console.log('跳转到成员数据页面');
+  router.push('/Centre/Member-data')
 }
 
 // 打开工具链接
@@ -622,7 +631,8 @@ const fetchStatistics = async () => {
     if (membersResponse.ok) {
       const membersData = await membersResponse.json();
       console.log('获取到的成员数据:', membersData);
-      
+
+      // 根据后端返回的数据结构更新统计数据
       if (membersData.Total !== undefined) {
         statistics.value.members = membersData.Total;
       }
