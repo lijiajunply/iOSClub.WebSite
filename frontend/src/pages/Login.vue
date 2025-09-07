@@ -11,41 +11,40 @@
       </div>
 
       <n-form :model="form" :rules="rules" ref="formRef">
-        <n-form-item path="email" label="学号">
+        <n-form-item path="email" label="姓名">
           <n-input
-            v-model:value="form.email"
-            placeholder=""
-            class="rounded-lg transition-all duration-300 focus:ring-2 focus:ring-blue-500/50"
+              v-model:value="form.email"
+              placeholder="请输入您的姓名"
+              class="rounded-lg transition-all duration-300 focus:ring-2 focus:ring-blue-500/50"
           />
         </n-form-item>
 
-        <n-form-item path="password" label="密码">
+        <n-form-item path="password" label="学号">
           <n-input
-            v-model:value="form.password"
-            type="password"
-            placeholder="初始密码为学号"
-            @keyup.enter="handleLogin"
-            class="rounded-lg transition-all duration-300 focus:ring-2 focus:ring-blue-500/50"
+              v-model:value="form.password"
+              placeholder="请输入您的学号"
+              @keyup.enter="handleLogin"
+              class="rounded-lg transition-all duration-300 focus:ring-2 focus:ring-blue-500/50"
           />
         </n-form-item>
 
         <div class="flex items-center justify-between mb-6">
-          <n-checkbox v-model:checked:value="form.rememberMe">
+          <n-checkbox v-model:checked="form.rememberMe">
             记住我
           </n-checkbox>
           <router-link
-            to="/ForgotPassword"
-            class="text-sm text-blue-600 dark:text-purple-400 hover:underline"
+              to="/ForgotPassword"
+              class="text-sm text-blue-600 dark:text-purple-400 hover:underline"
           >
             忘记密码？
           </router-link>
         </div>
 
         <button
-          @click="handleLogin"
-          :disabled="loading"
-          block
-          class="btn"
+            @click="handleLogin"
+            :disabled="loading"
+            block
+            class="btn"
         >
           <span v-if="loading">登录中...</span>
           <span v-else>登录</span>
@@ -56,9 +55,9 @@
       <div class="mt-6 text-center">
         <p class="text-sm text-gray-500 dark:text-gray-400">
           没有 iMember 账号？
-          <a href="/Signup" class="text-blue-600 dark:text-purple-400 font-medium hover:underline">
+          <router-link to="/SignUp" class="text-blue-600 dark:text-purple-400 font-medium hover:underline">
             注册
-          </a>
+          </router-link>
         </p>
       </div>
     </div>
@@ -66,15 +65,11 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { NButton, NInput, NCheckbox, NForm, NFormItem } from 'naive-ui'
 
 const router = useRouter()
-
-const goToForgotPassword = () => {
-  router.push('/ForgotPassword')
-}
 
 const formRef = ref()
 const form = ref({
@@ -88,15 +83,30 @@ const errorMsg = ref('')
 const rules = {
   email: {
     required: true,
-    message: '请输入您的学号',
+    message: '请输入您的姓名',
     trigger: 'blur'
   },
   password: {
     required: true,
-    message: '请输入您的密码',
+    message: '请输入您的学号',
     trigger: 'blur'
   }
 }
+
+// 页面加载时检查是否保存了登录信息
+onMounted(() => {
+  const savedLoginInfo = localStorage.getItem('savedLoginInfo')
+  if (savedLoginInfo) {
+    try {
+      const parsedInfo = JSON.parse(savedLoginInfo)
+      form.value.email = parsedInfo.email || ''
+      form.value.password = parsedInfo.password || ''
+      form.value.rememberMe = true
+    } catch (e) {
+      console.error('解析保存的登录信息时出错:', e)
+    }
+  }
+})
 
 const handleLogin = () => {
   if (loading.value) return
@@ -105,21 +115,42 @@ const handleLogin = () => {
       loading.value = true
       errorMsg.value = ''
       try {
-        const res = await fetch('/api/Member/Login', {
+        const res = await fetch('https://www.xauat.site/api/Member/Login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            email: form.value.email,
-            password: form.value.password
+            name: form.value.email,
+            id: form.value.password
           })
         })
         if (!res.ok) {
-          const err = await res.json().catch(() => ({}))
-          throw new Error(err.message || '登录失败')
+          // 尝试解析错误响应
+          let errorMessage = '登录失败'
+          try {
+            const errorData = await res.json()
+            errorMessage = errorData.message || errorMessage
+          } catch (e) {
+            // 如果无法解析为JSON，则使用默认错误消息
+          }
+          throw new Error(errorMessage)
         }
-        const data = await res.json()
-        localStorage.setItem('token', data.token)
-        router.push('/')
+
+        // 后端直接返回JWT token字符串，而不是JSON对象
+        const token = await res.text()
+        localStorage.setItem('Authorization', token)
+
+        // 如果用户选择了"记住我"，则保存登录信息
+        if (form.value.rememberMe) {
+          const loginInfo = {
+            email: form.value.email,
+            password: form.value.password
+          }
+          localStorage.setItem('savedLoginInfo', JSON.stringify(loginInfo))
+        } else {
+          localStorage.removeItem('savedLoginInfo')
+        }
+
+        router.push('/Centre')
       } catch (err) {
         errorMsg.value = err.message || '登录失败'
       } finally {

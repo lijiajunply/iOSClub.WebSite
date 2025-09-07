@@ -60,6 +60,35 @@ const routes = [
                 name: 'Blog',
                 meta: {title: "社团文章 - 西建大 iOS Club"},
                 component: () => import('./pages/Blog.vue'),
+            },{
+                path: 'Centre',
+                name: 'AdminCentre',
+                meta: {title: "管理中心 - 西建大 iOS Club", isNeedAdmin: true},
+                component: () => import('./pages/Centre.vue'),
+            },
+            {
+                path: 'Member-data',
+                name: 'MemberData',
+                meta: {title: "成员数据 - 西建大 iOS Club", isNeedAdmin: true},
+                component: () => import('./pages/MemberData.vue'),
+            },
+            {
+                path: 'Department',
+                name: 'Department',
+                meta: {title: "部门管理 - 西建大 iOS Club", isNeedAdmin: true},
+                component: () => import('./pages/Department.vue'),
+            },
+            {
+                path: 'Projects-data',
+                name: 'AdminProjects',
+                meta: {title: "项目管理 - 西建大 iOS Club", isNeedAdmin: true},
+                component: () => import('./pages/ProjectsData.vue'),
+            },
+            {
+                path: 'Personal-data',
+                name: 'AdminPersonalData',
+                meta: {title: "个人数据 - 西建大 iOS Club", isNeedAdmin: true},
+                component: () => import('./pages/PersonalData.vue'),
             },
             {
                 path: '/',
@@ -100,7 +129,36 @@ const routes = [
         meta: {isNeedAdmin: true},
         component: () => import('./layouts/AdminLayout.vue'),
         children: [
-
+            {
+                path: 'Member-data',
+                name: 'AdminMemberData',
+                meta: {title: "成员数据 - 西建大 iOS Club", isNeedAdmin: true},
+                component: () => import('./pages/MemberData.vue'),
+            },
+            {
+                path: 'Department',
+                name: 'AdminDepartment',
+                meta: {title: "部门管理 - 西建大 iOS Club", isNeedAdmin: true},
+                component: () => import('./pages/Department.vue'),
+            },
+            {
+                path: 'Projects',
+                name: 'AdminProjects',
+                meta: {title: "项目管理 - 西建大 iOS Club", isNeedAdmin: true},
+                component: () => import('./pages/ProjectsData.vue'),
+            },
+            {
+                path: 'Personal-data',
+                name: 'AdminPersonalData',
+                meta: {title: "个人数据 - 西建大 iOS Club", isNeedAdmin: true},
+                component: () => import('./pages/PersonalData.vue'),
+            },
+            {
+                path: 'Resources',
+                name: 'AdminResources',
+                meta: {title: "资源管理 - 西建大 iOS Club", isNeedAdmin: true},
+                component: () => import('./pages/Resources.vue'),
+            }
         ]
     },
     {
