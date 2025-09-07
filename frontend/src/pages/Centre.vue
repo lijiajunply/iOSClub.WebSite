@@ -176,7 +176,7 @@
 
         <!-- 数据中心 -->
         <n-grid-item :span="2">
-          <router-link to="/Centre/Member-data">
+          <router-link to="/Centre/Memberdata">
             <n-card hoverable class="rounded-2xl shadow-lg transition-all duration-300 hover:shadow-xl cursor-pointer">
               <template #header>
                 <div>
@@ -330,7 +330,7 @@ const goToDepartment = () => {
 // 导航到成员数据页面
 const goToMemberData = () => {
   console.log('跳转到成员数据页面');
-  router.push('/Centre/Member-data')
+  router.push('/Centre/Memberdata')
 }
 
 // 打开工具链接
