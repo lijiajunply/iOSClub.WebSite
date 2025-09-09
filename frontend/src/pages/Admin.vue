@@ -1,82 +1,84 @@
 <template>
-  <div class="p-6">
-    <n-page-header subtitle="社团管理系统" @back="goBack">
-      <template #title>
-        <div class="text-2xl font-bold">其他数据</div>
-      </template>
-      <template #extra>
-        <n-space v-if="userInfo.isAdmin">
-          <n-button type="primary" @click="downloadAllData">
-            下载所有数据
-          </n-button>
-          <n-button type="error" @click="removeAllData">
-            删除所有数据
-          </n-button>
-          <n-button @click="triggerFileInput">
-            上传Json数据
-          </n-button>
-          <input
-              ref="fileInput"
-              type="file"
-              accept=".json"
-              multiple
-              @change="uploadFiles"
-              style="display: none"
-          />
-        </n-space>
-      </template>
-      <template #avatar>
-        <n-avatar>
-          <n-icon>
-            <SettingsOutline />
-          </n-icon>
-        </n-avatar>
-      </template>
-    </n-page-header>
+  <div class="min-h-screen bg-gray-50 dark:bg-neutral-900 transition-colors duration-300">
+    <div class="p-6">
+      <n-page-header subtitle="社团管理系统" @back="goBack">
+        <template #title>
+          <div class="text-2xl font-bold">其他数据</div>
+        </template>
+        <template #extra>
+          <n-space v-if="userInfo.isAdmin">
+            <n-button type="primary" @click="downloadAllData">
+              下载所有数据
+            </n-button>
+            <n-button type="error" @click="removeAllData">
+              删除所有数据
+            </n-button>
+            <n-button @click="triggerFileInput">
+              上传Json数据
+            </n-button>
+            <input
+                ref="fileInput"
+                type="file"
+                accept=".json"
+                multiple
+                @change="uploadFiles"
+                style="display: none"
+            />
+          </n-space>
+        </template>
+        <template #avatar>
+          <n-avatar>
+            <n-icon>
+              <SettingsOutline />
+            </n-icon>
+          </n-avatar>
+        </template>
+      </n-page-header>
 
-    <n-card class="mt-6">
-      <h3 class="text-xl font-bold mb-4">总述</h3>
-      <n-descriptions bordered :column="column">
-        <n-descriptions-item label="社员人数">
-          {{ studentsCount }}
-        </n-descriptions-item>
-        <n-descriptions-item label="部员人数">
-          {{ staffs.length }}
-        </n-descriptions-item>
-        <n-descriptions-item label="社团项目数">
-          {{ projectsCount }}
-        </n-descriptions-item>
-        <n-descriptions-item label="任务数">
-          {{ tasksCount }}
-        </n-descriptions-item>
-        <n-descriptions-item label="社团各项资源数">
-          {{ resourcesCount }}
-        </n-descriptions-item>
-        <n-descriptions-item label="部门数">
-          {{ departmentsCount }}
-        </n-descriptions-item>
-        <n-descriptions-item label="社员任务数">
-          {{ todosCount }}
-        </n-descriptions-item>
-      </n-descriptions>
+      <n-card class="mt-6">
+        <h3 class="text-xl font-bold mb-4">总述</h3>
+        <n-descriptions bordered :column="column">
+          <n-descriptions-item label="社员人数">
+            {{ studentsCount }}
+          </n-descriptions-item>
+          <n-descriptions-item label="部员人数">
+            {{ staffs.length }}
+          </n-descriptions-item>
+          <n-descriptions-item label="社团项目数">
+            {{ projectsCount }}
+          </n-descriptions-item>
+          <n-descriptions-item label="任务数">
+            {{ tasksCount }}
+          </n-descriptions-item>
+          <n-descriptions-item label="社团各项资源数">
+            {{ resourcesCount }}
+          </n-descriptions-item>
+          <n-descriptions-item label="部门数">
+            {{ departmentsCount }}
+          </n-descriptions-item>
+          <n-descriptions-item label="社员任务数">
+            {{ todosCount }}
+          </n-descriptions-item>
+        </n-descriptions>
 
-      <n-divider />
+        <n-divider />
 
-      <h3 class="text-xl font-bold mb-4">部员列表</h3>
-      <n-grid :cols="2" :md="3" :lg="4" :xl="5" :x-gap="12" :y-gap="12">
-        <n-grid-item v-for="staff in staffs" :key="staff.id">
-          <div class="card">
-            <div class="img" :style="{ backgroundColor: getColorForStaff(staff.name) }">
-              <span>{{ staff.name.charAt(0) }}</span>
+        <h3 class="text-xl font-bold mb-4">部员列表</h3>
+        <n-grid :cols="2" :md="3" :lg="4" :xl="5" :x-gap="12" :y-gap="12">
+          <n-grid-item v-for="staff in staffs" :key="staff.id">
+            <div class="card">
+              <div class="img" :style="{ backgroundColor: getColorForStaff(staff.name) }">
+                <span>{{ staff.name.charAt(0) }}</span>
+              </div>
+              <h3 class="text-center mt-2 font-medium">{{ staff.name }}</h3>
+              <p class="text-gray-500 text-sm text-center">
+                {{ identityDictionary[staff.identity] || staff.identity }}
+              </p>
             </div>
-            <h3 class="text-center mt-2 font-medium">{{ staff.name }}</h3>
-            <p class="text-gray-500 text-sm text-center">
-              {{ identityDictionary[staff.identity] || staff.identity }}
-            </p>
-          </div>
-        </n-grid-item>
-      </n-grid>
-    </n-card>
+          </n-grid-item>
+        </n-grid>
+      </n-card>
+    </div>
   </div>
 </template>
 

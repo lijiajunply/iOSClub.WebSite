@@ -1,95 +1,97 @@
 <template>
-  <div class="p-6">
-    <n-page-header subtitle="社团资源管理" @back="goBack">
-      <template #title>
-        <div class="text-2xl font-bold">社团资源</div>
-      </template>
-      <template #extra>
-        <n-button type="primary" @click="showAddResourceModal">
-          添加资源
-        </n-button>
-      </template>
-      <template #avatar>
-        <n-avatar>
-          <n-icon>
-            <BookOutline />
-          </n-icon>
-        </n-avatar>
-      </template>
-    </n-page-header>
-
-    <n-card class="mt-6">
-      <n-input
-          v-model:value="searchTerm"
-          placeholder="搜索资源..."
-          clearable
-          class="mb-4"
-      >
-        <template #prefix>
-          <n-icon><SearchOutline /></n-icon>
+  <div class="min-h-screen bg-gray-50 dark:bg-neutral-900 transition-colors duration-300">
+    <div class="p-6">
+      <n-page-header subtitle="社团资源管理" @back="goBack">
+        <template #title>
+          <div class="text-2xl font-bold">社团资源</div>
         </template>
-      </n-input>
-
-      <n-data-table
-          :columns="columns"
-          :data="filteredResources"
-          :pagination="pagination"
-          :bordered="false"
-          striped
-          :scroll-x="scrollX"
-      />
-    </n-card>
-
-    <!-- 添加/编辑资源模态框 -->
-    <n-modal
-        v-model:show="showModal"
-        preset="card"
-        :style="modalStyle"
-        :title="editingResource.id ? '编辑资源' : '添加资源'"
-        @after-leave="resetForm"
-    >
-      <n-form
-          :model="editingResource"
-          :rules="rules"
-          ref="formRef"
-          label-placement="left"
-          :label-width="isMobile ? 60 : 80"
-      >
-        <n-form-item label="资源名称" path="name">
-          <n-input
-              v-model:value="editingResource.name"
-              placeholder="请输入资源名称"
-          />
-        </n-form-item>
-        <n-form-item label="描述" path="description">
-          <n-input
-              v-model:value="editingResource.description"
-              placeholder="请输入资源描述"
-              type="textarea"
-              :autosize="{ minRows: 3, maxRows: 5 }"
-          />
-        </n-form-item>
-        <n-form-item label="标签" path="tag">
-          <n-dynamic-tags
-              v-model:value="resourceTags"
-              placeholder="请输入标签并按回车确认"
-          />
-        </n-form-item>
-      </n-form>
-
-      <template #footer>
-        <n-space justify="end">
-          <n-button @click="showModal = false">取消</n-button>
-          <n-button
-              type="primary"
-              @click="saveResource"
-              :loading="saving"
-          >
-            保存
+        <template #extra>
+          <n-button type="primary" @click="showAddResourceModal">
+            添加资源
           </n-button>
-        </n-space>
-      </template>
-    </n-modal>
+        </template>
+        <template #avatar>
+          <n-avatar>
+            <n-icon>
+              <BookOutline />
+            </n-icon>
+          </n-avatar>
+        </template>
+      </n-page-header>
+
+      <n-card class="mt-6">
+        <n-input
+            v-model:value="searchTerm"
+            placeholder="搜索资源..."
+            clearable
+            class="mb-4"
+        >
+          <template #prefix>
+            <n-icon><SearchOutline /></n-icon>
+          </template>
+        </n-input>
+
+        <n-data-table
+            :columns="columns"
+            :data="filteredResources"
+            :pagination="pagination"
+            :bordered="false"
+            striped
+            :scroll-x="scrollX"
+        />
+      </n-card>
+
+      <!-- 添加/编辑资源模态框 -->
+      <n-modal
+          v-model:show="showModal"
+          preset="card"
+          :style="modalStyle"
+          :title="editingResource.id ? '编辑资源' : '添加资源'"
+          @after-leave="resetForm"
+      >
+        <n-form
+            :model="editingResource"
+            :rules="rules"
+            ref="formRef"
+            label-placement="left"
+            :label-width="isMobile ? 60 : 80"
+        >
+          <n-form-item label="资源名称" path="name">
+            <n-input
+                v-model:value="editingResource.name"
+                placeholder="请输入资源名称"
+            />
+          </n-form-item>
+          <n-form-item label="描述" path="description">
+            <n-input
+                v-model:value="editingResource.description"
+                placeholder="请输入资源描述"
+                type="textarea"
+                :autosize="{ minRows: 3, maxRows: 5 }"
+            />
+          </n-form-item>
+          <n-form-item label="标签" path="tag">
+            <n-dynamic-tags
+                v-model:value="resourceTags"
+                placeholder="请输入标签并按回车确认"
+            />
+          </n-form-item>
+        </n-form>
+
+        <template #footer>
+          <n-space justify="end">
+            <n-button @click="showModal = false">取消</n-button>
+            <n-button
+                type="primary"
+                @click="saveResource"
+                :loading="saving"
+            >
+              保存
+            </n-button>
+          </n-space>
+        </template>
+      </n-modal>
+    </div>
   </div>
 </template>
 

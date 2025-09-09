@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
+  <div class="min-h-screen bg-gray-50 dark:bg-neutral-900 transition-colors duration-300">
     <!-- 主要内容区 -->
     <div class="container mx-auto px-4 max-w-7xl">
       <!-- 头部区域  -->

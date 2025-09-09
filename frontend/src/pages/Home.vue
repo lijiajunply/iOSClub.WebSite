@@ -8,7 +8,7 @@
     <source src="../assets/other/纳新录音.m4a" type="audio/mpeg"/>
   </audio>
 
-  <div @wheel="handleFirstWheel" class="">
+  <div @wheel="handleFirstWheel" class="bg-white dark:bg-neutral-900 min-h-screen transition-colors duration-300">
     <div class="md:min-h-screen">
       <n-grid x-gap="12" cols="8" class="p-10" item-responsive>
         <n-gi span="8 700:3" class="flex items-center justify-center">
@@ -75,7 +75,9 @@
         :class="[
           'transition-opacity duration-300',
           'block min-h-screen',
-          isMobile || percent >= 70 ? 'opacity-100' : ''
+          isMobile || percent >= 70 ? 'opacity-100' : '',
+          'bg-white dark:bg-neutral-900',
+          'text-gray-800 dark:text-gray-100'
         ]"
         :style="{ opacity: !isMobile ? (percent - 30) / 30 : 1 }"
     >
@@ -93,10 +95,10 @@
               target="_blank"
               class="block"
           >
-            <div class="card-hover h-52 bg-gray-100">
+            <div class="card-hover h-52 bg-gray-100 dark:bg-gray-800">
               <div class="text-2xl mb-3">{{ card.icon }}</div>
-              <h3 class="text-lg font-semibold mb-2 text-gray-800">{{ card.title }}</h3>
-              <p class="text-gray-600">{{ card.content }}</p>
+              <h3 class="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-100">{{ card.title }}</h3>
+              <p class="text-gray-600 dark:text-gray-300">{{ card.content }}</p>
             </div>
           </a>
         </n-gi>

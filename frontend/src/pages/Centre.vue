@@ -1,5 +1,5 @@
 让数据中心大大小和社团部门一样大：<template>
-  <div class="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 py-12 px-4">
+  <div class="min-h-screen bg-gray-50 dark:bg-neutral-900 transition-colors duration-300">
     <div class="max-w-7xl mx-auto">
       <!-- 头部区域 -->
       <div class="text-center mb-12">

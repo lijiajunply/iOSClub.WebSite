@@ -1,8 +1,8 @@
 <template>
-  <n-layout class="min-h-screen bg-gray-50">
+  <n-layout class="min-h-screen bg-gray-50 dark:bg-neutral-800 transition-colors duration-300">
     <!-- Header with glassmorphism effect -->
     <n-layout-header
-        class="apple-header"
+        class="apple-header bg-white dark:bg-neutral-900 border-b border-gray-100 dark:border-gray-700"
         :class="{ 'scrolled': isScrolled }"
     >
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -14,7 +14,7 @@
                 alt="iOS Club Logo"
                 class="w-10 h-10 transition-transform group-hover:scale-105"
             />
-            <div class="text-xl font-semibold text-gray-900 hidden sm:block">
+            <div class="text-xl font-semibold text-gray-900 dark:text-gray-100 hidden sm:block">
               XAUAT iOS Club
             </div>
           </router-link>

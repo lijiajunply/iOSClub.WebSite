@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
+  <div class="min-h-screen bg-gray-50 dark:bg-neutral-900 transition-colors duration-300">
     <div class="container mx-auto px-4 max-w-7xl">
       <PageStart
           :title="isMobile ? 'iOS Club 工具' : 'iOS Club 社团工具'"
@@ -18,13 +18,13 @@
             :style="`animation-delay: ${index * 100}ms`"
             :title="link.description"
         >
-          <n-card hoverable class="w-full">
+          <n-card hoverable class="w-full dark:bg-neutral-800 dark:text-gray-100">
             <div class="flex items-center justify-between p-6">
               <div class="flex items-center gap-4">
                 <template v-if="!link.icon.startsWith('http')">
                   <IconFont
                       :type="`#icon-${link.icon}`"
-                      class="text-[28px]"
+                      class="text-[28px] dark:text-gray-100"
                   />
                 </template>
                 <template v-else>
@@ -37,10 +37,7 @@
                   />
                 </template>
 
-                <span
-                    class="text-xl font-semibold text-gray-900 group-hover:text-blue-600 transition-colors duration-300">
-                  {{ link.name }}
-                </span>
+                <span class="text-lg font-semibold dark:text-gray-100">{{ link.name }}</span>
               </div>
               <!-- 移动端隐藏描述文字，仅保留箭头图标 -->
               <span class="text-gray-600 group-hover:text-blue-500 transition-colors duration-300">

@@ -1,44 +1,37 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center p-4">
-    <div class="w-full max-w-md bg-white/80 backdrop-blur-lg rounded-2xl shadow-xl p-8 transition-all duration-300">
+  <div class="min-h-screen bg-gradient-to-br from-slate-100 to-slate-200 dark:from-neutral-900 dark:to-neutral-800 flex items-center justify-center p-4 transition-colors duration-300">
+    <div class="w-full max-w-md bg-white/80 dark:bg-neutral-900/80 backdrop-blur-lg rounded-2xl shadow-xl p-8 transition-all duration-300">
       <div class="text-center mb-8">
-        <h1 class="text-xl md:text-3xl font-semibold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-          登录到 iMember 账号
+        <h1 class="text-xl md:text-3xl font-semibold bg-gradient-to-r from-blue-500 to-indigo-500 bg-clip-text text-transparent">
+          登录 iMember 账号
         </h1>
         <p class="text-gray-500 dark:text-gray-400 mt-2">
-          Sign in to your account
+          Welcome back!
         </p>
       </div>
 
       <n-form :model="form" :rules="rules" ref="formRef">
-        <n-form-item path="email" label="姓名">
+        <n-form-item path="name" label="姓名" class="dark:text-gray-100">
           <n-input
-              v-model:value="form.email"
+              v-model:value="form.name"
               placeholder="请输入您的姓名"
-              class="rounded-lg transition-all duration-300 focus:ring-2 focus:ring-blue-500/50"
+              class="dark:text-gray-100 dark:bg-neutral-800"
           />
         </n-form-item>
 
-        <n-form-item path="password" label="学号">
+        <n-form-item path="studentId" label="学号" class="dark:text-gray-100">
           <n-input
-              v-model:value="form.password"
+              v-model:value="form.studentId"
               placeholder="请输入您的学号"
               @keyup.enter="handleLogin"
-              class="rounded-lg transition-all duration-300 focus:ring-2 focus:ring-blue-500/50"
+              class="dark:text-gray-100 dark:bg-neutral-800"
           />
         </n-form-item>
 
-        <div class="flex items-center justify-between mb-6">
-          <n-checkbox v-model:checked="form.rememberMe">
-            记住我
-          </n-checkbox>
-          <router-link
-              to="/ForgotPassword"
-              class="text-sm text-blue-600 dark:text-purple-400 hover:underline"
-          >
-            忘记密码？
-          </router-link>
-        </div>
+        <n-form-item>
+          <n-checkbox v-model:checked="form.rememberMe" class="dark:text-gray-100">记住我</n-checkbox>
+          <router-link to="/ForgotPassword" class="float-right text-blue-500 dark:text-blue-300">忘记密码?</router-link>
+        </n-form-item>
 
         <button
             @click="handleLogin"

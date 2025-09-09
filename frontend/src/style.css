@@ -7,6 +7,13 @@ html, body {
     background-size: auto;
     background-repeat: no-repeat;
     background-position: initial;
+    background-color: #fff;
+    color: #222;
+}
+
+.dark html, .dark body {
+    background-color: #18181c !important;
+    color: #e5e7eb !important;
 }
 
 h1:focus {

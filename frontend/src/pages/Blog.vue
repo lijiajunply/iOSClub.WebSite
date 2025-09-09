@@ -1,7 +1,7 @@
 <template>
   <meta name="referrer" content="never">
 
-  <div class="min-h-screen bg-gray-50">
+  <div class="min-h-screen bg-gray-50 dark:bg-neutral-900 transition-colors duration-300">
     <!-- 主要内容区 -->
     <div class="container mx-auto px-4 max-w-7xl">
       <!-- 头部区域 -->
@@ -18,13 +18,13 @@
             v-for="(article, index) in rssArticles"
             :key="index"
             hoverable
-            class="group cursor-pointer animate-slide-up"
+            class="group cursor-pointer animate-slide-up dark:bg-neutral-800 dark:text-gray-100"
             :style="`animation-delay: ${index * 100}ms`"
             @click="openArticle(article.url)"
         >
           <!-- 卡片封面（图片区域） -->
           <template #cover>
-            <div class="h-48 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center overflow-hidden">
+            <div class="h-48 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-neutral-900 dark:to-neutral-800 flex items-center justify-center overflow-hidden">
               <template v-if="article.image">
                 <img
                     :src="article.image"
@@ -35,7 +35,7 @@
                 />
               </template>
               <template v-else>
-                <span class="text-gray-500 text-5xl">📰</span>
+                <span class="text-gray-500 dark:text-gray-400 text-5xl">📰</span>
               </template>
             </div>
           </template>

@@ -1,251 +1,253 @@
 <template>
-  <div class="p-6">
-    <n-page-header subtitle="社团部门管理" @back="goBack">
-      <template #title>
-        <div class="text-2xl font-bold">社团部门</div>
-      </template>
-      <template #extra>
-        <div class="flex flex-wrap gap-2">
-          <n-button @click="downloadData">下载文件</n-button>
-          <n-button @click="uploadData">上传Json数据</n-button>
-          <n-button type="primary" @click="openDepartment">添加部门</n-button>
+  <div class="min-h-screen bg-gray-50 dark:bg-neutral-900 transition-colors duration-300">
+    <div class="p-6">
+      <n-page-header subtitle="社团部门管理" @back="goBack">
+        <template #title>
+          <div class="text-2xl font-bold">社团部门</div>
+        </template>
+        <template #extra>
+          <div class="flex flex-wrap gap-2">
+            <n-button @click="downloadData">下载文件</n-button>
+            <n-button @click="uploadData">上传Json数据</n-button>
+            <n-button type="primary" @click="openDepartment">添加部门</n-button>
+          </div>
+        </template>
+        <template #avatar>
+          <n-avatar>
+            <n-icon>
+              <PeopleOutline />
+            </n-icon>
+          </n-avatar>
+        </template>
+      </n-page-header>
+
+      <n-card class="mt-6">
+        <n-tabs type="line" animated>
+          <!-- 总览标签页 -->
+          <n-tab-pane name="总览" tab="总览">
+            <div class="flex justify-between items-center flex-wrap gap-2 mb-4">
+              <h2 class="text-xl font-bold">社长/团支书/秘书长</h2>
+              <n-space>
+                <n-button @click="openAddMember">添加成员</n-button>
+                <n-button type="error" @click="deleteAllMinisters">全部删除</n-button>
+              </n-space>
+            </div>
+
+            <div class="mb-6">
+              <n-space>
+                <n-button
+                    v-for="member in ministers"
+                    :key="member.id"
+                    type="primary"
+                    @click="() => deleteMember(member, ministers)"
+                >
+                  {{ member.name }}
+                </n-button>
+              </n-space>
+            </div>
+
+            <n-divider />
+
+            <div class="flex justify-between items-center flex-wrap gap-2 mb-4">
+              <h2 class="text-xl font-bold">成员</h2>
+              <n-space>
+                <n-statistic label="所有部员" :value="members.length">
+                  <template #prefix>
+                    <n-icon>
+                      <PeopleOutline />
+                    </n-icon>
+                  </template>
+                </n-statistic>
+                <n-button type="primary" @click="downloadMemberInfo">下载部员信息</n-button>
+              </n-space>
+            </div>
+
+            <n-data-table
+                :columns="memberColumns"
+                :data="members"
+                :pagination="pagination"
+                :bordered="false"
+            />
+
+            <n-divider />
+
+            <div class="flex justify-between items-center flex-wrap gap-2 mb-4">
+              <h2 class="text-xl font-bold">项目</h2>
+              <n-button type="primary" @click="addProject">添加</n-button>
+            </div>
+
+            <n-grid :cols="1" :md="2" :lg="3" :x-gap="12" :y-gap="12">
+              <n-grid-item v-for="project in projects" :key="project.id">
+                <n-card hoverable>
+                  <div class="h-48 flex flex-col justify-between">
+                    <div>
+                      <h3 class="text-lg font-bold">{{ project.title }}</h3>
+                      <n-tag v-if="project.department && project.department.name" type="info" class="mt-2">
+                        {{ project.department.name }}
+                      </n-tag>
+                      <p class="text-gray-600 text-sm mt-2">{{ project.description }}</p>
+                    </div>
+                    <div class="flex gap-2 mt-4">
+                      <n-button text>去看看</n-button>
+                      <n-button @click="() => editProject(project)">更改项目</n-button>
+                      <n-button type="error" @click="() => deleteProject(project)">删除</n-button>
+                    </div>
+                  </div>
+                </n-card>
+              </n-grid-item>
+            </n-grid>
+
+            <div v-if="projects.length === 0" class="text-center py-8 text-gray-500">
+              <n-empty description="没有项目" />
+            </div>
+
+            <n-divider />
+
+            <h2 class="text-xl font-bold mb-4">部门分布</h2>
+            <div class="h-64">
+              <n-empty v-if="!departmentData || departmentData.length === 0" description="暂无数据" />
+              <div v-else class="bg-gray-100 rounded p-4 h-full flex items-center justify-center">
+                <p>部门分布图表</p>
+              </div>
+            </div>
+
+            <n-divider />
+
+            <h2 class="text-xl font-bold mb-4">学院分布</h2>
+            <div class="h-64">
+              <n-empty v-if="!collegeData || collegeData.length === 0" description="暂无数据" />
+              <div v-else class="bg-gray-100 rounded p-4 h-full flex items-center justify-center">
+                <p>学院分布图表</p>
+              </div>
+            </div>
+
+            <n-divider />
+
+            <h2 class="text-xl font-bold mb-4">男女比例</h2>
+            <div class="h-64">
+              <n-empty v-if="!genderData || genderData.length === 0" description="暂无数据" />
+              <div v-else class="bg-gray-100 rounded p-4 h-full flex items-center justify-center">
+                <p>男女比例图表</p>
+              </div>
+            </div>
+          </n-tab-pane>
+
+          <!-- 各部门标签页 -->
+          <n-tab-pane
+              v-for="department in departments"
+              :key="department.id"
+              :name="department.name"
+              :tab="department.name"
+          >
+            <div class="flex justify-between items-center flex-wrap gap-2 mb-4">
+              <h2 class="text-xl font-bold">部长/副部长</h2>
+              <n-space>
+                <n-button @click="() => openAddMember(department)">添加成员</n-button>
+                <n-button type="error" @click="() => deleteAll(department.ministers)">全部删除</n-button>
+                <n-button type="primary" @click="() => openDepartment(department)">更改部门</n-button>
+                <n-button type="error" @click="() => deleteDepartment(department)">删除部门</n-button>
+              </n-space>
+            </div>
+
+            <div class="mb-6">
+              <n-space>
+                <n-button
+                    v-for="member in department.ministers"
+                    :key="member.id"
+                    type="primary"
+                    @click="() => deleteMember(member, department.ministers)"
+                >
+                  {{ member.name }}
+                </n-button>
+              </n-space>
+            </div>
+
+            <n-divider />
+
+            <div class="flex justify-between items-center flex-wrap gap-2 mb-4">
+              <h2 class="text-xl font-bold">成员</h2>
+              <n-space>
+                <n-button @click="() => openAddMember(department, 'Department')">添加成员</n-button>
+                <n-button type="error" @click="() => deleteAll(department.ministers)">全部删除</n-button>
+              </n-space>
+            </div>
+
+            <n-data-table
+                :columns="staffColumns"
+                :data="department.members"
+                :pagination="pagination"
+                :bordered="false"
+            />
+
+            <n-divider />
+
+            <div class="flex justify-between items-center flex-wrap gap-2 mb-4">
+              <h2 class="text-xl font-bold">项目</h2>
+              <n-button type="primary" @click="addProject">添加</n-button>
+            </div>
+
+            <n-grid :cols="1" :md="2" :lg="3" :x-gap="12" :y-gap="12">
+              <n-grid-item v-for="project in department.projects" :key="project.id">
+                <n-card hoverable>
+                  <div class="h-48 flex flex-col justify-between">
+                    <div>
+                      <h3 class="text-lg font-bold">{{ project.title }}</h3>
+                      <n-tag v-if="project.department && project.department.name" type="info" class="mt-2">
+                        {{ project.department.name }}
+                      </n-tag>
+                      <p class="text-gray-600 text-sm mt-2">{{ project.description }}</p>
+                    </div>
+                    <div class="flex gap-2 mt-4">
+                      <n-button text>去看看</n-button>
+                      <n-button @click="() => editProject(project)">更改项目</n-button>
+                      <n-button type="error" @click="() => deleteProject(project, department.projects)">删除</n-button>
+                    </div>
+                  </div>
+                </n-card>
+              </n-grid-item>
+            </n-grid>
+
+            <div v-if="!department.projects || department.projects.length === 0" class="text-center py-8 text-gray-500">
+              <n-empty description="没有项目" />
+            </div>
+          </n-tab-pane>
+        </n-tabs>
+      </n-card>
+
+      <!-- 添加成员模态框 -->
+      <n-modal v-model:show="showAddMemberModal" preset="card" style="width: 600px;" title="添加成员">
+        <n-input v-model:value="searchKeyword" placeholder="搜索成员" @keyup.enter="searchMembers" />
+        <n-button class="mt-2" @click="searchMembers">搜索</n-button>
+
+        <n-data-table
+            v-if="searchResults.length > 0"
+            :columns="searchColumns"
+            :data="searchResults"
+            class="mt-4"
+        />
+
+        <div v-else class="text-center py-8 text-gray-500">
+          <n-empty description="请输入关键词搜索成员" />
         </div>
-      </template>
-      <template #avatar>
-        <n-avatar>
-          <n-icon>
-            <PeopleOutline />
-          </n-icon>
-        </n-avatar>
-      </template>
-    </n-page-header>
+      </n-modal>
 
-    <n-card class="mt-6">
-      <n-tabs type="line" animated>
-        <!-- 总览标签页 -->
-        <n-tab-pane name="总览" tab="总览">
-          <div class="flex justify-between items-center flex-wrap gap-2 mb-4">
-            <h2 class="text-xl font-bold">社长/团支书/秘书长</h2>
-            <n-space>
-              <n-button @click="openAddMember">添加成员</n-button>
-              <n-button type="error" @click="deleteAllMinisters">全部删除</n-button>
-            </n-space>
-          </div>
-
-          <div class="mb-6">
-            <n-space>
-              <n-button
-                  v-for="member in ministers"
-                  :key="member.id"
-                  type="primary"
-                  @click="() => deleteMember(member, ministers)"
-              >
-                {{ member.name }}
-              </n-button>
-            </n-space>
-          </div>
-
-          <n-divider />
-
-          <div class="flex justify-between items-center flex-wrap gap-2 mb-4">
-            <h2 class="text-xl font-bold">成员</h2>
-            <n-space>
-              <n-statistic label="所有部员" :value="members.length">
-                <template #prefix>
-                  <n-icon>
-                    <PeopleOutline />
-                  </n-icon>
-                </template>
-              </n-statistic>
-              <n-button type="primary" @click="downloadMemberInfo">下载部员信息</n-button>
-            </n-space>
-          </div>
-
-          <n-data-table
-              :columns="memberColumns"
-              :data="members"
-              :pagination="pagination"
-              :bordered="false"
-          />
-
-          <n-divider />
-
-          <div class="flex justify-between items-center flex-wrap gap-2 mb-4">
-            <h2 class="text-xl font-bold">项目</h2>
-            <n-button type="primary" @click="addProject">添加</n-button>
-          </div>
-
-          <n-grid :cols="1" :md="2" :lg="3" :x-gap="12" :y-gap="12">
-            <n-grid-item v-for="project in projects" :key="project.id">
-              <n-card hoverable>
-                <div class="h-48 flex flex-col justify-between">
-                  <div>
-                    <h3 class="text-lg font-bold">{{ project.title }}</h3>
-                    <n-tag v-if="project.department && project.department.name" type="info" class="mt-2">
-                      {{ project.department.name }}
-                    </n-tag>
-                    <p class="text-gray-600 text-sm mt-2">{{ project.description }}</p>
-                  </div>
-                  <div class="flex gap-2 mt-4">
-                    <n-button text>去看看</n-button>
-                    <n-button @click="() => editProject(project)">更改项目</n-button>
-                    <n-button type="error" @click="() => deleteProject(project)">删除</n-button>
-                  </div>
-                </div>
-              </n-card>
-            </n-grid-item>
-          </n-grid>
-
-          <div v-if="projects.length === 0" class="text-center py-8 text-gray-500">
-            <n-empty description="没有项目" />
-          </div>
-
-          <n-divider />
-
-          <h2 class="text-xl font-bold mb-4">部门分布</h2>
-          <div class="h-64">
-            <n-empty v-if="!departmentData || departmentData.length === 0" description="暂无数据" />
-            <div v-else class="bg-gray-100 rounded p-4 h-full flex items-center justify-center">
-              <p>部门分布图表</p>
-            </div>
-          </div>
-
-          <n-divider />
-
-          <h2 class="text-xl font-bold mb-4">学院分布</h2>
-          <div class="h-64">
-            <n-empty v-if="!collegeData || collegeData.length === 0" description="暂无数据" />
-            <div v-else class="bg-gray-100 rounded p-4 h-full flex items-center justify-center">
-              <p>学院分布图表</p>
-            </div>
-          </div>
-
-          <n-divider />
-
-          <h2 class="text-xl font-bold mb-4">男女比例</h2>
-          <div class="h-64">
-            <n-empty v-if="!genderData || genderData.length === 0" description="暂无数据" />
-            <div v-else class="bg-gray-100 rounded p-4 h-full flex items-center justify-center">
-              <p>男女比例图表</p>
-            </div>
-          </div>
-        </n-tab-pane>
-
-        <!-- 各部门标签页 -->
-        <n-tab-pane
-            v-for="department in departments"
-            :key="department.id"
-            :name="department.name"
-            :tab="department.name"
-        >
-          <div class="flex justify-between items-center flex-wrap gap-2 mb-4">
-            <h2 class="text-xl font-bold">部长/副部长</h2>
-            <n-space>
-              <n-button @click="() => openAddMember(department)">添加成员</n-button>
-              <n-button type="error" @click="() => deleteAll(department.ministers)">全部删除</n-button>
-              <n-button type="primary" @click="() => openDepartment(department)">更改部门</n-button>
-              <n-button type="error" @click="() => deleteDepartment(department)">删除部门</n-button>
-            </n-space>
-          </div>
-
-          <div class="mb-6">
-            <n-space>
-              <n-button
-                  v-for="member in department.ministers"
-                  :key="member.id"
-                  type="primary"
-                  @click="() => deleteMember(member, department.ministers)"
-              >
-                {{ member.name }}
-              </n-button>
-            </n-space>
-          </div>
-
-          <n-divider />
-
-          <div class="flex justify-between items-center flex-wrap gap-2 mb-4">
-            <h2 class="text-xl font-bold">成员</h2>
-            <n-space>
-              <n-button @click="() => openAddMember(department, 'Department')">添加成员</n-button>
-              <n-button type="error" @click="() => deleteAll(department.ministers)">全部删除</n-button>
-            </n-space>
-          </div>
-
-          <n-data-table
-              :columns="staffColumns"
-              :data="department.members"
-              :pagination="pagination"
-              :bordered="false"
-          />
-
-          <n-divider />
-
-          <div class="flex justify-between items-center flex-wrap gap-2 mb-4">
-            <h2 class="text-xl font-bold">项目</h2>
-            <n-button type="primary" @click="addProject">添加</n-button>
-          </div>
-
-          <n-grid :cols="1" :md="2" :lg="3" :x-gap="12" :y-gap="12">
-            <n-grid-item v-for="project in department.projects" :key="project.id">
-              <n-card hoverable>
-                <div class="h-48 flex flex-col justify-between">
-                  <div>
-                    <h3 class="text-lg font-bold">{{ project.title }}</h3>
-                    <n-tag v-if="project.department && project.department.name" type="info" class="mt-2">
-                      {{ project.department.name }}
-                    </n-tag>
-                    <p class="text-gray-600 text-sm mt-2">{{ project.description }}</p>
-                  </div>
-                  <div class="flex gap-2 mt-4">
-                    <n-button text>去看看</n-button>
-                    <n-button @click="() => editProject(project)">更改项目</n-button>
-                    <n-button type="error" @click="() => deleteProject(project, department.projects)">删除</n-button>
-                  </div>
-                </div>
-              </n-card>
-            </n-grid-item>
-          </n-grid>
-
-          <div v-if="!department.projects || department.projects.length === 0" class="text-center py-8 text-gray-500">
-            <n-empty description="没有项目" />
-          </div>
-        </n-tab-pane>
-      </n-tabs>
-    </n-card>
-
-    <!-- 添加成员模态框 -->
-    <n-modal v-model:show="showAddMemberModal" preset="card" style="width: 600px;" title="添加成员">
-      <n-input v-model:value="searchKeyword" placeholder="搜索成员" @keyup.enter="searchMembers" />
-      <n-button class="mt-2" @click="searchMembers">搜索</n-button>
-
-      <n-data-table
-          v-if="searchResults.length > 0"
-          :columns="searchColumns"
-          :data="searchResults"
-          class="mt-4"
-      />
-
-      <div v-else class="text-center py-8 text-gray-500">
-        <n-empty description="请输入关键词搜索成员" />
-      </div>
-    </n-modal>
-
-    <!-- 添加或更改部门模态框 -->
-    <n-modal v-model:show="showDepartmentModal" preset="card" style="width: 600px;" :title="editingDepartment ? '更改部门' : '添加部门'">
-      <n-form :model="departmentForm" :rules="departmentRules" ref="departmentFormRef">
-        <n-form-item label="部门名称" path="name">
-          <n-input v-model:value="departmentForm.name" placeholder="请输入部门名称" />
-        </n-form-item>
-        <n-form-item label="部门简介" path="description">
-          <n-input v-model:value="departmentForm.description" placeholder="请输入部门简介" type="textarea" />
-        </n-form-item>
-        <n-form-item>
-          <n-button type="primary" @click="saveDepartment" block>
-            {{ editingDepartment ? '更改' : '添加' }}
-          </n-button>
-        </n-form-item>
-      </n-form>
-    </n-modal>
+      <!-- 添加或更改部门模态框 -->
+      <n-modal v-model:show="showDepartmentModal" preset="card" style="width: 600px;" :title="editingDepartment ? '更改部门' : '添加部门'">
+        <n-form :model="departmentForm" :rules="departmentRules" ref="departmentFormRef">
+          <n-form-item label="部门名称" path="name">
+            <n-input v-model:value="departmentForm.name" placeholder="请输入部门名称" />
+          </n-form-item>
+          <n-form-item label="部门简介" path="description">
+            <n-input v-model:value="departmentForm.description" placeholder="请输入部门简介" type="textarea" />
+          </n-form-item>
+          <n-form-item>
+            <n-button type="primary" @click="saveDepartment" block>
+              {{ editingDepartment ? '更改' : '添加' }}
+            </n-button>
+          </n-form-item>
+        </n-form>
+      </n-modal>
+    </div>
   </div>
 </template>
 
