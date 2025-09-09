@@ -1,62 +1,113 @@
 <template>
-  <div class="article-page">
-    <n-card hoverable class="article-card">
-      <div class="article-header">
-        <h1 class="article-title">{{ roomArticle.title }}</h1>
-        <div class="article-meta">
-          <n-space align="center" size="large">
-            <n-icon size="16">
-              <CalendarOutline />
-            </n-icon>
-            <span class="article-date">{{ formatDate(roomArticle.date) }}</span>
-            <n-icon size="16">
-              <EyeOutline />
-            </n-icon>
-            <span class="article-watch">浏览: {{ roomArticle.watch }}</span>
-          </n-space>
-        </div>
-
-        <!-- 管理员操作按钮 -->
-        <div class="article-actions">
-          <n-space>
-            <n-button type="primary" @click="editArticle">
-              <template #icon>
-                <n-icon>
-                  <CreateOutline />
-                </n-icon>
-              </template>
-              编辑
-            </n-button>
-            <n-button type="error" @click="deleteArticle">
-              <template #icon>
-                <n-icon>
-                  <TrashOutline />
-                </n-icon>
-              </template>
-              删除
-            </n-button>
-          </n-space>
-        </div>
+  <div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">社团文章</h1>
+        <p class="text-gray-600">管理社团的所有文章</p>
       </div>
 
-      <n-divider />
+      <!-- 文章列表 -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <n-card
+            v-for="article in articles"
+            :key="article.path"
+            hoverable
+            class="group cursor-pointer rounded-xl transition-all duration-300 hover:shadow-lg"
+            @click="editArticle(article)"
+        >
+          <div class="flex flex-col h-full">
+            <div class="flex-1">
+              <h3 class="text-lg font-semibold text-gray-900 mb-2 group-hover:text-purple-600 transition-colors">
+                {{ article.title }}
+              </h3>
+              <p class="text-sm text-gray-500 mb-4">
+                更新时间: {{ formatDate(article.lastWriteTime) }}
+              </p>
+            </div>
 
-      <div class="article-content">
-        <MarkdownComponent :content="roomArticle.content"/>
+            <!-- 管理员操作按钮 -->
+            <div class="flex justify-end space-x-2 mt-4">
+              <n-button
+                  type="primary"
+                  size="small"
+                  @click.stop="editArticle(article)"
+              >
+                编辑
+              </n-button>
+              <n-button
+                  type="error"
+                  size="small"
+                  @click.stop="deleteArticle(article)"
+              >
+                删除
+              </n-button>
+            </div>
+          </div>
+        </n-card>
+
+        <!-- 空状态 -->
+        <n-empty
+            v-if="articles.length === 0 && !loading"
+            class="col-span-full py-12"
+            description="暂无文章"
+        />
       </div>
-    </n-card>
 
-    <!-- 编辑文章对话框 -->
-    <n-modal v-model:show="showEditModal" preset="card" style="width: 800px; max-width: 95vw;" title="编辑文章">
-      <n-form :model="editForm" ref="formRef">
-        <n-form-item label="标题" path="title">
-          <n-input v-model:value="editForm.title" placeholder="请输入文章标题" />
+      <!-- 添加文章按钮 -->
+      <n-button
+          type="primary"
+          class="fixed bottom-8 right-8 rounded-full w-14 h-14 text-xl shadow-lg"
+          @click="openCreateModal"
+      >
+        +
+      </n-button>
+
+      <!-- 加载状态 -->
+      <div v-if="loading" class="flex justify-center items-center h-64">
+        <n-spin size="large" />
+      </div>
+    </div>
+
+    <!-- 编辑/创建文章对话框 -->
+    <n-modal
+        v-model:show="showEditModal"
+        preset="card"
+        style="width: 800px; max-width: 95vw;"
+        :title="editingArticle ? '编辑文章' : '新建文章'"
+        @close="handleModalClose"
+    >
+      <n-form :model="editForm" ref="formRef" :rules="rules">
+        <n-form-item label="文章路径 (Path)" path="path">
+          <n-input
+              v-model:value="editForm.path"
+              :disabled="!!editingArticle"
+              placeholder="请输入文章路径，如：About"
+          />
+          <p class="text-xs text-gray-500 mt-1">路径将作为文章的唯一标识，创建后不可修改</p>
         </n-form-item>
-        <n-form-item label="内容" path="content">
-          <n-input v-model:value="editForm.content" type="textarea" :autosize="{ minRows: 10 }" placeholder="请输入文章内容（支持Markdown语法）" />
+
+        <n-form-item label="文章标题" path="title">
+          <n-input
+              v-model:value="editForm.title"
+              placeholder="请输入文章标题"
+          />
         </n-form-item>
-        <n-form-item label="权限" path="identity">
-          <n-select v-model:value="editForm.identity" :options="identityOptions" placeholder="请选择可查看权限" />
+
+        <n-form-item label="访问权限" path="identity">
+          <n-select
+              v-model:value="editForm.identity"
+              :options="identityOptions"
+              placeholder="请选择可查看权限"
+          />
+        </n-form-item>
+
+        <n-form-item label="文章内容" path="content">
+          <n-input
+              v-model:value="editForm.content"
+              type="textarea"
+              :autosize="{ minRows: 15 }"
+              placeholder="请输入文章内容（支持Markdown语法）"
+          />
         </n-form-item>
       </n-form>
       <template #footer>
@@ -70,56 +121,48 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { ref, onMounted } from 'vue'
 import {
   NCard,
-  NSpace,
-  NIcon,
-  NDivider,
   NButton,
+  NEmpty,
+  NSpin,
   NModal,
   NForm,
   NFormItem,
   NInput,
   NSelect,
-  useMessage
+  NSpace,
+  useMessage,
+  useDialog
 } from 'naive-ui'
-import {
-  CalendarOutline,
-  EyeOutline,
-  CreateOutline,
-  TrashOutline
-} from '@vicons/ionicons5'
-import MarkdownComponent from "../components/MarkdownComponent.vue"
 import { type ArticleModel, type ArticleProps, ArticleService } from "../services/ArticleService.ts"
-import { useAuthorizationStore } from '../stores/Authorization'
 
-const roomArticle = ref<ArticleProps>({
-  title: '',
-  date: '',
-  watch: 0,
-  content: '',
-})
-
-const route = useRoute()
-const router = useRouter()
 const message = useMessage()
-const authorizationStore = useAuthorizationStore()
+const dialog = useDialog()
 
-// 用户信息
-const userInfo = ref({
-  isAdmin: false
-})
-
-// 编辑表单相关
+const articles = ref<ArticleProps[]>([])
+const loading = ref(true)
 const showEditModal = ref(false)
+const editingArticle = ref<ArticleModel | null>(null)
 const saving = ref(false)
 const formRef = ref()
-const editForm = ref({
+
+// 为编辑表单定义明确的类型
+interface EditFormType {
+  path: string
+  title: string
+  content: string
+  identity: 'Member' | 'Department' | 'Minister' | 'President' | 'Founder'
+  lastWriteTime: string
+}
+
+const editForm = ref<EditFormType>({
+  path: '',
   title: '',
   content: '',
-  identity: 'Member'
+  identity: 'Member',
+  lastWriteTime: new Date().toISOString()
 })
 
 const identityOptions = [
@@ -130,295 +173,164 @@ const identityOptions = [
   { label: '创始人', value: 'Founder' }
 ]
 
-// 获取用户信息
-const fetchUserInfo = async () => {
-  try {
-    const token = localStorage.getItem('Authorization');
-    if (!token) {
-      userInfo.value.isAdmin = false;
-      return;
-    }
+// 根据权限值获取显示标签
+const getIdentityLabel = (identity: string) => {
+  const option = identityOptions.find(item => item.value === identity)
+  return option ? option.label : '未知'
+}
 
-    const response = await fetch('https://www.xauat.site/api/Member/GetData', {
-      method: 'GET',
-      headers: {
-        'Authorization': 'Bearer ' + token,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    if (response.ok) {
-      const userData = await response.json();
-      userInfo.value.isAdmin = ['Founder', 'President', 'Minister'].includes(userData.identity);
-    } else {
-      userInfo.value.isAdmin = false;
-    }
-  } catch (error) {
-    console.error('获取用户信息失败:', error);
-    userInfo.value.isAdmin = false;
+const rules = {
+  path: {
+    required: true,
+    message: '请输入文章路径',
+    trigger: 'blur'
+  },
+  title: {
+    required: true,
+    message: '请输入文章标题',
+    trigger: 'blur'
+  },
+  content: {
+    required: true,
+    message: '请输入文章内容',
+    trigger: 'blur'
   }
 }
 
-watch(
-    () => route.params.id,
-    async (newId) => {
-      if (typeof newId !== 'string') return
-      try {
-        const a = await ArticleService.getArticle(newId)
-        roomArticle.value = {
-          title: a.title,
-          date: a.lastWriteTime,
-          watch: a.watch,
-          content: a.content
-        } as ArticleProps
-
-        // 同时获取用户信息
-        await fetchUserInfo()
-      } catch (error) {
-        console.error('获取文章失败:', error)
-        message.error('获取文章失败')
-      }
-    },
-    { immediate: true }
-)
-
+// 格式化日期
 const formatDate = (dateString: string) => {
-  if (!dateString) return ''
-  const date = new Date(dateString)
-  return date.toLocaleDateString('zh-CN', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  })
+  if (!dateString) return '未设置'
+  try {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('zh-CN', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })
+  } catch (error) {
+    console.error('日期格式化失败:', error)
+    return dateString
+  }
+}
+
+// 获取所有文章
+const fetchArticles = async () => {
+  try {
+    loading.value = true
+    const data = await ArticleService.getArticles()
+    articles.value = Array.isArray(data) ? data : []
+  } catch (error) {
+    console.error('获取文章列表失败:', error)
+    message.error('获取文章列表失败: ' + (error instanceof Error ? error.message : String(error)))
+  } finally {
+    loading.value = false
+  }
+}
+
+// 打开创建文章模态框
+const openCreateModal = () => {
+  editingArticle.value = null
+  // 重置表单
+  editForm.value = {
+    path: '',
+    title: '',
+    content: '',
+    identity: 'Member',
+    lastWriteTime: new Date().toISOString()
+  }
+  // 重置表单验证状态
+  formRef.value?.resetValidation()
+  showEditModal.value = true
 }
 
 // 编辑文章
-const editArticle = () => {
-  const articleId = route.params.id as string
+const editArticle = (article: ArticleModel) => {
+  editingArticle.value = article
   editForm.value = {
-    title: roomArticle.value.title,
-    content: roomArticle.value.content,
-    identity: 'Member' // 默认值，实际应该从后端获取
+    path: article.path,
+    title: article.title,
+    content: article.content,
+    identity: (article.identity as EditFormType['identity']) || 'Member',
+    lastWriteTime: article.lastWriteTime || new Date().toISOString()
   }
   showEditModal.value = true
 }
 
+// 处理模态框关闭
+const handleModalClose = () => {
+  formRef.value?.resetValidation()
+}
+
+// 删除文章
+const deleteArticle = (article: ArticleModel) => {
+  dialog.warning({
+    title: '确认删除',
+    content: `确定要删除文章"${article.title}"吗？此操作不可恢复。`,
+    positiveText: '确定',
+    negativeText: '取消',
+    onPositiveClick: async () => {
+      try {
+        // 调用删除API
+        await ArticleService.deleteArticle(article.path)
+        message.success('文章删除成功')
+        // 重新获取文章列表
+        await fetchArticles()
+      } catch (error) {
+        console.error('删除文章失败:', error)
+        message.error('删除文章失败: ' + (error instanceof Error ? error.message : String(error)))
+      }
+    }
+  })
+}
+
 // 保存文章
 const saveArticle = async () => {
+  const valid = await formRef.value?.validate()
+  if (!valid) {
+    message.error('请填写必填字段并修正错误')
+    return
+  }
+
   try {
     saving.value = true
-    const articleId = route.params.id as string
-    const updatedArticle = {
-      ...editForm.value,
-      path: articleId,
-      lastWriteTime: new Date().toISOString()
+    if (editingArticle.value) {
+      // 更新文章 - 更新时间戳
+      const updatedForm = {
+        ...editForm.value,
+        lastWriteTime: new Date().toISOString()
+      }
+      await ArticleService.updateArticle(editForm.value.path, updatedForm)
+      message.success('文章更新成功')
+    } else {
+      // 创建新文章
+      const newArticle = {
+        ...editForm.value,
+        lastWriteTime: new Date().toISOString()
+      }
+      await ArticleService.createArticle(newArticle)
+      message.success('文章创建成功')
     }
-
-    await ArticleService.updateArticle(articleId, updatedArticle)
-    message.success('文章更新成功')
-
-    // 更新页面显示
-    roomArticle.value.title = editForm.value.title
-    roomArticle.value.content = editForm.value.content
-
     showEditModal.value = false
+    // 重新获取文章列表
+    await fetchArticles()
   } catch (error) {
-    console.error('更新文章失败:', error)
-    message.error('更新文章失败')
+    console.error('保存文章失败:', error)
+    message.error('保存文章失败: ' + (error instanceof Error ? error.message : String(error)))
   } finally {
     saving.value = false
   }
 }
 
-// 删除文章
-const deleteArticle = () => {
-  const articleId = route.params.id as string
-  window.$dialog.warning({
-    title: '确认删除',
-    content: '确定要删除这篇文章吗？此操作不可恢复。',
-    positiveText: '确定',
-    negativeText: '取消',
-    onPositiveClick: async () => {
-      try {
-        await ArticleService.deleteArticle(articleId)
-        message.success('文章删除成功')
-        // 跳转到文章列表页或其他页面
-        router.push('/Blog')
-      } catch (error) {
-        console.error('删除文章失败:', error)
-        message.error('删除文章失败')
-      }
-    }
-  })
-}
+onMounted(() => {
+  fetchArticles()
+})
 </script>
 
 <style scoped>
-.article-page {
-  max-width: 900px;
-  margin: 20px auto;
-  padding: 0 20px;
-}
-
-.article-card {
-  border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.article-header {
-  padding: 20px 0;
-}
-
-.article-title {
-  font-size: 2rem;
-  font-weight: 600;
-  margin-bottom: 16px;
-  color: #1c1f23;
-  line-height: 1.3;
-}
-
-.article-meta {
-  display: flex;
-  align-items: center;
-  font-size: 0.95rem;
-  color: #666;
-}
-
-.article-actions {
-  margin-top: 20px;
-}
-
-.article-content {
-  line-height: 1.7;
-  padding: 10px 0;
-}
-
-.article-content :deep(img) {
-  max-width: 100%;
-  height: auto;
-  border-radius: 8px;
-  margin: 16px 0;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-}
-
-.article-content :deep(h1) {
-  font-size: 1.8rem;
-  margin: 1.8rem 0 1.2rem;
-  color: #1c1f23;
-  font-weight: 600;
-}
-
-.article-content :deep(h2) {
-  font-size: 1.5rem;
-  margin: 1.6rem 0 1rem;
-  color: #1c1f23;
-  font-weight: 600;
-}
-
-.article-content :deep(h3) {
-  font-size: 1.3rem;
-  margin: 1.4rem 0 0.8rem;
-  color: #1c1f23;
-  font-weight: 600;
-}
-
-.article-content :deep(p) {
-  margin-bottom: 1.2rem;
-  font-size: 1rem;
-  color: #333;
-}
-
-.article-content :deep(code) {
-  background-color: #f6f7f9;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
-  font-size: 0.9em;
-  color: #d6336c;
-}
-
-.article-content :deep(pre) {
-  background-color: #f6f7f9;
-  padding: 16px;
-  border-radius: 8px;
-  overflow-x: auto;
-  margin: 20px 0;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.article-content :deep(pre code) {
-  background: none;
-  padding: 0;
-  color: inherit;
-  font-size: 0.9em;
-}
-
-.article-content :deep(blockquote) {
-  border-left: 4px solid #dee2e6;
-  padding: 8px 0 8px 20px;
-  margin: 20px 0;
-  background-color: #f8f9fa;
-  border-radius: 0 4px 4px 0;
-}
-
-.article-content :deep(blockquote p) {
-  margin-bottom: 0;
-}
-
-.article-content :deep(ul),
-.article-content :deep(ol) {
-  margin: 1.2rem 0;
-  padding-left: 2rem;
-}
-
-.article-content :deep(li) {
-  margin-bottom: 0.6rem;
-}
-
-.article-content :deep(table) {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 1.5rem 0;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.article-content :deep(th),
-.article-content :deep(td) {
-  border: 1px solid #dee2e6;
-  padding: 12px;
-  text-align: left;
-}
-
-.article-content :deep(th) {
-  background-color: #f1f3f5;
-  font-weight: 600;
-}
-
-.article-content :deep(tr:nth-child(even)) {
-  background-color: #f8f9fa;
-}
-
-@media (max-width: 768px) {
-  .article-page {
-    padding: 0 12px;
-  }
-
-  .article-title {
-    font-size: 1.6rem;
-  }
-
-  .article-content :deep(h1) {
-    font-size: 1.5rem;
-  }
-
-  .article-content :deep(h2) {
-    font-size: 1.3rem;
-  }
-
-  .article-content :deep(h3) {
-    font-size: 1.1rem;
-  }
+.fixed-button {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 10;
 }
 </style>

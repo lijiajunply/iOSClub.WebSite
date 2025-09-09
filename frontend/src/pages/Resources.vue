@@ -36,6 +36,7 @@
           :pagination="pagination"
           :bordered="false"
           striped
+          :scroll-x="scrollX"
       />
     </n-card>
 
@@ -43,7 +44,7 @@
     <n-modal
         v-model:show="showModal"
         preset="card"
-        style="width: 600px;"
+        :style="modalStyle"
         :title="editingResource.id ? '编辑资源' : '添加资源'"
         @after-leave="resetForm"
     >
@@ -52,7 +53,7 @@
           :rules="rules"
           ref="formRef"
           label-placement="left"
-          label-width="80"
+          :label-width="isMobile ? 60 : 80"
       >
         <n-form-item label="资源名称" path="name">
           <n-input
@@ -93,7 +94,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, h } from 'vue'
+import { ref, computed, onMounted, watch, h, onMounted as onMountedVue } from 'vue'
 import { useRouter } from 'vue-router'
 import { useMessage } from 'naive-ui'
 import {
@@ -131,6 +132,8 @@ const showModal = ref(false)
 const searchTerm = ref('')
 const formRef = ref()
 const saving = ref(false)
+const isMobile = ref(false)
+const scrollX = ref(900)
 
 const editingResource = ref<Resource>({
   id: '',
@@ -140,6 +143,35 @@ const editingResource = ref<Resource>({
 })
 
 const resourceTags = ref<string[]>([])
+
+// 检测是否为移动设备
+const checkIsMobile = () => {
+  isMobile.value = window.innerWidth < 768
+  if (isMobile.value) {
+    scrollX.value = 600
+  } else {
+    scrollX.value = 900
+  }
+}
+
+// 监听窗口大小变化
+onMountedVue(() => {
+  checkIsMobile()
+  window.addEventListener('resize', checkIsMobile)
+})
+
+// 计算模态框样式
+const modalStyle = computed(() => {
+  if (isMobile.value) {
+    return {
+      width: '90%',
+      maxWidth: '90vw'
+    }
+  }
+  return {
+    width: '600px'
+  }
+})
 
 // 监听编辑资源的标签变化
 watch(() => editingResource.value.tag, (newTag) => {
@@ -182,18 +214,21 @@ const columns: DataTableColumns<Resource> = [
   {
     title: '资源名称',
     key: 'name',
-    width: 200
+    width: 150,
+    ellipsis: true
   },
   {
     title: '描述',
     key: 'description',
-    width: 300,
+    width: 200,
+    ellipsis: true,
     render: (row) => row.description || '无描述'
   },
   {
     title: '标签',
     key: 'tag',
-    width: 200,
+    width: 150,
+    ellipsis: true,
     render: (row) => {
       if (!row.tag) return '无标签'
       const tags = row.tag.split(',').map(t => t.trim()).filter(t => t.length > 0)
@@ -209,35 +244,36 @@ const columns: DataTableColumns<Resource> = [
   {
     title: '操作',
     key: 'actions',
-    width: 200,
+    width: 150,
     render: (row) => {
       return h('n-space', { justify: 'center' }, [
         h(
             NButton,
             {
               type: 'primary',
-              size: 'small',
-              onClick: () => editResource(row)
+              size: isMobile.value ? 'tiny' : 'small',
+              onClick: () => editResource(row),
+              style: { marginRight: '4px' }
             },
-            { default: () => '编辑' }
+            { default: () => isMobile.value ? '编辑' : '编辑' }
         ),
         h(
             NButton,
             {
               type: 'error',
-              size: 'small',
+              size: isMobile.value ? 'tiny' : 'small',
               onClick: () => deleteResource(row)
             },
-            { default: () => '删除' }
+            { default: () => isMobile.value ? '删除' : '删除' }
         )
       ])
     }
   }
 ]
 
-const pagination = {
-  pageSize: 10
-}
+const pagination = computed(() => ({
+  pageSize: isMobile.value ? 5 : 10
+}))
 
 // 导航方法
 const goBack = () => {
@@ -384,5 +420,29 @@ onMounted(() => {
 
 .n-card:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .p-6 {
+    padding: 1rem;
+  }
+
+  .n-page-header {
+    padding: 0;
+  }
+
+  .n-card {
+    padding: 1rem;
+  }
+
+  :deep(.n-data-table__pagination) {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  :deep(.n-pagination) {
+    justify-content: center;
+  }
 }
 </style>

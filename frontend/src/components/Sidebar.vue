@@ -12,7 +12,7 @@
 
     <nav class="sidebar-nav">
       <ul>
-        <li v-for="item in menuItems" :key="item.name" class="sidebar-item">
+        <li v-for="item in filteredMenuItems" :key="item.name" class="sidebar-item">
           <router-link
               :to="item.path"
               class="sidebar-link"
@@ -36,6 +36,7 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthorizationStore } from '../stores/Authorization'
 
@@ -43,15 +44,59 @@ const router = useRouter()
 const route = useRoute()
 const authorizationStore = useAuthorizationStore()
 
+// 解析JWT token获取用户身份
+const getUserRole = () => {
+  const token = authorizationStore.getAuthorization
+  if (!token) return null
+
+  try {
+    const payload = token.split('.')[1]
+    const decodedPayload = atob(payload)
+    const userInfo = JSON.parse(decodedPayload)
+    // JWT中角色信息的键是"http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+    // 而不是简单的"role"
+    return userInfo['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] ||
+        userInfo.role ||
+        null
+  } catch (e) {
+    console.error('解析token失败:', e)
+    return null
+  }
+}
+
 const menuItems = [
   { name: '主页', path: '/Centre', icon: '🏠' },
   { name: '个人数据', path: '/Centre/PersonalData', icon: '👤' },
-  { name: '社团部门', path: '/Centre/Department', icon: '🏢' },
-  { name: '社团资源', path: '/Centre/Resources', icon: '📚' },
-  { name: '社团文章', path: '/Centre/Article', icon: '📊' },
-  { name: '成员数据', path: '/Centre/MemberData', icon: '👥' },
-  { name: '其他数据', path: '/Centre/Admin', icon: '🚀' }
+  { name: '社团部门', path: '/Centre/Department', icon: '🏢', requiresRole: 'Minister' },
+  { name: '社团资源', path: '/Centre/Resources', icon: '📚', requiresRole: 'Minister' },
+  { name: '社团文章', path: '/Centre/Article', icon: '📊', requiresRole: 'Minister' },
+  { name: '成员数据', path: '/Centre/MemberData', icon: '👥', requiresRole: 'Minister' },
+  { name: '其他数据', path: '/Centre/Admin', icon: '🚀', requiresRole: 'Minister' }
 ]
+
+// 根据用户角色过滤菜单项
+const filteredMenuItems = computed(() => {
+  const userRole = getUserRole()
+  if (!userRole) return menuItems.filter(item => !item.requiresRole)
+
+  // 定义角色层级
+  const roleHierarchy = {
+    'Member': 1,
+    'Department': 2,
+    'Minister': 3,
+    'President': 4,
+    'Founder': 5
+  }
+
+  const userRoleLevel = roleHierarchy[userRole] || 0
+
+  return menuItems.filter(item => {
+    if (!item.requiresRole) return true
+
+    const requiredRoleLevel = roleHierarchy[item.requiresRole] || 0
+    return userRoleLevel >= requiredRoleLevel
+  })
+})
 
 const logout = () => {
   authorizationStore.logout()
