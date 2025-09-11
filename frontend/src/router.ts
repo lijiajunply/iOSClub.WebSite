@@ -64,11 +64,35 @@ const routes = [
                 component: () => import('./pages/Blog.vue'),
             },
             {
-                path: 'Centre',
-                name: 'Centre',
-                meta: {title: "您的iMember中心 - 西建大 iOS Club", requiresAuth: true},
-                component: () => import('./pages/Centre.vue'),
-            }
+                path: '/',
+                component: () => import('./layouts/WordLayout.vue'),
+                children: [
+                    {
+                        path: 'article/:id',
+                        component: () => import('./pages/Article.vue'),
+                    },
+                    {
+                        path: 'About',
+                        name: 'About',
+                        meta: {title: "关于我们 - 西建大 iOS Club"},
+                        component: () => import('./pages/Articles/About.vue'),
+                    },
+                    {
+                        path: 'OtherOrg',
+                        name: 'OtherOrg',
+                        component: () => import('./pages/Articles/OtherOrg.vue'),
+                        meta: {
+                            title: '其他组织 - 西建大iOS Club'
+                        }
+                    },
+                    {
+                        path: 'Structure',
+                        name: 'Structure',
+                        meta: {title: "社团结构 - 西建大 iOS Club"},
+                        component: () => import('./pages/Articles/Structure.vue'),
+                    }
+                ]
+            },
         ]
     },
     {
@@ -77,34 +101,40 @@ const routes = [
         meta: {requiresAuth: true},
         children: [
             {
+                path: '',
+                name: 'Centre',
+                meta: {title: "您的iMember中心 - 西建大 iOS Club", requiresAuth: true},
+                component: () => import('./adminPages/Centre.vue'),
+            },
+            {
                 path: 'PersonalData',
                 name: 'PersonalData',
                 meta: {title: "个人数据 - 西建大 iOS Club"},
-                component: () => import('./pages/PersonalData.vue'),
+                component: () => import('./adminPages/PersonalData.vue'),
             },
             {
                 path: 'MemberData',
                 name: 'MemberData',
                 meta: {title: "成员数据 - 西建大 iOS Club"},
-                component: () => import('./pages/MemberData.vue'),
+                component: () => import('./adminPages/MemberData.vue'),
             },
             {
                 path: 'Department',
                 name: 'Department',
                 meta: {title: "部门管理 - 西建大 iOS Club"},
-                component: () => import('./pages/Department.vue'),
+                component: () => import('./adminPages/Department.vue'),
             },
             {
                 path: 'Projects',
                 name: 'ProjectsData',
                 meta: {title: "项目管理 - 西建大 iOS Club"},
-                component: () => import('./pages/ProjectsData.vue'),
+                component: () => import('./adminPages/ProjectsData.vue'),
             },
             {
                 path: 'Resources',
                 name: 'Resources',
                 meta: {title: "资源管理 - 西建大 iOS Club"},
-                component: () => import('./pages/Resources.vue'),
+                component: () => import('./adminPages/Resources.vue'),
             },
             {
                 path: 'Admin',
@@ -116,7 +146,7 @@ const routes = [
                 path: 'Article',
                 name: 'Article',
                 meta: {title: "社团文章 - 西建大 iOS Club"},
-                component: () => import('./pages/CenterArticle.vue'),
+                component: () => import('./adminPages/CenterArticle.vue'),
             }
         ]
     }

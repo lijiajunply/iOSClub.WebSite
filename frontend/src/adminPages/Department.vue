@@ -254,7 +254,7 @@
 <script setup>
 import { ref, onMounted, h } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAuthorizationStore } from '../stores/Authorization'
+import { useAuthorizationStore } from '../stores/Authorization.js'
 import {
   NPageHeader,
   NCard,

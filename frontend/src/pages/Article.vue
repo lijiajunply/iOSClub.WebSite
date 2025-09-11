@@ -1,7 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-neutral-900 transition-colors duration-300">
-    <MarkdownComponent :content="roomArticle"/>
-  </div>
+  <MarkdownComponent :content="roomArticle"/>
 </template>
 
 <script setup lang="ts">

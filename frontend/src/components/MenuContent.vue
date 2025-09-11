@@ -153,6 +153,10 @@ const handleSelect = (key) => {
   font-weight: 500;
 }
 
+.dark .apple-menu .n-menu-item {
+  background: transparent !important;
+}
+
 .apple-menu .n-menu-item.n-menu-item--selected::before {
   display: none;
 }

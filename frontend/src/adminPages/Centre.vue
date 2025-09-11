@@ -223,10 +223,10 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { NCard, NList, NListItem, NTag, NButton, NEmpty } from 'naive-ui'
-import { useAuthorizationStore } from '../stores/Authorization'
-import '../lib/iconfont' // 导入图标库
+import { useAuthorizationStore } from '../stores/Authorization.js'
+import '../lib/iconfont.js' // 导入图标库
 import IconFont from '../components/IconFont.vue'
-import { ToolService } from '../services/ToolService.js'
+import { ToolService } from '../services/ToolService.ts'
 
 const router = useRouter()
 const authorizationStore = useAuthorizationStore()

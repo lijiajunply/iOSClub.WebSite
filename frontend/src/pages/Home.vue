@@ -8,7 +8,7 @@
     <source src="../assets/other/纳新录音.m4a" type="audio/mpeg"/>
   </audio>
 
-  <div @wheel="handleFirstWheel" class="bg-white dark:bg-neutral-900 min-h-screen transition-colors duration-300">
+  <div @wheel="handleFirstWheel" class=" min-h-screen transition-colors duration-300">
     <div class="md:min-h-screen">
       <n-grid x-gap="12" cols="8" class="p-10" item-responsive>
         <n-gi span="8 700:3" class="flex items-center justify-center">
@@ -76,10 +76,9 @@
           'transition-opacity duration-300',
           'block min-h-screen',
           isMobile || percent >= 70 ? 'opacity-100' : '',
-          'bg-white dark:bg-neutral-900',
-          'text-gray-800 dark:text-gray-100'
         ]"
         :style="{ opacity: !isMobile ? (percent - 30) / 30 : 1 }"
+        class=" text-gray-800 dark:text-gray-100"
     >
       <div class="text-3xl font-bold text-center mb-8 hidden md:block">关于我们</div>
       <br/>

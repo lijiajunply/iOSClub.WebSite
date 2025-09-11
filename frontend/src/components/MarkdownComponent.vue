@@ -197,10 +197,10 @@ const date = computed(() => new Date(props.content.date).toDateString('YYYY-MM-d
       <!-- 文章头部 -->
       <div class="p-8 mb-6">
         <div class="mb-6">
-          <div class="text-xl lg:text-4xl font-bold text-gray-900 leading-tight mb-4">
+          <div class="text-xl lg:text-4xl font-bold text-gray-900 dark:text-gray-50 leading-tight mb-4">
             {{ content.title }}
           </div>
-          <div class="flex items-center space-x-6 text-gray-500 text-sm">
+          <div class="flex items-center space-x-6 text-gray-500 dark:text-gray-200 text-sm">
                   <span class="flex items-center">
                     <n-icon size="16" class="mr-2">
                       <CalendarOutlined/>
@@ -216,13 +216,8 @@ const date = computed(() => new Date(props.content.date).toDateString('YYYY-MM-d
           </div>
         </div>
 
-        <div class="prose max-w-none">
-          <div>
-            <!-- 主内容区域 -->
-            <div class="prose max-w-none pr-8">
-              <div v-html="html"></div>
-            </div>
-          </div>
+        <div class="prose max-w-none pr-8">
+          <div v-html="html"></div>
         </div>
       </div>
 

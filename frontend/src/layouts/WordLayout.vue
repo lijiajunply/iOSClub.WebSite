@@ -10,7 +10,7 @@
           :on-update-collapsed="(b) => collapsed = b"
           :collapsed="collapsed"
           content-style="padding: 24px;"
-          class="bg-white/80 backdrop-blur-lg border-r border-gray-200"
+          class="bg-white/80 dark:bg-black/80 backdrop-blur-lg border-r border-gray-200 dark:border-gray-700"
       >
         <n-scrollbar class="h-screen">
           <div class="pb-20">
