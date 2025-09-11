@@ -102,11 +102,6 @@ builder.Services.AddScoped<ILoginService, LoginService>();
 
 var app = builder.Build();
 
-if (!app.Environment.IsDevelopment())
-{
-    app.UseHsts();
-}
-
 // 创建数据库
 using (var scope = app.Services.CreateScope())
 {
@@ -166,12 +161,12 @@ using (var scope = app.Services.CreateScope())
 }
 
 // 别动
+app.MapOpenApi();
+
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.UseCors();
 app.MapControllers();
 app.MapScalarApiReference();
-
-app.MapOpenApi();
 
 app.Run();
