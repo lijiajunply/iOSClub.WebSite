@@ -1,5 +1,9 @@
 <template>
-  <div class="p-6">
+  <!-- 主内容区：使用CSS类而不是内联样式 -->
+  <div
+      class="main-content"
+      :class="{ 'with-sidebar': layoutStore.showSidebar && !layoutStore.isMobile }"
+  >
     <n-card title="我的信息" class="mb-6">
       <template #header-extra>
         <n-tag type="info">当前身份: {{ identityMap[userInfo.identity] || userInfo.identity }}</n-tag>
@@ -109,10 +113,12 @@ import {
 } from 'naive-ui';
 import { useRouter } from 'vue-router';
 import { useAuthorizationStore } from '../stores/Authorization';
+import { useLayoutStore } from '../stores/LayoutStore';
 
 const message = useMessage();
 const router = useRouter();
 const authorizationStore = useAuthorizationStore();
+const layoutStore = useLayoutStore();
 
 // 表单引用
 const formRef = ref();
@@ -380,6 +386,12 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.main-content {
+  padding: 1.5rem;
+  width: 100%;
+  transition: margin-left 0.3s ease;
+}
+
 .n-card {
   transition: box-shadow 0.3s ease;
 }
@@ -390,5 +402,16 @@ onMounted(() => {
 
 :deep(.n-form-item-label) {
   font-weight: 500;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .main-content {
+    padding: 6px;
+  }
+
+  .main-content.with-sidebar {
+    margin-left: 0;
+  }
 }
 </style>

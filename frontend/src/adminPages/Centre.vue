@@ -1,4 +1,4 @@
-让数据中心大大小和社团部门一样大：<template>
+<template>
   <div class="min-h-screen bg-gray-50 dark:bg-neutral-900 transition-colors duration-300">
     <div class="max-w-7xl mx-auto">
       <!-- 头部区域 -->
@@ -224,7 +224,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { NCard, NList, NListItem, NTag, NButton, NEmpty } from 'naive-ui'
 import { useAuthorizationStore } from '../stores/Authorization.js'
-import '../lib/iconfont.js' // 导入图标库
+import '../lib/iconfont.js' 
 import IconFont from '../components/IconFont.vue'
 import { ToolService } from '../services/ToolService.ts'
 

@@ -16,7 +16,8 @@ import Sidebar from '../components/Sidebar.vue'
 const route = useRoute()
 
 const showSidebar = computed(() => {
-  return route.path !== '/Centre'
+  // 当路径以/Centre开头时显示侧边栏
+  return route.path.startsWith('/Centre')
 })
 </script>
 
@@ -30,15 +31,13 @@ const showSidebar = computed(() => {
 .main-content {
   flex: 1;
   padding: 20px;
-}
-
-.main-content.with-sidebar {
-  margin-left: 250px;
+  transition: margin-left 0.3s ease;
 }
 
 @media (max-width: 768px) {
   .main-content.with-sidebar {
-    margin-left: 200px;
+    margin-left: 0;
   }
 }
 </style>
+
