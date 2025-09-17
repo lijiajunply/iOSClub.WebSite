@@ -28,6 +28,16 @@
           />
         </n-form-item>
 
+        <n-form-item path="password" label="密码" class="dark:text-gray-100">
+          <n-input
+              type="password"
+              v-model:value="form.password"
+              placeholder="请输入密码"
+              @keyup.enter="handleLogin"
+              class="dark:text-gray-100 dark:bg-neutral-800"
+          />
+        </n-form-item>
+
         <n-form-item>
           <n-checkbox v-model:checked="form.rememberMe" class="dark:text-gray-100">记住我</n-checkbox>
           <router-link to="/ForgotPassword" class="float-right text-blue-500 dark:text-blue-300">忘记密码?</router-link>
@@ -42,7 +52,7 @@
           <span v-if="loading">登录中...</span>
           <span v-else>登录</span>
         </button>
-        <div v-if="errorMsg" class="text-red-500 text-center mt-4">{{ errorMsg }}</div>
+        <div v-if="errors" class="text-red-500 text-center mt-4">{{ errorMsg }}</div>
       </n-form>
 
       <div class="mt-6 text-center">
@@ -61,12 +71,15 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { NButton, NInput, NCheckbox, NForm, NFormItem } from 'naive-ui'
+import { useAuthorizationStore } from '../stores/Authorization.ts'
 
 const router = useRouter()
+const authorizationStore = useAuthorizationStore()
 
 const formRef = ref()
 const form = ref({
-  email: '',
+  name: '',
+  id: '',
   password: '',
   rememberMe: false
 })
@@ -74,14 +87,19 @@ const loading = ref(false)
 const errorMsg = ref('')
 
 const rules = {
-  email: {
+  name: {
     required: true,
     message: '请输入您的姓名',
     trigger: 'blur'
   },
-  password: {
+  id: {
     required: true,
     message: '请输入您的学号',
+    trigger: 'blur'
+  },
+  password: {
+    required: true,
+    message: '请输入密码',
     trigger: 'blur'
   }
 }
@@ -91,54 +109,58 @@ onMounted(() => {
   const savedLoginInfo = localStorage.getItem('savedLoginInfo')
   if (savedLoginInfo) {
     try {
-      const parsedInfo = JSON.parse(savedLoginInfo)
-      form.value.email = parsedInfo.email || ''
-      form.value.password = parsedInfo.password || ''
-      form.value.rememberMe = true
+      const info = JSON.parse(savedLoginInfo)
+      form.value.name = info.name
+      form.value.id = info.id // 对应学号
+      form.value.rememberMe = info.rememberMe
     } catch (e) {
-      console.error('解析保存的登录信息时出错:', e)
+      console.error('Failed to parse saved login info:', e)
     }
   }
 })
 
-const handleLogin = () => {
+// 密码SHA-256哈希处理函数
+const hashPassword = async (password) => {
+  const encoder = new TextEncoder()
+  const data = encoder.encode(password)
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+  const hashArray = Array.from(new Uint8Array(hashBuffer))
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+}
+
+const handleLogin = async () => {
   if (loading.value) return
   formRef.value.validate(async (errors) => {
     if (!errors) {
       loading.value = true
       errorMsg.value = ''
       try {
+        const hashedPassword = await hashPassword(form.value.password)
+
         const res = await fetch('https://www.xauat.site/api/Member/Login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            name: form.value.email,
-            id: form.value.password
+            name: form.value.name,
+            id: form.value.id,
+            password: hashedPassword
           })
         })
+
         if (!res.ok) {
-          // 尝试解析错误响应
-          let errorMessage = '登录失败'
-          try {
-            const errorData = await res.json()
-            errorMessage = errorData.message || errorMessage
-          } catch (e) {
-            // 如果无法解析为JSON，则使用默认错误消息
-          }
-          throw new Error(errorMessage)
+          const err = await res.json()
+          throw new Error(err.message || '登录失败')
         }
 
-        // 后端直接返回JWT token字符串，而不是JSON对象
         const token = await res.text()
         localStorage.setItem('Authorization', token)
 
-        // 如果用户选择了"记住我"，则保存登录信息
         if (form.value.rememberMe) {
-          const loginInfo = {
-            email: form.value.email,
-            password: form.value.password
-          }
-          localStorage.setItem('savedLoginInfo', JSON.stringify(loginInfo))
+          localStorage.setItem('savedLoginInfo', JSON.stringify({
+            name: form.value.name,
+            id: form.value.id,
+            password: hashedPassword
+          }))
         } else {
           localStorage.removeItem('savedLoginInfo')
         }

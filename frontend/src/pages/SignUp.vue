@@ -10,7 +10,6 @@
         </p>
       </div>
 
-
       <n-form :model="form" :rules="rules" ref="formRef">
         <n-form-item path="name" label="姓名">
           <n-input v-model:value="form.name" placeholder="请输入姓名"/>
@@ -33,6 +32,9 @@
         <n-form-item path="phone" label="电话号码">
           <n-input v-model:value="form.phone" placeholder="请输入电话号码"/>
         </n-form-item>
+        <n-form-item path="email" label="邮箱">
+          <n-input v-model:value="form.email" placeholder="请输入邮箱" type="email"/>
+        </n-form-item>
         <n-form-item path="password" label="密码">
           <n-input v-model:value="form.password" type="password" placeholder="请输入密码"/>
         </n-form-item>
@@ -43,7 +45,8 @@
           <span v-if="loading">注册中...</span>
           <span v-else>注册</span>
         </button>
-        <div v-if="errorMsg" class="text-red-500 text-center mt-4">{{ errorMsg }}</div>
+
+        <div v-if="errors" class="text-red-500 text-center mt-4">{{ errorMsg }}</div>
         <div v-if="successMsg" class="text-green-600 text-center mt-4">{{ successMsg }}</div>
       </n-form>
 
@@ -60,11 +63,14 @@
 </template>
 
 <script setup>
-import {ref} from 'vue'
-import {useRouter} from 'vue-router'
-import {NInput, NForm, NFormItem, NSelect} from 'naive-ui'
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { NInput, NForm, NFormItem, NSelect } from 'naive-ui'
+import { useAuthorizationStore } from '../stores/Authorization.ts'
 
 const router = useRouter()
+const authorizationStore = useAuthorizationStore()
+
 const formRef = ref()
 const form = ref({
   name: '',
@@ -74,6 +80,7 @@ const form = ref({
   gender: '',
   className: '',
   phone: '',
+  email: '',
   password: '',
   confirmPassword: ''
 })
@@ -105,6 +112,7 @@ const academyOptions = [
   {label: '未来技术学院', value: '未来技术学院'},
   {label: '国际教育学院', value: '国际教育学院'},
 ]
+
 //全部政治面貌选项
 const politicalOptions = [
   {label: '群众', value: '群众'},
@@ -127,52 +135,87 @@ const rules = {
   gender: {required: true, message: '请选择性别', trigger: 'change'},
   className: {required: true, message: '请输入班级', trigger: 'blur'},
   phone: {required: true, message: '请输入电话号码', trigger: 'blur'},
-  password: {required: true, message: '请输入密码', trigger: 'blur'},
-  confirmPassword: [
-    {required: true, message: '请确认密码', trigger: 'blur'},
-    {
-      validator(rule, value) {
-        return value === form.password
-      },
-      message: '两次输入的密码不一致',
-      trigger: 'blur'
+  email: {
+    required: true, // 若 API 要求必填则设为 true
+    message: '请输入邮箱',
+    trigger: 'blur',
+    validator: (rule, value) => {
+      // 简单邮箱格式验证
+      const emailReg = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (!emailReg.test(value)) {
+        return Promise.reject('请输入有效的邮箱地址')
+      }
+      return Promise.resolve()
     }
-  ]
+  },
+  password: {
+    required: true,
+    message: '请输入密码',
+    trigger: 'blur'
+  },
+  confirmPassword: {
+    required: true,
+    message: '请再次输入密码',
+    trigger: 'blur',
+    validator: (rule, value) => {
+      if (value !== form.value.password) {
+        return Promise.reject('两次输入的密码不一致')
+      }
+      return Promise.resolve()
+    }
+  }
 }
 
-const handleSignup = () => {
+const handleSignup = async () => {
   if (loading.value) return
+
   formRef.value.validate(async (errors) => {
     if (!errors) {
       loading.value = true
       errorMsg.value = ''
       successMsg.value = ''
+
       try {
+        const encoder = new TextEncoder()
+        const data = encoder.encode(form.value.password)
+        const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+        const hashArray = Array.from(new Uint8Array(hashBuffer))
+        const passwordHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+        
         const res = await fetch('/api/Member/SignUp', {
           method: 'POST',
-          headers: {'Content-Type': 'application/json'},
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer YOUR_SECRET_TOKEN'
+          },
           body: JSON.stringify({
-            name: form.value.name,
-            studentId: form.value.studentId,
-            major: form.value.major,
-            political: form.value.political,
+            userName: form.value.name,
+            userId: form.value.studentId,
+            academy: form.value.major,
+            politicalLandscape: form.value.political,
             gender: form.value.gender,
             className: form.value.className,
-            phone: form.value.phone,
-            password: form.value.password
+            phoneNum: form.value.phone,
+            joinTime: new Date().toISOString(),
+            passwordHash: passwordHash,
+            eMail: form.value.email
           })
         })
+
         if (!res.ok) {
-          const err = await res.json().catch(() => ({}))
-          console.log(err)
-          // throw new Error(err.message || '注册失败')
+          const err = await res.json()
+          throw new Error(err.message || '网络请求失败')
         }
-        successMsg.value = '注册成功，正在跳转登录页...'
+        
+        const responseData = await res.json() // 改为responseData
+
+        successMsg.value = '注册成功！请登录您的账号'
+
         setTimeout(() => {
           router.push('/Login')
-        }, 1500)
+        }, 2000)
       } catch (err) {
-        errorMsg.value = err.message || '注册失败'
+        errorMsg.value = err.message || '请求失败，请稍后再试'
       } finally {
         loading.value = false
       }
