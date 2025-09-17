@@ -1,6 +1,8 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-slate-100 to-slate-200 dark:from-neutral-900 dark:to-neutral-800 flex items-center justify-center p-4 transition-colors duration-300">
-    <div class="w-full max-w-md bg-white/80 dark:bg-neutral-900/80 backdrop-blur-lg rounded-2xl shadow-xl p-8 transition-all duration-300">
+  <div
+      class="min-h-screen bg-gradient-to-br from-slate-100 to-slate-200 dark:from-neutral-900 dark:to-neutral-800 flex items-center justify-center p-4 transition-colors duration-300">
+    <div
+        class="w-full max-w-md bg-white/80 dark:bg-neutral-900/80 backdrop-blur-lg rounded-2xl shadow-xl p-8 transition-all duration-300">
       <div class="text-center mb-8">
         <h1 class="text-xl md:text-3xl font-semibold bg-gradient-to-r from-pink-500 to-indigo-500 bg-clip-text text-transparent">
           注册 iMember 账号
@@ -62,11 +64,13 @@
   </div>
 </template>
 
-<script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { NInput, NForm, NFormItem, NSelect } from 'naive-ui'
-import { useAuthorizationStore } from '../stores/Authorization.ts'
+<script setup lang="ts">
+import {ref} from 'vue'
+import {useRouter} from 'vue-router'
+import {NInput, NForm, NFormItem, NSelect} from 'naive-ui'
+import {useAuthorizationStore} from '../stores/Authorization.ts'
+import {LoginService, SignupModel, ios} from "../services/LoginService.js";
+import {isWeiXin, NavigateTo} from "../lib/site";
 
 const router = useRouter()
 const authorizationStore = useAuthorizationStore()
@@ -181,39 +185,34 @@ const handleSignup = async () => {
         const hashBuffer = await crypto.subtle.digest('SHA-256', data)
         const hashArray = Array.from(new Uint8Array(hashBuffer))
         const passwordHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
-        
-        const res = await fetch('/api/Member/SignUp', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer YOUR_SECRET_TOKEN'
-          },
-          body: JSON.stringify({
-            userName: form.value.name,
-            userId: form.value.studentId,
-            academy: form.value.major,
-            politicalLandscape: form.value.political,
-            gender: form.value.gender,
-            className: form.value.className,
-            phoneNum: form.value.phone,
-            joinTime: new Date().toISOString(),
-            passwordHash: passwordHash,
-            eMail: form.value.email
-          })
-        })
 
-        if (!res.ok) {
-          const err = await res.json()
-          throw new Error(err.message || '网络请求失败')
+        const res = await LoginService.signup({
+          userName: form.value.name,
+          userId: form.value.studentId,
+          academy: form.value.major,
+          politicalLandscape: form.value.political,
+          gender: form.value.gender,
+          className: form.value.className,
+          phoneNum: form.value.phone,
+          joinTime: new Date().toISOString(),
+          passwordHash: passwordHash,
+          eMail: form.value.email
+        } as SignupModel)
+
+        if (!res) {
+          // throw new Error(err.message || '网络请求失败')
+          return
         }
-        
-        const responseData = await res.json() // 改为responseData
 
-        successMsg.value = '注册成功！请登录您的账号'
+        authorizationStore.setAuthorization(res)
 
-        setTimeout(() => {
-          router.push('/Login')
-        }, 2000)
+        const w = isWeiXin()
+        if (w) {
+          await router.push('QrCode')
+        }else{
+          NavigateTo(ios.url1, ios.url2)
+        }
+
       } catch (err) {
         errorMsg.value = err.message || '请求失败，请稍后再试'
       } finally {

@@ -64,6 +64,12 @@ const routes = [
                 component: () => import('./pages/Blog.vue'),
             },
             {
+                path: 'QrCode',
+                name: 'QrCode',
+                meta: {title: "QQ群二维码 - 西建大 iOS Club"},
+                component: () => import('./pages/QrCode.vue'),
+            },
+            {
                 path: '/',
                 component: () => import('./layouts/WordLayout.vue'),
                 children: [

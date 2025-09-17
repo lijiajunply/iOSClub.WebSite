@@ -1,1 +1,1 @@
-export const Url = 'https://www.xauat.site/api';
+export const Url = 'https://api.xauat.site';
