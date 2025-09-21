@@ -8,7 +8,7 @@
     <source src="../assets/other/纳新录音.m4a" type="audio/mpeg"/>
   </audio>
 
-  <div @wheel="handleFirstWheel" class=" min-h-screen transition-colors duration-300">
+  <div @wheel="handleFirstWheel" class="min-h-screen transition-colors duration-300 bg-white dark:bg-neutral-900">
     <div class="md:min-h-screen">
       <n-grid x-gap="12" cols="8" class="p-10" item-responsive>
         <n-gi span="8 700:3" class="flex items-center justify-center">
@@ -44,15 +44,15 @@
             iOS Club of XAUAT
           </div>
           <div class="block lg:hidden">
-            <h3 class="text-xl text-center text-gray-700">
+            <h3 class="text-xl text-center text-gray-700 dark:text-gray-200">
               一个跨专业与课堂的数码开发爱好者社团
             </h3>
-            <p class="text-lg text-center text-gray-500 mt-2">
+            <p class="text-lg text-center text-gray-500 dark:text-gray-400 mt-2">
               "Stay hungry, stay foolish"
             </p>
           </div>
           <div
-              class="text-2xl lg:text-4xl font-bold text-center lg:text-left text-gray-700 mt-4 lg:mt-0 hidden md:block">
+              class="text-2xl lg:text-4xl font-bold text-center lg:text-left text-gray-700 dark:text-gray-100 mt-4 lg:mt-0 hidden md:block">
             西安建筑科技大学iOS众创空间俱乐部
           </div>
           <div class="hidden lg:block mt-8">
@@ -76,9 +76,9 @@
           'transition-opacity duration-300',
           'block min-h-screen',
           isMobile || percent >= 70 ? 'opacity-100' : '',
+          'text-gray-800 dark:text-gray-100'
         ]"
         :style="{ opacity: !isMobile ? (percent - 30) / 30 : 1 }"
-        class=" text-gray-800 dark:text-gray-100"
     >
       <div class="text-3xl font-bold text-center mb-8 hidden md:block">关于我们</div>
       <br/>
@@ -242,8 +242,6 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-@reference 'tailwindcss';
-
 .gradient-text {
   background: -webkit-linear-gradient(-64deg, #f9bf65, #ffab6b, #ff9977, #fc8986, #ef7e95, #e47da6, #d37fb5, #bf83c1, #ab8dcf, #9597d8, #7fa0dc, #6ca7da);
   -webkit-background-clip: text;
@@ -252,22 +250,44 @@ onUnmounted(() => {
 }
 
 .lyric-item {
-  @apply w-full rounded-lg text-xl font-normal transition-all duration-200 p-2 mb-1;
+  width: 100%;
+  border-radius: 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 400;
+  transition: all 0.2s;
+  padding: 0.5rem;
+  margin-bottom: 0.25rem;
+  background-color: transparent;
+  color: #374151;
 }
-
+.dark .lyric-item {
+  color: #e5e7eb;
+}
 .lyric-item:hover {
-  @apply scale-[1.02] bg-gray-100 font-bold pl-4;
+  transform: scale(1.02);
+  background-color: #f3f4f6;
+  font-weight: 700;
+  padding-left: 1rem;
 }
-
+.dark .lyric-item:hover {
+  background-color: #374151;
+}
 .lyric-active {
-  @apply scale-[1.02] bg-gray-100 font-bold px-4 py-2;
+  transform: scale(1.02);
+  background-color: #f3f4f6;
+  font-weight: 700;
+  padding: 0.5rem 1rem;
+}
+.dark .lyric-active {
+  background-color: #374151;
 }
 
 .card-hover {
-  @apply transition-transform duration-200 p-6 rounded-lg;
+  transition: transform 0.2s;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
 }
-
 .card-hover:hover {
-  @apply transform scale-[1.02];
+  transform: scale(1.02);
 }
 </style>

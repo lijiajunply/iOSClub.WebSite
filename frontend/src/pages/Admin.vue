@@ -3,7 +3,7 @@
     <div class="p-6">
       <n-page-header subtitle="社团管理系统" @back="goBack">
         <template #title>
-          <div class="text-2xl font-bold">其他数据</div>
+          <div class="text-2xl font-bold dark:text-gray-100">其他数据</div>
         </template>
         <template #extra>
           <n-space v-if="userInfo.isAdmin">
@@ -35,43 +35,43 @@
         </template>
       </n-page-header>
 
-      <n-card class="mt-6">
-        <h3 class="text-xl font-bold mb-4">总述</h3>
-        <n-descriptions bordered :column="column">
+      <n-card class="mt-6 dark:bg-neutral-800 dark:text-gray-100">
+        <h3 class="text-xl font-bold mb-4 dark:text-gray-100">总述</h3>
+        <n-descriptions bordered :column="column" class="dark:bg-neutral-800 dark:text-gray-100">
           <n-descriptions-item label="社员人数">
-            {{ studentsCount }}
+            <span class="dark:text-gray-100">{{ studentsCount }}</span>
           </n-descriptions-item>
           <n-descriptions-item label="部员人数">
-            {{ staffs.length }}
+            <span class="dark:text-gray-100">{{ staffs.length }}</span>
           </n-descriptions-item>
           <n-descriptions-item label="社团项目数">
-            {{ projectsCount }}
+            <span class="dark:text-gray-100">{{ projectsCount }}</span>
           </n-descriptions-item>
           <n-descriptions-item label="任务数">
-            {{ tasksCount }}
+            <span class="dark:text-gray-100">{{ tasksCount }}</span>
           </n-descriptions-item>
           <n-descriptions-item label="社团各项资源数">
-            {{ resourcesCount }}
+            <span class="dark:text-gray-100">{{ resourcesCount }}</span>
           </n-descriptions-item>
           <n-descriptions-item label="部门数">
-            {{ departmentsCount }}
+            <span class="dark:text-gray-100">{{ departmentsCount }}</span>
           </n-descriptions-item>
           <n-descriptions-item label="社员任务数">
-            {{ todosCount }}
+            <span class="dark:text-gray-100">{{ todosCount }}</span>
           </n-descriptions-item>
         </n-descriptions>
 
-        <n-divider />
+        <n-divider class="dark:bg-neutral-700" />
 
-        <h3 class="text-xl font-bold mb-4">部员列表</h3>
+        <h3 class="text-xl font-bold mb-4 dark:text-gray-100">部员列表</h3>
         <n-grid :cols="2" :md="3" :lg="4" :xl="5" :x-gap="12" :y-gap="12">
           <n-grid-item v-for="staff in staffs" :key="staff.id">
-            <div class="card">
+            <div class="card dark:bg-neutral-700 dark:border-neutral-600">
               <div class="img" :style="{ backgroundColor: getColorForStaff(staff.name) }">
                 <span>{{ staff.name.charAt(0) }}</span>
               </div>
-              <h3 class="text-center mt-2 font-medium">{{ staff.name }}</h3>
-              <p class="text-gray-500 text-sm text-center">
+              <h3 class="text-center mt-2 font-medium dark:text-gray-100">{{ staff.name }}</h3>
+              <p class="text-gray-500 text-sm text-center dark:text-gray-300">
                 {{ identityDictionary[staff.identity] || staff.identity }}
               </p>
             </div>
@@ -384,12 +384,15 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   padding: 1rem 0;
+  background-color: #fff;
 }
-
 .card:hover {
   border-color: #1890ff;
 }
-
+.dark .card {
+  background-color: #374151;
+  border-color: #52525b;
+}
 .img {
   width: 2.6rem;
   height: 2.6rem;
@@ -400,7 +403,6 @@ onMounted(() => {
   flex-direction: column;
   vertical-align: middle;
 }
-
 .img span {
   display: grid;
   height: 100%;
@@ -409,7 +411,6 @@ onMounted(() => {
   color: #ffffff;
   font-weight: bold;
 }
-
 @media screen and (max-width: 767px) {
   .card {
     flex: 0 0 25%;

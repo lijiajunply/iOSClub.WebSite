@@ -1,55 +1,57 @@
 <template>
-  <n-grid :x-gap="12" :y-gap="12" cols="24" item-responsive justify="center">
-    <n-gi
-        span="0 800:7 1000:8"
-    ></n-gi>
-    <n-gi
-        span="24 800:10 1000:8"
-    >
-      <n-card
-          class="login-form w-full"
-          :bordered="false"
+  <div class="min-h-screen bg-gray-50 dark:bg-neutral-900 transition-colors duration-300">
+    <n-grid :x-gap="12" :y-gap="12" cols="24" item-responsive justify="center">
+      <n-gi
+          span="0 800:7 1000:8"
+      ></n-gi>
+      <n-gi
+          span="24 800:10 1000:8"
       >
-        <div class="flex gap-4">
-          <n-image
-              src="src/assets/iOS_Club_LOGO.png"
-              :preview-disabled="true"
-              class="w-[70px] h-[70px]"
-              object-fit="cover"
-          />
-          <div class="flex-1 p-[5px] max-w-[calc(100%-70px)]">
-            <div
-                class="title-btn inline-block transition-all duration-200 cursor-pointer overflow-hidden whitespace-nowrap text-ellipsis w-full text-[21px] font-medium text-[#1c1f23] hover:scale-[1.02]"
-                @click="handleTitleClick"
-            >
-              iOS Club of XAUAT 2025
+        <n-card
+            class="login-form w-full"
+            :bordered="false"
+        >
+          <div class="flex gap-4">
+            <n-image
+                src="src/assets/iOS_Club_LOGO.png"
+                :preview-disabled="true"
+                class="w-[70px] h-[70px]"
+                object-fit="cover"
+            />
+            <div class="flex-1 p-[5px] max-w-[calc(100%-70px)]">
+              <div
+                  class="title-btn inline-block transition-all duration-200 cursor-pointer overflow-hidden whitespace-nowrap text-ellipsis w-full text-[21px] font-medium text-[#1c1f23] hover:scale-[1.02]"
+                  @click="handleTitleClick"
+              >
+                iOS Club of XAUAT 2025
+              </div>
+              <p class="mt-2 flex items-center gap-2">
+                群号: 952954710
+                <n-icon
+                    :component="CopyOutline"
+                    size="18"
+                    class="cursor-pointer hover:text-primary"
+                    @click="handleCopyClick"
+                />
+              </p>
             </div>
-            <p class="mt-2 flex items-center gap-2">
-              群号: 952954710
-              <n-icon
-                  :component="CopyOutline"
-                  size="18"
-                  class="cursor-pointer hover:text-primary"
-                  @click="handleCopyClick"
-              />
-            </p>
           </div>
-        </div>
 
-        <n-divider/>
+          <n-divider/>
 
-        <img
-            alt="二维码"
-            src="../assets/other/二维码.jpg"
-            class="w-full"
-        />
+          <img
+              alt="二维码"
+              src="../assets/other/二维码.jpg"
+              class="w-full"
+          />
 
-        <div class="phone-desktop text-center mt-[18px]">
-          <p>扫一扫二维码，加入群聊</p>
-        </div>
-      </n-card>
-    </n-gi>
-  </n-grid>
+          <div class="phone-desktop text-center mt-[18px]">
+            <p>扫一扫二维码，加入群聊</p>
+          </div>
+        </n-card>
+      </n-gi>
+    </n-grid>
+  </div>
 </template>
 
 <script setup lang="ts">
