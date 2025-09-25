@@ -53,6 +53,8 @@
       <div class="absolute -top-40 -right-40 w-80 h-80 bg-purple-100 rounded-full blur-3xl opacity-30 animate-float"></div>
       <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-pink-100 rounded-full blur-3xl opacity-30 animate-float-delayed"></div>
     </div>
+
+    <!-- 页脚 -->
   </div>
 </template>
 

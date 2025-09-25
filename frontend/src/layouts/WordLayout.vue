@@ -54,6 +54,13 @@
         </div>
       </n-drawer-content>
     </n-drawer>
+
+    <n-layout-footer class="w-full py-4 text-center text-gray-500 bg-white/80 dark:bg-neutral-900/80 dark:text-gray-400 transition-colors duration-300">
+      Copyright © 2023 - 2024 XAUAT iOS Club<br>
+      西安建筑科技大学 ｜ 陕ICP备2024031872号 ｜
+      <a href="https://gitee.com/XAUATIOSClub" target="_blank" class="text-blue-600 dark:text-purple-400 underline">Gitee</a>
+    </n-layout-footer>
+
   </n-layout>
 </template>
 
@@ -99,5 +106,15 @@ onBeforeUnmount(() => {
 
 .fade-enter-from, .fade-leave-to {
   opacity: 0;
+}
+
+.n-layout-footer {
+  background: rgba(255,255,255,0.8);
+  color: #6b7280;
+  transition: background 0.3s, color 0.3s;
+}
+.dark .n-layout-footer {
+  background: rgba(23,23,23,0.8);
+  color: #a3a3a3;
 }
 </style>

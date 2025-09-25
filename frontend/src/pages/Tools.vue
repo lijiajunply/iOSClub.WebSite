@@ -69,6 +69,7 @@
       <div
           class="absolute -bottom-40 -left-40 w-80 h-80 bg-green-100 rounded-full blur-3xl opacity-30 animate-float-delayed"></div>
     </div>
+
   </div>
 </template>
 
