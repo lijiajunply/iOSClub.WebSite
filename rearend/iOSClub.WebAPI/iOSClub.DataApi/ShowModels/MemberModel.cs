@@ -1,7 +1,7 @@
 ﻿using System.Text;
 using iOSClub.Data.DataModels;
 
-namespace iOSClub.WebAPI.Models;
+namespace iOSClub.DataApi.ShowModels;
 
 public class MemberModel : StudentModel
 {

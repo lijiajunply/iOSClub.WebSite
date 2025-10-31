@@ -1,5 +1,6 @@
 ﻿using iOSClub.Data;
 using iOSClub.Data.DataModels;
+using iOSClub.WebAPI.IdentityModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -8,7 +9,7 @@ namespace iOSClub.WebAPI.Controllers;
 
 [Authorize]
 [TokenActionFilter]
-[Route("api/[controller]/[action]")]
+[Route("[controller]/[action]")]
 [ApiController]
 public class ProjectController(iOSContext context, IHttpContextAccessor httpContextAccessor)
     : ControllerBase

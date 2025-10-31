@@ -1,9 +1,10 @@
-﻿namespace iOSClub.WebAPI.Models;
+﻿namespace iOSClub.Data.ShowModels;
 
 public class LoginModel
 {
     public string Name { get; set; } = "";
     public string Id { get; set; } = "";
+    public string Password { get; set; } = "";
 }
 
 public class MarkAnchorModel

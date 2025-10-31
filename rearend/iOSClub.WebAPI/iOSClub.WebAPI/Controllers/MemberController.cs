@@ -1,17 +1,21 @@
 using iOSClub.Data;
 using iOSClub.Data.DataModels;
-using iOSClub.WebAPI.Models;
+using iOSClub.DataApi.Services;
+using iOSClub.DataApi.ShowModels;
+using iOSClub.WebAPI.IdentityModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using LoginModel = iOSClub.Data.ShowModels.LoginModel;
+using MemberModel = iOSClub.Data.ShowModels.MemberModel;
 
 namespace iOSClub.WebAPI.Controllers;
 
-[Route("api/[controller]/[action]")]
+[Route("[controller]/[action]")]
 [ApiController]
 public class MemberController(
     IDbContextFactory<iOSContext> factory,
-    JwtHelper jwtHelper,
+    IJwtHelper jwtHelper,
     IHttpContextAccessor httpContextAccessor)
     : ControllerBase
 {
@@ -20,9 +24,6 @@ public class MemberController(
     [HttpPost]
     public async Task<ActionResult<string>> SignUp(StudentModel model)
     {
-        if (DateTime.Today.Month != 10)
-            return NotFound();
-
         await using var context = await factory.CreateDbContextAsync();
         if (context.Students == null!)
         {
@@ -42,7 +43,6 @@ public class MemberController(
             throw;
         }
 
-        //return MemberModel.AutoCopy<SignModel, MemberModel>(model);
         return jwtHelper.GetMemberToken(MemberModel.AutoCopy<StudentModel, MemberModel>(model));
     }
 
