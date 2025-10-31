@@ -1,44 +1,97 @@
-# iOS Club Website Frontend
+# iOS Club 官网前端
 
-本项目是 iOS Club 网站的前端部分，使用现代前端技术开发，旨在为用户提供流畅的访问体验。
+## 整体架构
 
-## 项目结构
+assets: 静态资源
+components: 通用组件
+layout: 基础模板，这里放的是前台和个人中心的基础模板
+pages: 放前台的，个人中心的另起一个文件夹
+services: 那些和后端交互的服务
+stores: 一些需要长时间使用的东西，例如登录状态
+router: 的是路由
 
-- `src/`：源代码目录
-- `public/`：静态资源目录
-- `README.md`：项目说明文件
+## Markdown 解析
 
-## 技术栈
+这里使用 [markdown-it](https://github.com/markdown-it/markdown-it)
 
-- React
-- JavaScript/TypeScript
-- CSS/SCSS
-- 其他相关库
+核心代码：
+```ts
+// 初始化 mermaid
+mermaid.initialize({startOnLoad: true})
 
-## 快速开始
+// 创建 markdown-it 实例
+const md = new MarkdownIt({
+    html: true,
+    linkify: true,
+    typographer: true
+})
 
-1. 安装依赖：
+// 使用 anchor 插件
+md.use(markdownItAnchor, {
+    permalink: true,
+    permalinkBefore: true,
+    permalinkSymbol: '',
+})
+md.use(markdownitFootnote)
+md.use(markdownitTaskList, {label: false, labelAfter: false})
+md.use(markdownitAttrs, {
+    allowedAttributes: ['id', 'class', 'target']
+})
 
-    ```bash
-    npm install
-    ```
+md.use(mdExpandTabs)
+    .use(mdSup)
+    .use(mdSub)
+    .use(mdMark)
 
-2. 启动开发服务器：
+// 配置自定义容器
+const containerOptions = [
+    {
+        name: 'warning',
+        className: 'warning'
+    },
+    {
+        name: 'danger',
+        className: 'danger'
+    },
+    {
+        name: 'tip',
+        className: 'tip'
+    }
+]
 
-    ```bash
-    npm start
-    ```
+containerOptions.forEach(({name, className}) => {
+    md.use(markdownItContainer, name, {
+        validate: (params) => {
+            return params.trim().match(new RegExp(`^${name}\\s+(.*)$`))
+        },
+        render: (tokens, idx) => {
+            const m = tokens[idx].info.trim().match(new RegExp(`^${name}\\s+(.*)$`))
+            if (tokens[idx].nesting === 1) {
+                return `<div class="${className} custom-block"><p style="font-weight: bold">${md.utils.escapeHtml(m[1])}</p>\n`
+            } else {
+                return '</div>\n'
+            }
+        }
+    })
+})
 
-3. 构建生产版本：
+// 渲染 markdown 的函数
+const render = async (markdown) => {
+    const html = md.render(markdown)
 
-    ```bash
-    npm run build
-    ```
+    // 等待 DOM 更新
+    await nextTick()
 
-## 贡献指南
+    // 初始化 mermaid 图表
+    await mermaid.run({
+        nodes: document.querySelectorAll('.language-mermaid'),
+    })
 
-欢迎提交 issue 或 pull request 改进项目。请遵循代码规范并详细描述您的更改。
+    // 代码高亮
+    setTimeout(() => {
+        Prism.highlightAll()
+    }, 50)
 
-## 许可证
-
-本项目采用 MIT 许可证。
+    return html
+}
+```

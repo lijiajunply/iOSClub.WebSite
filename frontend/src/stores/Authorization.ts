@@ -7,26 +7,16 @@ export const useAuthorizationStore = defineStore('AuthorizationId', {
     }),
     getters: {
         getAuthorization: (state) => state.Authorization,
-        isAuthenticated: (state) => !!state.Authorization
+        isAuthenticated: (state) => !!state.Authorization && state.Authorization.length > 0
     },
     actions: {
-        // 修改token，并将token存入localStorage
-        async login(user: any): Promise<boolean> {
-            try {
-                const a = await LoginService.login(user.username, user.password)
-                if (!a) {
-                    return false;
-                }
-                this.Authorization = a.token;
-                localStorage.setItem('Authorization', a.token);
-                return true;
-            } catch (e) {
-                return false;
-            }
-        },
         logout() {
             this.Authorization = '';
             localStorage.removeItem('Authorization');
+        },
+        setAuthorization(token: string) {
+            this.Authorization = token;
+            localStorage.setItem('Authorization', token);
         }
     }
 });

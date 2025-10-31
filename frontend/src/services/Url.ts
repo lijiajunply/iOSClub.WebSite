@@ -1,0 +1,1 @@
+export const Url = 'https://api.xauat.site';

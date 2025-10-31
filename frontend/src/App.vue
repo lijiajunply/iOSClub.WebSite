@@ -1,5 +1,5 @@
 <template>
-  <n-config-provider>
+  <n-config-provider :theme="theme">
     <n-dialog-provider>
       <n-message-provider>
         <router-view/>
@@ -9,6 +9,16 @@
 </template>
 
 <script setup lang="ts">
-import {NMessageProvider,NDialogProvider,NConfigProvider} from 'naive-ui'
-import {RouterView} from 'vue-router'
+import { onMounted } from 'vue'
+import {NConfigProvider, NDialogProvider, NMessageProvider} from "naive-ui";
+import { useThemeStore } from './stores/theme'
+import { storeToRefs } from 'pinia'
+
+const themeStore = useThemeStore()
+const { theme } = storeToRefs(themeStore)
+const { init } = themeStore
+
+onMounted(() => {
+  init()
+})
 </script>
