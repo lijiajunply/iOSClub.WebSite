@@ -1,19 +1,29 @@
 <template>
-  <MarkdownComponent :content="roomArticle"/>
+  <MarkdownComponent :content="formattedArticle"/>
 </template>
 
 <script setup lang="ts">
-import {ref, watch} from 'vue'
+import {ref, watch, computed} from 'vue'
 import {useRoute} from 'vue-router'
 import MarkdownComponent from "../components/MarkdownComponent.vue";
-import {type ArticleProps, ArticleService} from "../services/ArticleService.ts";
+import {type ArticleModel, ArticleService} from "../services/ArticleService";
 
-const roomArticle = ref<ArticleProps>({
-  title: '',
-  date: '',
-  watch: 0,
-  content: '',
+const roomArticle = ref<ArticleModel>({
+  Path: "",
+  Title: '',
+  LastWriteTime: '',
+  Watch: 0,
+  Content: ''
 })
+
+const formattedArticle = computed(() => {
+  return {
+    title: roomArticle.value.Title,
+    date: roomArticle.value.LastWriteTime,
+    watch: roomArticle.value.Watch || 0,
+    content: roomArticle.value.Content
+  };
+});
 
 const route = useRoute()
 
@@ -21,13 +31,7 @@ watch(
     () => route.params.id,
     async (newId) => {
       if (typeof newId !== 'string') return
-      const a = await ArticleService.getArticle(newId)
-      roomArticle.value = {
-        title: a.title,
-        date: a.lastWriteTime,
-        watch: a.watch,
-        content: a.content
-      } as ArticleProps
+      roomArticle.value = await ArticleService.getArticle(newId)
     },
     {immediate: true}
 )

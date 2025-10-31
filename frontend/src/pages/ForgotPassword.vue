@@ -98,7 +98,7 @@ const handleSubmit = () => {
         alert('重置邮件已发送，请查收您的邮箱')
 
         // 跳转到登录页
-        router.push('/Login')
+        await router.push('/Login')
       } catch (err) {
         errorMsg.value = err.message || '请求失败，请稍后再试'
       } finally {

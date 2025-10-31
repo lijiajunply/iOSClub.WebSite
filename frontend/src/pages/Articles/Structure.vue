@@ -1,32 +1,32 @@
 <template>
   <div class="min-h-screen bg-gray-50 dark:bg-neutral-900 transition-colors duration-300">
-    <MarkdownComponent :content="roomArticle"/>
+    <MarkdownComponent :content="formattedArticle"/>
   </div>
 </template>
 
 <script setup lang="ts">
-import {ref, onMounted} from 'vue'
+import {ref, computed, onMounted} from 'vue'
 import MarkdownComponent from "../../components/MarkdownComponent.vue";
-import {type ArticleProps, ArticleService} from "../../services/ArticleService.ts";
+import {type ArticleModel, ArticleService} from "../../services/ArticleService";
 
-const roomArticle = ref<ArticleProps>({
-  title: '',
-  date: '',
-  watch: 0,
-  content: '',
+const roomArticle = ref<ArticleModel>({
+  Path: "",
+  Title: '',
+  LastWriteTime: '',
+  Watch: 0,
+  Content: ''
 })
 
-onMounted(async () =>{
-  const a = await ArticleService.getArticle('Structure')
-  roomArticle.value = {
-    title: a.title,
-    date: a.lastWriteTime,
-    watch: a.watch,
-    content: a.content
-  } as ArticleProps
+const formattedArticle = computed(() => {
+  return {
+    title: roomArticle.value.Title,
+    date: roomArticle.value.LastWriteTime,
+    watch: roomArticle.value.Watch || 0,
+    content: roomArticle.value.Content
+  };
+});
+
+onMounted(async () => {
+  roomArticle.value = await ArticleService.getArticle('Structure')
 })
 </script>
-
-<style scoped>
-
-</style>

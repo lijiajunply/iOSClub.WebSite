@@ -24,7 +24,7 @@ export const useThemeStore = defineStore('theme', () => {
 
     const theme = computed(() => (isDark.value ? darkTheme : null))
 
-    function updateThemeClass(dark) {
+    function updateThemeClass(dark: boolean) {
         if (dark) {
             document.documentElement.classList.add('dark')
         } else {
@@ -32,7 +32,7 @@ export const useThemeStore = defineStore('theme', () => {
         }
     }
 
-    function setThemePreference(preference) {
+    function setThemePreference(preference: 'light' | 'dark' | 'system') {
         userPreference.value = preference
         localStorage.setItem(LOCAL_STORAGE_THEME_KEY, preference)
         updateThemeClass(isDark.value)

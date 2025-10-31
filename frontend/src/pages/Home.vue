@@ -5,7 +5,7 @@
       class="hidden"
       @ended="onAudioEnded"
   >
-    <source src="../assets/other/纳新录音.m4a" type="audio/mpeg"/>
+    <source src="../../public/assets/other/纳新录音.m4a" type="audio/mpeg"/>
   </audio>
 
   <div @wheel="handleFirstWheel" class="min-h-screen transition-colors duration-300 bg-white dark:bg-neutral-900">
@@ -15,7 +15,7 @@
           <div class="w-3/4 text-center">
             <img
                 alt="Logo"
-                src="../assets/iOS_Club_LOGO.png"
+                src="../../public/assets/iOS_Club_LOGO.png"
                 class="w-full"
             />
             <div class="hidden lg:block">

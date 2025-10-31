@@ -78,22 +78,22 @@ import '../lib/iconfont'
 import {ref, onMounted} from 'vue';
 import {NCard} from 'naive-ui';
 import PageStart from "../components/PageStart.vue";
-import {LinkModel, ToolService} from "../services/ToolService.js";
-import toolsImage from '../assets/Centre/AppleLogo.jpg';
+import {LinkModel, ToolService} from "../services/ToolService";
+import toolsImage from '../../public/assets/Centre/AppleLogo.jpg';
 import IconFont from "../components/IconFont.vue";
 
-const models = ref<LinkModel>([]);
+const models = ref<LinkModel[]>([] as LinkModel[]);
 
 // 检测是否为移动设备
 const isMobile = ref(window.innerWidth < 640);
 
 // 修复图片URL中的重复斜杠问题
-const fixImageUrl = (url) => {
+const fixImageUrl = (url: string) => {
   return url.replace(/([^:]\/)\/+/g, '$1');
 };
 
 // 图标加载失败时替换为备用图标
-const handleImageError = (event, link) => {
+const handleImageError = (event: any, link: any) => {
   if (event.target.src === toolsImage) return;
 
   console.debug(`[${link.name}]图标加载失败，使用备用图标`, {

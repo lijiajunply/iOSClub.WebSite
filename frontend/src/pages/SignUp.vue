@@ -35,7 +35,7 @@
           <n-input v-model:value="form.phone" placeholder="请输入电话号码"/>
         </n-form-item>
         <n-form-item path="email" label="邮箱">
-          <n-input v-model:value="form.email" placeholder="请输入邮箱" type="email"/>
+          <n-input v-model:value="form.email" placeholder="请输入邮箱"/>
         </n-form-item>
         <n-form-item path="password" label="密码">
           <n-input v-model:value="form.password" type="password" placeholder="请输入密码"/>
@@ -48,7 +48,7 @@
           <span v-else>注册</span>
         </button>
 
-        <div v-if="errors" class="text-red-500 text-center mt-4">{{ errorMsg }}</div>
+        <div v-if="errorMsg" class="text-red-500 text-center mt-4">{{ errorMsg }}</div>
         <div v-if="successMsg" class="text-green-600 text-center mt-4">{{ successMsg }}</div>
       </n-form>
 
@@ -68,8 +68,8 @@
 import {ref} from 'vue'
 import {useRouter} from 'vue-router'
 import {NInput, NForm, NFormItem, NSelect} from 'naive-ui'
-import {useAuthorizationStore} from '../stores/Authorization.ts'
-import {LoginService, SignupModel, ios} from "../services/LoginService.js";
+import {useAuthorizationStore} from '../stores/Authorization'
+import {LoginService, ios} from "../services/LoginService";
 import {isWeiXin, NavigateTo} from "../lib/site";
 
 const router = useRouter()
@@ -143,7 +143,7 @@ const rules = {
     required: true, // 若 API 要求必填则设为 true
     message: '请输入邮箱',
     trigger: 'blur',
-    validator: (rule, value) => {
+    validator: (_: any, value: any) => {
       // 简单邮箱格式验证
       const emailReg = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
       if (!emailReg.test(value)) {
@@ -161,7 +161,7 @@ const rules = {
     required: true,
     message: '请再次输入密码',
     trigger: 'blur',
-    validator: (rule, value) => {
+    validator: (_: any, value: any) => {
       if (value !== form.value.password) {
         return Promise.reject('两次输入的密码不一致')
       }
@@ -173,7 +173,7 @@ const rules = {
 const handleSignup = async () => {
   if (loading.value) return
 
-  formRef.value.validate(async (errors) => {
+  formRef.value.validate(async (errors: any) => {
     if (!errors) {
       loading.value = true
       errorMsg.value = ''
@@ -197,10 +197,10 @@ const handleSignup = async () => {
           joinTime: new Date().toISOString(),
           passwordHash: passwordHash,
           eMail: form.value.email
-        } as SignupModel)
+        })
 
         if (!res) {
-          // throw new Error(err.message || '网络请求失败')
+          errorMsg.value = '注册失败，请稍后再试'
           return
         }
 
@@ -209,11 +209,11 @@ const handleSignup = async () => {
         const w = isWeiXin()
         if (w) {
           await router.push('QrCode')
-        }else{
+        } else {
           NavigateTo(ios.url1, ios.url2)
         }
 
-      } catch (err) {
+      } catch (err: any) {
         errorMsg.value = err.message || '请求失败，请稍后再试'
       } finally {
         loading.value = false

@@ -1,5 +1,5 @@
 import {createRouter, createWebHistory} from 'vue-router';
-import {useAuthorizationStore} from "./stores/Authorization.ts";
+import {useAuthorizationStore} from "./stores/Authorization";
 import MainLayout from "./layouts/MainLayout.vue";
 import CentreLayout from "./layouts/CentreLayout.vue";
 
@@ -164,11 +164,11 @@ const router = createRouter({
 });
 
 // Navigation guard
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, _from, next) => {
     const authorizationStore = useAuthorizationStore();
 
     // Set page title
-    document.title = to.meta.title || "西建大 iOS Club";
+    document.title = (to.meta.title as string) || "西建大 iOS Club";
 
     // Check if route requires authentication
     if (to.meta.requiresAuth && !authorizationStore.isAuthenticated) {

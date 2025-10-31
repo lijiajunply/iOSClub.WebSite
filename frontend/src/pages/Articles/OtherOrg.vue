@@ -10,10 +10,10 @@ import {
   NAnchorLink,
   NAffix,
 } from 'naive-ui'
-import xiaomiImg from '../../assets/other/xiaomi.jpg'
-import huaweiImg from '../../assets/other/huawei.jpg'
-import aircraftImg from '../../assets/other/aircraft.jpg'
-import tesheImg from '../../assets/other/teshe.jpg'
+import xiaomiImg from '../../../public/assets/other/xiaomi.jpg'
+import huaweiImg from '../../../public/assets/other/huawei.jpg'
+import aircraftImg from '../../../public/assets/other/aircraft.jpg'
+import tesheImg from '../../../public/assets/other/teshe.jpg'
 const visible = ref(false)
 </script>
 

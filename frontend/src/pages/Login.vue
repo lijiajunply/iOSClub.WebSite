@@ -72,7 +72,7 @@
 import {ref, onMounted} from 'vue'
 import {useRouter} from 'vue-router'
 import {NInput, NCheckbox, NForm, NFormItem} from 'naive-ui'
-import {LoginService, hashPassword} from '../services/LoginService'
+import {LoginService} from '../services/LoginService'
 import {useAuthorizationStore} from "../stores/Authorization.js";
 
 
@@ -82,7 +82,7 @@ const router = useRouter()
 const formRef = ref()
 const form = ref({
   name: '',
-  id: '',
+  studentId: '',
   password: '',
   rememberMe: false
 })
@@ -95,7 +95,7 @@ const rules = {
     message: '请输入您的姓名',
     trigger: 'blur'
   },
-  id: {
+  studentId: {
     required: true,
     message: '请输入您的学号',
     trigger: 'blur'
@@ -114,7 +114,7 @@ onMounted(() => {
     try {
       const info = JSON.parse(savedLoginInfo)
       form.value.name = info.name
-      form.value.id = info.id // 对应学号
+      form.value.studentId = info.studentId // 对应学号
       form.value.rememberMe = info.rememberMe
     } catch (e) {
       console.error('Failed to parse saved login info:', e)
@@ -124,14 +124,12 @@ onMounted(() => {
 
 const handleLogin = async () => {
   if (loading.value) return
-  formRef.value.validate(async (errors) => {
+  formRef.value.validate(async (errors: any) => {
     if (!errors) {
       loading.value = true
       errorMsg.value = ''
       try {
-        const hashedPassword = await hashPassword(form.value.password)
-
-        const res = LoginService.login(form.value.name, form.value.id, hashedPassword)
+        const res = await LoginService.login(form.value.name, form.value.studentId, form.value.password)
 
         if (!res) {
           return
@@ -140,7 +138,7 @@ const handleLogin = async () => {
         authorizationStore.setAuthorization(res)
 
         await router.push('/Centre')
-      } catch (err) {
+      } catch (err: any) {
         errorMsg.value = err.message || '登录失败'
       } finally {
         loading.value = false

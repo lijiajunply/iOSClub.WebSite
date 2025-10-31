@@ -11,7 +11,7 @@
             <!-- Logo and Title -->
             <router-link to="/" class="flex items-center gap-3 group">
               <img
-                  src="../assets/iOS_Club_LOGO.png"
+                  src="../../public/assets/iOS_Club_LOGO.png"
                   alt="iOS Club Logo"
                   class="w-10 h-10 transition-transform group-hover:scale-105"
               />
@@ -237,13 +237,13 @@ import {
 } from 'naive-ui'
 import {MenuOutline} from '@vicons/ionicons5'
 import {useThemeStore} from "../stores/theme.js";
-import { storeToRefs } from 'pinia'
+import {storeToRefs} from 'pinia'
 
 const themeStore = useThemeStore()
 // 解构响应式属性
-const { isDark, userPreference, theme } = storeToRefs(themeStore)
+const {isDark} = storeToRefs(themeStore)
 // 解构方法
-const { toggleTheme, setThemePreference } = themeStore
+const {toggleTheme, setThemePreference} = themeStore
 
 // 切换主题
 const mainToggleTheme = () => {

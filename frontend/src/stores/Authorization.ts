@@ -1,5 +1,4 @@
-import {defineStore} from 'pinia';
-import {LoginService} from "../services/LoginService.ts";
+import { defineStore } from 'pinia';
 
 export const useAuthorizationStore = defineStore('AuthorizationId', {
     state: () => ({

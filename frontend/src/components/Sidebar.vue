@@ -9,7 +9,7 @@
   <div class="sidebar" :class="{ 'sidebar-hidden': !layoutStore.showSidebar && layoutStore.isMobile }">
     <div class="sidebar-header">
       <img
-          src="../assets/iOS_Club_LOGO.png"
+          src="../../public/assets/iOS_Club_LOGO.png"
           alt="iOS Club Logo"
           class="sidebar-logo"
           @error="handleImageError"

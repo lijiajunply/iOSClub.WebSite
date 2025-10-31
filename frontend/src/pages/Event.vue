@@ -64,11 +64,11 @@ import { NCard } from 'naive-ui'
 import PageStart from "../components/PageStart.vue";
 
 // 导入图片
-import appleLogo from '../assets/Centre/AppleLogo.jpg'
-import visionProImage from '../assets/other/vision_pro.jpg'
-import launchEventImage from '../assets/other/launch_event.jpg'
-import classImage from '../assets/other/class.jpg'
-import partyImage from '../assets/other/you_yuan_hui.jpg'
+import appleLogo from '../../public/assets/Centre/AppleLogo.jpg'
+import visionProImage from '../../public/assets/other/vision_pro.jpg'
+import launchEventImage from '../../public/assets/other/launch_event.jpg'
+import classImage from '../../public/assets/other/class.jpg'
+import partyImage from '../../public/assets/other/you_yuan_hui.jpg'
 
 // 移动端判断状态
 const isMobile = ref(false)
