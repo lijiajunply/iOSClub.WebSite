@@ -1,10 +1,20 @@
-﻿using iOSClub.Data;
+using iOSClub.Data;
 using iOSClub.Data.DataModels;
 using Microsoft.EntityFrameworkCore;
 
 namespace iOSClub.DataApi.Repositories;
 
-public class DepartmentRepository(iOSContext context)
+public interface IDepartmentRepository
+{
+    Task<List<DepartmentModel>> GetAllDepartmentsAsync();
+    Task<DepartmentModel?> GetDepartmentByNameAsync(string name);
+    Task<DepartmentModel?> GetDepartmentByKeyAsync(string key);
+    Task<bool> AddDepartmentAsync(DepartmentModel department);
+    Task<bool> UpdateDepartmentAsync(DepartmentModel department);
+    Task<bool> DeleteDepartmentAsync(string name);
+}
+
+public class DepartmentRepository(iOSContext context) : IDepartmentRepository
 {
     private readonly iOSContext _context = context;
 

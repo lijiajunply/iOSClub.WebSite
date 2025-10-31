@@ -1,10 +1,20 @@
-﻿using iOSClub.Data;
+using iOSClub.Data;
 using iOSClub.Data.DataModels;
 using Microsoft.EntityFrameworkCore;
 
 namespace iOSClub.DataApi.Repositories;
 
-public class TodoRepository(iOSContext context)
+public interface ITodoRepository
+{
+    Task<List<TodoModel>> GetTodosByUserIdAsync(string userId);
+    Task<TodoModel?> GetTodoByIdAsync(string id);
+    Task<bool> AddTodoAsync(TodoModel todo);
+    Task<bool> UpdateTodoAsync(TodoModel todo);
+    Task<bool> DeleteTodoAsync(string id);
+    Task<bool> TodoExistsAsync(string id);
+}
+
+public class TodoRepository(iOSContext context) : ITodoRepository
 {
     private readonly iOSContext _context = context;
 

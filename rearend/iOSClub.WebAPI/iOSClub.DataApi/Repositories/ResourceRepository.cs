@@ -4,7 +4,18 @@ using Microsoft.EntityFrameworkCore;
 
 namespace iOSClub.DataApi.Repositories;
 
-public class ResourceRepository(iOSContext context)
+public interface IResourceRepository
+{
+    Task<List<ResourceModel>> GetAllResourcesAsync();
+    Task<ResourceModel?> GetResourceByIdAsync(string id);
+    Task<List<ResourceModel>> GetResourcesByTagAsync(string tag);
+    Task<List<ResourceModel>> SearchResourcesByNameAsync(string name);
+    Task<bool> AddResourceAsync(ResourceModel resource);
+    Task<bool> UpdateResourceAsync(ResourceModel resource);
+    Task<bool> DeleteResourceAsync(string id);
+}
+
+public class ResourceRepository(iOSContext context) : IResourceRepository
 {
     private readonly iOSContext _context = context;
 

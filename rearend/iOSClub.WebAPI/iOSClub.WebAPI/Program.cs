@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.IdentityModel.Tokens;
 using NpgsqlDataProtection;
 using Scalar.AspNetCore;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -61,6 +62,11 @@ builder.Services.AddCors(options =>
 
 var sql = Environment.GetEnvironmentVariable("SQL", EnvironmentVariableTarget.Process);
 
+// if (string.IsNullOrEmpty(sql) && builder.Environment.IsDevelopment())
+// {
+//     sql = builder.Configuration["SQL"];
+// }
+
 if (string.IsNullOrEmpty(sql))
 {
     builder.Services.AddDbContextFactory<iOSContext>(opt =>
@@ -83,6 +89,17 @@ else
         .PersistKeysToPostgres(sql, true);
 }
 
+var redis = Environment.GetEnvironmentVariable("REDIS", EnvironmentVariableTarget.Process);
+if (string.IsNullOrEmpty(redis) && builder.Environment.IsDevelopment())
+{
+    redis = builder.Configuration["Redis"];
+}
+
+if (!string.IsNullOrEmpty(redis))
+{
+    builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redis));
+}
+
 #endregion
 
 #region 仓库和服务的依赖注入
@@ -93,7 +110,12 @@ builder.Services.AddScoped<TokenActionFilter>();
 builder.Services.AddScoped<IJwtHelper, JwtHelper>();
 
 builder.Services.AddScoped<IArticleRepository, ArticleRepository>();
+builder.Services.AddScoped<IDepartmentRepository, DepartmentRepository>();
+builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
+builder.Services.AddScoped<IResourceRepository, ResourceRepository>();
+builder.Services.AddScoped<IStaffRepository, StaffRepository>();
 builder.Services.AddScoped<IStudentRepository, StudentRepository>();
+builder.Services.AddScoped<ITodoRepository, TodoRepository>();
 
 builder.Services.AddScoped<ILoginService, LoginService>();
 

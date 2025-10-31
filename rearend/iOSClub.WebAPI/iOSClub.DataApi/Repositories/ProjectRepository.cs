@@ -4,7 +4,17 @@ using Microsoft.EntityFrameworkCore;
 
 namespace iOSClub.DataApi.Repositories;
 
-public class ProjectRepository(iOSContext context)
+public interface IProjectRepository
+{
+    Task<List<ProjectModel>> GetAllProjectsAsync();
+    Task<ProjectModel?> GetProjectByIdAsync(string id);
+    Task<ProjectModel?> GetProjectByTitleAsync(string title);
+    Task<List<ProjectModel>> GetProjectsByDepartmentAsync(string departmentName);
+    Task<List<ProjectModel>> GetProjectsByStaffAsync(string userId);
+    Task<ProjectModel?> CreateProjectAsync(ProjectModel project, StaffModel creator);
+}
+
+public class ProjectRepository(iOSContext context) : IProjectRepository
 {
     private readonly iOSContext _context = context;
 
