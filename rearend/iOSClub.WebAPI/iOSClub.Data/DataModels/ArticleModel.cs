@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace iOSClub.Data.DataModels;
 
@@ -9,13 +8,13 @@ public class ArticleModel
     /// 路径
     /// </summary>
     [Key]
-    [Column(TypeName = "varchar(128)")]
+    [MaxLength(128)]
     public string Path { get; set; } = "";
 
     /// <summary>
     /// 标题
     /// </summary>
-    [Column(TypeName = "varchar(32)")]
+    [MaxLength(32)]
     public string Title { get; set; } = "";
 
     /// <summary>
@@ -26,7 +25,6 @@ public class ArticleModel
     /// <summary>
     /// 最后修改时间
     /// </summary>
-    [Column(TypeName = "DATE")]
     public DateTime LastWriteTime { get; set; } = DateTime.Now;
 
     /// <summary>
@@ -35,6 +33,7 @@ public class ArticleModel
     /// Minister : 部长
     /// Department : 部员成员
     /// </summary>
-    [Column(TypeName = "varchar(20)")]
+    [MaxLength(20)]
     public string? Identity { get; set; }
 }
+    

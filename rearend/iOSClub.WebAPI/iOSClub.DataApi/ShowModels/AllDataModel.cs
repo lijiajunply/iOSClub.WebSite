@@ -1,6 +1,6 @@
 ﻿using iOSClub.Data.DataModels;
 
-namespace iOSClub.WebAPI.Models;
+namespace iOSClub.DataApi.ShowModels;
 
 [Serializable]
 public class AllDataModel

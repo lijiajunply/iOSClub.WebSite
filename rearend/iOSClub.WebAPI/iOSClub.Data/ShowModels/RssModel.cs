@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Nodes;
 
-namespace iOSClub.WebAPI.Models;
+namespace iOSClub.Data.ShowModels;
 
 public class RssModel
 {

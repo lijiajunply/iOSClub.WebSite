@@ -1,9 +1,9 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using iOSClub.WebAPI.Models;
+using iOSClub.Data.ShowModels;
 using Microsoft.AspNetCore.Mvc.Filters;
 
-namespace iOSClub.WebAPI.Controllers;
+namespace iOSClub.WebAPI.IdentityModels;
 
 public class TokenActionFilter : ActionFilterAttribute
 {

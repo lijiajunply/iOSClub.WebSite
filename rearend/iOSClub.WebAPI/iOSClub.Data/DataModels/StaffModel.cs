@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
 namespace iOSClub.Data.DataModels;
@@ -7,10 +6,10 @@ namespace iOSClub.Data.DataModels;
 public class StaffModel
 {
     [Key]
-    [Column(TypeName = "varchar(10)")]
+    [MaxLength(10)]
     public string UserId { get; set; } = "";
 
-    [Column(TypeName = "varchar(50)")] public string Name { get; set; } = "";
+    [MaxLength(50)] public string Name { get; set; } = "";
 
     /// <summary>
     /// Founder : 创始人
@@ -19,7 +18,7 @@ public class StaffModel
     /// Department : 部员成员
     /// Member : 普通成员
     /// </summary>
-    [Column(TypeName = "varchar(20)")]
+    [MaxLength(20)]
     public string Identity { get; set; } = "Member";
 
     [JsonIgnore]
