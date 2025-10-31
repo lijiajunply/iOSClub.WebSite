@@ -16,6 +16,10 @@ public class UserController(
     IHttpContextAccessor httpContextAccessor)
     : ControllerBase
 {
+    /// <summary>
+    /// 获取当前用户的详细信息
+    /// </summary>
+    /// <returns>用户信息对象</returns>
     [TokenActionFilter]
     [Authorize]
     [HttpGet("data")]
@@ -34,6 +38,10 @@ public class UserController(
         return member;
     }
 
+    /// <summary>
+    /// 获取当前用户的所有待办事项
+    /// </summary>
+    /// <returns>待办事项列表</returns>
     [TokenActionFilter]
     [Authorize]
     [HttpGet("todos")]
@@ -47,6 +55,11 @@ public class UserController(
         return await context.Todos.Where(x => x.StudentId == student.UserId).ToListAsync();
     }
 
+    /// <summary>
+    /// 添加新的待办事项
+    /// </summary>
+    /// <param name="todoModel">待办事项模型</param>
+    /// <returns>添加后的待办事项</returns>
     [TokenActionFilter]
     [Authorize]
     [HttpPost("todos")]
@@ -65,6 +78,11 @@ public class UserController(
         return todoModel;
     }
 
+    /// <summary>
+    /// 删除指定ID的待办事项
+    /// </summary>
+    /// <param name="id">待办事项ID</param>
+    /// <returns>操作结果</returns>
     [TokenActionFilter]
     [Authorize]
     [HttpDelete("todos/{id}")]
@@ -85,6 +103,11 @@ public class UserController(
         return Ok();
     }
 
+    /// <summary>
+    /// 更新待办事项
+    /// </summary>
+    /// <param name="todoModel">更新后的待办事项模型</param>
+    /// <returns>操作结果</returns>
     [TokenActionFilter]
     [Authorize]
     [HttpPut("todos")]
@@ -105,6 +128,11 @@ public class UserController(
         return Ok();
     }
 
+    /// <summary>
+    /// 更新用户个人资料
+    /// </summary>
+    /// <param name="memberModel">更新后的用户资料模型</param>
+    /// <returns>操作结果</returns>
     [TokenActionFilter]
     [Authorize]
     [HttpPut("profile")]

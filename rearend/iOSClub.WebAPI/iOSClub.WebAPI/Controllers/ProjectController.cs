@@ -16,6 +16,10 @@ public class ProjectController(iOSContext context, IHttpContextAccessor httpCont
 {
     #region GetValue
 
+    /// <summary>
+    /// 获取所有项目数据（仅管理员）
+    /// </summary>
+    /// <returns>项目列表，包含关联的员工和任务信息</returns>
     [HttpGet]
     [Authorize(Roles = "Founder, President, Minister")]
     public async Task<ActionResult<List<ProjectModel>>> GetAllData()
@@ -26,6 +30,10 @@ public class ProjectController(iOSContext context, IHttpContextAccessor httpCont
             .ToListAsync();
     }
 
+    /// <summary>
+    /// 获取当前用户的项目列表
+    /// </summary>
+    /// <returns>用户参与的项目列表，包含任务信息</returns>
     [HttpGet("your-projects")]
     public async Task<ActionResult<List<ProjectModel>>> GetYourProjects()
     {
@@ -39,6 +47,10 @@ public class ProjectController(iOSContext context, IHttpContextAccessor httpCont
         return staff.Projects;
     }
 
+    /// <summary>
+    /// 获取当前用户的任务列表
+    /// </summary>
+    /// <returns>用户的任务列表</returns>
     [HttpGet("your-tasks")]
     public async Task<ActionResult<List<TaskModel>>> GetYourTasks()
     {
@@ -51,6 +63,10 @@ public class ProjectController(iOSContext context, IHttpContextAccessor httpCont
         return staff.Tasks;
     }
 
+    /// <summary>
+    /// 获取所有资源列表
+    /// </summary>
+    /// <returns>资源列表</returns>
     [HttpGet("resources")]
     public async Task<ActionResult<List<ResourceModel>>> GetResources()
     {
@@ -65,6 +81,11 @@ public class ProjectController(iOSContext context, IHttpContextAccessor httpCont
 
     #region Project
 
+    /// <summary>
+    /// 创建或更新项目（仅管理员）
+    /// </summary>
+    /// <param name="model">项目模型</param>
+    /// <returns>创建或更新后的项目信息</returns>
     [HttpPost]
     [Authorize(Roles = "Founder, President, Minister")]
     public async Task<ActionResult<ProjectModel>> CreateOrUpdateProject([FromBody] ProjectModel model)
@@ -90,6 +111,11 @@ public class ProjectController(iOSContext context, IHttpContextAccessor httpCont
         return model;
     }
 
+    /// <summary>
+    /// 删除项目
+    /// </summary>
+    /// <param name="id">项目ID</param>
+    /// <returns>操作结果</returns>
     [HttpPost("delete/{id}")]
     public async Task<ActionResult> DeleteProject(string id)
     {
@@ -113,6 +139,12 @@ public class ProjectController(iOSContext context, IHttpContextAccessor httpCont
         return Ok();
     }
 
+    /// <summary>
+    /// 添加或移除项目成员（仅管理员）
+    /// </summary>
+    /// <param name="id">成员ID</param>
+    /// <param name="projId">项目ID</param>
+    /// <returns>操作结果</returns>
     [HttpPost("change-member/{id}/{projId}")]
     [Authorize(Roles = "Founder, President, Minister")]
     public async Task<ActionResult> LetChangeProject(string id, string projId)
@@ -146,6 +178,11 @@ public class ProjectController(iOSContext context, IHttpContextAccessor httpCont
 
     #region Task
 
+    /// <summary>
+    /// 创建或更新任务
+    /// </summary>
+    /// <param name="model">任务模型</param>
+    /// <returns>创建或更新后的任务信息</returns>
     [HttpPost]
     public async Task<ActionResult<TaskModel>> CreateOrUpdateTask([FromBody] TaskModel model)
     {
@@ -178,6 +215,11 @@ public class ProjectController(iOSContext context, IHttpContextAccessor httpCont
         return model;
     }
 
+    /// <summary>
+    /// 删除任务
+    /// </summary>
+    /// <param name="id">任务ID</param>
+    /// <returns>操作结果</returns>
     [HttpPost("delete-task/{id}")]
     public async Task<ActionResult> DeleteTask(string id)
     {
@@ -197,6 +239,11 @@ public class ProjectController(iOSContext context, IHttpContextAccessor httpCont
         return Ok();
     }
 
+    /// <summary>
+    /// 加入任务
+    /// </summary>
+    /// <param name="id">任务ID</param>
+    /// <returns>加入后的任务信息</returns>
     [HttpPost("join-task/{id}")]
     public async Task<ActionResult<TaskModel>> JoinTask(string id)
     {
@@ -219,6 +266,11 @@ public class ProjectController(iOSContext context, IHttpContextAccessor httpCont
         return task;
     }
 
+    /// <summary>
+    /// 离开任务
+    /// </summary>
+    /// <param name="id">任务ID</param>
+    /// <returns>操作结果</returns>
     [HttpPost("leave-task/{id}")]
     public async Task<ActionResult> LeaveTask(string id)
     {
@@ -238,6 +290,12 @@ public class ProjectController(iOSContext context, IHttpContextAccessor httpCont
         return Ok();
     }
 
+    /// <summary>
+    /// 添加或移除任务成员（仅管理员）
+    /// </summary>
+    /// <param name="id">成员ID</param>
+    /// <param name="taskId">任务ID</param>
+    /// <returns>操作结果</returns>
     [HttpPost("change-task-member/{id}/{taskId}")]
     [Authorize(Roles = "Founder, President, Minister")]
     public async Task<ActionResult> LetChangeTask(string id, string taskId)

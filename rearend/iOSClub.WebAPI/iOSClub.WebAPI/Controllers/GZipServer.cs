@@ -1,4 +1,4 @@
-﻿using System.IO.Compression;
+using System.IO.Compression;
 using System.Text;
 
 namespace iOSClub.WebAPI.Controllers;
@@ -15,6 +15,11 @@ public static class GZipServer
         return Convert.ToBase64String(compressAfterByte);
     }
 
+    /// <summary>
+    /// 压缩字节数组
+    /// </summary>
+    /// <param name="data">需要压缩的字节数组</param>
+    /// <returns>压缩后的字节数组</returns>
     private static byte[] Compress(byte[] data)
     {
         try
@@ -46,6 +51,11 @@ public static class GZipServer
         return compressString;
     }
 
+    /// <summary>
+    /// 解压缩字节数组
+    /// </summary>
+    /// <param name="data">需要解压缩的字节数组</param>
+    /// <returns>解压缩后的字节数组</returns>
     private static byte[] Decompress(byte[] data)
     {
         try

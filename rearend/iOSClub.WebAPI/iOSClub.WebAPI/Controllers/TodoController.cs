@@ -197,6 +197,9 @@ public class TodoController(
     /// <summary>
     /// 获取分页待办事项
     /// </summary>
+    /// <param name="page">页码，从1开始</param>
+    /// <param name="pageSize">每页大小，范围1-50</param>
+    /// <returns>分页的待办事项列表</returns>
     [HttpGet("Page/{page}/{pageSize}")]
     public async Task<ActionResult<List<TodoModel>>> GetTodosPaged(int page = 1, int pageSize = 10)
     {

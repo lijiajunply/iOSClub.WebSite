@@ -14,9 +14,24 @@ public class InfoController(
     IHttpContextAccessor httpContextAccessor)
     : ControllerBase
 {
+    /// <summary>
+    /// 获取所有学院列表
+    /// </summary>
+    /// <returns>学院名称字符串数组</returns>
     [HttpGet("academies")]
     public ActionResult<string[]> GetAcademies() => SignRecord.Academies;
 
+    /// <summary>
+    /// 获取当前用户信息
+    /// </summary>
+    /// <remarks>
+    /// 根据用户身份返回不同级别的信息：
+    /// - 普通成员：返回空
+    /// - 部门成员：返回任务和项目信息
+    /// - 部长：返回任务、项目和资源信息
+    /// - 社长/创始人：返回所有系统信息
+    /// </remarks>
+    /// <returns>根据用户身份返回相应的用户信息</returns>
     [TokenActionFilter]
     [Authorize]
     [HttpGet("user-info")]

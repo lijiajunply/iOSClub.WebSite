@@ -15,6 +15,11 @@ public class AuthController(
     IJwtHelper jwtHelper)
     : ControllerBase
 {
+    /// <summary>
+    /// 学生注册接口
+    /// </summary>
+    /// <param name="model">学生注册信息模型</param>
+    /// <returns>成功返回JWT令牌，失败返回相应的错误信息</returns>
     [HttpPost("signup")]
     public async Task<ActionResult<string>> SignUp(StudentModel model)
     {
@@ -40,6 +45,11 @@ public class AuthController(
         return jwtHelper.GetMemberToken(MemberModel.AutoCopy<StudentModel, MemberModel>(model));
     }
 
+    /// <summary>
+    /// 用户登录接口
+    /// </summary>
+    /// <param name="loginModel">登录信息模型，包含用户ID和用户名</param>
+    /// <returns>成功返回JWT令牌，失败返回404未找到</returns>
     [HttpPost("login")]
     public async Task<ActionResult<string>> Login(LoginModel loginModel)
     {

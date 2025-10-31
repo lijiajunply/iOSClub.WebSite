@@ -259,13 +259,21 @@ public class DepartmentController(
         }
     }
 
-    // 辅助方法：检查用户是否有权限
+    /// <summary>
+    /// 检查用户是否有权限访问部门信息
+    /// </summary>
+    /// <param name="identity">用户身份</param>
+    /// <returns>如果用户有权限则返回true，否则返回false</returns>
     private bool IsAuthorizedUser(string? identity)
     {
         return identity is "Founder" or "President" or "Minister" or "Department";
     }
 
-    // 辅助方法：检查用户是否是管理员
+    /// <summary>
+    /// 检查用户是否是管理员（创始人、社长或部长）
+    /// </summary>
+    /// <param name="identity">用户身份</param>
+    /// <returns>如果用户是管理员则返回true，否则返回false</returns>
     private bool IsAdminUser(string? identity)
     {
         return identity is "Founder" or "President" or "Minister";

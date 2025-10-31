@@ -13,19 +13,31 @@ namespace iOSClub.WebAPI.Controllers;
 public class StaffController(IStaffRepository staffRepository, IHttpContextAccessor httpContextAccessor)
     : ControllerBase
 {
-    // 获取当前用户信息（用于权限验证）
+    /// <summary>
+    /// 获取当前用户信息（用于权限验证）
+    /// </summary>
+    /// <returns>当前用户的StaffModel对象，如果无法获取则返回null</returns>
     private StaffModel? GetCurrentUser()
     {
         return httpContextAccessor.HttpContext?.User.GetStaff();
     }
 
-    // 检查是否有管理权限（President 或 Minister）
+    /// <summary>
+    /// 检查是否有管理权限（创始人、社长或部长）
+    /// </summary>
+    /// <param name="staff">要检查的用户</param>
+    /// <returns>如果有管理权限则返回true，否则返回false</returns>
     private bool HasManagementPermission(StaffModel? staff)
     {
         return staff is { Identity: "President" or "Minister" or "Founder" };
     }
 
-    // 检查是否可以修改目标成员（不能修改比自己权限高的成员）
+    /// <summary>
+    /// 检查是否可以修改目标成员（不能修改比自己权限高的成员）
+    /// </summary>
+    /// <param name="currentStaff">当前用户</param>
+    /// <param name="targetStaff">目标成员</param>
+    /// <returns>如果可以修改则返回true，否则返回false</returns>
     private bool CanModifyTarget(StaffModel? currentStaff, StaffModel targetStaff)
     {
         if (currentStaff == null)
@@ -46,6 +58,10 @@ public class StaffController(IStaffRepository staffRepository, IHttpContextAcces
         return false;
     }
 
+    /// <summary>
+    /// 获取所有员工列表
+    /// </summary>
+    /// <returns>员工列表</returns>
     [HttpGet]
     public async Task<ActionResult<IEnumerable<StaffModel>>> GetAllStaff()
     {
@@ -57,6 +73,11 @@ public class StaffController(IStaffRepository staffRepository, IHttpContextAcces
         return Ok(staffs);
     }
 
+    /// <summary>
+    /// 根据用户ID获取员工信息
+    /// </summary>
+    /// <param name="userId">用户ID</param>
+    /// <returns>员工信息</returns>
     [HttpGet("{userId}")]
     public async Task<ActionResult<StaffModel>> GetStaff(string userId)
     {
@@ -71,6 +92,11 @@ public class StaffController(IStaffRepository staffRepository, IHttpContextAcces
         return Ok(staff);
     }
     
+    /// <summary>
+    /// 创建新员工
+    /// </summary>
+    /// <param name="staff">员工信息模型</param>
+    /// <returns>创建结果</returns>
     [HttpPost("Create")]
     public async Task<ActionResult> CreateStaff([FromBody] StaffModel staff)
     {
@@ -89,6 +115,12 @@ public class StaffController(IStaffRepository staffRepository, IHttpContextAcces
         return CreatedAtAction(nameof(GetStaff), new { userId = staff.UserId }, staff);
     }
 
+    /// <summary>
+    /// 更新员工信息
+    /// </summary>
+    /// <param name="userId">用户ID</param>
+    /// <param name="staff">更新后的员工信息</param>
+    /// <returns>更新结果</returns>
     [HttpPost("Update/{userId}")]
     public async Task<ActionResult> UpdateStaff(string userId, [FromBody] StaffModel staff)
     {
@@ -115,6 +147,11 @@ public class StaffController(IStaffRepository staffRepository, IHttpContextAcces
         return Ok();
     }
     
+    /// <summary>
+    /// 删除员工
+    /// </summary>
+    /// <param name="userId">用户ID</param>
+    /// <returns>删除结果</returns>
     [HttpGet("Delete/{userId}")]
     public async Task<ActionResult> DeleteStaff(string userId)
     {
@@ -138,6 +175,11 @@ public class StaffController(IStaffRepository staffRepository, IHttpContextAcces
         return Ok();
     }
 
+    /// <summary>
+    /// 根据身份获取员工列表
+    /// </summary>
+    /// <param name="identity">员工身份</param>
+    /// <returns>符合条件的员工列表</returns>
     [HttpGet("by-identity/{identity}")]
     public async Task<ActionResult<IEnumerable<StaffModel>>> GetStaffsByIdentity(string identity)
     {
@@ -149,6 +191,12 @@ public class StaffController(IStaffRepository staffRepository, IHttpContextAcces
         return Ok(staffs);
     }
 
+    /// <summary>
+    /// 修改员工所属部门
+    /// </summary>
+    /// <param name="userId">用户ID</param>
+    /// <param name="departmentName">部门名称，为null时表示移除部门</param>
+    /// <returns>修改结果</returns>
     [HttpPost("change-department/{userId}")]
     public async Task<ActionResult> ChangeStaffDepartment(string userId, [FromQuery] string? departmentName)
     {
