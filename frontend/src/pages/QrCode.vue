@@ -13,7 +13,7 @@
         >
           <div class="flex gap-4">
             <n-image
-                src="src/assets/iOS_Club_LOGO.png"
+                src="/assets/iOS_Club_LOGO.png"
                 :preview-disabled="true"
                 class="w-[70px] h-[70px]"
                 object-fit="cover"

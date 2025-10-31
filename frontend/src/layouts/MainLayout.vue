@@ -188,7 +188,7 @@
       <n-layout-footer class="apple-footer">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div class="text-center space-y-4">
-            <p class="text-sm text-gray-600">
+            <p class="text-sm text-gray-600 dark:text-gray-300">
               Copyright © 2023 - 2024 XAUAT iOS Club
             </p>
             <div class="flex flex-wrap justify-center gap-4 text-sm">
@@ -482,7 +482,6 @@ const handleSelect = (key) => {
 
 /* Footer styles */
 .apple-footer {
-  background: #f5f5f7;
   border-top: 1px solid rgba(0, 0, 0, 0.1);
 }
 
@@ -497,7 +496,6 @@ const handleSelect = (key) => {
 
 /* Dropdown customization */
 :deep(.n-dropdown-menu) {
-  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(0, 0, 0, 0.1);

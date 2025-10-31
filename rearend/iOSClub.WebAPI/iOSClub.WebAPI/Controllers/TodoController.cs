@@ -4,7 +4,6 @@ using iOSClub.DataApi.Repositories;
 using iOSClub.WebAPI.IdentityModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace iOSClub.WebAPI.Controllers;
 
@@ -13,9 +12,9 @@ namespace iOSClub.WebAPI.Controllers;
 [ApiController]
 [Route("[controller]")]  // 使用C#推荐的API路径格式
 public class TodoController(
-    IDbContextFactory<iOSContext> factory,
-    IHttpContextAccessor httpContextAccessor,
-    TodoRepository todoRepository)
+    ITodoRepository todoRepository,
+    IStudentRepository studentRepository,
+    IHttpContextAccessor httpContextAccessor)
     : ControllerBase
 {
     /// <summary>
@@ -30,8 +29,7 @@ public class TodoController(
             if (member == null)
                 return Unauthorized("用户未认证");
 
-            await using var context = await factory.CreateDbContextAsync();
-            var student = await context.Students.FirstOrDefaultAsync(x => x.UserId == member.UserId);
+            var student = await studentRepository.GetByIdAsync(member.UserId);
             if (student == null)
                 return NotFound("学生信息不存在");
 
@@ -114,8 +112,7 @@ public class TodoController(
             if (member == null)
                 return Unauthorized("用户未认证");
 
-            await using var context = await factory.CreateDbContextAsync();
-            var student = await context.Students.FirstOrDefaultAsync(x => x.UserId == member.UserId);
+            var student = await studentRepository.GetByIdAsync(member.UserId);
             if (student == null)
                 return NotFound("学生信息不存在");
 

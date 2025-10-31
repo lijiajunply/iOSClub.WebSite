@@ -1,10 +1,9 @@
-using iOSClub.Data;
 using iOSClub.Data.DataModels;
 using iOSClub.Data.ShowModels;
+using iOSClub.DataApi.Repositories;
 using iOSClub.WebAPI.IdentityModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace iOSClub.WebAPI.Controllers;
 
@@ -15,7 +14,7 @@ namespace iOSClub.WebAPI.Controllers;
 [TokenActionFilter]
 [ApiController]
 [Route("[controller]")]
-public class MemberManagementController(IDbContextFactory<iOSContext> factory) : ControllerBase
+public class MemberManagementController(IStudentRepository studentRepository) : ControllerBase
 {
     /// <summary>
     /// 删除学生成员
@@ -25,17 +24,9 @@ public class MemberManagementController(IDbContextFactory<iOSContext> factory) :
     [HttpPost("delete/{id}")]
     public async Task<IActionResult> Delete(string id)
     {
-        await using var context = await factory.CreateDbContextAsync();
-        if (context.Students == null!)
+        var result = await studentRepository.DeleteAsync(id);
+        if (!result)
             return NotFound();
-
-        var memberModel = await context.Students.FindAsync(id);
-
-        if (memberModel == null)
-            return NotFound();
-
-        context.Students.Remove(memberModel);
-        await context.SaveChangesAsync();
 
         return NoContent();
     }
@@ -48,27 +39,8 @@ public class MemberManagementController(IDbContextFactory<iOSContext> factory) :
     [HttpPost("update-many")]
     public async Task<ActionResult<List<StudentModel>>> UpdateMany(List<StudentModel> list)
     {
-        await using var context = await factory.CreateDbContextAsync();
-
-        // 获取所有现有的学生ID
-        var existingStudentIds = await context.Students
-            .Select(s => s.UserId)
-            .ToHashSetAsync();
-
-        // 过滤出只需要添加的学生
-        var newStudents = list
-            .Where(model => !existingStudentIds.Contains(model.UserId))
-            .Select(model => model.Standardization())
-            .ToList();
-
-        // 批量添加新学生
-        if (newStudents.Count > 0)
-        {
-            await context.Students.AddRangeAsync(newStudents);
-            await context.SaveChangesAsync();
-        }
-
-        return await context.Students.ToListAsync();
+        var result = await studentRepository.UpdateManyAsync(list);
+        return Ok(result);
     }
 
     /// <summary>
@@ -79,25 +51,9 @@ public class MemberManagementController(IDbContextFactory<iOSContext> factory) :
     [HttpPost("update")]
     public async Task<ActionResult> Update([FromBody] MemberModel model)
     {
-        await using var context = await factory.CreateDbContextAsync();
-        if (context.Students == null!)
-        {
+        var result = await studentRepository.UpdateAsync(model);
+        if (!result)
             return NotFound();
-        }
-
-        context.Entry(model).State = EntityState.Modified;
-
-        try
-        {
-            await context.SaveChangesAsync();
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            var exists = await context.Students.AnyAsync(x => x.Equals(model));
-            if (!exists)
-                return NotFound();
-            throw;
-        }
 
         return NoContent();
     }

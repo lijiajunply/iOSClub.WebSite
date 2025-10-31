@@ -1,4 +1,4 @@
-using iOSClub.Data;
+﻿using iOSClub.Data;
 using iOSClub.Data.DataModels;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,6 +12,14 @@ public interface ITodoRepository
     Task<bool> UpdateTodoAsync(TodoModel todo);
     Task<bool> DeleteTodoAsync(string id);
     Task<bool> TodoExistsAsync(string id);
+
+    Task<bool> HasPermissionAsync(string id, string userId);
+
+    Task<int> GetTodoCountAsync(string userId);
+
+    Task<int> GetCompletedTodoCountAsync(string userId);
+
+    Task<List<TodoModel>> GetTodosPagedAsync(string userId, int page, int pageSize);
 }
 
 public class TodoRepository(iOSContext context) : ITodoRepository

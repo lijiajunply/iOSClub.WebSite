@@ -21,7 +21,7 @@
             @click="handleCardClick(item)"
         >
           <template #cover>
-            <div class="h-48 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center overflow-hidden">
+            <div class="h-48 flex items-center justify-center overflow-hidden">
               <img
                   :src="item.imageUrl"
                   alt="Event Icon"
@@ -31,10 +31,10 @@
           </template>
 
           <div class="p-6 space-y-4">
-            <h2 class="text-2xl font-semibold text-gray-900 group-hover:text-purple-600 transition-colors duration-300">
+            <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 group-hover:text-purple-600 transition-colors duration-300">
               {{ item.title }}
             </h2>
-            <p class="text-gray-600 leading-relaxed">
+            <p class="text-gray-600 dark:text-gray-400 leading-relaxed">
               {{ item.content }}
             </p>
             <div class="flex items-center text-purple-600 font-medium">
@@ -64,11 +64,11 @@ import { NCard } from 'naive-ui'
 import PageStart from "../components/PageStart.vue";
 
 // 导入图片
-import appleLogo from '../../public/assets/Centre/AppleLogo.jpg'
-import visionProImage from '../../public/assets/other/vision_pro.jpg'
-import launchEventImage from '../../public/assets/other/launch_event.jpg'
-import classImage from '../../public/assets/other/class.jpg'
-import partyImage from '../../public/assets/other/you_yuan_hui.jpg'
+import appleLogo from '/assets/Centre/AppleLogo.jpg'
+import visionProImage from '/assets/other/vision_pro.jpg'
+import launchEventImage from '/assets/other/launch_event.jpg'
+import classImage from '/assets/other/class.jpg'
+import partyImage from '/assets/other/you_yuan_hui.jpg'
 
 // 移动端判断状态
 const isMobile = ref(false)

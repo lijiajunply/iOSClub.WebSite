@@ -1,8 +1,8 @@
 using iOSClub.Data;
+using iOSClub.DataApi.Repositories;
 using iOSClub.WebAPI.IdentityModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using TodoModel = iOSClub.Data.DataModels.TodoModel;
 using MemberModel = iOSClub.Data.ShowModels.MemberModel;
 using StudentModel = iOSClub.Data.DataModels.StudentModel;
@@ -12,7 +12,8 @@ namespace iOSClub.WebAPI.Controllers;
 [ApiController]
 [Route("[controller]")]
 public class UserController(
-    IDbContextFactory<iOSContext> factory,
+    ITodoRepository todoRepository,
+    IStudentRepository studentRepository,
     IHttpContextAccessor httpContextAccessor)
     : ControllerBase
 {
@@ -25,12 +26,13 @@ public class UserController(
     [HttpGet("data")]
     public async Task<ActionResult<MemberModel>> GetData()
     {
-        await using var context = await factory.CreateDbContextAsync();
         var member = httpContextAccessor.HttpContext?.User.GetUser();
         if (member == null) return NotFound();
         if (member.Identity == "Founder") return member;
-        var student = await context.Students.FirstOrDefaultAsync(x => x.UserId == member.UserId);
+
+        var student = await studentRepository.GetByIdAsync(member.UserId);
         if (student == null) return NotFound();
+
         var id = member.Identity;
         member = MemberModel.AutoCopy<StudentModel, MemberModel>(student);
         member.Identity = id;
@@ -47,12 +49,14 @@ public class UserController(
     [HttpGet("todos")]
     public async Task<ActionResult<List<TodoModel>>> GetTodos()
     {
-        await using var context = await factory.CreateDbContextAsync();
         var member = httpContextAccessor.HttpContext?.User.GetUser();
         if (member == null) return NotFound();
-        var student = await context.Students.FirstOrDefaultAsync(x => x.UserId == member.UserId);
+
+        var student = await studentRepository.GetByIdAsync(member.UserId);
         if (student == null) return NotFound();
-        return await context.Todos.Where(x => x.StudentId == student.UserId).ToListAsync();
+
+        var todos = await todoRepository.GetTodosByUserIdAsync(student.UserId);
+        return Ok(todos);
     }
 
     /// <summary>
@@ -65,17 +69,21 @@ public class UserController(
     [HttpPost("todos")]
     public async Task<ActionResult<TodoModel>> AddTodo(TodoModel todoModel)
     {
-        await using var context = await factory.CreateDbContextAsync();
         var member = httpContextAccessor.HttpContext?.User.GetUser();
         if (member == null) return NotFound();
-        var student = await context.Students.FirstOrDefaultAsync(x => x.UserId == member.UserId);
-        if (student == null) return NotFound();
-        todoModel.Student = student;
-        todoModel.Id = todoModel.ToHash();
-        await context.Todos.AddAsync(todoModel);
-        await context.SaveChangesAsync();
 
-        return todoModel;
+        var student = await studentRepository.GetByIdAsync(member.UserId);
+        if (student == null) return NotFound();
+
+        todoModel.StudentId = student.UserId;
+        todoModel.Id = todoModel.ToHash();
+        todoModel.CreatedTime = DateTime.Now;
+
+        var result = await todoRepository.AddTodoAsync(todoModel);
+        if (!result)
+            return StatusCode(500, "添加待办事项失败");
+
+        return CreatedAtAction(nameof(GetTodoById), new { id = todoModel.Id }, todoModel);
     }
 
     /// <summary>
@@ -88,19 +96,39 @@ public class UserController(
     [HttpDelete("todos/{id}")]
     public async Task<IActionResult> DeleteTodo(string id)
     {
-        await using var context = await factory.CreateDbContextAsync();
         var member = httpContextAccessor.HttpContext?.User.GetUser();
         if (member == null) return NotFound();
-        var student = await context.Students.FirstOrDefaultAsync(x => x.UserId == member.UserId);
-        if (student == null) return NotFound();
 
-        var todo = await context.Todos.FirstOrDefaultAsync(x => x.Id == id);
-        if (todo == null || todo.StudentId != member.UserId) return NotFound();
+        var hasPermission = await todoRepository.HasPermissionAsync(id, member.UserId);
+        if (!hasPermission)
+            return Forbid("无权删除此待办事项");
 
-        context.Todos.Remove(todo);
-        await context.SaveChangesAsync();
+        var result = await todoRepository.DeleteTodoAsync(id);
+        if (!result)
+            return NotFound("待办事项不存在或删除失败");
 
         return Ok();
+    }
+
+    /// <summary>
+    /// 根据ID获取待办事项详情
+    /// </summary>
+    [HttpGet("todos/{id}")]
+    public async Task<ActionResult<TodoModel>> GetTodoById(string id)
+    {
+        var member = httpContextAccessor.HttpContext?.User.GetUser();
+        if (member == null)
+            return Unauthorized("用户未认证");
+
+        var todo = await todoRepository.GetTodoByIdAsync(id);
+        if (todo == null)
+            return NotFound("待办事项不存在");
+
+        // 检查权限
+        if (todo.StudentId != member.UserId)
+            return Forbid("无权访问此待办事项");
+
+        return Ok(todo);
     }
 
     /// <summary>
@@ -113,18 +141,17 @@ public class UserController(
     [HttpPut("todos")]
     public async Task<IActionResult> UpdateTodo(TodoModel todoModel)
     {
-        await using var context = await factory.CreateDbContextAsync();
         var member = httpContextAccessor.HttpContext?.User.GetUser();
         if (member == null) return NotFound();
-        var student = await context.Students.FirstOrDefaultAsync(x => x.UserId == member.UserId);
-        if (student == null) return NotFound();
 
-        var todo = await context.Todos.FirstOrDefaultAsync(x => x.Id == todoModel.Id);
-        if (todo == null) return NotFound();
+        var hasPermission = await todoRepository.HasPermissionAsync(todoModel.Id, member.UserId);
+        if (!hasPermission)
+            return Forbid("无权修改此待办事项");
 
-        todo.Update(todoModel);
+        var result = await todoRepository.UpdateTodoAsync(todoModel);
+        if (!result)
+            return NotFound("待办事项不存在或更新失败");
 
-        await context.SaveChangesAsync();
         return Ok();
     }
 
@@ -138,12 +165,12 @@ public class UserController(
     [HttpPut("profile")]
     public async Task<IActionResult> UpdateProfile(MemberModel memberModel)
     {
-        await using var context = await factory.CreateDbContextAsync();
         var member = httpContextAccessor.HttpContext?.User.GetUser();
         if (member == null || member.UserId != memberModel.UserId) return Forbid();
 
-        context.Entry(memberModel).State = EntityState.Modified;
-        await context.SaveChangesAsync();
+        var result = await studentRepository.UpdateAsync(memberModel);
+        if (!result)
+            return StatusCode(500, "更新用户资料失败");
 
         return NoContent();
     }

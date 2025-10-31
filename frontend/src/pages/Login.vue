@@ -13,14 +13,6 @@
       </div>
 
       <n-form :model="form" :rules="rules" ref="formRef">
-        <n-form-item path="name" label="姓名" class="dark:text-gray-100">
-          <n-input
-              v-model:value="form.name"
-              placeholder="请输入您的姓名"
-              class="dark:text-gray-100 dark:bg-neutral-800"
-          />
-        </n-form-item>
-
         <n-form-item path="studentId" label="学号" class="dark:text-gray-100">
           <n-input
               v-model:value="form.studentId"

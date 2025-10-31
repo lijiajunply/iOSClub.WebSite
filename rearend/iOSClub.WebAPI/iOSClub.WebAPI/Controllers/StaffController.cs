@@ -9,7 +9,7 @@ namespace iOSClub.WebAPI.Controllers;
 [Authorize(Roles = "Founder, President, Minister")]
 [TokenActionFilter]
 [ApiController]
-[Route("[controller]")]  // 使用C#推荐的API路径格式
+[Route("[controller]")] // 使用C#推荐的API路径格式
 public class StaffController(IStaffRepository staffRepository, IHttpContextAccessor httpContextAccessor)
     : ControllerBase
 {
@@ -27,7 +27,7 @@ public class StaffController(IStaffRepository staffRepository, IHttpContextAcces
     /// </summary>
     /// <param name="staff">要检查的用户</param>
     /// <returns>如果有管理权限则返回true，否则返回false</returns>
-    private bool HasManagementPermission(StaffModel? staff)
+    private static bool HasManagementPermission(StaffModel? staff)
     {
         return staff is { Identity: "President" or "Minister" or "Founder" };
     }
@@ -38,7 +38,7 @@ public class StaffController(IStaffRepository staffRepository, IHttpContextAcces
     /// <param name="currentStaff">当前用户</param>
     /// <param name="targetStaff">目标成员</param>
     /// <returns>如果可以修改则返回true，否则返回false</returns>
-    private bool CanModifyTarget(StaffModel? currentStaff, StaffModel targetStaff)
+    private static bool CanModifyTarget(StaffModel? currentStaff, StaffModel targetStaff)
     {
         if (currentStaff == null)
             return false;
@@ -91,7 +91,7 @@ public class StaffController(IStaffRepository staffRepository, IHttpContextAcces
 
         return Ok(staff);
     }
-    
+
     /// <summary>
     /// 创建新员工
     /// </summary>
@@ -146,7 +146,7 @@ public class StaffController(IStaffRepository staffRepository, IHttpContextAcces
 
         return Ok();
     }
-    
+
     /// <summary>
     /// 删除员工
     /// </summary>

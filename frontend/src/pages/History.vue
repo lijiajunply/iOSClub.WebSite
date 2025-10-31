@@ -22,10 +22,10 @@
         >
 
           <div class="p-6 space-y-4">
-            <h2 class="text-2xl font-semibold text-gray-900 group-hover:text-blue-600 transition-colors duration-300">
+            <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 transition-colors duration-300">
               {{ item.title }}
             </h2>
-            <p class="text-gray-600 leading-relaxed">
+            <p class="text-gray-600 dark:text-gray-400 leading-relaxed">
               {{ item.content }}
             </p>
             <div class="flex items-center text-blue-600 font-medium">
@@ -52,7 +52,7 @@ import { NCard } from 'naive-ui'
 import { useRouter } from 'vue-router'
 import PageStart from "../components/PageStart.vue";
 
-import historyImage from '../../public/assets/Centre/History.jpg';
+import historyImage from '/assets/Centre/History.jpg';
 
 const router = useRouter()
 

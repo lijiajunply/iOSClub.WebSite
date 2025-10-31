@@ -42,7 +42,7 @@
 
           <!-- 卡片内容区 -->
           <div class="p-6 space-y-4">
-            <h3 class="text-2xl font-semibold text-gray-900 group-hover:text-purple-600 transition-colors duration-300 text-center">
+            <h3 class="text-2xl font-semibold text-gray-700 dark:text-gray-200 group-hover:text-purple-600 transition-colors duration-300 text-center">
               {{ article.title }}
             </h3>
             <div class="flex items-center justify-center text-purple-600 font-medium">
@@ -73,7 +73,7 @@
 
       <!-- 更多订阅 - 优化后的版本 -->
       <div v-if="entries.length > 0" class="pb-16 ml-4 mr-4 mt-8">
-        <h2 class="text-3xl font-bold mb-8 text-gray-900 relative inline-block">
+        <h2 class="text-3xl font-bold mb-8 text-gray-900 dark:text-gray-100 relative inline-block">
           更多订阅
           <span class="absolute -bottom-2 left-0 w-1/2 h-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"></span>
         </h2>
@@ -89,7 +89,7 @@
               <span class="text-lg font-medium">
                 {{ entry.title }}
               </span>
-              <span class="text-gray-500 text-sm bg-white/50 px-3 py-1 rounded-full backdrop-blur-sm">
+              <span class="text-gray-500 text-sm px-3 py-1 rounded-full backdrop-blur-sm">
                 {{ formatDate(entry.updated) }}
               </span>
             </div>
@@ -318,11 +318,7 @@ onMounted(async () => {
   padding: 18px 20px;
   margin: 0 0 6px 0;
   font-size: 18px;
-  color: #1c1f23;
-  /* 半透明背景与背景融合 */
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.9) 100%);
   backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
   overflow: hidden;
@@ -345,7 +341,6 @@ onMounted(async () => {
 .subscription-item:hover {
   transform: translateY(-4px) scale(1.005);
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 1) 100%);
 }
 
 .subscription-item:hover::before {

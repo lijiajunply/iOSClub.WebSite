@@ -17,12 +17,12 @@
             :style="`animation-delay: ${index * 100}ms`"
             @click="() => window.open(item.url, '_blank')"
         >
-          <div class="relative bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300">
+          <div class="relative  rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300">
             <div class="p-6 space-y-4">
-              <h2 class="text-2xl font-semibold text-gray-900 group-hover:text-purple-600 transition-colors duration-300">
+              <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 group-hover:text-purple-600 transition-colors duration-300">
                 {{ item.title }}
               </h2>
-              <p class="text-gray-600 leading-relaxed">
+              <p class="text-gray-600 dark:text-gray-400 leading-relaxed">
                 {{ item.content }}
               </p>
               <div class="flex items-center text-purple-600 font-medium">
@@ -43,7 +43,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
 import PageStart from "../components/PageStart.vue";
-import appleLogo from '../../public/assets/Centre/AppleLogo.jpg'
+import appleLogo from '/assets/Centre/AppleLogo.jpg'
 
 // 检测是否为移动设备
 const isMobile = ref(window.innerWidth < 640);
@@ -88,8 +88,8 @@ const cards = [
     url: "https://gitee.com/XAUATiOSClub/huaji-ledger"
   },
   {
-    title: "西建导航",
-    content: "用SwiftUI开发的西建大校园导航App",
+    title: "建大导航",
+    content: "西建大校园导航",
     url: "https://gitee.com/XAUATiOSClub/XAUATNav"
   }
 ]

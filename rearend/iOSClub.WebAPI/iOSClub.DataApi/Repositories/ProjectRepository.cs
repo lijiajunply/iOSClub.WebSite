@@ -12,18 +12,31 @@ public interface IProjectRepository
     Task<List<ProjectModel>> GetProjectsByDepartmentAsync(string departmentName);
     Task<List<ProjectModel>> GetProjectsByStaffAsync(string userId);
     Task<ProjectModel?> CreateProjectAsync(ProjectModel project, StaffModel creator);
+    Task<bool> UpdateProjectAsync(ProjectModel project);
+    Task<bool> DeleteProjectAsync(string id);
+    Task<bool> ProjectExistsAsync(string id);
+    Task<bool> AddStaffToProjectAsync(string projectId, string userId);
+    Task<bool> RemoveStaffFromProjectAsync(string projectId, string userId);
+
+    Task<List<StaffModel>> GetProjectStaffsAsync(string projectId);
+
+    Task<List<TaskModel>> GetProjectTasksAsync(string projectId);
+
+    Task<bool> HasProjectManagementPermissionAsync(string userId, string projectId);
+
+    Task<List<ProjectModel>> GetProjectsByTimeRangeAsync(string? startTime, string? endTime);
+
+    Task<List<ProjectModel>> SearchProjectsAsync(string searchTerm);
 }
 
 public class ProjectRepository(iOSContext context) : IProjectRepository
 {
-    private readonly iOSContext _context = context;
-
     /// <summary>
     /// 获取所有项目（包含关联数据）
     /// </summary>
     public async Task<List<ProjectModel>> GetAllProjectsAsync()
     {
-        return await _context.Projects
+        return await context.Projects
             .Include(p => p.Staffs)
             .Include(p => p.Tasks)
             .Include(p => p.Department)
@@ -35,7 +48,7 @@ public class ProjectRepository(iOSContext context) : IProjectRepository
     /// </summary>
     public async Task<ProjectModel?> GetProjectByIdAsync(string id)
     {
-        return await _context.Projects
+        return await context.Projects
             .Include(p => p.Staffs)
             .Include(p => p.Tasks)
             .Include(p => p.Department)
@@ -47,7 +60,7 @@ public class ProjectRepository(iOSContext context) : IProjectRepository
     /// </summary>
     public async Task<ProjectModel?> GetProjectByTitleAsync(string title)
     {
-        return await _context.Projects
+        return await context.Projects
             .Include(p => p.Staffs)
             .Include(p => p.Tasks)
             .Include(p => p.Department)
@@ -59,7 +72,7 @@ public class ProjectRepository(iOSContext context) : IProjectRepository
     /// </summary>
     public async Task<List<ProjectModel>> GetProjectsByDepartmentAsync(string departmentName)
     {
-        return await _context.Projects
+        return await context.Projects
             .Include(p => p.Staffs)
             .Include(p => p.Tasks)
             .Include(p => p.Department)
@@ -72,7 +85,7 @@ public class ProjectRepository(iOSContext context) : IProjectRepository
     /// </summary>
     public async Task<List<ProjectModel>> GetProjectsByStaffAsync(string userId)
     {
-        return await _context.Projects
+        return await context.Projects
             .Include(p => p.Staffs)
             .Include(p => p.Tasks)
             .Include(p => p.Department)
@@ -96,8 +109,8 @@ public class ProjectRepository(iOSContext context) : IProjectRepository
             // 添加创建者到项目成员
             project.Staffs.Add(creator);
 
-            await _context.Projects.AddAsync(project);
-            await _context.SaveChangesAsync();
+            await context.Projects.AddAsync(project);
+            await context.SaveChangesAsync();
             return project;
         }
         catch
@@ -113,15 +126,15 @@ public class ProjectRepository(iOSContext context) : IProjectRepository
     {
         try
         {
-            var existingProject = await _context.Projects
+            var existingProject = await context.Projects
                 .FirstOrDefaultAsync(p => p.Id == project.Id);
 
             if (existingProject == null)
                 return false;
 
             existingProject.Update(project);
-            _context.Projects.Update(existingProject);
-            await _context.SaveChangesAsync();
+            context.Projects.Update(existingProject);
+            await context.SaveChangesAsync();
             return true;
         }
         catch
@@ -141,8 +154,8 @@ public class ProjectRepository(iOSContext context) : IProjectRepository
             if (project == null)
                 return false;
 
-            _context.Projects.Remove(project);
-            await _context.SaveChangesAsync();
+            context.Projects.Remove(project);
+            await context.SaveChangesAsync();
             return true;
         }
         catch
@@ -156,7 +169,7 @@ public class ProjectRepository(iOSContext context) : IProjectRepository
     /// </summary>
     public async Task<bool> ProjectExistsAsync(string id)
     {
-        return await _context.Projects.AnyAsync(p => p.Id == id);
+        return await context.Projects.AnyAsync(p => p.Id == id);
     }
 
     /// <summary>
@@ -166,11 +179,11 @@ public class ProjectRepository(iOSContext context) : IProjectRepository
     {
         try
         {
-            var project = await _context.Projects
+            var project = await context.Projects
                 .Include(p => p.Staffs)
                 .FirstOrDefaultAsync(p => p.Id == projectId);
 
-            var staff = await _context.Staffs
+            var staff = await context.Staffs
                 .FirstOrDefaultAsync(s => s.UserId == userId);
 
             if (project == null || staff == null)
@@ -180,7 +193,7 @@ public class ProjectRepository(iOSContext context) : IProjectRepository
                 return true; // 已经存在，返回成功
 
             project.Staffs.Add(staff);
-            await _context.SaveChangesAsync();
+            await context.SaveChangesAsync();
             return true;
         }
         catch
@@ -196,7 +209,7 @@ public class ProjectRepository(iOSContext context) : IProjectRepository
     {
         try
         {
-            var project = await _context.Projects
+            var project = await context.Projects
                 .Include(p => p.Staffs)
                 .FirstOrDefaultAsync(p => p.Id == projectId);
 
@@ -205,7 +218,7 @@ public class ProjectRepository(iOSContext context) : IProjectRepository
                 return false;
 
             project.Staffs.Remove(staff);
-            await _context.SaveChangesAsync();
+            await context.SaveChangesAsync();
             return true;
         }
         catch
@@ -219,7 +232,7 @@ public class ProjectRepository(iOSContext context) : IProjectRepository
     /// </summary>
     public async Task<List<StaffModel>> GetProjectStaffsAsync(string projectId)
     {
-        return await _context.Projects
+        return await context.Projects
             .Where(p => p.Id == projectId)
             .SelectMany(p => p.Staffs)
             .ToListAsync();
@@ -230,7 +243,7 @@ public class ProjectRepository(iOSContext context) : IProjectRepository
     /// </summary>
     public async Task<List<TaskModel>> GetProjectTasksAsync(string projectId)
     {
-        return await _context.Projects
+        return await context.Projects
             .Where(p => p.Id == projectId)
             .SelectMany(p => p.Tasks)
             .ToListAsync();
@@ -241,7 +254,7 @@ public class ProjectRepository(iOSContext context) : IProjectRepository
     /// </summary>
     public async Task<bool> HasProjectManagementPermissionAsync(string userId, string projectId)
     {
-        var staff = await _context.Staffs
+        var staff = await context.Staffs
             .FirstOrDefaultAsync(s => s.UserId == userId);
 
         if (staff == null)
@@ -252,7 +265,7 @@ public class ProjectRepository(iOSContext context) : IProjectRepository
             return true;
 
         // 检查是否是项目成员
-        var isProjectMember = await _context.Projects
+        var isProjectMember = await context.Projects
             .AnyAsync(p => p.Id == projectId && p.Staffs.Any(s => s.UserId == userId));
 
         return isProjectMember;
@@ -263,7 +276,7 @@ public class ProjectRepository(iOSContext context) : IProjectRepository
     /// </summary>
     public async Task<List<ProjectModel>> GetProjectsByTimeRangeAsync(string? startTime, string? endTime)
     {
-        var query = _context.Projects
+        var query = context.Projects
             .Include(p => p.Staffs)
             .Include(p => p.Tasks)
             .Include(p => p.Department)
@@ -287,13 +300,13 @@ public class ProjectRepository(iOSContext context) : IProjectRepository
     /// </summary>
     public async Task<List<ProjectModel>> SearchProjectsAsync(string searchTerm)
     {
-        return await _context.Projects
+        return await context.Projects
             .Include(p => p.Staffs)
             .Include(p => p.Tasks)
             .Include(p => p.Department)
             .Where(p => p.Title.Contains(searchTerm) ||
-                       p.Description.Contains(searchTerm) ||
-                       (p.Department != null && p.Department.Name.Contains(searchTerm)))
+                        p.Description.Contains(searchTerm) ||
+                        (p.Department != null && p.Department.Name.Contains(searchTerm)))
             .ToListAsync();
     }
 }

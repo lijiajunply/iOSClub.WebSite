@@ -1,8 +1,7 @@
-using iOSClub.Data;
 using iOSClub.Data.DataModels;
+using iOSClub.DataApi.Repositories;
 using iOSClub.DataApi.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using LoginModel = iOSClub.Data.ShowModels.LoginModel;
 using MemberModel = iOSClub.Data.ShowModels.MemberModel;
 
@@ -11,7 +10,8 @@ namespace iOSClub.WebAPI.Controllers;
 [ApiController]
 [Route("[controller]")]
 public class AuthController(
-    IDbContextFactory<iOSContext> factory,
+    IStudentRepository studentRepository,
+    ILoginService loginService,
     IJwtHelper jwtHelper)
     : ControllerBase
 {
@@ -23,26 +23,14 @@ public class AuthController(
     [HttpPost("signup")]
     public async Task<ActionResult<string>> SignUp(StudentModel model)
     {
-        await using var context = await factory.CreateDbContextAsync();
-        if (context.Students == null!)
+        var createdStudent = await studentRepository.Create(model);
+        
+        if (createdStudent == null)
         {
-            return Problem("Entity set 'MemberContext.Students'  is null.");
+            return Conflict();
         }
 
-        context.Students.Add(model);
-        try
-        {
-            await context.SaveChangesAsync();
-        }
-        catch (DbUpdateException)
-        {
-            if (await context.Students.AnyAsync(e => e.UserId == model.UserId))
-                return Conflict();
-
-            throw;
-        }
-
-        return jwtHelper.GetMemberToken(MemberModel.AutoCopy<StudentModel, MemberModel>(model));
+        return jwtHelper.GetMemberToken(MemberModel.AutoCopy<StudentModel, MemberModel>(createdStudent));
     }
 
     /// <summary>
@@ -53,33 +41,53 @@ public class AuthController(
     [HttpPost("login")]
     public async Task<ActionResult<string>> Login(LoginModel loginModel)
     {
-        await using var context = await factory.CreateDbContextAsync();
-        if (context.Students == null!)
-            return NotFound();
-
-        var peo = await context.Staffs.FirstOrDefaultAsync(x =>
-            x.UserId == loginModel.Id && x.Name == loginModel.Name);
-
-        var id = peo?.Identity ?? "Member";
-
-        var model =
-            await context.Students.FirstOrDefaultAsync(x =>
-                x.UserId == loginModel.Id && x.UserName == loginModel.Name);
-
-        if (model == null)
+        // 首先尝试使用LoginService进行学生登录
+        var studentToken = await loginService.Login(loginModel.Id, loginModel.Name);
+        if (!string.IsNullOrEmpty(studentToken))
         {
-            if (peo != null)
+            // 学生登录成功，需要获取完整的学生信息和身份信息
+            var student = await studentRepository.Get(loginModel.Id);
+            
+            if (student != null)
             {
-                return jwtHelper.GetMemberToken(new MemberModel()
-                    { UserName = peo.Name, UserId = peo.UserId, Identity = peo.Identity });
+                var member = MemberModel.AutoCopy<StudentModel, MemberModel>(student);
+                // 对于学生用户，暂时保留默认身份
+                return jwtHelper.GetMemberToken(member);
             }
-
-            return NotFound();
+        }
+        
+        // 如果学生登录失败，尝试员工登录
+        var staffToken = await loginService.StaffLogin(loginModel.Id, loginModel.Name);
+        if (!string.IsNullOrEmpty(staffToken))
+        {
+            return staffToken;
         }
 
-        var member = MemberModel.AutoCopy<StudentModel, MemberModel>(model);
-        member.Identity = id;
-
-        return jwtHelper.GetMemberToken(member);
+        return NotFound();
+    }
+    
+    /// <summary>
+    /// 用户登出接口
+    /// </summary>
+    /// <param name="userId">用户ID</param>
+    /// <returns>成功返回true，失败返回false</returns>
+    [HttpPost("logout")]
+    public async Task<ActionResult<bool>> Logout(string userId)
+    {
+        var result = await loginService.Logout(userId);
+        return result ? Ok(true) : BadRequest(false);
+    }
+    
+    /// <summary>
+    /// 验证用户token是否有效
+    /// </summary>
+    /// <param name="userId">用户ID</param>
+    /// <param name="token">要验证的token</param>
+    /// <returns>有效返回true，无效返回false</returns>
+    [HttpPost("validate")]
+    public async Task<ActionResult<bool>> ValidateToken(string userId, string token)
+    {
+        var result = await loginService.ValidateToken(userId, token);
+        return result ? Ok(true) : Unauthorized(false);
     }
 }
