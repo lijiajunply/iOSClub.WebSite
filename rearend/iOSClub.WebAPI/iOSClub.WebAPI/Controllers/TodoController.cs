@@ -1,4 +1,4 @@
-﻿using iOSClub.Data;
+using iOSClub.Data;
 using iOSClub.Data.DataModels;
 using iOSClub.DataApi.Repositories;
 using iOSClub.WebAPI.IdentityModels;
@@ -10,8 +10,8 @@ namespace iOSClub.WebAPI.Controllers;
 
 [Authorize]
 [TokenActionFilter]
-[Route("[controller]/[action]")]
 [ApiController]
+[Route("[controller]")]  // 使用C#推荐的API路径格式
 public class TodoController(
     IDbContextFactory<iOSContext> factory,
     IHttpContextAccessor httpContextAccessor,
@@ -47,7 +47,7 @@ public class TodoController(
     /// <summary>
     /// 获取待办事项统计信息
     /// </summary>
-    [HttpGet("Statistics")]
+    [HttpGet("statistics")]
     public async Task<ActionResult<object>> GetTodoStatistics()
     {
         try

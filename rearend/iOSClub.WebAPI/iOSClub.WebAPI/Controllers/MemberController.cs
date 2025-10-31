@@ -11,8 +11,8 @@ using MemberModel = iOSClub.Data.ShowModels.MemberModel;
 
 namespace iOSClub.WebAPI.Controllers;
 
-[Route("[controller]/[action]")]
 [ApiController]
+[Route("[controller]")]  // 使用C#推荐的API路径格式
 public class MemberController(
     IDbContextFactory<iOSContext> factory,
     IJwtHelper jwtHelper,
@@ -21,7 +21,7 @@ public class MemberController(
 {
     #region Visitor
 
-    [HttpPost]
+    [HttpPost("signup")]
     public async Task<ActionResult<string>> SignUp(StudentModel model)
     {
         await using var context = await factory.CreateDbContextAsync();
@@ -47,7 +47,7 @@ public class MemberController(
     }
 
 
-    [HttpPost]
+    [HttpPost("login")]
     public async Task<ActionResult<string>> Login(LoginModel loginModel)
     {
         await using var context = await factory.CreateDbContextAsync();
@@ -86,7 +86,7 @@ public class MemberController(
 
     [TokenActionFilter]
     [Authorize]
-    [HttpGet]
+    [HttpGet("data")]
     public async Task<ActionResult<MemberModel>> GetData()
     {
         await using var context = await factory.CreateDbContextAsync();

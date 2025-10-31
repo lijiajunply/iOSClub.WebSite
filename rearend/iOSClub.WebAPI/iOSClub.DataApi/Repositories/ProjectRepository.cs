@@ -4,14 +4,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace iOSClub.DataApi.Repositories;
 
-public class ProjectRepository
+public class ProjectRepository(iOSContext context)
 {
-    private readonly iOSContext _context;
-
-    public ProjectRepository(iOSContext context)
-    {
-        _context = context;
-    }
+    private readonly iOSContext _context = context;
 
     /// <summary>
     /// 获取所有项目（包含关联数据）

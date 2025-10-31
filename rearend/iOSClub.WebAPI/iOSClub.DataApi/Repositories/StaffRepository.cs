@@ -16,14 +16,9 @@ public interface IStaffRepository
     Task<bool> ChangeStaffDepartmentAsync(string userId, string? departmentName);
 }
 
-public class StaffRepository : IStaffRepository
+public class StaffRepository(IDbContextFactory<iOSContext> factory) : IStaffRepository
 {
-    private readonly IDbContextFactory<iOSContext> _factory;
-
-    public StaffRepository(IDbContextFactory<iOSContext> factory)
-    {
-        _factory = factory;
-    }
+    private readonly IDbContextFactory<iOSContext> _factory = factory;
 
     public async Task<IEnumerable<StaffModel>> GetAllStaffAsync()
     {

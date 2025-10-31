@@ -1,4 +1,4 @@
-﻿using iOSClub.Data.DataModels;
+using iOSClub.Data.DataModels;
 using iOSClub.DataApi.Repositories;
 using iOSClub.WebAPI.IdentityModels;
 using Microsoft.AspNetCore.Authorization;
@@ -8,8 +8,8 @@ namespace iOSClub.WebAPI.Controllers;
 
 [Authorize(Roles = "Founder, President, Minister")]
 [TokenActionFilter]
-[Route("[controller]")]
 [ApiController]
+[Route("[controller]")]  // 使用C#推荐的API路径格式
 public class StaffController(IStaffRepository staffRepository, IHttpContextAccessor httpContextAccessor)
     : ControllerBase
 {
@@ -46,7 +46,7 @@ public class StaffController(IStaffRepository staffRepository, IHttpContextAcces
         return false;
     }
 
-    [HttpGet("all")]
+    [HttpGet]
     public async Task<ActionResult<IEnumerable<StaffModel>>> GetAllStaff()
     {
         var currentStaff = GetCurrentUser();

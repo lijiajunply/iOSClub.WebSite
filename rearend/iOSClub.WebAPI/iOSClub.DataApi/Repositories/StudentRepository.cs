@@ -1,4 +1,4 @@
-﻿using iOSClub.Data;
+using iOSClub.Data;
 using iOSClub.Data.DataModels;
 using Microsoft.EntityFrameworkCore;
 

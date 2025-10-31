@@ -4,14 +4,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace iOSClub.DataApi.Repositories;
 
-public class DepartmentRepository
+public class DepartmentRepository(iOSContext context)
 {
-    private readonly iOSContext _context;
-
-    public DepartmentRepository(iOSContext context)
-    {
-        _context = context;
-    }
+    private readonly iOSContext _context = context;
 
     /// <summary>
     /// 获取所有部门

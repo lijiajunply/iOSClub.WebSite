@@ -1,4 +1,4 @@
-﻿using iOSClub.Data;
+using iOSClub.Data;
 using iOSClub.Data.DataModels;
 using iOSClub.WebAPI.IdentityModels;
 using Microsoft.AspNetCore.Authorization;
@@ -9,8 +9,8 @@ namespace iOSClub.WebAPI.Controllers;
 
 [Authorize]
 [TokenActionFilter]
-[Route("[controller]")]
 [ApiController]
+[Route("[controller]")]  // 使用C#推荐的API路径格式
 public class DepartmentController(
     IDbContextFactory<iOSContext> factory,
     IHttpContextAccessor httpContextAccessor)
@@ -79,7 +79,7 @@ public class DepartmentController(
     /// <summary>
     /// 获取所有部门（仅管理员）
     /// </summary>
-    [HttpGet("All")]
+    [HttpGet("all")]
     [Authorize(Roles = "Founder,President,Minister")]
     public async Task<ActionResult<List<DepartmentModel>>> GetAllDepartments()
     {

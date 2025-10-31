@@ -4,14 +4,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace iOSClub.DataApi.Repositories;
 
-public class TodoRepository
+public class TodoRepository(iOSContext context)
 {
-    private readonly iOSContext _context;
-
-    public TodoRepository(iOSContext context)
-    {
-        _context = context;
-    }
+    private readonly iOSContext _context = context;
 
     /// <summary>
     /// 获取用户的所有待办事项

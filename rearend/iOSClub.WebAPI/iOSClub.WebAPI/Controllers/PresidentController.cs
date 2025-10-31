@@ -11,13 +11,13 @@ namespace iOSClub.WebAPI.Controllers;
 
 [Authorize(Roles = "Founder, President, Minister")]
 [TokenActionFilter]
-[Route("[controller]/[action]")]
 [ApiController]
+[Route("[controller]")]  // 使用C#推荐的API路径格式
 public class PresidentController(IDbContextFactory<iOSContext> factory)
     : ControllerBase
 {
-    // GET: api/Member
-    [HttpGet("{id}")]
+    // POST: api/President/delete/{id}
+    [HttpPost("delete/{id}")]
     public async Task<IActionResult> Delete(string id)
     {
         await using var context = await factory.CreateDbContextAsync();
@@ -35,7 +35,7 @@ public class PresidentController(IDbContextFactory<iOSContext> factory)
         return NoContent();
     }
 
-    [HttpGet]
+    [HttpGet("all-data")]
     public async Task<ActionResult<string>> GetAllData()
     {
         await using var context = await factory.CreateDbContextAsync();
@@ -50,7 +50,7 @@ public class PresidentController(IDbContextFactory<iOSContext> factory)
         return GZipServer.CompressString(JsonConvert.SerializeObject(members));
     }
 
-    [HttpGet]
+    [HttpGet("all-data/page")]
     public async Task<ActionResult<string>> GetAllDataByPage(int pageNum = 1, int pageSize = 10)
     {
         if (pageNum < 1 || pageSize < 1 || pageSize > 100) // 限制最大页大小

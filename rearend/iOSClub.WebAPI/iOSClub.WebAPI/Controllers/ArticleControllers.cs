@@ -9,8 +9,8 @@ using iOSClub.Data;
 
 namespace iOSClub.WebAPI.Controllers;
 
-[Route("[controller]")]
 [ApiController]
+[Route("[controller]")]  // 使用C#推荐的API路径格式
 public class ArticleController(
     IArticleRepository articleRepository,
     ILogger<ArticleController> logger,
@@ -123,7 +123,7 @@ public class ArticleController(
     /// </summary>
     [Authorize]
     [TokenActionFilter]
-    [HttpDelete("update/{path}")]
+    [HttpPost("update/{path}")]
     public async Task<ActionResult> UpdateArticle(string path, [FromBody] ArticleUpdateDto updateDto)
     {
         try
@@ -178,7 +178,7 @@ public class ArticleController(
     /// </summary>
     [Authorize]
     [TokenActionFilter]
-    [HttpPost("{path}")]
+    [HttpPost("delete/{path}")]
     public async Task<ActionResult> DeleteArticle(string path)
     {
         try

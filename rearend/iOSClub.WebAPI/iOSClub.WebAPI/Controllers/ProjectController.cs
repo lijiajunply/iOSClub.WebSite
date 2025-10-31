@@ -1,4 +1,4 @@
-﻿using iOSClub.Data;
+using iOSClub.Data;
 using iOSClub.Data.DataModels;
 using iOSClub.WebAPI.IdentityModels;
 using Microsoft.AspNetCore.Authorization;
@@ -9,8 +9,8 @@ namespace iOSClub.WebAPI.Controllers;
 
 [Authorize]
 [TokenActionFilter]
-[Route("[controller]/[action]")]
 [ApiController]
+[Route("[controller]")]  // 使用C#推荐的API路径格式
 public class ProjectController(iOSContext context, IHttpContextAccessor httpContextAccessor)
     : ControllerBase
 {
@@ -26,7 +26,7 @@ public class ProjectController(iOSContext context, IHttpContextAccessor httpCont
             .ToListAsync();
     }
 
-    [HttpGet]
+    [HttpGet("your-projects")]
     public async Task<ActionResult<List<ProjectModel>>> GetYourProjects()
     {
         var member = httpContextAccessor.HttpContext?.User.GetUser();
@@ -39,7 +39,7 @@ public class ProjectController(iOSContext context, IHttpContextAccessor httpCont
         return staff.Projects;
     }
 
-    [HttpGet]
+    [HttpGet("your-tasks")]
     public async Task<ActionResult<List<TaskModel>>> GetYourTasks()
     {
         var member = httpContextAccessor.HttpContext?.User.GetUser();
@@ -51,7 +51,7 @@ public class ProjectController(iOSContext context, IHttpContextAccessor httpCont
         return staff.Tasks;
     }
 
-    [HttpGet]
+    [HttpGet("resources")]
     public async Task<ActionResult<List<ResourceModel>>> GetResources()
     {
         var member = httpContextAccessor.HttpContext?.User.GetUser();
@@ -90,7 +90,7 @@ public class ProjectController(iOSContext context, IHttpContextAccessor httpCont
         return model;
     }
 
-    [HttpGet("{id}")]
+    [HttpPost("delete/{id}")]
     public async Task<ActionResult> DeleteProject(string id)
     {
         var member = httpContextAccessor.HttpContext?.User.GetUser();
@@ -113,7 +113,7 @@ public class ProjectController(iOSContext context, IHttpContextAccessor httpCont
         return Ok();
     }
 
-    [HttpGet("{id}/{projId}")]
+    [HttpPost("change-member/{id}/{projId}")]
     [Authorize(Roles = "Founder, President, Minister")]
     public async Task<ActionResult> LetChangeProject(string id, string projId)
     {
@@ -178,7 +178,7 @@ public class ProjectController(iOSContext context, IHttpContextAccessor httpCont
         return model;
     }
 
-    [HttpGet("{id}")]
+    [HttpPost("delete-task/{id}")]
     public async Task<ActionResult> DeleteTask(string id)
     {
         var member = httpContextAccessor.HttpContext?.User.GetUser();
@@ -197,7 +197,7 @@ public class ProjectController(iOSContext context, IHttpContextAccessor httpCont
         return Ok();
     }
 
-    [HttpGet("{id}")]
+    [HttpPost("join-task/{id}")]
     public async Task<ActionResult<TaskModel>> JoinTask(string id)
     {
         var member = httpContextAccessor.HttpContext?.User.GetUser();
@@ -219,7 +219,7 @@ public class ProjectController(iOSContext context, IHttpContextAccessor httpCont
         return task;
     }
 
-    [HttpGet("{id}")]
+    [HttpPost("leave-task/{id}")]
     public async Task<ActionResult> LeaveTask(string id)
     {
         var member = httpContextAccessor.HttpContext?.User.GetUser();
@@ -238,7 +238,7 @@ public class ProjectController(iOSContext context, IHttpContextAccessor httpCont
         return Ok();
     }
 
-    [HttpGet("{id}/{taskId}")]
+    [HttpPost("change-task-member/{id}/{taskId}")]
     [Authorize(Roles = "Founder, President, Minister")]
     public async Task<ActionResult> LetChangeTask(string id, string taskId)
     {

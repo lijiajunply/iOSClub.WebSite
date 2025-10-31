@@ -9,3 +9,5 @@ riderModule.iml
 
 keys/
 logs/
+
+appsettings.Development.json
