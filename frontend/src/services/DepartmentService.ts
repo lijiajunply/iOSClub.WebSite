@@ -1,13 +1,13 @@
-import { Url } from './Url';
+import { url } from './Url';
 import { AuthService } from './AuthService';
 
 // 部门模型接口
 export interface DepartmentModel {
-  Id: string;
-  Name: string;
-  Description: string;
-  Staffs?: any[];
-  Projects?: any[];
+  id: string;
+  name: string;
+  description: string;
+  staffs?: any[];
+  projects?: any[];
 }
 
 /**
@@ -25,8 +25,8 @@ export class DepartmentService {
       throw new Error('未登录');
     }
 
-    const url = name ? `${Url}/Department/${name}` : `${Url}/Department`;
-    const response = await fetch(url, {
+    const departmentUrl = name ? `${url}/Department/${name}` : `${url}/Department`;
+    const response = await fetch(departmentUrl, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -61,7 +61,7 @@ export class DepartmentService {
       throw new Error('未登录');
     }
 
-    const response = await fetch(`${Url}/Department/all`, {
+    const response = await fetch(`${url}/Department/all`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,

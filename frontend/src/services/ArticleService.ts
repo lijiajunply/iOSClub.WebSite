@@ -1,21 +1,21 @@
-import { Url } from './Url';
+import { url } from './Url';
 import { AuthService } from './AuthService';
 
 // 文章模型接口
 export interface ArticleModel {
-  Path: string;
-  Title: string;
-  Content: string;
-  LastWriteTime: string;
-  Identity?: string;
-  Watch?: number;
+  path: string;
+  title: string;
+  content: string;
+  lastWriteTime: string;
+  identity?: string;
+  watch?: number;
 }
 
 // 文章创建DTO接口
 export interface ArticleCreateDto {
-  Path: string;
-  Title: string;
-  Content: string;
+  path: string;
+  title: string;
+  content: string;
 }
 
 /**
@@ -27,7 +27,7 @@ export class ArticleService {
    * @returns Promise<ArticleModel[]> 文章列表
    */
   static async getAllArticles(): Promise<ArticleModel[]> {
-    const response = await fetch(`${Url}/Article`, {
+    const response = await fetch(`${url}/Article`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -51,7 +51,7 @@ export class ArticleService {
       throw new Error('路径不能为空');
     }
 
-    const response = await fetch(`${Url}/Article/${path}`, {
+    const response = await fetch(`${url}/Article/${path}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -79,7 +79,7 @@ export class ArticleService {
       throw new Error('未登录');
     }
 
-    const response = await fetch(`${Url}/Article`, {
+    const response = await fetch(`${url}/Article`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -97,7 +97,7 @@ export class ArticleService {
         throw new Error('权限不足，需要社团成员身份');
       }
       if (response.status === 409) {
-        throw new Error(`路径 '${createDto.Path}' 已存在`);
+        throw new Error(`路径 '${createDto.path}' 已存在`);
       }
       if (response.status === 400) {
         const errors = await response.json();

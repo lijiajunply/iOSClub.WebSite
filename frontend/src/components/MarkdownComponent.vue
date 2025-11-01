@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 import {nextTick, ref, watch, computed} from "vue";
 import {NAnchor, NAnchorLink, NIcon} from 'naive-ui'
 import {CalendarOutlined, EyeFilled} from "@vicons/antd";
@@ -192,81 +192,78 @@ const date = computed(() => new Date(props.content.date).toDateString('YYYY-MM-d
 </script>
 
 <template>
-  <div class="min-h-screen">
-    <div v-if="content" class="flex">
-      <!-- 文章头部 -->
-      <div class="p-8 mb-6">
-        <div class="mb-6">
-          <div class="text-xl lg:text-4xl font-bold text-gray-900 dark:text-gray-50 leading-tight mb-4">
-            {{ content.title }}
-          </div>
-          <div class="flex items-center space-x-6 text-gray-500 dark:text-gray-200 text-sm">
+  <div v-if="content" class="flex">
+    <!-- 文章头部 -->
+    <div class="p-8 mb-6 flex-5/6 w-full">
+      <div class="mb-6">
+        <div class="text-xl lg:text-4xl font-bold text-gray-900 dark:text-gray-50 leading-tight mb-4">
+          {{ content.title }}
+        </div>
+        <div class="flex items-center space-x-6 text-gray-500 dark:text-gray-200 text-sm">
                   <span class="flex items-center">
                     <n-icon size="16" class="mr-2">
                       <CalendarOutlined/>
                     </n-icon>
                     {{ date }}
                   </span>
-            <span class="flex items-center">
+          <span class="flex items-center">
                     <n-icon size="16" class="mr-2">
                       <EyeFilled/>
                     </n-icon>
                     {{ content.watch }} 次阅读
                   </span>
-          </div>
-        </div>
-
-        <div class="prose max-w-none pr-8">
-          <div v-html="html"></div>
         </div>
       </div>
 
-      <!-- 导航栏 -->
-      <div class="hidden md:flex sticky top-8 h-fit" v-if="headings.length > 0">
-        <div class="pl-4">
-          <h3 class="text-sm font-semibold mb-4">
-            目录
-          </h3>
-          <n-anchor
-              :show-rail="false"
-              :show-background="false"
-              :bound="100"
-              class="toc-anchor"
-          >
-            <div v-for="link in anchorLinks" :key="link.href">
-              <n-anchor-link
-                  :title="link.title"
-                  :href="link.href"
-              >
-                <div v-if="link.children?.length > 0">
-                  <n-anchor-link
-                      v-for="subLink in link.children"
-                      :key="subLink.href"
-                      :title="subLink.title"
-                      :href="subLink.href"
-                  />
-                </div>
-              </n-anchor-link>
-            </div>
-          </n-anchor>
-        </div>
+      <div class="prose max-w-none pr-8">
+        <div v-html="html"></div>
       </div>
     </div>
 
-    <!-- 空状态 -->
-    <div v-else class="flex items-center justify-center h-full">
-      <div class="text-center">
-        <n-icon size="64" class="text-gray-300 mb-4">
-          <svg viewBox="0 0 24 24">
-            <path fill="currentColor"
-                  d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/>
-          </svg>
-        </n-icon>
-        <p class="text-gray-500 text-lg">请选择一篇文章阅读</p>
+    <!-- 导航栏 -->
+    <div class="hidden md:flex flex-1/6 sticky top-8 h-fit" v-if="headings.length > 0">
+      <div class="pl-4">
+        <h3 class="text-sm font-semibold mb-4">
+          目录
+        </h3>
+        <n-anchor
+            :show-rail="false"
+            :show-background="false"
+            :bound="100"
+            class="toc-anchor"
+        >
+          <div v-for="link in anchorLinks" :key="link.href">
+            <n-anchor-link
+                :title="link.title"
+                :href="link.href"
+            >
+              <div v-if="link.children?.length > 0">
+                <n-anchor-link
+                    v-for="subLink in link.children"
+                    :key="subLink.href"
+                    :title="subLink.title"
+                    :href="subLink.href"
+                />
+              </div>
+            </n-anchor-link>
+          </div>
+        </n-anchor>
       </div>
     </div>
   </div>
 
+  <!-- 空状态 -->
+  <div v-else class="flex items-center justify-center h-full">
+    <div class="text-center">
+      <n-icon size="64" class="text-gray-300 mb-4">
+        <svg viewBox="0 0 24 24">
+          <path fill="currentColor"
+                d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/>
+        </svg>
+      </n-icon>
+      <p class="text-gray-500 text-lg">请选择一篇文章阅读</p>
+    </div>
+  </div>
 </template>
 
 <style scoped>
@@ -302,6 +299,11 @@ const date = computed(() => new Date(props.content.date).toDateString('YYYY-MM-d
   font-size: 0.875em;
 }
 
+.dark .prose :deep(code) {
+  background-color: #374151;
+  color: #f9fafb;
+}
+
 .prose :deep(pre) {
   background-color: #1f2937;
   color: #f9fafb;
@@ -323,24 +325,38 @@ const date = computed(() => new Date(props.content.date).toDateString('YYYY-MM-d
   color: #6b7280;
 }
 
-.prose :deep(.custom-block){
+.dark .prose :deep(blockquote) {
+  border-left: 4px solid #4b5563;
+  color: #9ca3af;
+}
+
+.prose :deep(.custom-block) {
   border-radius: 8px;
   line-height: 24px;
   font-size: 14px;
-  color: rgba(60, 60, 67, .78);
   margin-bottom: 10px;
   padding: 16px 16px 8px 16px;
 }
 
-.prose :deep(.danger){
+.prose :deep(.danger) {
   border-color: transparent;
   color: rgba(60, 60, 67);
   background-color: rgba(244, 63, 94, .14);
+}
+
+.dark .prose :deep(.danger) {
+  color: rgba(255, 255, 255, 0.9);
+  background-color: rgba(244, 63, 94, .25);
 }
 
 .prose :deep(.tip) {
   border-color: transparent;
   color: rgba(60, 60, 67);
   background-color: rgba(100, 108, 255, .14);
+}
+
+.dark .prose :deep(.tip) {
+  color: rgba(255, 255, 255, 0.9);
+  background-color: rgba(100, 108, 255, .25);
 }
 </style>

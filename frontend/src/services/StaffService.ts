@@ -1,12 +1,12 @@
-import { Url } from './Url';
+import { url } from './Url';
 import { AuthService } from './AuthService';
 
 // 员工模型接口
 export interface StaffModel {
-  UserId: string;
-  Name: string;
-  Identity: string;
-  Department: string;
+  userId: string;
+  name: string;
+  identity: string;
+  department: string;
   // 其他必要的员工信息字段
 }
 
@@ -24,7 +24,7 @@ export class StaffService {
       throw new Error('未登录');
     }
 
-    const response = await fetch(`${Url}/Staff`, {
+    const response = await fetch(`${url}/Staff`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -57,7 +57,7 @@ export class StaffService {
       throw new Error('未登录');
     }
 
-    const response = await fetch(`${Url}/Staff/${userId}`, {
+    const response = await fetch(`${url}/Staff/${userId}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -93,7 +93,7 @@ export class StaffService {
       throw new Error('未登录');
     }
 
-    const response = await fetch(`${Url}/Staff/Create`, {
+    const response = await fetch(`${url}/Staff/Create`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,

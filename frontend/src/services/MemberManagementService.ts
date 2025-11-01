@@ -1,4 +1,4 @@
-import { Url } from './Url';
+import { url } from './Url';
 import { AuthService } from './AuthService';
 import { StudentModel } from './AuthService';
 import { MemberModel } from './AuthService';
@@ -18,7 +18,7 @@ export class MemberManagementService {
       throw new Error('未登录');
     }
 
-    const response = await fetch(`${Url}/MemberManagement/delete/${id}`, {
+    const response = await fetch(`${url}/MemberManagement/delete/${id}`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -52,7 +52,7 @@ export class MemberManagementService {
       throw new Error('未登录');
     }
 
-    const response = await fetch(`${Url}/MemberManagement/update-many`, {
+    const response = await fetch(`${url}/MemberManagement/update-many`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -86,7 +86,7 @@ export class MemberManagementService {
       throw new Error('未登录');
     }
 
-    const response = await fetch(`${Url}/MemberManagement/update`, {
+    const response = await fetch(`${url}/MemberManagement/update`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,

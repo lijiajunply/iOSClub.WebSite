@@ -1,14 +1,14 @@
-import { Url } from './Url';
+import { url } from './Url';
 import { AuthService } from './AuthService';
 import { MemberModel } from './AuthService';
 
 // 分页响应接口
 export interface PaginatedMemberResponse {
-  TotalCount: number;
-  PageSize: number;
-  CurrentPage: number;
-  TotalPages: number;
-  Data: MemberModel[];
+  totalCount: number;
+  pageSize: number;
+  currentPage: number;
+  totalPages: number;
+  data: MemberModel[];
 }
 
 /**
@@ -25,7 +25,7 @@ export class MemberQueryService {
       throw new Error('未登录');
     }
 
-    const response = await fetch(`${Url}/MemberQuery/all-data`, {
+    const response = await fetch(`${url}/MemberQuery/all-data`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -70,7 +70,7 @@ export class MemberQueryService {
       throw new Error('未登录');
     }
 
-    const response = await fetch(`${Url}/MemberQuery/all-data/page?pageNum=${pageNum}&pageSize=${pageSize}`, {
+    const response = await fetch(`${url}/MemberQuery/all-data/page?pageNum=${pageNum}&pageSize=${pageSize}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -96,11 +96,11 @@ export class MemberQueryService {
     
     // 暂时返回模拟数据，实际项目中需要实现解压逻辑
     return {
-      TotalCount: 0,
-      PageSize: pageSize,
-      CurrentPage: pageNum,
-      TotalPages: 0,
-      Data: []
+      totalCount: 0,
+      pageSize: pageSize,
+      currentPage: pageNum,
+      totalPages: 0,
+      data: []
     };
   }
 }

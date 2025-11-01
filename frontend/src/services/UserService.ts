@@ -1,14 +1,14 @@
-import { Url } from './Url';
+import { url } from './Url';
 import { AuthService, MemberModel } from './AuthService';
 
 // 待办事项模型接口
 export interface TodoModel {
-  Id: string;
-  StudentId: string;
-  Content: string;
-  Completed: boolean;
-  CreateTime: Date;
-  LastUpdateTime: Date;
+  id: string;
+  studentId: string;
+  content: string;
+  completed: boolean;
+  createTime: Date;
+  lastUpdateTime: Date;
 }
 
 /**
@@ -25,7 +25,7 @@ export class UserService {
       throw new Error('未登录');
     }
 
-    const response = await fetch(`${Url}/User/data`, {
+    const response = await fetch(`${url}/User/data`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -54,7 +54,7 @@ export class UserService {
       throw new Error('未登录');
     }
 
-    const response = await fetch(`${Url}/User/todos`, {
+    const response = await fetch(`${url}/User/todos`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -84,7 +84,7 @@ export class UserService {
       throw new Error('未登录');
     }
 
-    const response = await fetch(`${Url}/User/todos`, {
+    const response = await fetch(`${url}/User/todos`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -115,7 +115,7 @@ export class UserService {
       throw new Error('未登录');
     }
 
-    const response = await fetch(`${Url}/User/todos/${id}`, {
+    const response = await fetch(`${url}/User/todos/${id}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`,

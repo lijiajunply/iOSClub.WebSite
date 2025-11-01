@@ -1,45 +1,45 @@
-import { Url } from './Url';
+import { url } from './Url';
 import { AuthService } from './AuthService';
 
 // 项目模型接口
 export interface ProjectModel {
-  Id: string;
-  Name: string;
-  Description: string;
-  StartTime: Date;
-  EndTime: Date;
-  Department: string;
-  Staffs?: StaffModel[];
-  Tasks?: TaskModel[];
+  id: string;
+  name: string;
+  description: string;
+  startTime: Date;
+  endTime: Date;
+  department: string;
+  staffs?: StaffModel[];
+  tasks?: TaskModel[];
 }
 
 // 员工模型接口
 export interface StaffModel {
-  UserId: string;
-  Name: string;
-  Identity: string;
-  Department: string;
+  userId: string;
+  name: string;
+  identity: string;
+  department: string;
 }
 
 // 任务模型接口
 export interface TaskModel {
-  Id: string;
-  Name: string;
-  Description: string;
-  Status: string;
-  StartTime: Date;
-  EndTime: Date;
-  Users?: StaffModel[];
+  id: string;
+  name: string;
+  description: string;
+  status: string;
+  startTime: Date;
+  endTime: Date;
+  users?: StaffModel[];
 }
 
 // 资源模型接口
 export interface ResourceModel {
-  Id: string;
-  Name: string;
-  Type: string;
-  Path: string;
-  Description: string;
-  CreateTime: Date;
+  id: string;
+  name: string;
+  type: string;
+  path: string;
+  description: string;
+  createTime: Date;
 }
 
 /**
@@ -56,7 +56,7 @@ export class ProjectService {
       throw new Error('未登录');
     }
 
-    const response = await fetch(`${Url}/Project`, {
+    const response = await fetch(`${url}/Project`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -88,7 +88,7 @@ export class ProjectService {
       throw new Error('未登录');
     }
 
-    const response = await fetch(`${Url}/Project/your-projects`, {
+    const response = await fetch(`${url}/Project/your-projects`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -117,7 +117,7 @@ export class ProjectService {
       throw new Error('未登录');
     }
 
-    const response = await fetch(`${Url}/Project/your-tasks`, {
+    const response = await fetch(`${url}/Project/your-tasks`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -146,7 +146,7 @@ export class ProjectService {
       throw new Error('未登录');
     }
 
-    const response = await fetch(`${Url}/Project/resources`, {
+    const response = await fetch(`${url}/Project/resources`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -176,7 +176,7 @@ export class ProjectService {
       throw new Error('未登录');
     }
 
-    const response = await fetch(`${Url}/Project`, {
+    const response = await fetch(`${url}/Project`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,

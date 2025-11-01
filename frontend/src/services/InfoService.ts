@@ -1,14 +1,14 @@
-import { Url } from './Url';
+import { url } from './Url';
 import { AuthService } from './AuthService';
 
 // 用户信息响应接口
 export interface UserInfoResponse {
-  Tasks?: any[];
-  Projects?: any[];
-  Resources?: any[];
-  Total?: number;
-  StaffsCount?: number;
-  Departments?: any[];
+  tasks?: any[];
+  projects?: any[];
+  resources?: any[];
+  total?: number;
+  staffsCount?: number;
+  departments?: any[];
 }
 
 /**
@@ -20,7 +20,7 @@ export class InfoService {
    * @returns Promise<string[]> 学院名称字符串数组
    */
   static async getAcademies(): Promise<string[]> {
-    const response = await fetch(`${Url}/Info/academies`, {
+    const response = await fetch(`${url}/Info/academies`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -45,7 +45,7 @@ export class InfoService {
       throw new Error('未登录');
     }
 
-    const response = await fetch(`${Url}/Info/user-info`, {
+    const response = await fetch(`${url}/Info/user-info`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,

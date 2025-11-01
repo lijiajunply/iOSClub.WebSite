@@ -1,15 +1,15 @@
-import { Url } from './Url';
+import { url } from './Url';
 import { AuthService } from './AuthService';
 
 // 资源模型接口
 export interface ResourceModel {
-  Id: string;
-  Name: string;
-  Type: string;
-  Path: string;
-  Description: string;
-  CreateTime: Date;
-  Tags?: string[];
+  id: string;
+  name: string;
+  type: string;
+  path: string;
+  description: string;
+  createTime: Date;
+  tags?: string[];
 }
 
 /**
@@ -26,7 +26,7 @@ export class ResourceService {
       throw new Error('未登录');
     }
 
-    const response = await fetch(`${Url}/Resource`, {
+    const response = await fetch(`${url}/Resource`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -59,7 +59,7 @@ export class ResourceService {
       throw new Error('未登录');
     }
 
-    const response = await fetch(`${Url}/Resource/${id}`, {
+    const response = await fetch(`${url}/Resource/${id}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -95,7 +95,7 @@ export class ResourceService {
       throw new Error('未登录');
     }
 
-    const response = await fetch(`${Url}/Resource/tag/${tag}`, {
+    const response = await fetch(`${url}/Resource/tag/${tag}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,

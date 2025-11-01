@@ -118,7 +118,7 @@ const offCampusOrgs = [
                 :key="index"
                 :href="org.url" 
                 target="_blank"
-                class="block p-3 rounded-lg bg-zinc-50 dark:bg-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-600 transition-colors flex items-center justify-between"
+                class="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-600 transition-colors flex items-center justify-between"
               >
                 <span class="text-zinc-700 dark:text-zinc-200">{{ org.name }}</span>
                 <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">

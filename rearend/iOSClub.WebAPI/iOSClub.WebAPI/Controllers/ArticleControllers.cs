@@ -13,8 +13,8 @@ namespace iOSClub.WebAPI.Controllers;
 [Route("[controller]")]  // 使用C#推荐的API路径格式
 public class ArticleController(
     IArticleRepository articleRepository,
+    IStaffRepository staffRepository,
     ILogger<ArticleController> logger,
-    IDbContextFactory<iOSContext> factory,
     IHttpContextAccessor httpContextAccessor)
     : ControllerBase
 {
@@ -253,10 +253,7 @@ public class ArticleController(
         if (userJwt == null)
             return (false, Unauthorized("用户未认证"));
 
-        await using var context = await factory.CreateDbContextAsync();
-        var user = await context.Staffs
-            .Include(x => x.Department)
-            .FirstOrDefaultAsync(x => x.UserId == userJwt.UserId);
+        var user = await staffRepository.GetStaffByIdAsync(userJwt.UserId);
 
         if (user == null)
             return (false, Unauthorized("用户不存在"));

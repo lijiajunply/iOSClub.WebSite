@@ -1,22 +1,22 @@
-import { Url } from './Url';
+import { url } from './Url';
 import { AuthService } from './AuthService';
 
 // 待办事项模型接口
 export interface TodoModel {
-  Id: string;
-  StudentId: string;
-  Content: string;
-  Completed: boolean;
-  CreateTime: Date;
-  LastUpdateTime: Date;
+  id: string;
+  studentId: string;
+  content: string;
+  completed: boolean;
+  createTime: Date;
+  lastUpdateTime: Date;
 }
 
 // 待办事项统计接口
 export interface TodoStatistics {
-  Total: number;
-  Completed: number;
-  Pending: number;
-  CompletionRate: number;
+  total: number;
+  completed: number;
+  pending: number;
+  completionRate: number;
 }
 
 /**
@@ -33,7 +33,7 @@ export class TodoService {
       throw new Error('未登录');
     }
 
-    const response = await fetch(`${Url}/Todo`, {
+    const response = await fetch(`${url}/Todo`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -62,7 +62,7 @@ export class TodoService {
       throw new Error('未登录');
     }
 
-    const response = await fetch(`${Url}/Todo/statistics`, {
+    const response = await fetch(`${url}/Todo/statistics`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -92,7 +92,7 @@ export class TodoService {
       throw new Error('未登录');
     }
 
-    const response = await fetch(`${Url}/Todo/${id}`, {
+    const response = await fetch(`${url}/Todo/${id}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,

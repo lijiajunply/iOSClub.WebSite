@@ -1,16 +1,16 @@
-import { Url } from './Url';
+import { url } from './Url';
 
 // 登录模型接口
 export interface LoginModel {
-  Id: string;
-  Name: string;
+  id: string;
+  name: string;
 }
 
 // 成员模型接口
 export interface MemberModel {
-  UserName: string;
-  UserId: string;
-  Identity: string;
+  userName: string;
+  userId: string;
+  identity: string;
 }
 
 // 详细注册模型接口
@@ -50,7 +50,7 @@ export class AuthService {
    * @returns Promise<string> JWT令牌
    */
   static async login(loginModel: LoginModel): Promise<string> {
-    const response = await fetch(`${Url}/Auth/login`, {
+    const response = await fetch(`${url}/Auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -74,7 +74,7 @@ export class AuthService {
    * @returns Promise<string> JWT令牌
    */
   static async signup(model: StudentModel): Promise<string> {
-    const response = await fetch(`${Url}/Auth/signup`, {
+    const response = await fetch(`${url}/Auth/signup`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -98,7 +98,7 @@ export class AuthService {
    * @returns Promise<string> 响应结果
    */
   static async memberSignup(member: StudentModel): Promise<string> {
-    const response = await fetch(`${Url}/Member/SignUp`, {
+    const response = await fetch(`${url}/Member/SignUp`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(member)
@@ -119,7 +119,7 @@ export class AuthService {
    * @returns Promise<string> 响应结果
    */
   static async memberLogin(username: string, studentId: string, password: string): Promise<string> {
-    const response = await fetch(`${Url}/Member/Login`, {
+    const response = await fetch(`${url}/Member/Login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

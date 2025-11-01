@@ -1,7 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-neutral-900 transition-colors duration-300">
-    <MarkdownComponent :content="formattedArticle"/>
-  </div>
+  <MarkdownComponent :content="formattedArticle"/>
 </template>
 
 <script setup lang="ts">
@@ -10,19 +8,19 @@ import MarkdownComponent from "../../components/MarkdownComponent.vue";
 import {type ArticleModel, ArticleService} from "../../services/ArticleService";
 
 const roomArticle = ref<ArticleModel>({
-  Path: "",
-  Title: '',
-  LastWriteTime: '',
-  Watch: 0,
-  Content: ''
+  path: "",
+  title: '',
+  lastWriteTime: '',
+  watch: 0,
+  content: ''
 })
 
 const formattedArticle = computed(() => {
   return {
-    title: roomArticle.value.Title,
-    date: roomArticle.value.LastWriteTime,
-    watch: roomArticle.value.Watch || 0,
-    content: roomArticle.value.Content
+    title: roomArticle.value.title,
+    date: roomArticle.value.lastWriteTime,
+    watch: roomArticle.value.watch || 0,
+    content: roomArticle.value.content
   };
 });
 

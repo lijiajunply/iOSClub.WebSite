@@ -11,7 +11,7 @@
             <!-- Logo and Title -->
             <router-link to="/" class="flex items-center gap-3 group">
               <img
-                  src="../../public/assets/iOS_Club_LOGO.png"
+                  src="/assets/iOS_Club_LOGO.png"
                   alt="iOS Club Logo"
                   class="w-10 h-10 transition-transform group-hover:scale-105"
               />
