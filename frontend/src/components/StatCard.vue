@@ -5,9 +5,7 @@
   >
     <div class="flex items-center">
       <div class="p-2 rounded-lg" :class="bgColorClass">
-        <n-icon :size="iconSize" :color="iconColor">
-          <component :is="iconComponent" />
-        </n-icon>
+        <Icon :icon="iconName" :size="iconSize" :color="iconColor" />
       </div>
       <div class="ml-4">
         <p class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ title }}</p>
@@ -19,16 +17,8 @@
 
 <script setup>
 import { computed } from 'vue'
-import { NCard, NIcon } from 'naive-ui'
-import { 
-  People, 
-  IdCard, 
-  Folder, 
-  List, 
-  Document, 
-  Business, 
-  Checkbox
-} from '@vicons/ionicons5'
+import { NCard } from 'naive-ui'
+import { Icon } from '@iconify/vue'
 
 const props = defineProps({
   title: {
@@ -51,24 +41,24 @@ const props = defineProps({
 
 const iconSize = 24
 
-const iconComponent = computed(() => {
+const iconName = computed(() => {
   switch (props.icon) {
     case 'people':
-      return People
+      return 'ion:people'
     case 'badge':
-      return IdCard
+      return 'ion:card'
     case 'folder':
-      return Folder
+      return 'ion:folder'
     case 'task':
-      return List
+      return 'ion:list'
     case 'resource':
-      return Document
+      return 'ion:document'
     case 'department':
-      return Business
+      return 'ion:business'
     case 'todo':
-      return Checkbox
+      return 'ion:checkbox'
     default:
-      return People
+      return 'ion:people'
   }
 })
 

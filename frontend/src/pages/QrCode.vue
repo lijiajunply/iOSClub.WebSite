@@ -27,8 +27,8 @@
               </div>
               <p class="mt-2 flex items-center gap-2">
                 群号: 952954710
-                <n-icon
-                    :component="CopyOutline"
+                <Icon
+                    icon="ion:copy-outline"
                     size="18"
                     class="cursor-pointer hover:text-primary"
                     @click="handleCopyClick"
@@ -56,8 +56,8 @@
 
 <script setup lang="ts">
 import {onMounted} from 'vue'
-import {useMessage, NGrid, NGi, NCard, NImage, NIcon, NDivider} from 'naive-ui'
-import {CopyOutline} from '@vicons/ionicons5'
+import {useMessage, NGrid, NGi, NCard, NImage, NDivider} from 'naive-ui'
+import { Icon } from '@iconify/vue'
 
 const message = useMessage()
 

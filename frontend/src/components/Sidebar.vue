@@ -1,17 +1,5 @@
 <template>
   <div class="relative">
-    <!-- 移动端菜单按钮 -->
-    <NButton
-        v-show="layoutStore.isMobile"
-        class="fixed top-4 right-4 z-50 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm"
-        quaternary
-        circle
-        size="medium"
-        @click="layoutStore.toggleSidebar()"
-    >
-      <Menu :size="20"/>
-    </NButton>
-
     <!-- 侧边栏蒙层 -->
     <div
         v-if="layoutStore.isMobile && layoutStore.showSidebar"

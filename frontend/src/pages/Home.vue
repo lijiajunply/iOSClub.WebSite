@@ -85,7 +85,7 @@
               :class="card.class"
           >
             <div class="text-5xl mb-4">
-              <n-icon :component="card.icon" :size="48" :color="card.color" />
+              <Icon :icon="card.iconName" :size="48" :color="card.color" />
             </div>
             <h3 class="text-xl font-semibold mb-3 text-gray-900 dark:text-white">
               {{ card.title }}
@@ -113,18 +113,11 @@
 
 <script setup lang="ts">
 import {useRouter} from 'vue-router'
-import {NButton, NIcon} from 'naive-ui'
-import { 
-  LogoApple, 
-  PeopleCircle, 
-  Earth, 
-  Happy, 
-  Code,
-  TrendingUp
-} from '@vicons/ionicons5'
+import {NButton} from 'naive-ui'
+import { Icon } from '@iconify/vue'
 
 interface Card {
-  icon: any
+  iconName: string
   title: string
   content: string
   class: string
@@ -135,42 +128,42 @@ const router = useRouter()
 
 const cards: Card[] = [
   {
-    icon: LogoApple,
+    iconName: 'heroicons:academic-cap-20-solid',
     title: "我们是谁?",
     content: "我们是由Apple公司资金支持，受学管和西安建筑科技大学大学生创新创业实践中心指导的创新创业类社团。",
     class: "hover:border-blue-500",
     color: "#3B82F6" // blue-500
   },
   {
-    icon: PeopleCircle,
+    iconName: 'heroicons:bolt-solid',
     title: "和iOS Club一起结伴同行",
     content: "不管是零基础的小白还是大神，只要你有兴趣，这里就是你的天堂",
     class: "hover:border-purple-500",
     color: "#8B5CF6" // purple-500
   },
   {
-    icon: Earth,
+    iconName: 'mdi:account-group',
     title: "iOS Club,不止iOS",
     content: "我们不止只有iOS，西建大iOS Club是一个跨专业与课堂的数码编程爱好者社团",
     class: "hover:border-green-500",
     color: "#10B981" // green-500
   },
   {
-    icon: Happy,
+    iconName: 'heroicons:chat-bubble-left-ellipsis-solid',
     title: "和 iOS Club 一起玩",
     content: "活动覆盖编程和数码，不仅有最新数码设备体验活动，还有大咖沙龙和Apple官方活动",
     class: "hover:border-yellow-500",
     color: "#F59E0B" // yellow-500
   },
   {
-    icon: Code,
+    iconName: 'lucide:code-xml',
     title: "合作软件开发",
     content: "加入我们，和志同道合的iMember一起合作开发，一起创造世界",
     class: "hover:border-pink-500",
     color: "#EC4899" // pink-500
   },
   {
-    icon: TrendingUp,
+    iconName: 'ion:trending-up',
     title: "全校数码编程爱好者,联合起来！",
     content: "我们意图打造全校最大的科技社区，快来加入我们成为一名iMember吧",
     class: "hover:border-indigo-500",

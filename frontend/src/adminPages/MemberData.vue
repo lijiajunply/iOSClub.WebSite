@@ -1,17 +1,10 @@
 <script setup lang="ts">
 import { ref, computed, h, onMounted, nextTick } from 'vue'
-import { 
-  SearchOutline, 
-  Refresh, 
-  Download, 
-  PersonAdd 
-} from '@vicons/ionicons5'
 import { useDialog, useMessage } from 'naive-ui'
 // 导入所有需要的 NaiveUI 组件
 import {
   NCard,
   NButton,
-  NIcon,
   NDropdown,
   NTabs,
   NTabPane,
@@ -25,9 +18,10 @@ import {
   NSpace,
   NRadio
 } from 'naive-ui'
+import { Icon } from '@iconify/vue'
 import { MemberQueryService } from '../services/MemberQueryService'
 import { MemberManagementService } from '../services/MemberManagementService'
-import { DateCentreService } from '../services/DateCentreService'
+import { AcademyCount, DateCentreService, GenderCount, GradeCount, PoliticalCount, YearCount } from '../services/DateCentreService'
 import type { MemberModel, PaginatedMemberResponse } from '../models'
 import * as echarts from 'echarts'
 
@@ -271,11 +265,11 @@ const onUpdatePageSize = (size: number) => {
 const filteredMembers = computed(() => members.value)
 
 // 图表数据
-const yearData = ref<{ year: string; value: number }[]>([])
-const collegeData = ref<{ type: string; value: number }[]>([])
-const gradeData = ref<{ grade: string; value: number }[]>([])
-const genderData = ref<{ type: string; value: number }[]>([])
-const politicalData = ref<{ type: string; sales: number }[]>([])
+const yearData = ref<YearCount[]>([])
+const collegeData = ref<AcademyCount[]>([])
+const gradeData = ref<GradeCount[]>([])
+const genderData = ref<GenderCount[]>([])
+const politicalData = ref<PoliticalCount[]>([])
 
 // 加载图表数据的函数
 const loadChartData = async () => {
@@ -299,8 +293,8 @@ const loadChartData = async () => {
     
     // 处理年级分布数据
     gradeData.value = gradeResult.map(item => ({
-      grade: item.grade || item.type,
-      value: item.value || item.value
+      grade: item.grade,
+      value: item.value
     }))
     
     // 处理性别分布数据
@@ -704,27 +698,21 @@ onMounted(() => {
         <div class="flex flex-wrap gap-2">
           <n-button type="primary" @click="showAddMemberModal">
             <template #icon>
-              <n-icon>
-                <PersonAdd />
-              </n-icon>
+              <Icon icon="ion:person-add" />
             </template>
             添加成员
           </n-button>
           <n-dropdown trigger="hover" :options="downloadOptions" @select="handleDownloadSelect">
             <n-button>
               <template #icon>
-                <n-icon>
-                  <Download />
-                </n-icon>
+                <Icon icon="ion:download" />
               </template>
               导出数据
             </n-button>
           </n-dropdown>
           <n-button @click="fetchMembers">
             <template #icon>
-              <n-icon>
-                <Refresh />
-              </n-icon>
+              <Icon icon="ion:refresh" />
             </template>
             刷新
           </n-button>
@@ -738,9 +726,7 @@ onMounted(() => {
               <n-select v-model:value="searchItem" :options="searchItems" style="width: 150px" class="flex-shrink-0" />
               <n-input v-model:value="searchTerm" placeholder="请输入搜索项" clearable @keyup.enter="searchMembers">
                 <template #suffix>
-                  <n-icon>
-                    <SearchOutline />
-                  </n-icon>
+                  <Icon icon="ion:search-outline" />
                 </template>
               </n-input>
               <n-button type="primary" @click="searchMembers">

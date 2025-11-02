@@ -14,7 +14,7 @@
               <n-thing :title="project.name" :description="project.description">
                 <template #avatar>
                   <n-avatar>
-                    <n-icon><FolderOutline /></n-icon>
+                    <Icon icon="ion:folder-outline" />
                   </n-avatar>
                 </template>
                 <template #header-extra>
@@ -41,12 +41,12 @@
                 <n-button-group>
                   <n-button strong secondary @click="editProject(project)">
                     <template #icon>
-                      <n-icon><CreateOutline /></n-icon>
+                      <Icon icon="ion:create-outline" />
                     </template>
                   </n-button>
                   <n-button strong secondary @click="viewProjectDetails(project)">
                     <template #icon>
-                      <n-icon><EyeOutline /></n-icon>
+                      <Icon icon="ion:eye-outline" />
                     </template>
                   </n-button>
                 </n-button-group>
@@ -124,8 +124,9 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { FolderOutline, CreateOutline, EyeOutline } from '@vicons/ionicons5'
 import { useMessage } from 'naive-ui'
+import { NButton, NCard, NList, NListItem, NThing, NAvatar, NTag, NProgress, NModal, NForm, NFormItem, NInput, NButtonGroup } from 'naive-ui'
+import { Icon } from '@iconify/vue'
 import { ProjectService } from '../services/ProjectService'
 
 const message = useMessage()

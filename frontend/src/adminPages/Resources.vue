@@ -1,78 +1,77 @@
 <template>
-  <div class="min-h-screen transition-colors duration-300"
+  <div class="min-h-screen transition-colors duration-300 bg-background text-foreground"
        :class="{ 'with-sidebar': layoutStore.showSidebar && !layoutStore.isMobile }">
     <div class="px-4 py-6 sm:px-6 lg:px-8">
       <!-- Header -->
-      <div class="flex items-center justify-between mb-8">
-        <div class="flex items-center">
-          <div>
-            <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">社团资源</h1>
-            <p class="text-sm text-gray-500 dark:text-gray-400">社团资源管理</p>
-          </div>
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
+        <div>
+          <h1 class="text-3xl font-semibold tracking-tight">社团资源</h1>
+          <p class="text-base text-muted-foreground mt-1">社团资源管理</p>
         </div>
         
         <n-button v-if="authorizationStore.isAdmin()" type="primary" @click="showAddResourceModal"
-                  class="transition-all duration-200 hover:shadow-md">
+                  class="rounded-full px-5 py-2.5 text-base transition-all duration-200 hover:shadow-lg">
           <template #icon>
-            <n-icon>
-              <Add />
-            </n-icon>
-          </template>
+                  <Icon icon="ion:add" />
+                </template>
           添加资源
         </n-button>
       </div>
 
       <!-- Search -->
       <div class="mb-8">
-        <n-input v-model:value="searchTerm" placeholder="搜索资源..." clearable size="large" class="max-w-md">
+        <n-input v-model:value="searchTerm" placeholder="搜索资源..." clearable size="large" 
+                 class="max-w-md rounded-2xl bg-card border-0 shadow-sm focus-within:shadow-md transition-shadow">
           <template #prefix>
-            <n-icon>
-              <Search />
-            </n-icon>
+            <Icon icon="ion:search" class="text-muted-foreground" />
           </template>
         </n-input>
       </div>
 
       <!-- Empty State -->
-      <div v-if="filteredResources.length === 0" class="flex flex-col items-center justify-center py-16">
-        <n-icon size="48" class="mb-4 text-gray-400">
-          <FolderOpen />
-        </n-icon>
-        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">暂无资源</h3>
-        <p class="text-gray-500 dark:text-gray-400 mb-6">社团现在还没有任何资源</p>
-        <n-button v-if="authorizationStore.isAdmin()" type="primary" @click="showAddResourceModal">
+      <div v-if="filteredResources.length === 0" class="flex flex-col items-center justify-center py-20 rounded-3xl bg-card border border-border shadow-sm">
+        <div class="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-6">
+          <Icon icon="ion:folder-open" size="32" class="text-muted-foreground" />
+        </div>
+        <h3 class="text-2xl font-semibold mb-2">暂无资源</h3>
+        <p class="text-muted-foreground mb-8 max-w-md text-center px-4">社团现在还没有任何资源，请添加第一个资源</p>
+        <n-button v-if="authorizationStore.isAdmin()" type="primary" @click="showAddResourceModal"
+                  class="rounded-full px-6 py-2.5 text-base">
           添加第一个资源
         </n-button>
       </div>
 
       <!-- Resource Grid -->
-      <div v-else class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      <div v-else class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         <div v-for="resource in filteredResources" :key="resource.id"
-             class="overflow-hidden transition-all duration-200 bg-white rounded-xl dark:bg-neutral-800 shadow-sm hover:shadow-md">
+             class="overflow-hidden transition-all duration-300 bg-card rounded-3xl shadow-sm border border-border hover:shadow-xl">
           <div class="p-6">
             <div class="flex items-start justify-between">
               <div class="flex-1 min-w-0">
-                <h3 class="text-lg font-semibold text-gray-900 truncate dark:text-white">{{ resource.name }}</h3>
-                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
+                <h3 class="text-xl font-semibold truncate mb-2">{{ resource.name }}</h3>
+                <p class="text-base text-muted-foreground line-clamp-2">
                   {{ resource.description || '无描述' }}
                 </p>
               </div>
             </div>
             
-            <div class="mt-4">
+            <div class="mt-5">
               <div v-if="getResourceTags(resource).length > 0" class="flex flex-wrap gap-2">
-                <n-tag v-for="tag in getResourceTags(resource)" :key="tag" type="info" size="small" round>
+                <n-tag v-for="tag in getResourceTags(resource)" :key="tag" type="info" size="small" round
+                       class="rounded-full px-3 py-1 text-xs">
                   {{ tag }}
                 </n-tag>
               </div>
-              <div v-else class="text-xs text-gray-400 dark:text-gray-500">无标签</div>
+              <div v-else class="text-sm text-muted-foreground">无标签</div>
             </div>
             
-            <div v-if="authorizationStore.isAdmin" class="flex mt-6 space-x-3">
-              <n-button size="small" type="primary" quaternary @click="editResource(resource)">
+            <div v-if="authorizationStore.isAdmin" class="flex mt-8 space-x-3">
+              <n-button size="small" type="primary" tertiary @click="editResource(resource)"
+                        class="rounded-full px-4 py-1.5 text-sm">
                 编辑
               </n-button>
-              <n-button size="small" type="error" quaternary @click="deleteResource(resource)">
+              <n-button size="small" type="error" tertiary @click="deleteResource(resource)"
+                        class="rounded-full px-4 py-1.5 text-sm">
                 删除
               </n-button>
             </div>
@@ -83,23 +82,26 @@
 
     <!-- Modal -->
     <n-modal v-model:show="showModal" preset="card" :style="modalStyle" :title="editingResource.id ? '编辑资源' : '添加资源'"
-             @after-leave="resetForm" :mask-closable="false">
+             @after-leave="resetForm" :mask-closable="false" class="rounded-3xl overflow-hidden">
       <n-form ref="formRef" :model="editingResource" :rules="rules" label-placement="top" label-width="auto">
         <n-form-item label="资源名称" path="name">
-          <n-input v-model:value="editingResource.name" placeholder="请输入资源名称" />
+          <n-input v-model:value="editingResource.name" placeholder="请输入资源名称" 
+                   class="rounded-2xl bg-card border-border" />
         </n-form-item>
         <n-form-item label="资源描述" path="description">
-          <n-input v-model:value="editingResource.description" placeholder="请输入资源描述" type="textarea" :autosize="{ minRows: 3 }" />
+          <n-input v-model:value="editingResource.description" placeholder="请输入资源描述" 
+                   type="textarea" :autosize="{ minRows: 4 }" class="rounded-2xl bg-card border-border" />
         </n-form-item>
         <n-form-item label="资源标签" path="tag">
-          <n-dynamic-tags v-model:value="resourceTags" />
+          <n-dynamic-tags v-model:value="resourceTags" class="rounded-2xl bg-card border-border" />
         </n-form-item>
       </n-form>
       
       <template #footer>
-        <div class="flex justify-end space-x-3">
-          <n-button @click="showModal = false" quaternary>取消</n-button>
-          <n-button type="primary" @click="saveResource" :loading="saving" class="transition-all duration-200 hover:shadow-md">
+        <div class="flex justify-end space-x-3 pt-2">
+          <n-button @click="showModal = false" quaternary class="rounded-full px-5 py-2.5">取消</n-button>
+          <n-button type="primary" @click="saveResource" :loading="saving" 
+                    class="rounded-full px-5 py-2.5 transition-all duration-200 hover:shadow-md">
             保存
           </n-button>
         </div>
@@ -109,8 +111,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted } from 'vue'
 import { useMessage } from 'naive-ui'
 import {
   NButton,
@@ -118,25 +119,25 @@ import {
   NModal,
   NForm,
   NFormItem,
-  NIcon,
   NTag,
   NDynamicTags
 } from 'naive-ui'
-import { ArrowBack, Add, Search, FolderOpen } from '@vicons/ionicons5'
+import { Icon } from '@iconify/vue'
 import { useAuthorizationStore } from '../stores/Authorization'
 import { useLayoutStore } from '../stores/LayoutStore'
 import { ResourceService } from '../services/ResourceService'
-import { ResourceModel } from '../models'
+import { useDialog } from 'naive-ui'
+import {ResourceModel} from "../models";
 
 interface Resource {
   id: string
   name: string
   description: string | null
-  tag: string | null
+  tag: string | null | undefined
 }
 
-const router = useRouter()
 const message = useMessage()
+const dialog = useDialog()
 const authorizationStore = useAuthorizationStore()
 const layoutStore = useLayoutStore()
 
@@ -153,11 +154,6 @@ const editingResource = ref<Resource>({
 })
 
 const resourceTags = ref<string[]>([])
-
-// 页面返回
-const goBack = () => {
-  router.back()
-}
 
 // 重置表单
 const resetForm = () => {
@@ -203,8 +199,7 @@ const rules = {
 // 模态框样式
 const modalStyle = {
   width: '100%',
-  maxWidth: '520px',
-  borderRadius: '12px'
+  maxWidth: '520px'
 }
 
 // 显示添加资源模态框
@@ -226,7 +221,7 @@ const editResource = (resource: Resource) => {
 
 // 删除资源
 const deleteResource = (resource: Resource) => {
-  const dialog = window.$dialog?.warning({
+  dialog.warning({
     title: '确认删除',
     content: `确定要删除资源 "${resource.name}" 吗？此操作不可撤销。`,
     positiveText: '删除',
@@ -284,12 +279,12 @@ const saveResource = async () => {
 const fetchResources = async () => {
   try {
     const data = await ResourceService.getAllResources()
-    resources.value = data.map(resource => ({
-      id: resource.id,
-      name: resource.name,
-      description: resource.description,
-      tag: resource.tag
-    }))
+      resources.value = data.map(resource => ({
+        id: resource.id,
+        name: resource.name,
+        description: resource.description || null,
+        tag: resource.tag === undefined ? null : resource.tag
+      }))
   } catch (error: any) {
     console.error('获取资源列表时出错:', error)
     message.error('获取资源列表失败: ' + error.message)

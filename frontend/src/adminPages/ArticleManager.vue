@@ -18,54 +18,50 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
       <!-- 文章列表网格 -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-        <div 
-          v-for="article in articles" 
-          :key="article.path"
-          class="group rounded-2xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-2xl border border-gray-200/80 dark:border-gray-700/80 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden cursor-pointer"
-          @click="editArticle(article)"
+        <div
+            v-for="article in articles"
+            :key="article.path"
+            class="group rounded-2xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-2xl border border-gray-200/80 dark:border-gray-700/80 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden cursor-pointer"
+            @click="editArticle(article)"
         >
           <div class="p-5 h-full flex flex-col">
             <div class="flex-1">
               <h3 class="font-medium text-base md:text-lg mb-2 line-clamp-2 text-gray-900 group-hover:text-blue-600 dark:text-white dark:group-hover:text-blue-400 transition-colors">
-                {{ article.title }}
+                {{ article.title || '' }}
               </h3>
               <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">
                 更新时间: {{ formatDate(article.lastWriteTime) }}
               </p>
-              <n-tag 
-                size="small" 
-                :type="getIdentityType(article.identity)"
-                :bordered="false">
-                {{ getIdentityLabel(article.identity) }}
+              <n-tag
+                  size="small"
+                  :type="getIdentityType(article.identity)"
+                  :bordered="false">
+                {{ getIdentityLabel(article.identity || '') }}
               </n-tag>
             </div>
-            
+
             <!-- 操作按钮 -->
             <div class="flex justify-end space-x-2 pt-3">
               <n-button
-                type="primary"
-                size="small"
-                quaternary
-                circle
-                @click.stop="editArticle(article)"
+                  type="primary"
+                  size="small"
+                  quaternary
+                  circle
+                  @click.stop="editArticle(article)"
               >
                 <template #icon>
-                  <n-icon size="18">
-                    <EditOutlined />
-                  </n-icon>
+                  <Icon icon="antd:edit-outlined" size="18"/>
                 </template>
               </n-button>
               <n-button
-                type="error"
-                size="small"
-                quaternary
-                circle
-                @click.stop="deleteArticle(article)"
+                  type="error"
+                  size="small"
+                  quaternary
+                  circle
+                  @click.stop="deleteArticle(article)"
               >
                 <template #icon>
-                  <n-icon size="18">
-                    <DeleteOutlined />
-                  </n-icon>
+                  <Icon icon="antd:delete-outlined" size="18"/>
                 </template>
               </n-button>
             </div>
@@ -73,21 +69,19 @@
         </div>
 
         <!-- 空状态 -->
-        <div 
-          v-if="articles.length === 0 && !loading"
-          class="col-span-full py-16 flex flex-col items-center justify-center rounded-2xl bg-white/50 dark:bg-gray-800/50 border border-dashed border-gray-300 dark:border-gray-600"
+        <div
+            v-if="articles.length === 0 && !loading"
+            class="col-span-full py-16 flex flex-col items-center justify-center rounded-2xl bg-white/50 dark:bg-gray-800/50 border border-dashed border-gray-300 dark:border-gray-600"
         >
           <n-empty description="暂无文章" size="large">
             <template #icon>
-              <n-icon>
-                <FileTextOutlined />
-              </n-icon>
+              <Icon icon="antd:file-text-outlined"/>
             </template>
           </n-empty>
-          <n-button 
-            type="primary" 
-            class="mt-4 rounded-full px-5 py-2 text-sm"
-            @click="openCreateModal">
+          <n-button
+              type="primary"
+              class="mt-4 rounded-full px-5 py-2 text-sm"
+              @click="openCreateModal">
             创建第一篇文章
           </n-button>
         </div>
@@ -102,33 +96,31 @@
     <!-- 添加文章按钮 -->
     <div class="fixed bottom-6 right-6 z-10">
       <n-button
-        type="primary"
-        class="w-14 h-14 rounded-full shadow-lg backdrop-blur-xl flex items-center justify-center"
-        @click="openCreateModal"
+          type="primary"
+          class="w-14 h-14 rounded-full shadow-lg backdrop-blur-xl flex items-center justify-center"
+          @click="openCreateModal"
       >
-        <n-icon size="24">
-          <PlusOutlined />
-        </n-icon>
+        <Icon icon="antd:plus-outlined" size="24"/>
       </n-button>
     </div>
 
     <!-- 编辑/创建文章对话框 -->
     <n-modal
-      v-model:show="showEditModal"
-      preset="card"
-      style="width: 800px; max-width: 95vw; border-radius: 24px;"
-      :title="editingArticle ? '编辑文章' : '新建文章'"
-      :bordered="false"
-      segmented
-      @close="handleModalClose"
+        v-model:show="showEditModal"
+        preset="card"
+        style="width: 800px; max-width: 95vw; border-radius: 24px;"
+        :title="editingArticle ? '编辑文章' : '新建文章'"
+        :bordered="false"
+        segmented
+        @close="handleModalClose"
     >
       <n-form :model="editForm" ref="formRef" :rules="rules">
         <n-form-item label="文章路径 (Path)" path="path">
           <n-input
-            v-model:value="editForm.path"
-            :disabled="!!editingArticle"
-            placeholder="请输入文章路径，如：About"
-            round
+              v-model:value="editForm.path"
+              :disabled="!!editingArticle"
+              placeholder="请输入文章路径，如：About"
+              round
           />
           <p class="text-xs mt-1 text-gray-500 dark:text-gray-400">
             路径将作为文章的唯一标识，创建后不可修改
@@ -137,48 +129,48 @@
 
         <n-form-item label="文章标题" path="title">
           <n-input
-            v-model:value="editForm.title"
-            placeholder="请输入文章标题"
-            round
+              v-model:value="editForm.title"
+              placeholder="请输入文章标题"
+              round
           />
         </n-form-item>
 
         <n-form-item label="访问权限" path="identity">
           <n-select
-            v-model:value="editForm.identity"
-            :options="identityOptions"
-            placeholder="请选择可查看权限"
-            round
+              v-model:value="editForm.identity"
+              :options="identityOptions"
+              placeholder="请选择可查看权限"
+              round
           />
         </n-form-item>
 
         <n-form-item label="文章内容" path="content">
           <n-input
-            v-model:value="editForm.content"
-            type="textarea"
-            :autosize="{ minRows: 12, maxRows: 20 }"
-            placeholder="请输入文章内容（支持Markdown语法）"
-            round
+              v-model:value="editForm.content"
+              type="textarea"
+              :autosize="{ minRows: 12, maxRows: 20 }"
+              placeholder="请输入文章内容（支持Markdown语法）"
+              round
           />
         </n-form-item>
       </n-form>
-      
+
       <template #footer>
         <div class="flex justify-end space-x-3">
-          <n-button 
-            @click="showEditModal = false"
-            quaternary
-            round
-            class="px-5"
+          <n-button
+              @click="showEditModal = false"
+              quaternary
+              round
+              class="px-5"
           >
             取消
           </n-button>
-          <n-button 
-            type="primary" 
-            @click="saveArticle" 
-            :loading="saving"
-            round
-            class="px-5"
+          <n-button
+              type="primary"
+              @click="saveArticle"
+              :loading="saving"
+              round
+              class="px-5"
           >
             保存
           </n-button>
@@ -189,7 +181,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import {ref, onMounted} from 'vue'
 import {
   NButton,
   NEmpty,
@@ -201,17 +193,11 @@ import {
   NSelect,
   useMessage,
   useDialog,
-  NTag,
-  NIcon
+  NTag
 } from 'naive-ui'
-import { ArticleService } from "../services/ArticleService"
-import { type ArticleModel, type ArticleCreateDto, type ArticleUpdateDto } from '../models'
-import { 
-  EditOutlined, 
-  DeleteOutlined, 
-  PlusOutlined,
-  FileTextOutlined
-} from '@vicons/antd'
+import {ArticleService} from "../services/ArticleService"
+import {type ArticleModel, type ArticleCreateDto, type ArticleUpdateDto} from '../models'
+import {Icon} from '@iconify/vue'
 
 const message = useMessage()
 const dialog = useDialog()
@@ -241,11 +227,11 @@ const editForm = ref<EditFormType>({
 })
 
 const identityOptions = [
-  { label: '所有人', value: 'Member' },
-  { label: '部员', value: 'Department' },
-  { label: '部长', value: 'Minister' },
-  { label: '社长', value: 'President' },
-  { label: '创始人', value: 'Founder' }
+  {label: '所有人', value: 'Member'},
+  {label: '部员', value: 'Department'},
+  {label: '部长', value: 'Minister'},
+  {label: '社长', value: 'President'},
+  {label: '创始人', value: 'Founder'}
 ]
 
 // 根据权限值获取显示标签
@@ -255,14 +241,20 @@ const getIdentityLabel = (identity: string) => {
 }
 
 // 根据权限值获取标签类型
-const getIdentityType = (identity: string) => {
+const getIdentityType = (identity: string | null | undefined) => {
   switch (identity) {
-    case 'Member': return 'success'
-    case 'Department': return 'info'
-    case 'Minister': return 'warning'
-    case 'President': return 'error'
-    case 'Founder': return 'default'
-    default: return 'default'
+    case 'Member':
+      return 'success'
+    case 'Department':
+      return 'info'
+    case 'Minister':
+      return 'warning'
+    case 'President':
+      return 'error'
+    case 'Founder':
+      return 'default'
+    default:
+      return 'default'
   }
 }
 

@@ -10,9 +10,7 @@
               @click="goBack"
               class="hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full"
           >
-            <n-icon size="24">
-              <ChevronBack/>
-            </n-icon>
+            <Icon icon="ion:chevron-back" size="24" />
           </n-button>
           <div>
             <h1 class="text-2xl font-semibold tracking-tight">社团部门</h1>
@@ -27,9 +25,7 @@
               @click="downloadData"
           >
             <template #icon>
-              <n-icon>
-                <Download/>
-              </n-icon>
+              <Icon icon="ion:download" />
             </template>
             下载文件
           </n-button>
@@ -39,9 +35,7 @@
               @click="uploadData"
           >
             <template #icon>
-              <n-icon>
-                <Upload/>
-              </n-icon>
+              <Icon icon="ion:cloud-upload" />
             </template>
             上传数据
           </n-button>
@@ -50,9 +44,7 @@
               @click="() => openDepartment()"
           >
             <template #icon>
-              <n-icon>
-                <Plus/>
-              </n-icon>
+              <Icon icon="ion:add" />
             </template>
             添加部门
           </n-button>
@@ -129,9 +121,7 @@
                   <h2 class="text-lg font-medium">成员</h2>
                   <div class="flex flex-col sm:flex-row sm:items-center gap-4">
                     <div class="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                      <n-icon class="mr-1" size="16">
-                        <Users/>
-                      </n-icon>
+                      <Icon icon="ion:people" class="mr-1" size="16" />
                       <span>所有部员: {{ members.length }}</span>
                     </div>
                     <n-button
@@ -167,9 +157,7 @@
                       @click="addProject"
                   >
                     <template #icon>
-                      <n-icon>
-                        <Plus/>
-                      </n-icon>
+                      <Icon icon="ion:add" />
                     </template>
                     添加
                   </n-button>
@@ -455,9 +443,7 @@
               clearable
           >
             <template #prefix>
-              <n-icon>
-                <Search/>
-              </n-icon>
+              <Icon icon="ion:search" />
             </template>
           </n-input>
           <n-button type="primary" @click="searchMembers">搜索</n-button>
@@ -481,9 +467,7 @@
         <div v-else class="text-center py-8 text-gray-500 dark:text-gray-400">
           <n-empty description="请输入关键词搜索成员">
             <template #icon>
-              <n-icon>
-                <Search/>
-              </n-icon>
+              <Icon icon="ion:search" />
             </template>
           </n-empty>
         </div>
@@ -556,10 +540,9 @@ import {
   NModal,
   NTag,
   NEmpty,
-  NIcon,
   type DataTableColumns
 } from 'naive-ui'
-import {People as Users, Download, CloudUpload as Upload, Add as Plus, ChevronBack, Search} from '@vicons/ionicons5'
+import { Icon } from '@iconify/vue'
 import {DepartmentService} from '../services/DepartmentService'
 import {StaffService} from '../services/StaffService'
 import {ProjectService} from '../services/ProjectService'
@@ -720,7 +703,7 @@ const deleteAll = (list: any[] | undefined) => {
   }
 }
 
-const deleteMember = (member: MemberModel, list?: MemberModel[]) => {
+const deleteMember = (member: any, list?: any[]) => {
   if (list && Array.isArray(list)) {
     const index = list.findIndex(m => m.userId === member.userId)
     if (index > -1) {
@@ -736,7 +719,7 @@ const deleteMember = (member: MemberModel, list?: MemberModel[]) => {
   }
 }
 
-const deleteStaff = (staff: MemberModel) => {
+const deleteStaff = (staff: any) => {
   message.success('部员已删除')
 }
 
@@ -929,7 +912,7 @@ const departmentData = computed(() => {
   const departmentCount: Record<string, number> = {}
 
   departments.value.forEach(dept => {
-    departmentCount[dept.name] = dept.members.length + dept.ministers.length
+    departmentCount[dept.name] = (dept.members || []).length + (dept.ministers || []).length
   })
 
   // 转换为图表需要的格式

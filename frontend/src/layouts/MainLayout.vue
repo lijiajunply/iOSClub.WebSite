@@ -3,17 +3,17 @@
     <n-layout class="min-h-screen">
       <!-- Header with apple-style -->
       <n-layout-header
-          class="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-black/80 backdrop-blur-xl border-b border-gray-200 dark:border-gray-800"
-          :class="{ 'shadow-md': isScrolled }"
+        class="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-black/80 backdrop-blur-xl border-b border-gray-200 dark:border-gray-800"
+        :class="{ 'shadow-md': isScrolled }"
       >
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div class="flex items-center justify-between h-16">
             <!-- Logo and Title -->
             <router-link to="/" class="flex items-center gap-3 group">
               <img
-                  src="/assets/iOS_Club_LOGO.png"
-                  alt="iOS Club Logo"
-                  class="w-8 h-8 transition-transform group-hover:scale-105"
+                src="/assets/iOS_Club_LOGO.png"
+                alt="iOS Club Logo"
+                class="w-8 h-8 transition-transform group-hover:scale-105"
               />
               <div class="text-lg font-semibold text-gray-900 dark:text-gray-100 hidden sm:block">
                 XAUAT iOS Club
@@ -24,74 +24,84 @@
             <nav class="hidden md:flex items-center space-x-1">
               <!-- 关于我们 Dropdown -->
               <n-dropdown
-                  trigger="hover"
-                  :options="aboutUsOptions"
-                  @select="handleSelect"
-                  placement="bottom"
+                trigger="hover"
+                :options="aboutUsOptions"
+                @select="handleSelect"
+                placement="bottom"
               >
                 <button
-                    class="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                  class="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center"
+                >
                   关于我们
+                  <Icon icon="material-symbols:arrow-drop-down" class="ml-1" />
                 </button>
               </n-dropdown>
 
               <!-- 社团动态 Dropdown -->
               <n-dropdown
-                  trigger="hover"
-                  :options="communityOptions"
-                  @select="handleSelect"
-                  placement="bottom"
+                trigger="hover"
+                :options="communityOptions"
+                @select="handleSelect"
+                placement="bottom"
               >
                 <button
-                    class="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                  class="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center"
+                >
                   社团动态
+                  <Icon icon="material-symbols:arrow-drop-down" class="ml-1" />
                 </button>
               </n-dropdown>
 
               <!-- Login/Register or Logout Button -->
               <button
-                  v-if="!isCentreRoute"
-                  class="ml-4 px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-full hover:bg-blue-600 transition-colors"
-                  @click="() => router.push('/login')"
+                v-if="!isCentreRoute"
+                class="ml-4 px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-full hover:bg-blue-600 transition-colors"
+                @click="() => router.push('/login')"
               >
                 登录/注册
               </button>
               <button
-                  v-else
-                  class="ml-4 px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-full hover:bg-blue-600 transition-colors"
-                  @click="toCentre"
+                v-else
+                class="ml-4 px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-full hover:bg-blue-600 transition-colors"
+                @click="toCentre"
               >
                 进入中心
               </button>
 
               <!-- Theme Toggle -->
               <button
-                  @click="mainToggleTheme"
-                  class="ml-2 w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                  aria-label="切换暗夜模式"
+                @click="mainToggleTheme"
+                class="ml-2 w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                aria-label="切换暗夜模式"
               >
-                <svg v-if="!isDark" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-500"
-                     viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
-                </svg>
-                <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-400"
-                     viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
-                </svg>
+                <Icon
+                  v-if="!isDark"
+                  icon="material-symbols:light-mode"
+                  class="h-5 w-5 text-yellow-500"
+                />
+                <Icon v-else icon="material-symbols:dark-mode" class="h-5 w-5 text-blue-400" />
               </button>
             </nav>
 
             <!-- Mobile Menu Button -->
             <button
-                class="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                @click="drawerVisible = !drawerVisible"
+              class="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              @click="drawerVisible = !drawerVisible"
             >
-              <n-icon size="20" class="text-gray-900 dark:text-gray-100">
-                <MenuOutline v-if="!drawerVisible"/>
-                <CloseOutline v-else/>
-              </n-icon>
+              <Icon
+                v-if="!drawerVisible"
+                icon="material-symbols:menu"
+                class="text-gray-900 dark:text-gray-100"
+                width="20"
+                height="20"
+              />
+              <Icon
+                v-else
+                icon="material-symbols:close"
+                class="text-gray-900 dark:text-gray-100"
+                width="20"
+                height="20"
+              />
             </button>
           </div>
         </div>
@@ -102,14 +112,14 @@
         <!-- Mobile Drawer Menu -->
         <transition name="slide-down">
           <div
-              v-if="drawerVisible"
-              class="fixed inset-0 z-40 bg-white dark:bg-black pt-16"
+            v-if="drawerVisible"
+            class="fixed inset-0 z-40 bg-white dark:bg-black pt-16"
           >
             <div class="px-4 py-6 space-y-1">
               <router-link
-                  to="/"
-                  class="block px-4 py-3 text-base font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
-                  @click="drawerVisible = false"
+                to="/"
+                class="block px-4 py-3 text-base font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+                @click="drawerVisible = false"
               >
                 首页
               </router-link>
@@ -120,11 +130,11 @@
                   关于我们
                 </div>
                 <router-link
-                    v-for="item in aboutUsOptions"
-                    :key="item.key"
-                    :to="item.key"
-                    class="block px-4 py-3 text-base font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
-                    @click="drawerVisible = false"
+                  v-for="item in aboutUsOptions"
+                  :key="item.key"
+                  :to="item.key"
+                  class="block px-4 py-3 text-base font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+                  @click="drawerVisible = false"
                 >
                   {{ item.label }}
                 </router-link>
@@ -136,11 +146,11 @@
                   社团动态
                 </div>
                 <router-link
-                    v-for="item in communityOptions"
-                    :key="item.key"
-                    :to="item.key"
-                    class="block px-4 py-3 text-base font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
-                    @click="drawerVisible = false"
+                  v-for="item in communityOptions"
+                  :key="item.key"
+                  :to="item.key"
+                  class="block px-4 py-3 text-base font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+                  @click="drawerVisible = false"
                 >
                   {{ item.label }}
                 </router-link>
@@ -148,34 +158,30 @@
 
               <div class="pt-4 border-t border-gray-200 dark:border-gray-800">
                 <button
-                    v-if="!isCentreRoute"
-                    class="w-full px-4 py-3 bg-blue-500 text-white text-base font-medium rounded-lg hover:bg-blue-600 transition-colors"
-                    @click="() => { router.push('/login'); drawerVisible = false }"
+                  v-if="!isCentreRoute"
+                  class="w-full px-4 py-3 bg-blue-500 text-white text-base font-medium rounded-lg hover:bg-blue-600 transition-colors"
+                  @click="() => { router.push('/login'); drawerVisible = false }"
                 >
                   登录/注册
                 </button>
                 <button
-                    v-else
-                    class="w-full px-4 py-3 bg-blue-500 text-white text-base font-medium rounded-lg hover:bg-blue-600 transition-colors"
-                    @click="logout"
+                  v-else
+                  class="w-full px-4 py-3 bg-blue-500 text-white text-base font-medium rounded-lg hover:bg-blue-600 transition-colors"
+                  @click="logout"
                 >
                   退出登录
                 </button>
 
                 <button
-                    @click="mainToggleTheme"
-                    class="mt-3 w-full px-4 py-3 flex items-center justify-center gap-2 text-base font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  @click="mainToggleTheme"
+                  class="mt-3 w-full px-4 py-3 flex items-center justify-center gap-2 text-base font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                 >
-                  <svg v-if="!isDark" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-500"
-                       viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
-                  </svg>
-                  <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-400"
-                       viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
-                  </svg>
+                  <Icon
+                    v-if="!isDark"
+                    icon="material-symbols:light-mode"
+                    class="h-5 w-5 text-yellow-500"
+                  />
+                  <Icon v-else icon="material-symbols:dark-mode" class="h-5 w-5 text-blue-400" />
                   {{ isDark ? '浅色模式' : '深色模式' }}
                 </button>
               </div>
@@ -185,7 +191,7 @@
 
         <!-- Page Content -->
         <div class="min-h-screen">
-          <router-view/>
+          <router-view />
         </div>
       </n-layout-content>
 
@@ -198,28 +204,28 @@
             </p>
             <div class="flex flex-wrap justify-center gap-4 text-sm">
               <a
-                  href="https://cn.xauat.edu.cn/"
-                  class="text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
-                  target="_blank"
-                  rel="noopener"
+                href="https://cn.xauat.edu.cn/"
+                class="text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                target="_blank"
+                rel="noopener"
               >
                 西安建筑科技大学
               </a>
               <span class="text-gray-400">·</span>
               <a
-                  href="https://beian.miit.gov.cn/"
-                  class="text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
-                  target="_blank"
-                  rel="noopener"
+                href="https://beian.miit.gov.cn/"
+                class="text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                target="_blank"
+                rel="noopener"
               >
                 陕ICP备2024031872号
               </a>
               <span class="text-gray-400">·</span>
               <a
-                  href="https://gitee.com/XAUATiOSClub"
-                  class="text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
-                  target="_blank"
-                  rel="noopener"
+                href="https://gitee.com/XAUATiOSClub"
+                class="text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                target="_blank"
+                rel="noopener"
               >
                 Gitee
               </a>
@@ -232,21 +238,18 @@
 </template>
 
 <script setup lang="ts">
-import {ref, onMounted, onUnmounted, computed} from 'vue'
-import {useRouter, useRoute} from 'vue-router'
-import {useAuthorizationStore} from '../stores/Authorization'
-import {
-  NLayout, NLayoutHeader, NLayoutContent, NLayoutFooter,
-  NDropdown, NIcon
-} from 'naive-ui'
-import {MenuOutline, CloseOutline} from '@vicons/ionicons5'
-import {useThemeStore} from "../stores/theme"
-import {storeToRefs} from 'pinia'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { useAuthorizationStore } from '../stores/Authorization'
+import { NLayout, NLayoutHeader, NLayoutContent, NLayoutFooter, NDropdown } from 'naive-ui'
+import { Icon } from '@iconify/vue'
+import { useThemeStore } from '../stores/theme'
+import { storeToRefs } from 'pinia'
 
 const themeStore = useThemeStore()
-const {isDark} = storeToRefs(themeStore)
+const { isDark } = storeToRefs(themeStore)
 // 解构方法
-const {toggleTheme, setThemePreference} = themeStore
+const { toggleTheme, setThemePreference } = themeStore
 
 // 切换主题
 const mainToggleTheme = () => {
@@ -340,7 +343,7 @@ const communityOptions = [
 ]
 
 // Handle dropdown selection
-const handleSelect = (key) => {
+const handleSelect = (key: string) => {
   router.push(key)
 }
 </script>

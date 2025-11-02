@@ -5,9 +5,7 @@
       <div class="flex items-center justify-between">
         <div class="flex items-center space-x-4">
           <n-button text @click="goBack" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-neutral-700">
-            <n-icon size="24" class="text-gray-600 dark:text-gray-300">
-              <ArrowBack/>
-            </n-icon>
+            <Icon icon="ion:arrow-back" size="24" class="text-gray-600 dark:text-gray-300" />
           </n-button>
           <div>
             <h1 class="text-xl font-semibold text-gray-900 dark:text-white">管理中心</h1>
@@ -24,10 +22,8 @@
               class="hidden sm:flex"
           >
             <template #icon>
-              <n-icon>
-                <CloudUpload/>
-              </n-icon>
-            </template>
+                  <Icon icon="ion:cloud-upload" />
+                </template>
             上传数据
           </n-button>
 
@@ -38,9 +34,7 @@
               @select="handleDropdownSelect"
           >
             <n-button circle>
-              <n-icon size="20">
-                <EllipsisVertical/>
-              </n-icon>
+              <Icon icon="ion:ellipsis-vertical" size="20" />
             </n-button>
           </n-dropdown>
 
@@ -127,11 +121,10 @@ import {useRouter} from 'vue-router'
 import {useMessage, useDialog} from 'naive-ui'
 import {
   NButton,
-  NIcon,
   NCard,
   NDropdown
 } from 'naive-ui'
-import {ArrowBack, CloudUpload, EllipsisVertical} from '@vicons/ionicons5'
+import { Icon } from '@iconify/vue'
 import * as echarts from 'echarts'
 import StatCard from '../components/StatCard.vue'
 import {MemberQueryService} from '../services/MemberQueryService.ts'

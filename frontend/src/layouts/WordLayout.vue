@@ -1,120 +1,189 @@
 <template>
-  <n-layout class="min-h-screen bg-gray-50">
-    <n-layout has-sider position="absolute">
-      <!-- 桌面端侧边栏 -->
+  <n-layout class="min-h-screen bg-gray-100 dark:bg-neutral-900">
+    <n-layout has-sider position="absolute" class="macos-layout">
+      <!-- Desktop sidebar (macOS style) -->
       <n-layout-sider
-          :collapsed-width="4"
-          :width="320"
-          :native-scrollbar="false"
-          show-trigger="arrow-circle"
-          :on-update-collapsed="(b) => collapsed = b"
-          :collapsed="collapsed"
-          content-style="padding: 24px;"
-          class="bg-white/80 dark:bg-black/80 backdrop-blur-lg border-r border-gray-200 dark:border-gray-700"
+        :collapsed-width="4"
+        :width="280"
+        :native-scrollbar="false"
+        show-trigger="bar"
+        :on-update-collapsed="(b: boolean) => (collapsed = b)"
+        :collapsed="collapsed"
+        class="bg-gray-50 dark:bg-neutral-800 border-r border-gray-200 dark:border-neutral-700 macos-sidebar"
       >
         <n-scrollbar class="h-screen">
-          <div class="pb-20">
-            <MenuContent @menu-item-click="handleMenuClick"/>
+          <div class="pb-20 pt-2">
+            <MenuContent @menu-item-click="handleMenuClick" />
           </div>
         </n-scrollbar>
       </n-layout-sider>
 
-      <!-- 主内容区域 -->
+      <!-- Main content area -->
       <n-layout-content class="relative">
-        <div class=" py-4 md:px-8 md:py-8 min-h-screen">
-          <!-- 移动端菜单按钮 -->
-          <transition name="fade">
+        <div class="p-6 min-h-screen">
+          <!-- Mobile menu button -->
+          <Transition name="fade">
             <button
-                v-if="!drawerVisible"
-                @click="drawerVisible = true"
-                class="md:hidden fixed bottom-12 left-4 z-50 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:shadow-xl transition-shadow duration-200"
+              v-if="!drawerVisible"
+              @click="drawerVisible = true"
+              class="md:hidden fixed bottom-6 right-6 z-50 w-14 h-14 bg-blue-500 rounded-full shadow-lg flex items-center justify-center hover:shadow-xl transition-all duration-200"
             >
-              <n-icon size="24" class="text-gray-700">
-                <MenuOutline/>
-              </n-icon>
+              <Icon icon="mdi:menu" width="24" class="text-white" />
             </button>
-          </transition>
+          </Transition>
 
-          <!-- 页面内容插槽 -->
-          <router-view/>
+          <!-- Page content slot -->
+          <router-view />
         </div>
       </n-layout-content>
     </n-layout>
 
-    <!-- 移动端抽屉菜单 -->
-    <n-drawer
-        v-model:show="drawerVisible"
-        :width="280"
-        placement="left"
-    >
-      <n-drawer-content
-      >
-        <div class="py-4">
-          <MenuContent @menu-item-click="handleMenuClick"/>
+    <!-- Mobile drawer menu -->
+    <n-drawer v-model:show="drawerVisible" :width="280" placement="right">
+      <n-drawer-content>
+        <template #header>
+          <h3 class="text-lg font-semibold">文档导航</h3>
+        </template>
+        <div class="py-2">
+          <MenuContent @menu-item-click="handleMenuClick" />
         </div>
       </n-drawer-content>
     </n-drawer>
-
-    <n-layout-footer class="w-full py-4 text-center text-gray-500 bg-white/80 dark:bg-neutral-900/80 dark:text-gray-400 transition-colors duration-300">
-      Copyright © 2023 - 2024 XAUAT iOS Club<br>
-      西安建筑科技大学 ｜ 陕ICP备2024031872号 ｜
-      <a href="https://gitee.com/XAUATIOSClub" target="_blank" class="text-blue-600 dark:text-purple-400 underline">Gitee</a>
-    </n-layout-footer>
-
   </n-layout>
 </template>
 
-<script setup>
-import {ref, onMounted, onBeforeUnmount} from 'vue'
-import {useRouter} from 'vue-router'
-import {NLayout, NLayoutSider, NLayoutContent, NDrawer, NDrawerContent, NScrollbar, NIcon} from 'naive-ui'
-import {MenuOutline} from '@vicons/ionicons5'
+<script setup lang="ts">
+import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import {
+  NLayout,
+  NLayoutSider,
+  NLayoutContent,
+  NDrawer,
+  NDrawerContent,
+  NScrollbar
+} from 'naive-ui'
+import { Icon } from '@iconify/vue'
 import MenuContent from '../components/MenuContent.vue'
-import {RouterView} from 'vue-router'
+import { useThemeStore } from '../stores/theme'
 
 const router = useRouter()
+const route = useRoute()
+const themeStore = useThemeStore()
 const drawerVisible = ref(false)
 const collapsed = ref(false)
+const isDark = computed(() => themeStore.isDark)
 
-const handleMenuClick = (key) => {
+const handleMenuClick = (key: string) => {
   drawerVisible.value = false
   router.push(key)
 }
 
-// 处理窗口大小变化
-const handleResize = () => {
-  const width = window.innerWidth
-  collapsed.value = width <= 768;
+const goBack = () => {
+  router.back()
 }
 
-// 组件挂载时添加事件监听器
+const goForward = () => {
+  // Forward functionality would require more complex history management
+  // This is a simplified version
+}
+
+const refresh = () => {
+  window.location.reload()
+}
+
+const toggleSearch = () => {
+  // Search functionality can be implemented as needed
+}
+
+const toggleTheme = () => {
+  themeStore.toggleTheme()
+}
+
+// Handle window resize
+const handleResize = () => {
+  const width = window.innerWidth
+  collapsed.value = width <= 768
+}
+
+// Add event listener when component is mounted
 onMounted(() => {
-  handleResize() // 初始化时检查一次
+  handleResize() // Check once on initialization
   window.addEventListener('resize', handleResize)
 })
 
-// 组件卸载前移除事件监听器
+// Remove event listener before component is unmounted
 onBeforeUnmount(() => {
   window.removeEventListener('resize', handleResize)
 })
 </script>
 
 <style scoped>
-.fade-enter-active, .fade-leave-active {
+.macos-layout {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+.macos-sidebar {
+  border-right: 1px solid #e5e5e5;
+}
+
+.dark .macos-sidebar {
+  border-right: 1px solid #3f3f46;
+}
+
+.macos-sidebar-header {
+  background: linear-gradient(to bottom, #f9f9f9, #f5f5f5);
+}
+
+.dark .macos-sidebar-header {
+  background: linear-gradient(to bottom, #2d2d2d, #27272a);
+}
+
+.macos-toolbar {
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.dark .macos-toolbar {
+  background: rgba(38, 38, 38, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.fade-enter-active,
+.fade-leave-active {
   transition: opacity 0.3s ease;
 }
 
-.fade-enter-from, .fade-leave-to {
+.fade-enter-from,
+.fade-leave-to {
   opacity: 0;
 }
 
-.n-layout-footer {
-  background: rgba(255,255,255,0.8);
-  color: #6b7280;
-  transition: background 0.3s, color 0.3s;
+/* Scrollbar styling for WebKit browsers */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
-.dark .n-layout-footer {
-  background: rgba(23,23,23,0.8);
-  color: #a3a3a3;
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.3);
 }
 </style>
