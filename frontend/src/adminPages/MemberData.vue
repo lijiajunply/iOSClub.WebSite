@@ -1,337 +1,5 @@
-<template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-6 transition-colors duration-200">
-    <n-card class="rounded-xl shadow-sm border-0 bg-white dark:bg-gray-800 mb-6 transition-colors duration-200">
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-        <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">成员数据管理</h1>
-        <div class="flex flex-wrap gap-2">
-          <n-button type="primary" @click="showAddMemberModal" secondary>
-            <template #icon>
-              <n-icon><PersonAdd /></n-icon>
-            </template>
-            添加成员
-          </n-button>
-          <n-dropdown trigger="hover" :options="downloadOptions" @select="handleDownloadSelect">
-            <n-button secondary>
-              <template #icon>
-                <n-icon><Download /></n-icon>
-              </template>
-              导出数据
-            </n-button>
-          </n-dropdown>
-          <n-button @click="fetchMembers" secondary>
-            <template #icon>
-              <n-icon><Refresh /></n-icon>
-            </template>
-            刷新
-          </n-button>
-        </div>
-      </div>
-
-      <n-tabs type="line" animated v-model:value="activeTab" class="mt-4">
-        <n-tab-pane name="memberData" tab="成员数据">
-          <div class="space-y-4">
-            <div class="flex flex-col sm:flex-row gap-2">
-              <n-select
-                v-model:value="searchItem"
-                :options="searchItems"
-                style="width: 150px"
-                class="flex-shrink-0"
-              />
-              <n-input
-                v-model:value="searchTerm"
-                placeholder="请输入搜索项"
-                clearable
-                @keyup.enter="searchMembers"
-              >
-                <template #suffix>
-                  <n-icon><SearchOutline /></n-icon>
-                </template>
-              </n-input>
-              <n-button type="primary" @click="searchMembers">
-                搜索
-              </n-button>
-            </div>
-
-            <n-data-table
-              :columns="columns"
-              :data="filteredMembers"
-              :pagination="pagination"
-              :bordered="false"
-              striped
-              :loading="loading"
-              class="rounded-lg overflow-hidden"
-            />
-          </div>
-        </n-tab-pane>
-
-        <n-tab-pane name="yearData" tab="历年人数">
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
-            <n-card class="rounded-xl bg-white dark:bg-gray-800 transition-colors duration-200">
-              <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">历年人数变化</h3>
-              <div class="h-64 flex items-end justify-between px-2">
-                <div 
-                  v-for="(item, index) in yearData" 
-                  :key="index" 
-                  class="flex flex-col items-center flex-1 mx-1"
-                >
-                  <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ item.year }}</div>
-                  <div
-                    class="w-full rounded-t-md bg-blue-500 hover:bg-blue-600 transition-all duration-300"
-                    :style="{ height: (item.value / maxYearValue * 100) + '%' }"
-                  ></div>
-                  <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ item.value }}</div>
-                </div>
-              </div>
-            </n-card>
-          </div>
-        </n-tab-pane>
-
-        <n-tab-pane name="collegeData" tab="学院分布">
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
-            <n-card class="rounded-xl bg-white dark:bg-gray-800 transition-colors duration-200 md:col-span-2">
-              <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">学院分布</h3>
-              <div class="h-64">
-                <div 
-                  v-for="(item, index) in collegeDataSorted" 
-                  :key="index" 
-                  class="flex items-center mb-2"
-                >
-                  <div class="w-24 text-sm text-gray-600 dark:text-gray-300 truncate">{{ item.type }}</div>
-                  <div class="flex-1 mx-2">
-                    <div class="h-6 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
-                      <div 
-                        class="h-full rounded-full bg-blue-500"
-                        :style="{ width: (item.value / totalCollegeValue * 100) + '%' }"
-                      ></div>
-                    </div>
-                  </div>
-                  <div class="w-10 text-sm text-gray-900 dark:text-white">{{ item.value }}</div>
-                </div>
-              </div>
-            </n-card>
-            
-            <div class="space-y-4">
-              <n-card 
-                v-for="item in collegeData.slice(0, 4)" 
-                :key="item.type"
-                class="rounded-xl bg-white dark:bg-gray-800 transition-colors duration-200"
-              >
-                <div class="flex justify-between items-center">
-                  <div>
-                    <div class="font-medium text-gray-900 dark:text-white">{{ item.type }}</div>
-                    <div class="text-sm text-gray-500 dark:text-gray-400">当前成员</div>
-                  </div>
-                  <div class="text-2xl font-bold text-blue-500">{{ item.value }}</div>
-                </div>
-              </n-card>
-            </div>
-          </div>
-        </n-tab-pane>
-
-        <n-tab-pane name="gradeData" tab="年级分布">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-            <n-card class="rounded-xl bg-white dark:bg-gray-800 transition-colors duration-200">
-              <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">年级分布</h3>
-              <div class="h-64 overflow-y-auto pr-2">
-                <div 
-                  v-for="(item, index) in gradeDataSorted" 
-                  :key="index" 
-                  class="flex items-center mb-3"
-                >
-                  <div class="w-16 text-sm text-gray-600 dark:text-gray-300">{{ item.年级 }}</div>
-                  <div class="flex-1 mx-2">
-                    <div class="h-5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
-                      <div 
-                        class="h-full rounded-full bg-green-500"
-                        :style="{ width: (item.人数 / maxGradeValue * 100) + '%' }"
-                      ></div>
-                    </div>
-                  </div>
-                  <div class="w-8 text-sm text-gray-900 dark:text-white">{{ item.人数 }}</div>
-                </div>
-              </div>
-            </n-card>
-            
-            <n-card class="rounded-xl bg-white dark:bg-gray-800 transition-colors duration-200">
-              <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">年级分布图</h3>
-              <div class="h-64 flex items-end justify-between px-2">
-                <div 
-                  v-for="(item, index) in gradeDataSorted.slice(0, 8)" 
-                  :key="index" 
-                  class="flex flex-col items-center flex-1 mx-1"
-                >
-                  <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ item.年级 }}</div>
-                  <div
-                    class="w-full rounded-t-md bg-green-500 hover:bg-green-600 transition-all duration-300"
-                    :style="{ height: (item.人数 / maxGradeValue * 100) + '%' }"
-                  ></div>
-                  <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ item.人数 }}</div>
-                </div>
-              </div>
-            </n-card>
-          </div>
-        </n-tab-pane>
-
-        <n-tab-pane name="genderData" tab="男女比例">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-            <n-card class="rounded-xl bg-white dark:bg-gray-800 transition-colors duration-200">
-              <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">性别分布</h3>
-              <div class="h-48 flex items-center justify-center">
-                <div class="w-full max-w-md mx-auto">
-                  <div class="flex h-12 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
-                    <div 
-                      v-for="(item, index) in genderData" 
-                      :key="index"
-                      class="flex items-center justify-center text-white font-medium"
-                      :class="item.type === '男' ? 'bg-blue-500' : 'bg-pink-500'"
-                      :style="{ width: (item.value / totalGenderValue * 100) + '%' }"
-                    >
-                      {{ item.type }}: {{ item.value }}
-                    </div>
-                  </div>
-                  <div class="mt-6 text-center text-gray-600 dark:text-gray-300">
-                    {{ genderInfo }}
-                  </div>
-                </div>
-              </div>
-            </n-card>
-            
-            <n-card class="rounded-xl bg-white dark:bg-gray-800 transition-colors duration-200">
-              <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">统计数据</h3>
-              <div class="space-y-4">
-                <div 
-                  v-for="(item, index) in genderData" 
-                  :key="index"
-                  class="flex items-center justify-between p-4 rounded-lg"
-                  :class="item.type === '男' ? 'bg-blue-50 dark:bg-blue-900/30' : 'bg-pink-50 dark:bg-pink-900/30'"
-                >
-                  <div class="flex items-center">
-                    <div 
-                      class="w-10 h-10 rounded-full flex items-center justify-center text-white font-medium mr-3"
-                      :class="item.type === '男' ? 'bg-blue-500' : 'bg-pink-500'"
-                    >
-                      {{ item.type }}
-                    </div>
-                    <div>
-                      <div class="font-medium text-gray-900 dark:text-white">{{ item.type }}</div>
-                      <div class="text-sm text-gray-500 dark:text-gray-400">性别</div>
-                    </div>
-                  </div>
-                  <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ item.value }}</div>
-                </div>
-              </div>
-            </n-card>
-          </div>
-        </n-tab-pane>
-
-        <n-tab-pane name="politicalData" tab="政治面貌">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-            <n-card class="rounded-xl bg-white dark:bg-gray-800 transition-colors duration-200">
-              <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">政治面貌分布</h3>
-              <div class="h-64 overflow-y-auto pr-2">
-                <div 
-                  v-for="(item, index) in politicalDataSorted" 
-                  :key="index" 
-                  class="flex items-center mb-3"
-                >
-                  <div class="w-24 text-sm text-gray-600 dark:text-gray-300 truncate">{{ item.type }}</div>
-                  <div class="flex-1 mx-2">
-                    <div class="h-5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
-                      <div 
-                        class="h-full rounded-full bg-purple-500"
-                        :style="{ width: (item.sales / maxPoliticalValue * 100) + '%' }"
-                      ></div>
-                    </div>
-                  </div>
-                  <div class="w-8 text-sm text-gray-900 dark:text-white">{{ item.sales }}</div>
-                </div>
-              </div>
-            </n-card>
-            
-            <n-card class="rounded-xl bg-white dark:bg-gray-800 transition-colors duration-200">
-              <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">政治面貌占比</h3>
-              <div class="h-64 flex items-center justify-center">
-                <div class="w-48 h-48 rounded-full border-8 border-purple-500 flex items-center justify-center">
-                  <div class="text-center">
-                    <div class="text-3xl font-bold text-gray-900 dark:text-white">
-                      {{ Math.round((politicalData.find(p => p.type === '共青团员')?.sales || 0) / totalPoliticalValue * 100) }}%
-                    </div>
-                    <div class="text-gray-600 dark:text-gray-300">共青团员</div>
-                  </div>
-                </div>
-              </div>
-            </n-card>
-          </div>
-        </n-tab-pane>
-      </n-tabs>
-    </n-card>
-
-    <!-- 添加/编辑成员模态框 -->
-    <n-modal v-model:show="showModal" preset="card" class="w-full max-w-md rounded-xl" :title="currentMember.id ? '编辑成员' : '添加成员'">
-      <n-form :model="currentMember" :rules="rules" ref="formRef">
-        <n-form-item label="姓名" path="userName">
-          <n-input v-model:value="currentMember.userName" placeholder="请输入姓名" />
-        </n-form-item>
-        <n-form-item label="学号" path="userId">
-          <n-input v-model:value="currentMember.userId" placeholder="请输入学号" />
-        </n-form-item>
-        <n-form-item label="学院" path="academy">
-          <n-select
-            v-model:value="currentMember.academy"
-            :options="academyOptions"
-            filterable
-            placeholder="请选择学院"
-          />
-        </n-form-item>
-        <n-form-item label="专业班级" path="className">
-          <n-input v-model:value="currentMember.className" placeholder="请输入专业班级" />
-        </n-form-item>
-        <n-form-item label="手机号" path="phoneNum">
-          <n-input v-model:value="currentMember.phoneNum" placeholder="请输入手机号" />
-        </n-form-item>
-        <n-form-item label="政治面貌" path="politicalLandscape">
-          <n-select
-            v-model:value="currentMember.politicalLandscape"
-            :options="politicalLandscapeOptions"
-            placeholder="请选择政治面貌"
-          />
-        </n-form-item>
-        <n-form-item label="性别" path="gender">
-          <n-radio-group v-model:value="currentMember.gender" name="gender">
-            <n-space>
-              <n-radio
-                v-for="gender in genderOptions"
-                :key="gender"
-                :value="gender"
-              >
-                {{ gender }}
-              </n-radio>
-            </n-space>
-          </n-radio-group>
-        </n-form-item>
-      </n-form>
-      <template #footer>
-        <div class="flex justify-end gap-2">
-          <n-button @click="showModal = false">取消</n-button>
-          <n-button type="primary" @click="saveMember">保存</n-button>
-        </div>
-      </template>
-    </n-modal>
-
-    <!-- 文件上传隐藏输入框 -->
-    <input
-      ref="fileInput"
-      type="file"
-      accept=".json"
-      @change="handleFileUpload"
-      style="display: none"
-      multiple
-    />
-  </div>
-</template>
-
 <script setup lang="ts">
-import { ref, computed, h, onMounted } from 'vue'
+import { ref, computed, h, onMounted, nextTick } from 'vue'
 import { 
   SearchOutline, 
   Refresh, 
@@ -339,9 +7,28 @@ import {
   PersonAdd 
 } from '@vicons/ionicons5'
 import { useDialog, useMessage } from 'naive-ui'
+// 导入所有需要的 NaiveUI 组件
+import {
+  NCard,
+  NButton,
+  NIcon,
+  NDropdown,
+  NTabs,
+  NTabPane,
+  NSelect,
+  NInput,
+  NDataTable,
+  NModal,
+  NForm,
+  NFormItem,
+  NRadioGroup,
+  NSpace,
+  NRadio
+} from 'naive-ui'
 import { MemberQueryService } from '../services/MemberQueryService'
 import { MemberManagementService } from '../services/MemberManagementService'
-import type { MemberModel } from '../models'
+import type { MemberModel, PaginatedMemberResponse } from '../models'
+import * as echarts from 'echarts'
 
 const dialog = useDialog()
 const message = useMessage()
@@ -351,7 +38,25 @@ const searchItem = ref('姓名')
 const formRef = ref<any>(null)
 const loading = ref(false)
 const activeTab = ref('memberData')
-const fileInput = ref<HTMLInputElement | null>(null)
+
+// 分页相关状态
+const currentPage = ref(1)
+const pageSize = ref(10)
+const totalCount = ref(0)
+
+// 图表引用
+const yearChartRef = ref<HTMLDivElement | null>(null)
+const collegeChartRef = ref<HTMLDivElement | null>(null)
+const gradeChartRef = ref<HTMLDivElement | null>(null)
+const genderChartRef = ref<HTMLDivElement | null>(null)
+const politicalChartRef = ref<HTMLDivElement | null>(null)
+
+// ECharts实例
+let yearChart: echarts.ECharts | null = null
+let collegeChart: echarts.ECharts | null = null
+let gradeChart: echarts.ECharts | null = null
+let genderChart: echarts.ECharts | null = null
+let politicalChart: echarts.ECharts | null = null
 
 // 搜索选项
 const searchItems = [
@@ -386,22 +91,22 @@ const academyOptions = [
   '马克思主义学院',
   '体育学院',
   '继续教育学院'
-].map(academy => ({ label: academy, value: academy }));
+].map(academy => ({ label: academy, value: academy }))
 
 // 政治面貌选项
 const politicalLandscapeOptions = [
   '群众',
   '共青团员',
   '中共党员'
-].map(political => ({ label: political, value: political }));
+].map(political => ({ label: political, value: political }))
 
 // 性别选项
-const genderOptions = ['男', '女'];
+const genderOptions = ['男', '女']
 
 // 成员数据
 const members = ref<MemberModel[]>([])
 
-const currentMember = ref({
+const currentMember = ref<MemberModel>({
   identity: '',
   userName: '',
   userId: '',
@@ -413,7 +118,7 @@ const currentMember = ref({
   joinTime: '',
   passwordHash: '',
   eMail: null as string | null
-})
+} as MemberModel)
 
 const rules = {
   userName: {
@@ -511,7 +216,7 @@ const columns = [
     render(row: MemberModel) {
       return [
         h(
-          'n-button',
+          NButton,
           {
             strong: true,
             tertiary: true,
@@ -521,7 +226,7 @@ const columns = [
           { default: () => '编辑' }
         ),
         h(
-          'n-button',
+          NButton,
           {
             strong: true,
             tertiary: true,
@@ -536,8 +241,25 @@ const columns = [
   }
 ]
 
-const pagination = {
-  pageSize: 10
+// 分页配置
+const paginationConfig = computed(() => {
+  return {
+    page: currentPage.value,
+    pageSize: pageSize.value,
+    showSizePicker: true,
+    pageSizes: [10, 20, 30, 50],
+    itemCount: totalCount.value,
+  }
+})
+
+const onChange = (page: number) => {
+  currentPage.value = page
+  fetchMembers()
+}
+const onUpdatePageSize = (size: number) => {
+  pageSize.value = size
+  currentPage.value = 1
+  fetchMembers()
 }
 
 const filteredMembers = computed(() => {
@@ -563,63 +285,19 @@ const gradeData = ref<{ 年级: string; 人数: number }[]>([])
 const genderData = ref<{ type: string; value: number }[]>([])
 const politicalData = ref<{ type: string; sales: number }[]>([])
 
-// 计算最大值用于图表缩放
-const maxYearValue = computed(() => {
-  return Math.max(...yearData.value.map(item => item.value), 1)
-})
-
-const maxGradeValue = computed(() => {
-  return Math.max(...gradeData.value.map(item => item.人数), 1)
-})
-
-const maxPoliticalValue = computed(() => {
-  return Math.max(...politicalData.value.map(item => item.sales), 1)
-})
-
-const totalCollegeValue = computed(() => {
-  return collegeData.value.reduce((sum, item) => sum + item.value, 0)
-})
-
-const totalGenderValue = computed(() => {
-  return genderData.value.reduce((sum, item) => sum + item.value, 0)
-})
-
-const totalPoliticalValue = computed(() => {
-  return politicalData.value.reduce((sum, item) => sum + item.sales, 0)
-})
-
-// 排序后的数据
-const collegeDataSorted = computed(() => {
-  return [...collegeData.value].sort((a, b) => b.value - a.value)
-})
-
-const gradeDataSorted = computed(() => {
-  return [...gradeData.value].sort((a, b) => b.人数 - a.人数)
-})
-
-const politicalDataSorted = computed(() => {
-  return [...politicalData.value].sort((a, b) => b.sales - a.sales)
-})
-
-const genderInfo = computed(() => {
-  if (genderData.value.length === 0) return ''
-  const man = genderData.value.find(item => item.type === '男')?.value || 0
-  const woman = genderData.value.find(item => item.type === '女')?.value || 0
-  const total = man + woman
-  if (total === 0) return ''
-
-  return `社团现有男生${man}人，女生${woman}人，比例为${(man / woman * 100).toFixed(2)}%，男生占总人数${(man / total * 100).toFixed(2)}%`
-})
-
 // 获取成员数据
 const fetchMembers = async () => {
   try {
     loading.value = true
-    const data = await MemberQueryService.getAllData()
-    members.value = data
+    const response: PaginatedMemberResponse = await MemberQueryService.getAllDataByPage(
+      currentPage.value,
+      pageSize.value
+    )
 
-    // 处理图表数据
-    processChartData(data)
+    console.log(response)
+    
+    members.value = response.data
+    totalCount.value = response.totalCount
   } catch (error: any) {
     console.error('获取成员数据时出错:', error)
     message.error('获取成员数据时出错: ' + (error.message || '未知错误'))
@@ -628,68 +306,204 @@ const fetchMembers = async () => {
   }
 }
 
-// 处理图表数据
-const processChartData = (data: MemberModel[]) => {
-  // 历年数据（模拟）
-  yearData.value = [
-    { year: '2019学年', value: 33 },
-    { year: '2020学年', value: 1 },
-    { year: '2021学年', value: 274 },
-    { year: '2022学年', value: 329 }
-  ]
+// 初始化图表
+const initChart = (chartRef: HTMLDivElement | null, option: any) => {
+  if (chartRef) {
+    const chart = echarts.init(chartRef)
+    chart.setOption(option)
+    return chart
+  }
+  return null
+}
 
-  // 学院分布数据
-  const collegeMap: Record<string, number> = {}
-  data.forEach(member => {
-    if (member.academy) {
-      collegeMap[member.academy] = (collegeMap[member.academy] || 0) + 1
+// 渲染历年数据图表
+const renderYearChart = () => {
+  if (!yearChartRef.value) return
+
+  const option = {
+    tooltip: {
+      trigger: 'axis'
+    },
+    xAxis: {
+      type: 'category',
+      data: yearData.value.map(item => item.year)
+    },
+    yAxis: {
+      type: 'value'
+    },
+    series: [{
+      data: yearData.value.map(item => item.value),
+      type: 'line',
+      smooth: true,
+      itemStyle: {
+        color: '#3b82f6'
+      },
+      areaStyle: {
+        color: '#3b82f6'
+      }
+    }]
+  }
+
+  if (yearChart) {
+    yearChart.setOption(option, true)
+  } else {
+    yearChart = initChart(yearChartRef.value, option)
+  }
+}
+
+// 渲染学院分布图表
+const renderCollegeChart = () => {
+  if (!collegeChartRef.value) return
+
+  const option = {
+    tooltip: {
+      trigger: 'item'
+    },
+    series: [{
+      type: 'pie',
+      radius: ['40%', '70%'],
+      data: collegeData.value.map(item => ({
+        name: item.type,
+        value: item.value
+      })),
+      emphasis: {
+        itemStyle: {
+          shadowBlur: 10,
+          shadowOffsetX: 0,
+          shadowColor: 'rgba(0, 0, 0, 0.5)'
+        }
+      }
+    }]
+  }
+
+  if (collegeChart) {
+    collegeChart.setOption(option, true)
+  } else {
+    collegeChart = initChart(collegeChartRef.value, option)
+  }
+}
+
+// 渲染年级分布图表
+const renderGradeChart = () => {
+  if (!gradeChartRef.value) return
+
+  const option = {
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: {
+        type: 'shadow'
+      }
+    },
+    xAxis: {
+      type: 'category',
+      data: gradeData.value.map(item => item.年级)
+    },
+    yAxis: {
+      type: 'value'
+    },
+    series: [{
+      data: gradeData.value.map(item => item.人数),
+      type: 'bar',
+      itemStyle: {
+        color: '#10b981'
+      }
+    }]
+  }
+
+  if (gradeChart) {
+    gradeChart.setOption(option, true)
+  } else {
+    gradeChart = initChart(gradeChartRef.value, option)
+  }
+}
+
+// 渲染性别分布图表
+const renderGenderChart = () => {
+  if (!genderChartRef.value) return
+
+  const option = {
+    tooltip: {
+      trigger: 'item'
+    },
+    series: [{
+      type: 'pie',
+      radius: ['40%', '70%'],
+      data: genderData.value.map(item => ({
+        name: item.type,
+        value: item.value
+      })),
+      emphasis: {
+        itemStyle: {
+          shadowBlur: 10,
+          shadowOffsetX: 0,
+          shadowColor: 'rgba(0, 0, 0, 0.5)'
+        }
+      }
+    }]
+  }
+
+  if (genderChart) {
+    genderChart.setOption(option, true)
+  } else {
+    genderChart = initChart(genderChartRef.value, option)
+  }
+}
+
+// 渲染政治面貌图表
+const renderPoliticalChart = () => {
+  if (!politicalChartRef.value) return
+
+  const option = {
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: {
+        type: 'shadow'
+      }
+    },
+    xAxis: {
+      type: 'category',
+      data: politicalData.value.map(item => item.type)
+    },
+    yAxis: {
+      type: 'value'
+    },
+    series: [{
+      data: politicalData.value.map(item => item.sales),
+      type: 'bar',
+      itemStyle: {
+        color: '#8b5cf6'
+      }
+    }]
+  }
+
+  if (politicalChart) {
+    politicalChart.setOption(option, true)
+  } else {
+    politicalChart = initChart(politicalChartRef.value, option)
+  }
+}
+
+// 标签页切换处理
+const handleTabChange = (name: string) => {
+  nextTick(() => {
+    switch (name) {
+      case 'yearData':
+        renderYearChart()
+        break
+      case 'collegeData':
+        renderCollegeChart()
+        break
+      case 'gradeData':
+        renderGradeChart()
+        break
+      case 'genderData':
+        renderGenderChart()
+        break
+      case 'politicalData':
+        renderPoliticalChart()
+        break
     }
   })
-
-  collegeData.value = Object.keys(collegeMap).map(key => ({
-    type: key,
-    value: collegeMap[key]
-  }))
-
-  // 年级分布数据
-  const gradeMap: Record<string, number> = {}
-  data.forEach(member => {
-    if (member.userId && member.userId.length >= 2) {
-      const grade = member.userId.substring(0, 2)
-      gradeMap[grade] = (gradeMap[grade] || 0) + 1
-    }
-  })
-
-  gradeData.value = Object.keys(gradeMap).map(key => ({
-    年级: key + '级',
-    人数: gradeMap[key]
-  }))
-
-  // 性别分布数据
-  const genderMap: Record<string, number> = { 男: 0, 女: 0 }
-  data.forEach(member => {
-    if (member.gender === '男' || member.gender === '女') {
-      genderMap[member.gender] = (genderMap[member.gender] || 0) + 1
-    }
-  })
-
-  genderData.value = Object.keys(genderMap).map(key => ({
-    type: key,
-    value: genderMap[key]
-  }))
-
-  // 政治面貌数据
-  const politicalMap: Record<string, number> = {}
-  data.forEach(member => {
-    if (member.politicalLandscape) {
-      politicalMap[member.politicalLandscape] = (politicalMap[member.politicalLandscape] || 0) + 1
-    }
-  })
-
-  politicalData.value = Object.keys(politicalMap).map(key => ({
-    type: key,
-    sales: politicalMap[key]
-  }))
 }
 
 const showAddMemberModal = () => {
@@ -697,11 +511,11 @@ const showAddMemberModal = () => {
     identity: '',
     userName: '',
     userId: '',
-    academy: null,
+    academy: '',
     className: '',
     phoneNum: '',
-    politicalLandscape: null,
-    gender: null,
+    politicalLandscape: '',
+    gender: '',
     joinTime: new Date().toISOString(),
     passwordHash: '',
     eMail: null
@@ -727,8 +541,8 @@ const deleteMember = async (member: MemberModel) => {
         if (index !== -1) {
           members.value.splice(index, 1)
           message.success(`删除成员: ${member.userName} 成功`)
-          // 重新处理图表数据
-          processChartData(members.value)
+          // 更新总数
+          totalCount.value--
         }
       } catch (error: any) {
         console.error('删除成员时出错:', error)
@@ -754,10 +568,10 @@ const saveMember = async () => {
           // 添加新成员 (这里需要根据实际情况调整)
           members.value.push({ ...currentMember.value })
           message.success('新成员已添加')
+          // 更新总数
+          totalCount.value++
         }
 
-        // 重新处理图表数据
-        processChartData(members.value)
         showModal.value = false
       } catch (error: any) {
         console.error('保存成员信息时出错:', error)
@@ -788,94 +602,223 @@ const handleDownloadSelect = (key: string) => {
 const exportToCSV = () => {
   try {
     // 定义 CSV 头部
-    const headers = ['姓名', '学号', '学院', '专业班级', '手机号', '政治面貌', '性别'];
-    const keys = ['userName', 'userId', 'academy', 'className', 'phoneNum', 'politicalLandscape', 'gender'] as const;
+    const headers = ['姓名', '学号', '学院', '专业班级', '手机号', '政治面貌', '性别']
+    const keys = ['userName', 'userId', 'academy', 'className', 'phoneNum', 'politicalLandscape', 'gender'] as const
 
     // 创建 CSV 内容
-    let csvContent = '\uFEFF' + headers.join(',') + '\n'; // 添加 UTF-8 BOM
+    let csvContent = '\uFEFF' + headers.join(',') + '\n' // 添加 UTF-8 BOM
 
     // 添加数据行
     members.value.forEach(member => {
       const row = keys.map(key => {
-        const value = member[key] || '';
+        const value = member[key] || ''
         // 转义包含逗号或引号的值
-        return `"${value.toString().replace(/"/g, '""')}"`;
-      });
-      csvContent += row.join(',') + '\n';
-    });
+        return `"${value.toString().replace(/"/g, '""')}"`
+      })
+      csvContent += row.join(',') + '\n'
+    })
 
     // 创建并下载文件
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', '成员数据.csv');
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.setAttribute('href', url)
+    link.setAttribute('download', '成员数据.csv')
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
 
-    message.success('CSV数据导出成功');
+    message.success('CSV数据导出成功')
   } catch (error) {
-    console.error('导出CSV数据失败:', error);
-    message.error('导出CSV数据失败');
+    console.error('导出CSV数据失败:', error)
+    message.error('导出CSV数据失败')
   }
 }
 
 // 导出为 JSON 格式
 const exportToJSON = () => {
   try {
-    const dataStr = JSON.stringify(members.value, null, 2);
-    const blob = new Blob([dataStr], { type: 'application/json;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', '成员数据.json');
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const dataStr = JSON.stringify(members.value, null, 2)
+    const blob = new Blob([dataStr], { type: 'application/json;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.setAttribute('href', url)
+    link.setAttribute('download', '成员数据.json')
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
 
-    message.success('JSON数据导出成功');
+    message.success('JSON数据导出成功')
   } catch (error) {
-    console.error('导出JSON数据失败:', error);
-    message.error('导出JSON数据失败');
+    console.error('导出JSON数据失败:', error)
+    message.error('导出JSON数据失败')
   }
 }
 
-// 处理文件上传
-const handleFileUpload = (event: Event) => {
-  const target = event.target as HTMLInputElement;
-  const file = target.files?.[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    try {
-      const jsonData = JSON.parse(e.target?.result as string);
-      // 这里应该处理上传的数据
-      message.success('文件上传成功');
-    } catch (error) {
-      message.error('解析JSON文件失败');
-    }
-  };
-  reader.readAsText(file);
-
-  // 重置文件输入框
-  target.value = '';
-}
-
-// 上传文件
-const uploadFile = () => {
-  fileInput.value?.click();
+// 窗口大小变化时重置图表大小
+const handleResize = () => {
+  if (yearChart) yearChart.resize()
+  if (collegeChart) collegeChart.resize()
+  if (gradeChart) gradeChart.resize()
+  if (genderChart) genderChart.resize()
+  if (politicalChart) politicalChart.resize()
 }
 
 // 组件挂载时获取成员数据
 onMounted(() => {
   fetchMembers()
+  window.addEventListener('resize', handleResize)
 })
+
+// 组件卸载时清理事件监听器和图表实例
+// 注意：在Vue 3的组合式API中，通常不需要手动销毁ECharts实例，因为它们会随DOM一起被销毁
 </script>
 
-<style scoped>
-/* 使用 TailwindCSS 类，尽量减少自定义样式 */
-</style>
+<template>
+  <div class="min-h-screen p-4 md:p-6">
+    <div class="rounded-xl mb-6 p-4">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+        <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">成员数据管理</h1>
+        <div class="flex flex-wrap gap-2">
+          <n-button type="primary" @click="showAddMemberModal">
+            <template #icon>
+              <n-icon>
+                <PersonAdd />
+              </n-icon>
+            </template>
+            添加成员
+          </n-button>
+          <n-dropdown trigger="hover" :options="downloadOptions" @select="handleDownloadSelect">
+            <n-button>
+              <template #icon>
+                <n-icon>
+                  <Download />
+                </n-icon>
+              </template>
+              导出数据
+            </n-button>
+          </n-dropdown>
+          <n-button @click="fetchMembers">
+            <template #icon>
+              <n-icon>
+                <Refresh />
+              </n-icon>
+            </template>
+            刷新
+          </n-button>
+        </div>
+      </div>
+
+      <n-tabs type="line" animated v-model:value="activeTab" class="mt-4" @update:value="handleTabChange">
+        <n-tab-pane name="memberData" tab="成员数据">
+          <div class="space-y-4">
+            <div class="flex flex-col sm:flex-row gap-2">
+              <n-select v-model:value="searchItem" :options="searchItems" style="width: 150px" class="flex-shrink-0" />
+              <n-input v-model:value="searchTerm" placeholder="请输入搜索项" clearable @keyup.enter="searchMembers">
+                <template #suffix>
+                  <n-icon>
+                    <SearchOutline />
+                  </n-icon>
+                </template>
+              </n-input>
+              <n-button type="primary" @click="searchMembers">
+                搜索
+              </n-button>
+            </div>
+
+            <n-data-table remote :columns="columns" :data="filteredMembers" @update:page-size="onUpdatePageSize" @update:page="onChange" :pagination="paginationConfig" :bordered="false"
+              :loading="loading" class="rounded-lg overflow-hidden" />
+          </div>
+        </n-tab-pane>
+
+        <n-tab-pane name="yearData" tab="历年人数">
+          <div class="grid grid-cols-1 gap-6 mt-4">
+            <n-card class="rounded-xl bg-white dark:bg-gray-800 transition-colors duration-200">
+              <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">历年人数变化</h3>
+              <div ref="yearChartRef" class="h-80 w-full"></div>
+            </n-card>
+          </div>
+        </n-tab-pane>
+
+        <n-tab-pane name="collegeData" tab="学院分布">
+          <div class="grid grid-cols-1 gap-6 mt-4">
+            <n-card class="rounded-xl bg-white dark:bg-gray-800 transition-colors duration-200">
+              <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">学院分布</h3>
+              <div ref="collegeChartRef" class="h-80 w-full"></div>
+            </n-card>
+          </div>
+        </n-tab-pane>
+
+        <n-tab-pane name="gradeData" tab="年级分布">
+          <div class="grid grid-cols-1 gap-6 mt-4">
+            <n-card class="rounded-xl bg-white dark:bg-gray-800 transition-colors duration-200">
+              <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">年级分布</h3>
+              <div ref="gradeChartRef" class="h-80 w-full"></div>
+            </n-card>
+          </div>
+        </n-tab-pane>
+
+        <n-tab-pane name="genderData" tab="男女比例">
+          <div class="grid grid-cols-1 gap-6 mt-4">
+            <n-card class="rounded-xl bg-white dark:bg-gray-800 transition-colors duration-200">
+              <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">性别分布</h3>
+              <div ref="genderChartRef" class="h-80 w-full"></div>
+            </n-card>
+          </div>
+        </n-tab-pane>
+
+        <n-tab-pane name="politicalData" tab="政治面貌">
+          <div class="grid grid-cols-1 gap-6 mt-4">
+            <n-card class="rounded-xl bg-white dark:bg-gray-800 transition-colors duration-200">
+              <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">政治面貌分布</h3>
+              <div ref="politicalChartRef" class="h-80 w-full"></div>
+            </n-card>
+          </div>
+        </n-tab-pane>
+      </n-tabs>
+    </div>
+
+    <!-- 添加/编辑成员模态框 -->
+    <n-modal v-model:show="showModal" preset="card" class="w-full max-w-md rounded-xl"
+      :title="currentMember.identity ? '编辑成员' : '添加成员'">
+      <n-form :model="currentMember" :rules="rules" ref="formRef">
+        <n-form-item label="姓名" path="userName">
+          <n-input v-model:value="currentMember.userName" placeholder="请输入姓名" />
+        </n-form-item>
+        <n-form-item label="学号" path="userId">
+          <n-input v-model:value="currentMember.userId" placeholder="请输入学号" />
+        </n-form-item>
+        <n-form-item label="学院" path="academy">
+          <n-select v-model:value="currentMember.academy" :options="academyOptions" filterable placeholder="请选择学院" />
+        </n-form-item>
+        <n-form-item label="专业班级" path="className">
+          <n-input v-model:value="currentMember.className" placeholder="请输入专业班级" />
+        </n-form-item>
+        <n-form-item label="手机号" path="phoneNum">
+          <n-input v-model:value="currentMember.phoneNum" placeholder="请输入手机号" />
+        </n-form-item>
+        <n-form-item label="政治面貌" path="politicalLandscape">
+          <n-select v-model:value="currentMember.politicalLandscape" :options="politicalLandscapeOptions"
+            placeholder="请选择政治面貌" />
+        </n-form-item>
+        <n-form-item label="性别" path="gender">
+          <n-radio-group v-model:value="currentMember.gender" name="gender">
+            <n-space>
+              <n-radio v-for="gender in genderOptions" :key="gender" :value="gender">
+                {{ gender }}
+              </n-radio>
+            </n-space>
+          </n-radio-group>
+        </n-form-item>
+      </n-form>
+      <template #footer>
+        <div class="flex justify-end gap-2">
+          <n-button @click="showModal = false">取消</n-button>
+          <n-button type="primary" @click="saveMember">保存</n-button>
+        </div>
+      </template>
+    </n-modal>
+  </div>
+</template>

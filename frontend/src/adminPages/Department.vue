@@ -72,6 +72,7 @@
             animated
             class="w-full"
             :tabs-padding="20"
+            @update:value="handleTabChange"
         >
           <!-- 总览标签页 -->
           <n-tab-pane name="overview" tab="总览">
@@ -104,7 +105,7 @@
                 <div class="flex flex-wrap gap-2 mt-4">
                   <n-tag
                       v-for="member in ministers"
-                      :key="member.id"
+                      :key="member.userId"
                       type="primary"
                       closable
                       @close="() => deleteMember(member, ministers)"
@@ -217,18 +218,17 @@
                   <div
                       class="bg-white dark:bg-gray-700 rounded-xl shadow-sm p-5 border border-gray-200 dark:border-gray-600">
                     <h3 class="text-sm font-medium mb-3 text-gray-600 dark:text-gray-300">部门分布</h3>
-                    <div class="h-48 flex items-center justify-center">
+                    <div class="h-80 flex items-center justify-center">
                       <n-empty
                           v-if="!departmentData || departmentData.length === 0"
                           description="暂无数据"
                           size="small"
                       />
                       <div v-else class="w-full h-full">
-                        <!-- 这里可以放置图表 -->
                         <div
-                            class="w-full h-full bg-gray-100 dark:bg-gray-600 rounded-lg flex items-center justify-center">
-                          <span class="text-sm text-gray-500 dark:text-gray-400">部门分布图表</span>
-                        </div>
+                            id="departmentChart"
+                            class="w-full h-full"
+                        ></div>
                       </div>
                     </div>
                   </div>
@@ -237,18 +237,17 @@
                   <div
                       class="bg-white dark:bg-gray-700 rounded-xl shadow-sm p-5 border border-gray-200 dark:border-gray-600">
                     <h3 class="text-sm font-medium mb-3 text-gray-600 dark:text-gray-300">学院分布</h3>
-                    <div class="h-48 flex items-center justify-center">
+                    <div class="h-80 flex items-center justify-center">
                       <n-empty
                           v-if="!collegeData || collegeData.length === 0"
                           description="暂无数据"
                           size="small"
                       />
                       <div v-else class="w-full h-full">
-                        <!-- 这里可以放置图表 -->
                         <div
-                            class="w-full h-full bg-gray-100 dark:bg-gray-600 rounded-lg flex items-center justify-center">
-                          <span class="text-sm text-gray-500 dark:text-gray-400">学院分布图表</span>
-                        </div>
+                            id="collegeChart"
+                            class="w-full h-full"
+                        ></div>
                       </div>
                     </div>
                   </div>
@@ -257,18 +256,17 @@
                   <div
                       class="bg-white dark:bg-gray-700 rounded-xl shadow-sm p-5 border border-gray-200 dark:border-gray-600">
                     <h3 class="text-sm font-medium mb-3 text-gray-600 dark:text-gray-300">男女比例</h3>
-                    <div class="h-48 flex items-center justify-center">
+                    <div class="h-80 flex items-center justify-center">
                       <n-empty
                           v-if="!genderData || genderData.length === 0"
                           description="暂无数据"
                           size="small"
                       />
                       <div v-else class="w-full h-full">
-                        <!-- 这里可以放置图表 -->
                         <div
-                            class="w-full h-full bg-gray-100 dark:bg-gray-600 rounded-lg flex items-center justify-center">
-                          <span class="text-sm text-gray-500 dark:text-gray-400">男女比例图表</span>
-                        </div>
+                            id="genderChart"
+                            class="w-full h-full"
+                        ></div>
                       </div>
                     </div>
                   </div>
@@ -543,7 +541,7 @@
 </template>
 
 <script setup lang="ts">
-import {ref, onMounted, h} from 'vue'
+import {ref, onMounted, h, computed, nextTick, watch} from 'vue'
 import {useRouter} from 'vue-router'
 import {
   useMessage,
@@ -565,6 +563,7 @@ import {DepartmentService} from '../services/DepartmentService'
 import {StaffService} from '../services/StaffService'
 import {ProjectService} from '../services/ProjectService'
 import type {Department, DepartmentModel, MemberModel, Project} from '../models'
+import * as echarts from 'echarts'
 
 const router = useRouter()
 const message = useMessage()
@@ -574,9 +573,7 @@ const ministers = ref<MemberModel[]>([])
 const members = ref<MemberModel[]>([])
 const projects = ref<Project[]>([])
 const departments = ref<Department[]>([])
-const departmentData = ref([])
-const collegeData = ref([])
-const genderData = ref([])
+const staffs = ref<MemberModel[]>([])
 
 // 模态框状态
 const showAddMemberModal = ref(false)
@@ -878,40 +875,33 @@ const fetchData = async () => {
     // 获取所有部门信息
     const departmentsData = await DepartmentService.getAllDepartments()
     departments.value = departmentsData.map(dept => ({
-      id: dept.key as unknown as number, // 需要根据实际情况调整
+      id: dept.key, // 需要根据实际情况调整
       name: dept.name,
       description: dept.description,
       ministers: dept.staffs?.filter((staff: any) =>
           staff.identity === 'President' || staff.identity === 'Minister') || [],
       members: dept.staffs?.filter((staff: any) =>
           staff.identity === 'Department') || [],
-      projects: dept.projects || []
-    }))
+      projects: (dept.projects || []).map(project => ({
+        id: parseInt(project.id),
+        title: project.name,
+        description: project.description,
+        department: {
+          id: 0, // 需要根据实际情况调整
+          name: project.department
+        }
+      }))
+    } as Department))
 
     // 获取员工信息
-    const staffs = await StaffService.getAllStaff()
+    staffs.value = await StaffService.getAllStaff()
 
     // 分离领导层和普通成员
-    ministers.value = staffs
+    ministers.value = staffs.value
         .filter(staff => staff.identity === 'President')
-        .map(staff => ({
-          userName: staff.name,
-          userId: staff.userId,
-          identity: staff.identity,
-        })) as MemberModel[]
 
-    members.value = staffs
+    members.value = staffs.value
         .filter(staff => staff.identity !== 'Founder')
-        .map(staff => ({
-          userName: staff.name,
-          userId: staff.userId,
-          identity: staff.identity,
-          academy: '', // 需要根据实际情况获取
-          politicalLandscape: '',
-          gender: '',
-          className: '',
-          phoneNum: ''
-        })) as MemberModel[]
 
     // 获取项目信息
     const projectsData = await ProjectService.getAllProjects()
@@ -925,20 +915,246 @@ const fetchData = async () => {
       }
     })) as Project[]
 
-    // 模拟统计数据
-    departmentData.value = []
-    collegeData.value = []
-    genderData.value = []
-
   } catch (error: any) {
     console.error('获取部门数据失败:', error)
     message.error('获取数据时发生错误: ' + (error.message || '未知错误'))
   }
 }
 
-onMounted(() => {
-  fetchData()
+// 计算属性：部门分布数据
+const departmentData = computed(() => {
+  if (!staffs.value || staffs.value.length === 0) return []
+  
+  const departmentCount: Record<string, number> = {}
+
+  departments.value.forEach(dept => {
+    departmentCount[dept.name] = dept.members.length + dept.ministers.length
+  })
+  
+  // 转换为图表需要的格式
+  return Object.entries(departmentCount).map(([name, count]) => ({
+    name,
+    value: count
+  }))
 })
+
+// 计算属性：学院分布数据
+const collegeData = computed(() => {
+  if (!staffs.value || staffs.value.length === 0) return []
+  
+  const collegeCount: Record<string, number> = {}
+  
+  // 统计各学院人数
+  staffs.value.forEach(staff => {
+    const college = staff.academy || '未知学院'
+    collegeCount[college] = (collegeCount[college] || 0) + 1
+  })
+  
+  // 转换为图表需要的格式
+  return Object.entries(collegeCount).map(([name, count]) => ({
+    name,
+    value: count
+  }))
+})
+
+// 计算属性：男女比例数据
+const genderData = computed(() => {
+  if (!staffs.value || staffs.value.length === 0) return []
+  
+  const genderCount: Record<string, number> = {
+    男: 0,
+    女: 0
+  }
+  
+  // 统计男女比例
+  staffs.value.forEach(staff => {
+    if (staff.gender === '男') {
+      genderCount['男']++
+    } else if (staff.gender === '女') {
+      genderCount['女']++
+    }
+  })
+  
+  // 转换为图表需要的格式
+  return Object.entries(genderCount).map(([name, count]) => ({
+    name,
+    value: count
+  }))
+})
+
+// 图表初始化函数
+const initChart = (chartId: string, option: any) => {
+  const chartDom = document.getElementById(chartId)
+  if (chartDom) {
+    const myChart = echarts.init(chartDom)
+    myChart.setOption(option)
+    
+    // 响应式处理
+    window.addEventListener('resize', () => {
+      myChart.resize()
+    })
+  }
+}
+
+// 渲染部门分布图表
+const renderDepartmentChart = () => {
+  const option = {
+    tooltip: {
+      trigger: 'item'
+    },
+    legend: {
+      bottom: '0%',
+      left: 'center'
+    },
+    series: [
+      {
+        name: '部门分布',
+        type: 'pie',
+        radius: ['40%', '70%'],
+        avoidLabelOverlap: false,
+        itemStyle: {
+          borderRadius: 10,
+          borderColor: '#fff',
+          borderWidth: 2
+        },
+        label: {
+          show: false,
+          position: 'center'
+        },
+        emphasis: {
+          label: {
+            show: true,
+            fontSize: 20,
+            fontWeight: 'bold'
+          }
+        },
+        labelLine: {
+          show: false
+        },
+        data: departmentData.value
+      }
+    ]
+  }
+  
+  initChart('departmentChart', option)
+}
+
+// 渲染学院分布图表
+const renderCollegeChart = () => {
+  const option = {
+    tooltip: {
+      trigger: 'item'
+    },
+    legend: {
+      bottom: '0%',
+      left: 'center'
+    },
+    series: [
+      {
+        name: '学院分布',
+        type: 'pie',
+        radius: ['40%', '70%'],
+        avoidLabelOverlap: false,
+        itemStyle: {
+          borderRadius: 10,
+          borderColor: '#fff',
+          borderWidth: 2
+        },
+        label: {
+          show: false,
+          position: 'center'
+        },
+        emphasis: {
+          label: {
+            show: true,
+            fontSize: 20,
+            fontWeight: 'bold'
+          }
+        },
+        labelLine: {
+          show: false
+        },
+        data: collegeData.value
+      }
+    ]
+  }
+  
+  initChart('collegeChart', option)
+}
+
+// 渲染男女比例图表
+const renderGenderChart = () => {
+  const option = {
+    tooltip: {
+      trigger: 'item'
+    },
+    legend: {
+      bottom: '0%',
+      left: 'center'
+    },
+    series: [
+      {
+        name: '男女比例',
+        type: 'pie',
+        radius: ['40%', '70%'],
+        avoidLabelOverlap: false,
+        itemStyle: {
+          borderRadius: 10,
+          borderColor: '#fff',
+          borderWidth: 2
+        },
+        label: {
+          show: false,
+          position: 'center'
+        },
+        emphasis: {
+          label: {
+            show: true,
+            fontSize: 20,
+            fontWeight: 'bold'
+          }
+        },
+        labelLine: {
+          show: false
+        },
+        data: genderData.value
+      }
+    ]
+  }
+  
+  initChart('genderChart', option)
+}
+
+// 在数据更新后重新渲染图表
+const renderAllCharts = () => {
+  nextTick(() => {
+    renderDepartmentChart()
+    renderCollegeChart()
+    renderGenderChart()
+  })
+}
+
+// 在组件挂载后初始化图表
+onMounted(() => {
+  fetchData().then(() => {
+    renderAllCharts()
+  })
+})
+
+// 监听数据变化，重新渲染图表
+watch([departmentData, collegeData, genderData], () => {
+  renderAllCharts()
+})
+
+// 监听标签页切换，重新渲染图表
+const handleTabChange = (name: string) => {
+  if (name === 'overview') {
+    nextTick(() => {
+      renderAllCharts()
+    })
+  }
+}
+
 </script>
 
 <style scoped>

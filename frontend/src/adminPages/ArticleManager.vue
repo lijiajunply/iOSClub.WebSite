@@ -1,77 +1,81 @@
 <template>
-  <div class="min-h-screen py-8">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="mb-8">
-        <h1 class="text-3xl font-semibold mb-2 text-gray-900 dark:text-white">
-          社团文章
-        </h1>
-        <p class="text-gray-600 dark:text-gray-400">
-          管理社团的所有文章
-        </p>
+  <div class="min-h-screen">
+    <!-- 顶部标题区域 -->
+    <div class="pt-6 pb-4">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="mb-6">
+          <h1 class="text-2xl md:text-3xl font-semibold text-gray-900 dark:text-white">
+            社团文章
+          </h1>
+          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">
+            管理社团的所有文章
+          </p>
+        </div>
       </div>
+    </div>
 
-      <!-- 文章列表 -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 mb-8">
-        <n-card
-            v-for="article in articles"
-            :key="article.path"
-            hoverable
-            class="group cursor-pointer rounded-2xl transition-all duration-300 overflow-hidden bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
-            @click="editArticle(article)"
+    <!-- 主要内容区域 -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+      <!-- 文章列表网格 -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+        <div 
+          v-for="article in articles" 
+          :key="article.path"
+          class="group rounded-2xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-2xl border border-gray-200/80 dark:border-gray-700/80 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden cursor-pointer"
+          @click="editArticle(article)"
         >
-          <div class="flex flex-col h-full p-5">
+          <div class="p-5 h-full flex flex-col">
             <div class="flex-1">
-              <h3 class="text-lg font-medium mb-2 line-clamp-2 text-gray-900 group-hover:text-blue-600 dark:text-white dark:group-hover:text-blue-400">
+              <h3 class="font-medium text-base md:text-lg mb-2 line-clamp-2 text-gray-900 group-hover:text-blue-600 dark:text-white dark:group-hover:text-blue-400 transition-colors">
                 {{ article.title }}
               </h3>
-              <p class="text-sm mb-4 text-gray-500 dark:text-gray-400">
+              <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">
                 更新时间: {{ formatDate(article.lastWriteTime) }}
               </p>
               <n-tag 
                 size="small" 
-                class="mb-4"
                 :type="getIdentityType(article.identity)"
                 :bordered="false">
                 {{ getIdentityLabel(article.identity) }}
               </n-tag>
             </div>
-
-            <!-- 管理员操作按钮 -->
-            <div class="flex justify-end space-x-2">
+            
+            <!-- 操作按钮 -->
+            <div class="flex justify-end space-x-2 pt-3">
               <n-button
-                  type="primary"
-                  size="small"
-                  quaternary
-                  circle
-                  @click.stop="editArticle(article)"
+                type="primary"
+                size="small"
+                quaternary
+                circle
+                @click.stop="editArticle(article)"
               >
                 <template #icon>
-                  <n-icon>
+                  <n-icon size="18">
                     <EditOutlined />
                   </n-icon>
                 </template>
               </n-button>
               <n-button
-                  type="error"
-                  size="small"
-                  quaternary
-                  circle
-                  @click.stop="deleteArticle(article)"
+                type="error"
+                size="small"
+                quaternary
+                circle
+                @click.stop="deleteArticle(article)"
               >
                 <template #icon>
-                  <n-icon>
+                  <n-icon size="18">
                     <DeleteOutlined />
                   </n-icon>
                 </template>
               </n-button>
             </div>
           </div>
-        </n-card>
+        </div>
 
         <!-- 空状态 -->
         <div 
           v-if="articles.length === 0 && !loading"
-          class="col-span-full py-16 flex flex-col items-center justify-center rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
+          class="col-span-full py-16 flex flex-col items-center justify-center rounded-2xl bg-white/50 dark:bg-gray-800/50 border border-dashed border-gray-300 dark:border-gray-600"
         >
           <n-empty description="暂无文章" size="large">
             <template #icon>
@@ -82,23 +86,12 @@
           </n-empty>
           <n-button 
             type="primary" 
-            class="mt-4 rounded-full px-6"
+            class="mt-4 rounded-full px-5 py-2 text-sm"
             @click="openCreateModal">
             创建第一篇文章
           </n-button>
         </div>
       </div>
-
-      <!-- 添加文章按钮 -->
-      <n-button
-          type="primary"
-          class="fixed bottom-8 right-8 rounded-full w-14 h-14 text-xl shadow-lg flex items-center justify-center z-10"
-          @click="openCreateModal"
-      >
-        <n-icon size="24">
-          <PlusOutlined />
-        </n-icon>
-      </n-button>
 
       <!-- 加载状态 -->
       <div v-if="loading" class="flex justify-center items-center h-64">
@@ -106,23 +99,36 @@
       </div>
     </div>
 
+    <!-- 添加文章按钮 -->
+    <div class="fixed bottom-6 right-6 z-10">
+      <n-button
+        type="primary"
+        class="w-14 h-14 rounded-full shadow-lg backdrop-blur-xl flex items-center justify-center"
+        @click="openCreateModal"
+      >
+        <n-icon size="24">
+          <PlusOutlined />
+        </n-icon>
+      </n-button>
+    </div>
+
     <!-- 编辑/创建文章对话框 -->
     <n-modal
-        v-model:show="showEditModal"
-        preset="card"
-        style="width: 800px; max-width: 95vw;"
-        :title="editingArticle ? '编辑文章' : '新建文章'"
-        :bordered="false"
-        segmented
-        @close="handleModalClose"
+      v-model:show="showEditModal"
+      preset="card"
+      style="width: 800px; max-width: 95vw; border-radius: 24px;"
+      :title="editingArticle ? '编辑文章' : '新建文章'"
+      :bordered="false"
+      segmented
+      @close="handleModalClose"
     >
       <n-form :model="editForm" ref="formRef" :rules="rules">
         <n-form-item label="文章路径 (Path)" path="path">
           <n-input
-              v-model:value="editForm.path"
-              :disabled="!!editingArticle"
-              placeholder="请输入文章路径，如：About"
-              round
+            v-model:value="editForm.path"
+            :disabled="!!editingArticle"
+            placeholder="请输入文章路径，如：About"
+            round
           />
           <p class="text-xs mt-1 text-gray-500 dark:text-gray-400">
             路径将作为文章的唯一标识，创建后不可修改
@@ -131,47 +137,52 @@
 
         <n-form-item label="文章标题" path="title">
           <n-input
-              v-model:value="editForm.title"
-              placeholder="请输入文章标题"
-              round
+            v-model:value="editForm.title"
+            placeholder="请输入文章标题"
+            round
           />
         </n-form-item>
 
         <n-form-item label="访问权限" path="identity">
           <n-select
-              v-model:value="editForm.identity"
-              :options="identityOptions"
-              placeholder="请选择可查看权限"
-              round
+            v-model:value="editForm.identity"
+            :options="identityOptions"
+            placeholder="请选择可查看权限"
+            round
           />
         </n-form-item>
 
         <n-form-item label="文章内容" path="content">
           <n-input
-              v-model:value="editForm.content"
-              type="textarea"
-              :autosize="{ minRows: 12, maxRows: 20 }"
-              placeholder="请输入文章内容（支持Markdown语法）"
-              round
+            v-model:value="editForm.content"
+            type="textarea"
+            :autosize="{ minRows: 12, maxRows: 20 }"
+            placeholder="请输入文章内容（支持Markdown语法）"
+            round
           />
         </n-form-item>
       </n-form>
+      
       <template #footer>
-        <n-space justify="end">
+        <div class="flex justify-end space-x-3">
           <n-button 
             @click="showEditModal = false"
             quaternary
-            round>
+            round
+            class="px-5"
+          >
             取消
           </n-button>
           <n-button 
             type="primary" 
             @click="saveArticle" 
             :loading="saving"
-            round>
+            round
+            class="px-5"
+          >
             保存
           </n-button>
-        </n-space>
+        </div>
       </template>
     </n-modal>
   </div>
@@ -180,7 +191,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import {
-  NCard,
   NButton,
   NEmpty,
   NSpin,
@@ -189,7 +199,6 @@ import {
   NFormItem,
   NInput,
   NSelect,
-  NSpace,
   useMessage,
   useDialog,
   NTag,
@@ -282,7 +291,7 @@ const formatDate = (dateString: string) => {
     const date = new Date(dateString)
     return date.toLocaleDateString('zh-CN', {
       year: 'numeric',
-      month: 'long',
+      month: 'short',
       day: 'numeric',
     })
   } catch (error) {

@@ -1,4 +1,5 @@
 using iOSClub.Data.DataModels;
+using iOSClub.Data.ShowModels;
 using iOSClub.DataApi.Repositories;
 using iOSClub.WebAPI.IdentityModels;
 using Microsoft.AspNetCore.Authorization;
@@ -73,6 +74,13 @@ public class StaffController(IStaffRepository staffRepository, IHttpContextAcces
     public async Task<ActionResult<IEnumerable<StaffModel>>> GetAllStaff()
     {
         var staffs = await staffRepository.GetAllStaffAsync();
+        return Ok(staffs);
+    }
+
+    [HttpGet("members")]
+    public async Task<ActionResult<IEnumerable<MemberModel>>> GetAllStaffToMembers()
+    {
+        var staffs = await staffRepository.GetAllStaffToMembers();
         return Ok(staffs);
     }
 

@@ -1,5 +1,6 @@
-﻿using iOSClub.Data;
+using iOSClub.Data;
 using iOSClub.Data.DataModels;
+using iOSClub.DataApi.ShowModels;
 using Microsoft.EntityFrameworkCore;
 
 namespace iOSClub.DataApi.Repositories;
@@ -7,6 +8,7 @@ namespace iOSClub.DataApi.Repositories;
 public interface IStaffRepository
 {
     Task<IEnumerable<StaffModel>> GetAllStaffAsync();
+    Task<IEnumerable<MemberModel>> GetAllStaffToMembers();
     Task<StaffModel?> GetStaffByIdAsync(string userId);
     Task<bool> CreateStaffAsync(StaffModel staff);
     Task<bool> UpdateStaffAsync(StaffModel staff);
@@ -18,11 +20,9 @@ public interface IStaffRepository
 
 public class StaffRepository(IDbContextFactory<iOSContext> factory) : IStaffRepository
 {
-    private readonly IDbContextFactory<iOSContext> _factory = factory;
-
     public async Task<IEnumerable<StaffModel>> GetAllStaffAsync()
     {
-        await using var context = await _factory.CreateDbContextAsync();
+        await using var context = await factory.CreateDbContextAsync();
         return await context.Staffs
             .Include(s => s.Department)
             .Include(s => s.Projects)
@@ -30,9 +30,34 @@ public class StaffRepository(IDbContextFactory<iOSContext> factory) : IStaffRepo
             .ToListAsync();
     }
 
+    public async Task<IEnumerable<MemberModel>> GetAllStaffToMembers()
+    {
+        await using var context = await factory.CreateDbContextAsync();
+        var query = from staff in context.Staffs
+            join student in context.Students
+                on staff.UserId equals student.UserId into studentGroup
+            from student in studentGroup.DefaultIfEmpty() // LEFT JOIN
+            select new MemberModel
+            {
+                UserId = staff.UserId,
+                UserName = student != null ? student.UserName : staff.Name,
+                Academy = student != null ? student.Academy : "",
+                PoliticalLandscape = student != null ? student.PoliticalLandscape : "群众",
+                Gender = student != null ? student.Gender : "",
+                ClassName = student != null ? student.ClassName : "",
+                PhoneNum = student != null ? student.PhoneNum : "",
+                JoinTime = student != null ? student.JoinTime : DateTime.Today,
+                PasswordHash = student != null ? student.PasswordHash : "",
+                EMail = student != null ? student.EMail : null,
+                Identity = staff.Identity
+            };
+        
+        return await query.ToListAsync();
+    }
+
     public async Task<StaffModel?> GetStaffByIdAsync(string userId)
     {
-        await using var context = await _factory.CreateDbContextAsync();
+        await using var context = await factory.CreateDbContextAsync();
         return await context.Staffs
             .Include(s => s.Department)
             .Include(s => s.Projects)
@@ -42,7 +67,7 @@ public class StaffRepository(IDbContextFactory<iOSContext> factory) : IStaffRepo
 
     public async Task<bool> CreateStaffAsync(StaffModel staff)
     {
-        await using var context = await _factory.CreateDbContextAsync();
+        await using var context = await factory.CreateDbContextAsync();
 
         if (await StaffExistsAsync(staff.UserId))
             return false;
@@ -53,7 +78,7 @@ public class StaffRepository(IDbContextFactory<iOSContext> factory) : IStaffRepo
 
     public async Task<bool> UpdateStaffAsync(StaffModel staff)
     {
-        await using var context = await _factory.CreateDbContextAsync();
+        await using var context = await factory.CreateDbContextAsync();
 
         var existingStaff = await context.Staffs.FirstOrDefaultAsync(s => s.UserId == staff.UserId);
         if (existingStaff == null)
@@ -69,7 +94,7 @@ public class StaffRepository(IDbContextFactory<iOSContext> factory) : IStaffRepo
 
     public async Task<bool> DeleteStaffAsync(string userId)
     {
-        await using var context = await _factory.CreateDbContextAsync();
+        await using var context = await factory.CreateDbContextAsync();
 
         var staff = await context.Staffs.FirstOrDefaultAsync(s => s.UserId == userId);
         if (staff == null)
@@ -81,13 +106,13 @@ public class StaffRepository(IDbContextFactory<iOSContext> factory) : IStaffRepo
 
     public async Task<bool> StaffExistsAsync(string userId)
     {
-        await using var context = await _factory.CreateDbContextAsync();
+        await using var context = await factory.CreateDbContextAsync();
         return await context.Staffs.AnyAsync(s => s.UserId == userId);
     }
 
     public async Task<IEnumerable<StaffModel>> GetStaffsByIdentitiesAsync(params string[] identities)
     {
-        await using var context = await _factory.CreateDbContextAsync();
+        await using var context = await factory.CreateDbContextAsync();
         return await context.Staffs
             .Include(s => s.Department)
             .Where(s => identities.Contains(s.Identity))
@@ -96,7 +121,7 @@ public class StaffRepository(IDbContextFactory<iOSContext> factory) : IStaffRepo
 
     public async Task<bool> ChangeStaffDepartmentAsync(string userId, string? departmentName)
     {
-        await using var context = await _factory.CreateDbContextAsync();
+        await using var context = await factory.CreateDbContextAsync();
 
         var staff = await context.Staffs
             .Include(s => s.Department)

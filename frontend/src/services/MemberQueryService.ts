@@ -1,6 +1,7 @@
 import {url} from './Url';
 import {AuthService} from './AuthService';
 import type {MemberModel, PaginatedMemberResponse} from '../models'
+import {GZipService} from "./GZipService";
 
 /**
  * 成员查询服务类 - 处理成员数据的查询功能
@@ -36,13 +37,8 @@ export class MemberQueryService {
         }
 
         // 注意：后端返回的是压缩后的JSON字符串，需要解压处理
-        // 这里假设前端有相应的解压工具函数
-        // 实际项目中需要实现解压逻辑
-        // const jsonData = decompress(await response.text());
-        // return JSON.parse(jsonData);
-
-        // 暂时返回空数组，实际项目中需要实现解压逻辑
-        return [];
+        const jsonData = await GZipService.decompressFromString(await response.text());
+        return JSON.parse(jsonData);
     }
 
     /**
@@ -80,18 +76,7 @@ export class MemberQueryService {
             throw new Error('获取分页成员数据失败');
         }
 
-        // 注意：后端返回的是压缩后的JSON字符串，需要解压处理
-        // 实际项目中需要实现解压逻辑
-        // const jsonData = decompress(await response.text());
-        // return JSON.parse(jsonData);
-
-        // 暂时返回模拟数据，实际项目中需要实现解压逻辑
-        return {
-            totalCount: 0,
-            pageSize: pageSize,
-            currentPage: pageNum,
-            totalPages: 0,
-            data: []
-        };
+        const jsonData = await GZipService.decompressFromString(await response.text());
+        return JSON.parse(jsonData);
     }
 }

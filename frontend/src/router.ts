@@ -146,7 +146,7 @@ const routes = [
                 path: 'Admin',
                 name: 'Admin',
                 meta: {title: "其他数据 - 西建大 iOS Club"},
-                component: () => import('./pages/Admin.vue'),
+                component: () => import('./adminPages/Admin.vue'),
             },
             {
                 path: 'Article',

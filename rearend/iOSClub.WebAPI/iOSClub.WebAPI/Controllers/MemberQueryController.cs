@@ -3,6 +3,7 @@ using iOSClub.WebAPI.IdentityModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace iOSClub.WebAPI.Controllers;
 
@@ -23,7 +24,11 @@ public class MemberQueryController(IStudentRepository studentRepository) : Contr
     public async Task<ActionResult<string>> GetAllData()
     {
         var members = await studentRepository.GetAllMembersAsync();
-        return GZipServer.CompressString(JsonConvert.SerializeObject(members));
+        var settings = new JsonSerializerSettings
+        {
+            ContractResolver = new CamelCasePropertyNamesContractResolver()
+        };
+        return GZipServer.CompressString(JsonConvert.SerializeObject(members, settings));
     }
 
     /// <summary>
@@ -51,6 +56,10 @@ public class MemberQueryController(IStudentRepository studentRepository) : Contr
             Data = members
         };
 
-        return GZipServer.CompressString(JsonConvert.SerializeObject(response));
+        var settings = new JsonSerializerSettings
+        {
+            ContractResolver = new CamelCasePropertyNamesContractResolver()
+        };
+        return GZipServer.CompressString(JsonConvert.SerializeObject(response, settings));
     }
 }
