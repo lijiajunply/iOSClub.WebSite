@@ -21,6 +21,9 @@ public interface IStudentRepository
     public Task<List<StudentModel>> UpdateManyAsync(List<StudentModel> list);
     public Task<List<MemberModel>> GetAllMembersAsync();
     public Task<(List<MemberModel>, int)> GetMembersPagedAsync(int pageNum, int pageSize);
+    
+    // 带搜索功能的分页方法
+    public Task<(List<MemberModel>, int)> GetMembersPagedAsync(int pageNum, int pageSize, string? searchTerm, string? searchCondition);
 }
 
 public class StudentRepository(iOSContext context) : IStudentRepository
@@ -130,22 +133,49 @@ public class StudentRepository(iOSContext context) : IStudentRepository
 
     public async Task<(List<MemberModel>, int)> GetMembersPagedAsync(int pageNum, int pageSize)
     {
+        // 调用带搜索参数的版本，传递null值表示无搜索条件
+        return await GetMembersPagedAsync(pageNum, pageSize, null, null);
+    }
+    
+    // 带搜索功能的分页方法实现
+    public async Task<(List<MemberModel>, int)> GetMembersPagedAsync(int pageNum, int pageSize, string? searchTerm, string? searchCondition)
+    {
+        // 构建基础查询
+        var query = context.Students.AsQueryable();
+        
+        // 如果提供了搜索词，则应用搜索条件
+        if (!string.IsNullOrEmpty(searchTerm))
+        {
+            query = searchCondition?.ToLower() switch
+            {
+                "userid" => query.Where(s => s.UserId.StartsWith(searchTerm)),
+                "username" => query.Where(s => s.UserName.Contains(searchTerm)),
+                "classname" => query.Where(s => s.ClassName.Contains(searchTerm)),
+                "academy" => query.Where(s => s.Academy.Contains(searchTerm)),
+                "phone_num" => query.Where(s => s.PhoneNum.Contains(searchTerm)),
+                _ => query.Where(s =>
+                    s.UserId.Contains(searchTerm) || s.UserName.Contains(searchTerm) ||
+                    s.ClassName.Contains(searchTerm) || s.Academy.Contains(searchTerm) ||
+                    s.PhoneNum.Contains(searchTerm))
+            };
+        }
+        
         var skipCount = (pageNum - 1) * pageSize;
-        var studentIdsQuery = context.Students
+        var studentIdsQuery = query
             .OrderBy(s => s.UserId) // 确保结果一致性的排序
             .Skip(skipCount)
             .Take(pageSize)
             .Select(s => s.UserId);
 
-        var studentIds = await studentIdsQuery.ToListAsync(); // 使用两个更小的查询代替一个复杂查询
+        var studentIds = await studentIdsQuery.ToListAsync();
         var studentsQuery = context.Students
             .Where(s => studentIds.Contains(s.UserId))
-            .AsNoTracking(); // 禁用变更跟踪提高性能
+            .AsNoTracking();
         var staffQuery = context.Staffs
             .Where(s => studentIds.Contains(s.UserId))
-            .AsNoTracking(); // 并行执行两个查询
+            .AsNoTracking();
 
-        var totalCount = await context.Students.CountAsync();
+        var totalCount = await query.CountAsync();
         var students = await studentsQuery.ToListAsync();
         var staffs = await staffQuery.ToListAsync();
 

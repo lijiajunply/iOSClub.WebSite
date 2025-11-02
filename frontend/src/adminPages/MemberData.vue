@@ -59,11 +59,13 @@ let gradeChart: echarts.ECharts | null = null
 let genderChart: echarts.ECharts | null = null
 let politicalChart: echarts.ECharts | null = null
 
-// 搜索选项
+// 搜索选项 - 与后端API匹配
 const searchItems = [
-  { label: '姓名', value: '姓名' },
-  { label: '学号', value: '学号' },
-  { label: '学院', value: '学院' }
+  { label: '姓名', value: 'username' },
+  { label: '学号', value: 'userid' },
+  { label: '学院', value: 'academy' },
+  { label: '专业班级', value: 'classname' },
+  { label: '手机号', value: 'phone_num' }
 ]
 
 // 下载选项
@@ -255,34 +257,23 @@ const paginationConfig = computed(() => {
 
 const onChange = (page: number) => {
   currentPage.value = page
+  // 带搜索条件的分页
   fetchMembers()
 }
 const onUpdatePageSize = (size: number) => {
   pageSize.value = size
   currentPage.value = 1
+  // 带搜索条件的分页
   fetchMembers()
 }
 
-const filteredMembers = computed(() => {
-  if (!searchTerm.value) return members.value
-  const term = searchTerm.value.toLowerCase()
-
-  switch (searchItem.value) {
-    case '姓名':
-      return members.value.filter(member => member.userName.toLowerCase().includes(term))
-    case '学号':
-      return members.value.filter(member => member.userId.includes(term))
-    case '学院':
-      return members.value.filter(member => member.academy && member.academy.toLowerCase().includes(term))
-    default:
-      return members.value
-  }
-})
+// 直接使用从API获取的成员数据，不再需要前端过滤
+const filteredMembers = computed(() => members.value)
 
 // 图表数据
 const yearData = ref<{ year: string; value: number }[]>([])
 const collegeData = ref<{ type: string; value: number }[]>([])
-const gradeData = ref<{ 年级: string; 人数: number }[]>([])
+const gradeData = ref<{ grade: string; value: number }[]>([])
 const genderData = ref<{ type: string; value: number }[]>([])
 const politicalData = ref<{ type: string; sales: number }[]>([])
 
@@ -308,8 +299,8 @@ const loadChartData = async () => {
     
     // 处理年级分布数据
     gradeData.value = gradeResult.map(item => ({
-      年级: item.年级 || item.type,
-      人数: item.人数 || item.value
+      grade: item.grade || item.type,
+      value: item.value || item.value
     }))
     
     // 处理性别分布数据
@@ -318,7 +309,7 @@ const loadChartData = async () => {
     // 处理政治面貌数据
     politicalData.value = landscapeResult.map(item => ({
       type: item.type,
-      sales: item.value
+      sales: item.sales
     }))
     
     // 渲染当前激活的图表
@@ -333,13 +324,15 @@ const loadChartData = async () => {
   }
 }
 
-// 获取成员数据
+// 获取成员数据（支持搜索）
 const fetchMembers = async () => {
   try {
     loading.value = true
     const response: PaginatedMemberResponse = await MemberQueryService.getAllDataByPage(
       currentPage.value,
-      pageSize.value
+      pageSize.value,
+      searchTerm.value,
+      searchItem.value
     )
 
     console.log(response)
@@ -392,11 +385,7 @@ const renderYearChart = () => {
     }]
   }
 
-  if (yearChart) {
-    yearChart.setOption(option, true)
-  } else {
-    yearChart = initChart(yearChartRef.value, option)
-  }
+  yearChart = initChart(yearChartRef.value, option)
 }
 
 // 渲染学院分布图表
@@ -424,11 +413,7 @@ const renderCollegeChart = () => {
     }]
   }
 
-  if (collegeChart) {
-    collegeChart.setOption(option, true)
-  } else {
-    collegeChart = initChart(collegeChartRef.value, option)
-  }
+  collegeChart = initChart(collegeChartRef.value, option)
 }
 
 // 渲染年级分布图表
@@ -444,13 +429,13 @@ const renderGradeChart = () => {
     },
     xAxis: {
       type: 'category',
-      data: gradeData.value.map(item => item.年级)
+      data: gradeData.value.map(item => item.grade)
     },
     yAxis: {
       type: 'value'
     },
     series: [{
-      data: gradeData.value.map(item => item.人数),
+      data: gradeData.value.map(item => item.value),
       type: 'bar',
       itemStyle: {
         color: '#10b981'
@@ -458,11 +443,7 @@ const renderGradeChart = () => {
     }]
   }
 
-  if (gradeChart) {
-    gradeChart.setOption(option, true)
-  } else {
-    gradeChart = initChart(gradeChartRef.value, option)
-  }
+  gradeChart = initChart(gradeChartRef.value, option)
 }
 
 // 渲染性别分布图表
@@ -490,17 +471,12 @@ const renderGenderChart = () => {
     }]
   }
 
-  if (genderChart) {
-    genderChart.setOption(option, true)
-  } else {
-    genderChart = initChart(genderChartRef.value, option)
-  }
+  genderChart = initChart(genderChartRef.value, option)
 }
 
 // 渲染政治面貌图表
 const renderPoliticalChart = () => {
-  if (!politicalChartRef.value) return
-
+  console.log(politicalData.value)
   const option = {
     tooltip: {
       trigger: 'axis',
@@ -524,11 +500,8 @@ const renderPoliticalChart = () => {
     }]
   }
 
-  if (politicalChart) {
-    politicalChart.setOption(option, true)
-  } else {
-    politicalChart = initChart(politicalChartRef.value, option)
-  }
+  console.log(option)
+  politicalChart = initChart(politicalChartRef.value, option)
 }
 
 // 标签页切换处理
@@ -631,10 +604,11 @@ const saveMember = async () => {
   })
 }
 
-// 搜索成员
+// 搜索成员 - 使用后端API进行搜索
 const searchMembers = () => {
-  // 实际搜索已在 filteredMembers 中处理
-  message.info('搜索完成')
+  // 重置为第一页并获取搜索结果
+  currentPage.value = 1
+  fetchMembers()
 }
 
 // 导出数据

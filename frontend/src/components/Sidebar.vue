@@ -1,27 +1,27 @@
 <template>
   <div class="relative">
     <!-- 移动端菜单按钮 -->
-    <NButton 
-      v-show="layoutStore.isMobile"
-      class="fixed top-4 right-4 z-50 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm"
-      quaternary 
-      circle 
-      size="medium"
-      @click="layoutStore.toggleSidebar()"
+    <NButton
+        v-show="layoutStore.isMobile"
+        class="fixed top-4 right-4 z-50 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm"
+        quaternary
+        circle
+        size="medium"
+        @click="layoutStore.toggleSidebar()"
     >
-      <Menu :size="20" />
+      <Menu :size="20"/>
     </NButton>
 
     <!-- 侧边栏蒙层 -->
-    <div 
-      v-if="layoutStore.isMobile && layoutStore.showSidebar"
-      class="fixed inset-0 bg-black/20 backdrop-blur-sm z-40"
-      @click="layoutStore.toggleSidebar()"
+    <div
+        v-if="layoutStore.isMobile && layoutStore.showSidebar"
+        class="fixed inset-0 bg-black/20 backdrop-blur-sm z-40"
+        @click="layoutStore.toggleSidebar()"
     ></div>
 
     <!-- 侧边栏主体 -->
-    <aside 
-      class="
+    <aside
+        class="
         fixed top-0 left-0 h-screen w-64 
         bg-white/90 dark:bg-gray-800/90 backdrop-blur-md
         border-r border-gray-100 dark:border-gray-700
@@ -29,18 +29,18 @@
         z-50 overflow-hidden
         flex flex-col
       "
-      :class="{
+        :class="{
         'transform -translate-x-full': layoutStore.isMobile && !layoutStore.showSidebar,
         'shadow-lg': layoutStore.isMobile
       }"
     >
       <!-- 侧边栏头部 -->
       <div class="p-6 border-b border-gray-100 dark:border-gray-700 flex items-center">
-        <img 
-          src="/assets/iOS_Club_LOGO.png" 
-          alt="iOS Club Logo" 
-          class="w-10 h-10 rounded-lg object-contain"
-          @error="handleImageError"
+        <img
+            src="/assets/iOS_Club_LOGO.png"
+            alt="iOS Club Logo"
+            class="w-10 h-10 rounded-lg object-contain"
+            @error="handleImageError"
         />
         <h2 class="pl-3 text-xl font-semibold text-gray-900 dark:text-white">iMember</h2>
       </div>
@@ -50,18 +50,19 @@
         <ul class="space-y-1 px-3">
           <li v-for="item in filteredMenuItems" :key="item.name">
             <router-link
-              :to="item.path"
-              class="
+                :to="item.path"
+                class="
                 flex items-center px-4 py-2.5 rounded-lg transition-all duration-200
-                text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50
+                text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50 hover:!text-blue-600 dark:hover:!text-blue-400
               "
-              :class="{
-                'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400': 
-                  $route.path === item.path || ($route.path === '/Centre' && item.path === '/Centre')
+
+                :class="{
+                'bg-blue-50 dark:bg-blue-900/30 !text-blue-600 dark:!text-blue-400':
+                   $route.path === item.path
               }"
-              @click="closeSidebar"
+                @click="closeSidebar"
             >
-              <component :is="item.icon" class="w-5 h-5 mr-3" />
+              <component :is="item.icon" class="w-5 h-5 mr-3"/>
               <span class="text-sm font-medium">{{ item.name }}</span>
             </router-link>
           </li>
@@ -70,24 +71,23 @@
 
       <!-- 侧边栏底部 -->
       <div class="p-4 border-t border-gray-100 dark:border-gray-700">
-        <NButton 
-          quaternary 
-          class="w-full justify-start"
-          :class="{
-            'hover:bg-red-50 dark:hover:bg-red-900/20': true
-          }"
-          @click="logout"
+        <NButton
+            quaternary
+            class="w-full justify-start"
+            @click="logout"
         >
-          <LogOut :size="18" class="mr-2" />
+          <n-icon class="mr-2">
+            <LogOut :size="18"/>
+          </n-icon>
           <span class="font-medium text-sm">退出登录</span>
         </NButton>
       </div>
     </aside>
 
     <!-- 主内容区域的边距 -->
-    <div 
-      class="transition-all duration-300"
-      :style="{ marginLeft: layoutStore.showSidebar && !layoutStore.isMobile ? '16rem' : '0' }"
+    <div
+        class="transition-all duration-300"
+        :style="{ marginLeft: layoutStore.showSidebar && !layoutStore.isMobile ? '16rem' : '0' }"
     >
       <slot></slot>
     </div>
@@ -95,12 +95,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onBeforeUnmount } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuthorizationStore } from '../stores/Authorization'
-import { useLayoutStore } from '../stores/LayoutStore'
-import { NButton } from 'naive-ui'
-import { Menu, LogOut, HomeOutline, Person, Business, Book, DocumentText, People, Cog } from '@vicons/ionicons5'
+import {computed, onMounted, onBeforeUnmount} from 'vue'
+import {useRouter} from 'vue-router'
+import {useAuthorizationStore} from '../stores/Authorization'
+import {useLayoutStore} from '../stores/LayoutStore'
+import {NButton, NIcon} from 'naive-ui'
+import {Menu, LogOut, HomeOutline, Person, Business, Book, DocumentText, People, Cog} from '@vicons/ionicons5'
 
 const router = useRouter()
 const authorizationStore = useAuthorizationStore()
@@ -147,13 +147,13 @@ const getUserRole = () => {
 
 // 使用组件图标替换emoji
 const menuItems = [
-  { name: '主页', path: '/Centre', icon: HomeOutline },
-  { name: '个人数据', path: '/Centre/PersonalData', icon: Person },
-  { name: '社团部门', path: '/Centre/Department', icon: Business, requiresRole: 'Minister' },
-  { name: '社团资源', path: '/Centre/Resources', icon: Book, requiresRole: 'Minister' },
-  { name: '社团文章', path: '/Centre/Article', icon: DocumentText, requiresRole: 'Minister' },
-  { name: '成员数据', path: '/Centre/MemberData', icon: People, requiresRole: 'Minister' },
-  { name: '其他数据', path: '/Centre/Admin', icon: Cog, requiresRole: 'Minister' }
+  {name: '主页', path: '/Centre', icon: HomeOutline},
+  {name: '个人数据', path: '/Centre/PersonalData', icon: Person},
+  {name: '社团部门', path: '/Centre/Department', icon: Business, requiresRole: 'Minister'},
+  {name: '社团资源', path: '/Centre/Resources', icon: Book, requiresRole: 'Minister'},
+  {name: '社团文章', path: '/Centre/Article', icon: DocumentText, requiresRole: 'Minister'},
+  {name: '成员数据', path: '/Centre/MemberData', icon: People, requiresRole: 'Minister'},
+  {name: '其他数据', path: '/Centre/Admin', icon: Cog, requiresRole: 'Minister'}
 ]
 
 // 根据用户角色过滤菜单项
@@ -216,5 +216,10 @@ const handleImageError = (e: Event) => {
 
 .dark ::-webkit-scrollbar-thumb:hover {
   background: rgba(156, 163, 175, 0.4);
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
 }
 </style>

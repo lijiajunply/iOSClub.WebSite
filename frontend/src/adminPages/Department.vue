@@ -556,6 +556,7 @@ import {
   NModal,
   NTag,
   NEmpty,
+  NIcon,
   type DataTableColumns
 } from 'naive-ui'
 import {People as Users, Download, CloudUpload as Upload, Add as Plus, ChevronBack, Search} from '@vicons/ionicons5'
@@ -924,13 +925,13 @@ const fetchData = async () => {
 // 计算属性：部门分布数据
 const departmentData = computed(() => {
   if (!staffs.value || staffs.value.length === 0) return []
-  
+
   const departmentCount: Record<string, number> = {}
 
   departments.value.forEach(dept => {
     departmentCount[dept.name] = dept.members.length + dept.ministers.length
   })
-  
+
   // 转换为图表需要的格式
   return Object.entries(departmentCount).map(([name, count]) => ({
     name,
@@ -941,15 +942,15 @@ const departmentData = computed(() => {
 // 计算属性：学院分布数据
 const collegeData = computed(() => {
   if (!staffs.value || staffs.value.length === 0) return []
-  
+
   const collegeCount: Record<string, number> = {}
-  
+
   // 统计各学院人数
   staffs.value.forEach(staff => {
     const college = staff.academy || '未知学院'
     collegeCount[college] = (collegeCount[college] || 0) + 1
   })
-  
+
   // 转换为图表需要的格式
   return Object.entries(collegeCount).map(([name, count]) => ({
     name,
@@ -960,12 +961,12 @@ const collegeData = computed(() => {
 // 计算属性：男女比例数据
 const genderData = computed(() => {
   if (!staffs.value || staffs.value.length === 0) return []
-  
+
   const genderCount: Record<string, number> = {
     男: 0,
     女: 0
   }
-  
+
   // 统计男女比例
   staffs.value.forEach(staff => {
     if (staff.gender === '男') {
@@ -974,7 +975,7 @@ const genderData = computed(() => {
       genderCount['女']++
     }
   })
-  
+
   // 转换为图表需要的格式
   return Object.entries(genderCount).map(([name, count]) => ({
     name,
@@ -988,7 +989,7 @@ const initChart = (chartId: string, option: any) => {
   if (chartDom) {
     const myChart = echarts.init(chartDom)
     myChart.setOption(option)
-    
+
     // 响应式处理
     window.addEventListener('resize', () => {
       myChart.resize()
@@ -1035,7 +1036,7 @@ const renderDepartmentChart = () => {
       }
     ]
   }
-  
+
   initChart('departmentChart', option)
 }
 
@@ -1078,7 +1079,7 @@ const renderCollegeChart = () => {
       }
     ]
   }
-  
+
   initChart('collegeChart', option)
 }
 
@@ -1121,7 +1122,7 @@ const renderGenderChart = () => {
       }
     ]
   }
-  
+
   initChart('genderChart', option)
 }
 

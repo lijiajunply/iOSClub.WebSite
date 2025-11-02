@@ -32,20 +32,23 @@ public class MemberQueryController(IStudentRepository studentRepository) : Contr
     }
 
     /// <summary>
-    /// 分页获取所有成员数据
+    /// 分页获取所有成员数据（支持搜索）
     /// </summary>
     /// <param name="pageNum">页码，默认1</param>
     /// <param name="pageSize">每页大小，默认10</param>
+    /// <param name="searchTerm">搜索词</param>
+    /// <param name="searchCondition">搜索条件</param>
     /// <returns>分页后的成员数据</returns>
     [HttpGet("all-data/page")]
-    public async Task<ActionResult<string>> GetAllDataByPage(int pageNum = 1, int pageSize = 10)
+    public async Task<ActionResult<string>> GetAllDataByPage(int pageNum = 1, int pageSize = 10, 
+        string? searchTerm = null, string? searchCondition = null)
     {
         if (pageNum < 1 || pageSize < 1 || pageSize > 100) // 限制最大页大小
         {
             return BadRequest("Invalid pagination parameters");
         }
 
-        var (members, totalCount) = await studentRepository.GetMembersPagedAsync(pageNum, pageSize);
+        var (members, totalCount) = await studentRepository.GetMembersPagedAsync(pageNum, pageSize, searchTerm, searchCondition);
         
         var response = new
         {
@@ -56,10 +59,10 @@ public class MemberQueryController(IStudentRepository studentRepository) : Contr
             Data = members
         };
 
-        var settings = new JsonSerializerSettings
+        var settingsWithCamelCase = new JsonSerializerSettings
         {
             ContractResolver = new CamelCasePropertyNamesContractResolver()
         };
-        return GZipServer.CompressString(JsonConvert.SerializeObject(response, settings));
+        return GZipServer.CompressString(JsonConvert.SerializeObject(response, settingsWithCamelCase));
     }
 }

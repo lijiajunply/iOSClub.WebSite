@@ -1,5 +1,6 @@
 import {defineStore} from 'pinia';
-import {AuthService, LoginModel, StudentModel} from '../services/AuthService';
+import {AuthService} from '../services/AuthService';
+import type {LoginModel, StudentModel} from '../models';
 
 export const useAuthorizationStore = defineStore('AuthorizationId', {
     state: () => ({

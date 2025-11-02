@@ -13,15 +13,19 @@ public interface IDataCentreService
 }
 
 // 用于存储年度统计数据的记录类型
+[Serializable]
 public record YearCount(string Year, int Value);
 
 // 用于存储年级统计数据的记录类型
-public record GradeCount(string 年级, int 人数);
+[Serializable]
+public record GradeCount(string Grade, int Value);
 
 // 用于存储政治面貌统计数据的记录类型
+[Serializable]
 public record LandscapeCount(string Type, int Sales);
 
 // 用于存储性别统计数据的记录类型
+[Serializable]
 public record GenderCount(string Type, int Value);
 
 public class DataCentreService(IDbContextFactory<iOSContext> contextFactory) : IDataCentreService
@@ -82,18 +86,14 @@ public class DataCentreService(IDbContextFactory<iOSContext> contextFactory) : I
     public async Task<List<GradeCount>> GetGradeDataAsync()
     {
         await using var context = await contextFactory.CreateDbContextAsync();
-        var gradeData = new List<GradeCount>();
 
         // 使用客户端评估处理年级数据
         var students = await context.Students.ToListAsync();
         var groupedStudents = students.GroupBy(s => s.UserId.Substring(0, 2));
 
-        foreach (var group in groupedStudents)
-        {
-            gradeData.Add(new GradeCount(group.Key + "级", group.Count()));
-        }
+        var gradeData = groupedStudents.Select(group => new GradeCount(group.Key + "级", group.Count())).ToList();
 
-        gradeData.Sort((x, y) => string.Compare(x.年级, y.年级, StringComparison.Ordinal));
+        gradeData.Sort((x, y) => string.Compare(x.Grade, y.Grade, StringComparison.Ordinal));
 
         return gradeData;
     }
@@ -102,18 +102,12 @@ public class DataCentreService(IDbContextFactory<iOSContext> contextFactory) : I
     public async Task<List<LandscapeCount>> GetLandscapeDataAsync()
     {
         await using var context = await contextFactory.CreateDbContextAsync();
-        var landscapeData = new List<LandscapeCount>();
 
         // 使用客户端评估处理政治面貌数据
         var students = await context.Students.ToListAsync();
         var groupedStudents = students.GroupBy(s => s.PoliticalLandscape);
 
-        foreach (var group in groupedStudents)
-        {
-            landscapeData.Add(new LandscapeCount(group.Key, group.Count()));
-        }
-
-        return landscapeData;
+        return groupedStudents.Select(group => new LandscapeCount(group.Key, group.Count())).ToList();
     }
 
     // 获取按性别统计数据
