@@ -27,6 +27,7 @@ import {
 } from 'naive-ui'
 import { MemberQueryService } from '../services/MemberQueryService'
 import { MemberManagementService } from '../services/MemberManagementService'
+import { DateCentreService } from '../services/DateCentreService'
 import type { MemberModel, PaginatedMemberResponse } from '../models'
 import * as echarts from 'echarts'
 
@@ -284,6 +285,53 @@ const collegeData = ref<{ type: string; value: number }[]>([])
 const gradeData = ref<{ 年级: string; 人数: number }[]>([])
 const genderData = ref<{ type: string; value: number }[]>([])
 const politicalData = ref<{ type: string; sales: number }[]>([])
+
+// 加载图表数据的函数
+const loadChartData = async () => {
+  try {
+    loading.value = true
+    
+    // 并行获取所有图表数据
+    const [yearResult, collegeResult, gradeResult, genderResult, landscapeResult] = await Promise.all([
+      DateCentreService.getYearData(),
+      DateCentreService.getCollegeData(),
+      DateCentreService.getGradeData(),
+      DateCentreService.getGenderData(),
+      DateCentreService.getLandscapeData()
+    ])
+    
+    // 处理历年人数数据
+    yearData.value = yearResult
+    
+    // 处理学院分布数据
+    collegeData.value = collegeResult
+    
+    // 处理年级分布数据
+    gradeData.value = gradeResult.map(item => ({
+      年级: item.年级 || item.type,
+      人数: item.人数 || item.value
+    }))
+    
+    // 处理性别分布数据
+    genderData.value = genderResult
+    
+    // 处理政治面貌数据
+    politicalData.value = landscapeResult.map(item => ({
+      type: item.type,
+      sales: item.value
+    }))
+    
+    // 渲染当前激活的图表
+    if (activeTab.value !== 'memberData') {
+      handleTabChange(activeTab.value)
+    }
+  } catch (error: any) {
+    console.error('获取图表数据时出错:', error)
+    message.error('获取图表数据失败: ' + (error.message || '未知错误'))
+  } finally {
+    loading.value = false
+  }
+}
 
 // 获取成员数据
 const fetchMembers = async () => {
@@ -669,11 +717,9 @@ const handleResize = () => {
 // 组件挂载时获取成员数据
 onMounted(() => {
   fetchMembers()
+  loadChartData()
   window.addEventListener('resize', handleResize)
 })
-
-// 组件卸载时清理事件监听器和图表实例
-// 注意：在Vue 3的组合式API中，通常不需要手动销毁ECharts实例，因为它们会随DOM一起被销毁
 </script>
 
 <template>

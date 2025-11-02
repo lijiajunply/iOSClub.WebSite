@@ -1,4 +1,5 @@
 using iOSClub.Data;
+using iOSClub.DataApi.Services;
 using iOSClub.DataApi.ShowModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -7,13 +8,43 @@ using System.Text.Json;
 namespace iOSClub.WebAPI.Controllers;
 
 [ApiController]
-[Route("[controller]")]  // 使用C#推荐的API路径格式
-public class DateCentreController(IDbContextFactory<iOSContext> dbContextFactory) : ControllerBase
+[Route("[controller]")] // 使用C#推荐的API路径格式
+public class DateCentreController(IDbContextFactory<iOSContext> dbContextFactory, IDataCentreService dataCentreService)
+    : ControllerBase
 {
-    [HttpGet]
-    public ActionResult<string> GetNeedData()
+    [HttpGet("year")]
+    public async Task<ActionResult<List<YearCount>>> GetYearData()
     {
-        return "Hello World!";
+        var yearData = await dataCentreService.GetYearDataAsync();
+        return Ok(yearData);
+    }
+
+    [HttpGet("college")]
+    public async Task<ActionResult<List<AcademyCount>>> GetCollegeData()
+    {
+        var collegeData = await dataCentreService.GetCollegeDataAsync();
+        return Ok(collegeData);
+    }
+
+    [HttpGet("grade")]
+    public async Task<ActionResult<List<LandscapeCount>>> GetGradeData()
+    {
+        var gradeData = await dataCentreService.GetGradeDataAsync();
+        return Ok(gradeData);
+    }
+
+    [HttpGet("landscape")]
+    public async Task<ActionResult<List<LandscapeCount>>> GetLandscapeData()
+    {
+        var landscapeData = await dataCentreService.GetLandscapeDataAsync();
+        return Ok(landscapeData);
+    }
+
+    [HttpGet("gender")]
+    public async Task<ActionResult<List<GenderCount>>> GetGenderData()
+    {
+        var genderData = await dataCentreService.GetGenderDataAsync();
+        return Ok(genderData);
     }
 
     [HttpPost("update")]

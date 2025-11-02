@@ -18,10 +18,7 @@ var builder = WebApplication.CreateBuilder(args);
 #region 控制器基本设置
 
 builder.Services.AddControllers();
-builder.Services.AddOpenApi(opt =>
-{
-    opt.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
-});
+builder.Services.AddOpenApi(opt => { opt.AddDocumentTransformer<BearerSecuritySchemeTransformer>(); });
 
 #endregion
 
@@ -123,6 +120,7 @@ builder.Services.AddScoped<IStudentRepository, StudentRepository>();
 builder.Services.AddScoped<ITodoRepository, TodoRepository>();
 
 builder.Services.AddScoped<ILoginService, LoginService>();
+builder.Services.AddScoped<IDataCentreService, DataCentreService>();
 
 #endregion
 

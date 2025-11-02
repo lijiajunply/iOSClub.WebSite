@@ -33,8 +33,8 @@ public class JwtHelper(IConfiguration configuration) : IJwtHelper
             audience: configuration["Jwt:Audience"] ?? "iOSClubApp", // 接收者
             claims: claims,
             notBefore: now, // 生效时间
-            expires: now.AddMinutes(int.Parse(configuration["Jwt:AccessTokenExpirationInMinutes"] ??
-                                              "30")), // 过期时间（默认30分钟）
+            expires: now.AddHours(int.Parse(configuration["Jwt:AccessTokenExpirationInMinutes"] ??
+                                            "2")),
             signingCredentials: signingCredentials
         );
         return new JwtSecurityTokenHandler().WriteToken(securityToken);

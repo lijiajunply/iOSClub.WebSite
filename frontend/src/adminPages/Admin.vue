@@ -6,7 +6,7 @@
         <div class="flex items-center space-x-4">
           <n-button text @click="goBack" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-neutral-700">
             <n-icon size="24" class="text-gray-600 dark:text-gray-300">
-              <ArrowBack />
+              <ArrowBack/>
             </n-icon>
           </n-button>
           <div>
@@ -14,41 +14,43 @@
             <p class="text-sm text-gray-500 dark:text-gray-400">社团管理系统</p>
           </div>
         </div>
-        
+
         <div class="flex items-center space-x-3">
-          <n-button 
-            v-if="userInfo.isAdmin" 
-            secondary 
-            type="info" 
-            @click="triggerFileInput"
-            class="hidden sm:flex"
+          <n-button
+              v-if="userInfo.isAdmin"
+              secondary
+              type="info"
+              @click="triggerFileInput"
+              class="hidden sm:flex"
           >
             <template #icon>
-              <n-icon><CloudUpload /></n-icon>
+              <n-icon>
+                <CloudUpload/>
+              </n-icon>
             </template>
             上传数据
           </n-button>
-          
-          <n-dropdown 
-            v-if="userInfo.isAdmin" 
-            trigger="click" 
-            :options="dropdownOptions" 
-            @select="handleDropdownSelect"
+
+          <n-dropdown
+              v-if="userInfo.isAdmin"
+              trigger="click"
+              :options="dropdownOptions"
+              @select="handleDropdownSelect"
           >
             <n-button circle>
               <n-icon size="20">
-                <EllipsisVertical />
+                <EllipsisVertical/>
               </n-icon>
             </n-button>
           </n-dropdown>
-          
+
           <input
-            ref="fileInput"
-            type="file"
-            accept=".json"
-            multiple
-            @change="uploadFiles"
-            style="display: none"
+              ref="fileInput"
+              type="file"
+              accept=".json"
+              multiple
+              @change="uploadFiles"
+              style="display: none"
           />
         </div>
       </div>
@@ -58,48 +60,48 @@
       <!-- Stats Overview Section -->
       <section class="mb-8">
         <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">数据概览</h2>
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-4">
-          <StatCard 
-            title="社员人数" 
-            :value="studentsCount" 
-            icon="people"
-            color="blue"
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+          <StatCard
+              title="社员人数"
+              :value="studentsCount"
+              icon="people"
+              color="blue"
           />
-          <StatCard 
-            title="部员人数" 
-            :value="staffs.length" 
-            icon="badge"
-            color="green"
+          <StatCard
+              title="部员人数"
+              :value="staffs.length"
+              icon="badge"
+              color="green"
           />
-          <StatCard 
-            title="项目数" 
-            :value="projectsCount" 
-            icon="folder"
-            color="purple"
+          <StatCard
+              title="项目数"
+              :value="projectsCount"
+              icon="folder"
+              color="purple"
           />
-          <StatCard 
-            title="任务数" 
-            :value="tasksCount" 
-            icon="task"
-            color="yellow"
+          <StatCard
+              title="任务数"
+              :value="tasksCount"
+              icon="task"
+              color="yellow"
           />
-          <StatCard 
-            title="资源数" 
-            :value="resourcesCount" 
-            icon="resource"
-            color="pink"
+          <StatCard
+              title="资源数"
+              :value="resourcesCount"
+              icon="resource"
+              color="pink"
           />
-          <StatCard 
-            title="部门数" 
-            :value="departmentsCount" 
-            icon="department"
-            color="indigo"
+          <StatCard
+              title="部门数"
+              :value="departmentsCount"
+              icon="department"
+              color="indigo"
           />
-          <StatCard 
-            title="待办数" 
-            :value="todosCount" 
-            icon="todo"
-            color="red"
+          <StatCard
+              title="待办数"
+              :value="todosCount"
+              icon="todo"
+              color="red"
           />
         </div>
       </section>
@@ -107,67 +109,42 @@
       <!-- Charts Section -->
       <section class="mb-8">
         <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">数据统计</h2>
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <n-card 
+        <n-card
             class="rounded-xl shadow-sm bg-white dark:bg-neutral-800 transition-colors duration-300"
             :bordered="false"
-          >
-            <h3 class="font-medium text-gray-900 dark:text-white mb-4">成员分布</h3>
-            <div ref="memberChartRef" class="h-64"></div>
-          </n-card>
-          
-          <n-card 
-            class="rounded-xl shadow-sm bg-white dark:bg-neutral-800 transition-colors duration-300"
-            :bordered="false"
-          >
-            <h3 class="font-medium text-gray-900 dark:text-white mb-4">项目进度</h3>
-            <div ref="projectChartRef" class="h-64"></div>
-          </n-card>
-        </div>
-      </section>
-
-      <!-- Staff Section -->
-      <section>
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="text-lg font-semibold text-gray-900 dark:text-white">部员列表</h2>
-          <n-button text type="primary" @click="viewAllStaff">
-            查看全部
-          </n-button>
-        </div>
-        
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-          <StaffCard 
-            v-for="staff in displayedStaffs" 
-            :key="staff.id"
-            :staff="staff"
-            :identity-dictionary="identityDictionary"
-          />
-        </div>
+        >
+          <h3 class="font-medium text-gray-900 dark:text-white mb-4">成员分布</h3>
+          <div ref="memberChartRef" class="h-64"></div>
+        </n-card>
       </section>
     </main>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, nextTick, computed } from 'vue'
-import { useRouter } from 'vue-router'
-import { useMessage, useDialog } from 'naive-ui'
-import { 
-  NButton, 
-  NIcon, 
-  NCard, 
-  NDropdown 
+import {ref, onMounted, onBeforeUnmount, nextTick} from 'vue'
+import {useRouter} from 'vue-router'
+import {useMessage, useDialog} from 'naive-ui'
+import {
+  NButton,
+  NIcon,
+  NCard,
+  NDropdown
 } from 'naive-ui'
-import { ArrowBack, CloudUpload, EllipsisVertical } from '@vicons/ionicons5'
+import {ArrowBack, CloudUpload, EllipsisVertical} from '@vicons/ionicons5'
 import * as echarts from 'echarts'
 import StatCard from '../components/StatCard.vue'
-import StaffCard from '../components/StaffCard.vue'
-import { useAuthorizationStore } from '../stores/Authorization.ts'
+import {MemberQueryService} from '../services/MemberQueryService.ts'
+import {StaffService} from '../services/StaffService.ts'
+import {ProjectService} from '../services/ProjectService.ts'
+import {ResourceService} from '../services/ResourceService.ts'
+import {DepartmentService} from '../services/DepartmentService.ts'
+import {TodoService} from '../services/TodoService.ts'
+import {InfoService} from '../services/InfoService.ts'
 
 const router = useRouter()
 const message = useMessage()
 const dialog = useDialog()
-const authorizationStore = useAuthorizationStore()
 
 // Refs
 const fileInput = ref(null)
@@ -186,11 +163,6 @@ const departmentsCount = ref(0)
 const todosCount = ref(0)
 const userInfo = ref({
   isAdmin: false
-})
-
-// Displayed staffs (first 6)
-const displayedStaffs = computed(() => {
-  return staffs.value.slice(0, 6)
 })
 
 // Identity dictionary mapping
@@ -234,7 +206,7 @@ const triggerFileInput = () => {
 }
 
 const handleDropdownSelect = (key) => {
-  switch(key) {
+  switch (key) {
     case 'download':
       downloadAllData()
       break
@@ -299,7 +271,7 @@ const downloadAllData = async () => {
     }
 
     const jsonString = JSON.stringify(data, null, 2)
-    const blob = new Blob([jsonString], { type: 'application/json' })
+    const blob = new Blob([jsonString], {type: 'application/json'})
     const url = URL.createObjectURL(blob)
 
     const a = document.createElement('a')
@@ -329,6 +301,8 @@ const removeAllData = () => {
     negativeText: '取消',
     onPositiveClick: async () => {
       try {
+        // 目前没有在services中找到删除所有数据的服务方法
+        // 使用现有的API调用方式
         const token = localStorage.getItem('Authorization')
         if (!token) {
           message.error('未找到认证信息')
@@ -345,7 +319,7 @@ const removeAllData = () => {
 
         if (response.ok) {
           message.success('所有数据已删除')
-          fetchData()
+          await fetchData()
         } else {
           message.error('删除数据失败')
         }
@@ -360,87 +334,58 @@ const removeAllData = () => {
 // Fetch data
 const fetchData = async () => {
   try {
-    const token = localStorage.getItem('Authorization')
-    if (!token) {
-      message.error('未找到认证信息')
-      return
-    }
+    // 并行获取所有数据
+    const [membersData, staffsData, projectsData, resourcesData, departmentsData, todoStats, userData] = await Promise.all([
+      // 获取成员数据
+      MemberQueryService.getAllDataByPage(1, 1).catch(() => ({Total: 0, Data: []})),
+      // 获取部员数据
+      StaffService.getAllStaff().catch(() => []),
+      // 获取项目数据
+      ProjectService.getAllProjects().catch(() => []),
+      // 获取资源数据
+      ResourceService.getAllResources().catch(() => []),
+      // 获取部门数据
+      DepartmentService.getAllDepartments().catch(() => []),
+      // 获取待办统计数据
+      TodoService.getTodoStatistics().catch(() => ({TotalCount: 0})),
+      // 获取用户信息
+      InfoService.getUserInfo().catch(() => ({isAdmin: false}))
+    ])
 
-    // Get member info
-    const memberResponse = await fetch('https://www.xauat.site/api/Member/GetInfo', {
-      method: 'GET',
-      headers: {
-        'Authorization': 'Bearer ' + token,
-        'Content-Type': 'application/json'
+    // 更新成员数据
+    studentsCount.value = membersData.totalCount || 0
+
+    // 处理 staffs 数据，确保每个对象都有必要的属性
+    staffs.value = (staffsData || []).map(staff => {
+      return {
+        id: staff.id || staff.Id || Math.random().toString(36).substr(2, 9),
+        name: staff.name || staff.Name || '未知成员',
+        identity: staff.identity || staff.Identity || 'Member',
+        ...staff
+      }
+    }).filter(staff => staff.name && staff.name.length > 0) // 过滤掉空名称的成员
+
+    // 更新项目和任务数据
+    projectsCount.value = projectsData.length || 0
+    let totalTasks = 0
+    projectsData.forEach(project => {
+      if (project.tasks && Array.isArray(project.tasks)) {
+        totalTasks += project.tasks.length
       }
     })
+    tasksCount.value = totalTasks
 
-    if (memberResponse.ok) {
-      const memberData = await memberResponse.json()
-      studentsCount.value = memberData.Total || 0
-      staffs.value = memberData.Staffs || []
-    } else {
-      message.error('获取成员数据失败')
-    }
+    // 更新资源数据
+    resourcesCount.value = resourcesData.length || 0
 
-    // Get project info
-    const projectResponse = await fetch('https://www.xauat.site/api/Project/GetAllData', {
-      method: 'GET',
-      headers: {
-        'Authorization': 'Bearer ' + token,
-        'Content-Type': 'application/json'
-      }
-    })
+    // 更新部门数据
+    departmentsCount.value = departmentsData.length || 0
 
-    if (projectResponse.ok) {
-      const projectData = await projectResponse.json()
-      projectsCount.value = projectData.length || 0
+    // 更新待办数据
+    todosCount.value = todoStats.TotalCount || 0
 
-      let totalTasks = 0
-      projectData.forEach(project => {
-        if (project.tasks) {
-          totalTasks += project.tasks.length
-        }
-      })
-      tasksCount.value = totalTasks
-    } else {
-      message.error('获取项目数据失败')
-    }
-
-    // Get resource info
-    const resourceResponse = await fetch('https://www.xauat.site/api/Project/GetResources', {
-      method: 'GET',
-      headers: {
-        'Authorization': 'Bearer ' + token,
-        'Content-Type': 'application/json'
-      }
-    })
-
-    if (resourceResponse.ok) {
-      const resourceData = await resourceResponse.json()
-      resourcesCount.value = resourceData.length || 0
-    } else {
-      message.error('获取资源数据失败')
-    }
-
-    // Get department info
-    const departmentResponse = await fetch('https://www.xauat.site/api/Department/GetAll', {
-      method: 'GET',
-      headers: {
-        'Authorization': 'Bearer ' + token,
-        'Content-Type': 'application/json'
-      }
-    })
-
-    if (departmentResponse.ok) {
-      const departmentData = await departmentResponse.json()
-      departmentsCount.value = departmentData.length || 0
-    } else {
-      message.error('获取部门数据失败')
-    }
-    
-    todosCount.value = 0
-    userInfo.value.isAdmin = true
+    // 更新用户信息
+    userInfo.value.isAdmin = userData.isAdmin || false
   } catch (error) {
     console.error('获取数据时出错:', error)
     message.error('获取数据时出错')
@@ -453,7 +398,7 @@ const initCharts = () => {
     memberChart.value = echarts.init(memberChartRef.value)
     updateMemberChart()
   }
-  
+
   if (projectChartRef.value) {
     projectChart.value = echarts.init(projectChartRef.value)
     updateProjectChart()
@@ -463,13 +408,13 @@ const initCharts = () => {
 // Update member chart
 const updateMemberChart = () => {
   if (!memberChart.value) return
-  
+
   const identityCounts = {}
   staffs.value.forEach(staff => {
     const identity = identityDictionary[staff.identity] || staff.identity
     identityCounts[identity] = (identityCounts[identity] || 0) + 1
   })
-  
+
   const option = {
     tooltip: {
       trigger: 'item'
@@ -513,14 +458,14 @@ const updateMemberChart = () => {
       }
     ]
   }
-  
+
   memberChart.value.setOption(option)
 }
 
 // Update project chart
 const updateProjectChart = () => {
   if (!projectChart.value) return
-  
+
   const option = {
     tooltip: {
       trigger: 'axis',
@@ -567,24 +512,24 @@ const updateProjectChart = () => {
         data: [3, 5, 2, 1],
         itemStyle: {
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: '#83bff6' },
-            { offset: 0.5, color: '#188df0' },
-            { offset: 1, color: '#1890ff' }
+            {offset: 0, color: '#83bff6'},
+            {offset: 0.5, color: '#188df0'},
+            {offset: 1, color: '#1890ff'}
           ])
         },
         emphasis: {
           itemStyle: {
             color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-              { offset: 0, color: '#2378f7' },
-              { offset: 0.7, color: '#2378f7' },
-              { offset: 1, color: '#83bff6' }
+              {offset: 0, color: '#2378f7'},
+              {offset: 0.7, color: '#2378f7'},
+              {offset: 1, color: '#83bff6'}
             ])
           }
         }
       }
     ]
   }
-  
+
   projectChart.value.setOption(option)
 }
 
@@ -606,12 +551,12 @@ const handleDarkModeChange = () => {
   })
 }
 
-onMounted(() => {
-  fetchData()
+onMounted(async () => {
+  await fetchData()
   nextTick(() => {
     initCharts()
   })
-  
+
   window.addEventListener('resize', handleResize)
   const observer = new MutationObserver(handleDarkModeChange)
   observer.observe(document.documentElement, {

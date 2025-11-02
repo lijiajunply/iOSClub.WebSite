@@ -108,9 +108,9 @@
       <!-- 我的任务和社团资源 -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         <!-- 我的任务 -->
-        <section>
+        <section class="max-h-100 h-full">
           <div
-              class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden transition-all duration-300">
+              class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden transition-all duration-300 h-full">
             <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800">
               <h2 class="text-lg font-semibold tracking-tight">我的任务</h2>
               <p class="text-sm text-zinc-500 dark:text-zinc-400">待完成的工作任务</p>
@@ -147,9 +147,9 @@
         </section>
 
         <!-- 社团资源 -->
-        <section>
+        <section class="max-h-100 h-full">
           <div
-              class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden transition-all duration-300 cursor-pointer hover:shadow-md"
+              class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden transition-all duration-300 cursor-pointer hover:shadow-md h-full"
               @click="goToResources"
           >
             <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800">
@@ -191,7 +191,7 @@
       <div v-if="userInfo.isAdmin" class="mb-8">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <!-- 社团部门 -->
-          <div class="lg:col-span-1">
+          <div class="lg:col-span-1 max-h-100 h-full">
             <div
                 class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden transition-all duration-300 cursor-pointer hover:shadow-md h-full"
                 @click="goToDepartment"
@@ -221,8 +221,8 @@
           </div>
 
           <!-- 数据中心 -->
-          <div class="lg:col-span-2">
-            <router-link to="/Centre/Memberdata" class="block">
+          <div class="lg:col-span-2 max-h-100 h-full">
+            <router-link to="/Centre/Memberdata" class="block h-full">
               <div
                   class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden transition-all duration-300 hover:shadow-md h-full">
                 <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800">
@@ -242,7 +242,7 @@
                         </div>
                         <div
                             class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-800/50 flex items-center justify-center">
-                          <People class="w-4 h-4 text-blue-600 dark:text-blue-400"/>
+                          <IconFont type="#icon-people" class="w-4 h-4 text-blue-600 dark:text-blue-400"/>
                         </div>
                       </div>
                     </div>
