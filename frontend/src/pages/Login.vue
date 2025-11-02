@@ -8,7 +8,7 @@
           登录 iMember 账号
         </h1>
         <p class="text-gray-500 dark:text-gray-400 mt-2">
-          Welcome back!
+          Log in iMember ID
         </p>
       </div>
 
@@ -26,7 +26,7 @@
           <n-input
               type="password"
               v-model:value="form.password"
-              placeholder="请输入密码"
+              placeholder="请输入密码 (未设置时为手机号码)"
               @keyup.enter="handleLogin"
               class="dark:text-gray-100 dark:bg-neutral-800"
           />
@@ -61,10 +61,9 @@
 </template>
 
 <script setup lang="ts">
-import {ref, onMounted} from 'vue'
+import {ref} from 'vue'
 import {useRouter} from 'vue-router'
 import {NInput, NCheckbox, NForm, NFormItem} from 'naive-ui'
-import {LoginService} from '../services/LoginService'
 import {useAuthorizationStore} from "../stores/Authorization.js";
 
 
@@ -73,7 +72,6 @@ const router = useRouter()
 
 const formRef = ref()
 const form = ref({
-  name: '',
   studentId: '',
   password: '',
   rememberMe: false
@@ -82,11 +80,6 @@ const loading = ref(false)
 const errorMsg = ref('')
 
 const rules = {
-  name: {
-    required: true,
-    message: '请输入您的姓名',
-    trigger: 'blur'
-  },
   studentId: {
     required: true,
     message: '请输入您的学号',
@@ -99,21 +92,6 @@ const rules = {
   }
 }
 
-// 页面加载时检查是否保存了登录信息
-onMounted(() => {
-  const savedLoginInfo = localStorage.getItem('savedLoginInfo')
-  if (savedLoginInfo) {
-    try {
-      const info = JSON.parse(savedLoginInfo)
-      form.value.name = info.name
-      form.value.studentId = info.studentId // 对应学号
-      form.value.rememberMe = info.rememberMe
-    } catch (e) {
-      console.error('Failed to parse saved login info:', e)
-    }
-  }
-})
-
 const handleLogin = async () => {
   if (loading.value) return
   formRef.value.validate(async (errors: any) => {
@@ -121,13 +99,14 @@ const handleLogin = async () => {
       loading.value = true
       errorMsg.value = ''
       try {
-        const res = await LoginService.login(form.value.name, form.value.studentId, form.value.password)
+        const res = await authorizationStore.login({
+          id: form.value.studentId, 
+          name: form.value.password
+        })
 
         if (!res) {
           return
         }
-
-        authorizationStore.setAuthorization(res)
 
         await router.push('/Centre')
       } catch (err: any) {

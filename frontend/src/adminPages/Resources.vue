@@ -1,134 +1,115 @@
 <template>
-  <div
-      class="min-h-screen bg-gray-50 dark:bg-neutral-900 transition-colors duration-300 main-content"
-      :class="{ 'with-sidebar': layoutStore.showSidebar && !layoutStore.isMobile }"
-      :style="{ padding: isMobile ? '0.5rem' : '1rem' }"
-  >
-    <div class="p-6" :style="{ padding: isMobile ? '0.5rem' : '1rem' }">
-      <n-page-header subtitle="社团资源管理" @back="goBack">
-        <template #title>
-          <div class="text-2xl font-bold">社团资源</div>
-        </template>
-        <template #extra>
-          <n-button
-              v-if="authorizationStore.isAdmin"
-              type="primary"
-              @click="showAddResourceModal"
-              size="medium"
-              class="transition-transform duration-200 hover:scale-105 active:scale-95"
-          >
-            添加资源
-          </n-button>
-        </template>
-        <template #avatar>
-          <n-avatar>
-            <n-icon>
-              <BookOutline />
+  <div class="min-h-screen transition-colors duration-300 bg-gray-50 dark:bg-neutral-900 main-content"
+       :class="{ 'with-sidebar': layoutStore.showSidebar && !layoutStore.isMobile }">
+    <div class="px-4 py-6 sm:px-6 lg:px-8">
+      <!-- Header -->
+      <div class="flex items-center justify-between mb-8">
+        <div class="flex items-center">
+          <n-button text class="mr-4" @click="goBack">
+            <n-icon size="24">
+              <ArrowBack />
             </n-icon>
-          </n-avatar>
-        </template>
-      </n-page-header>
+          </n-button>
+          <div>
+            <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">社团资源</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400">社团资源管理</p>
+          </div>
+        </div>
+        
+        <n-button v-if="authorizationStore.isAdmin()" type="primary" @click="showAddResourceModal"
+                  class="transition-all duration-200 hover:shadow-md">
+          <template #icon>
+            <n-icon>
+              <Add />
+            </n-icon>
+          </template>
+          添加资源
+        </n-button>
+      </div>
 
-      <n-card class="mt-6 overflow-hidden">
-        <n-input
-            v-model:value="searchTerm"
-            placeholder="搜索资源..."
-            clearable
-            class="mb-4"
-        >
+      <!-- Search -->
+      <div class="mb-8">
+        <n-input v-model:value="searchTerm" placeholder="搜索资源..." clearable size="large" class="max-w-md">
           <template #prefix>
-            <n-icon><SearchOutline /></n-icon>
+            <n-icon>
+              <Search />
+            </n-icon>
           </template>
         </n-input>
+      </div>
 
-        <div v-if="filteredResources.length === 0" class="text-center py-8">
-          <n-empty description="社团现在还没有任何资源">
-            <template #icon>
-              <n-icon>
-                <BookOutline />
-              </n-icon>
-            </template>
-          </n-empty>
-        </div>
+      <!-- Empty State -->
+      <div v-if="filteredResources.length === 0" class="flex flex-col items-center justify-center py-16">
+        <n-icon size="48" class="mb-4 text-gray-400">
+          <FolderOpen />
+        </n-icon>
+        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">暂无资源</h3>
+        <p class="text-gray-500 dark:text-gray-400 mb-6">社团现在还没有任何资源</p>
+        <n-button v-if="authorizationStore.isAdmin()" type="primary" @click="showAddResourceModal">
+          添加第一个资源
+        </n-button>
+      </div>
 
-        <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <n-card
-              v-for="resource in filteredResources"
-              :key="resource.id"
-              hoverable
-              class="rounded-lg transition-transform duration-200 hover:scale-[1.02]"
-          >
-            <div class="flex flex-col h-full">
-              <div class="mb-3">
-                <h3 class="text-xl font-bold mb-2">{{ resource.name }}</h3>
-                <p class="text-gray-600 dark:text-gray-300 mb-3">
+      <!-- Resource Grid -->
+      <div v-else class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div v-for="resource in filteredResources" :key="resource.id"
+             class="overflow-hidden transition-all duration-200 bg-white rounded-xl dark:bg-neutral-800 shadow-sm hover:shadow-md">
+          <div class="p-6">
+            <div class="flex items-start justify-between">
+              <div class="flex-1 min-w-0">
+                <h3 class="text-lg font-semibold text-gray-900 truncate dark:text-white">{{ resource.name }}</h3>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
                   {{ resource.description || '无描述' }}
                 </p>
-                <div class="mb-4">
-                  <n-tag
-                      v-for="tag in getResourceTags(resource)"
-                      :key="tag"
-                      type="info"
-                      size="small"
-                      class="mr-1 mb-1"
-                  >
-                    {{ tag }}
-                  </n-tag>
-                </div>
-              </div>
-
-              <div v-if="authorizationStore.isAdmin" class="mt-auto">
-                <n-space justify="end">
-                  <n-button
-                      type="primary"
-                      size="small"
-                      @click="editResource(resource)"
-                      class="transition-transform duration-200 hover:scale-105 active:scale-95"
-                  >
-                    编辑
-                  </n-button>
-                  <n-button
-                      type="error"
-                      size="small"
-                      @click="deleteResource(resource)"
-                      class="transition-transform duration-200 hover:scale-105 active:scale-95"
-                  >
-                    删除
-                  </n-button>
-                </n-space>
               </div>
             </div>
-          </n-card>
+            
+            <div class="mt-4">
+              <div v-if="getResourceTags(resource).length > 0" class="flex flex-wrap gap-2">
+                <n-tag v-for="tag in getResourceTags(resource)" :key="tag" type="info" size="small" round>
+                  {{ tag }}
+                </n-tag>
+              </div>
+              <div v-else class="text-xs text-gray-400 dark:text-gray-500">无标签</div>
+            </div>
+            
+            <div v-if="authorizationStore.isAdmin" class="flex mt-6 space-x-3">
+              <n-button size="small" type="primary" quaternary @click="editResource(resource)">
+                编辑
+              </n-button>
+              <n-button size="small" type="error" quaternary @click="deleteResource(resource)">
+                删除
+              </n-button>
+            </div>
+          </div>
         </div>
-      </n-card>
-
-      <n-modal
-          v-model:show="showModal"
-          preset="card"
-          :style="mergedModalStyle"
-          :title="editingResource.id ? '编辑资源' : '添加资源'"
-          @after-leave="resetForm"
-          :mask-closable="!isMobile"
-      >
-        <n-form ref="formRef" :model="editingResource" :rules="rules" label-placement="left" label-width="auto">
-          <n-form-item label="资源名称" path="name">
-            <n-input v-model:value="editingResource.name" placeholder="请输入资源名称" />
-          </n-form-item>
-          <n-form-item label="资源描述" path="description">
-            <n-input v-model:value="editingResource.description" placeholder="请输入资源描述" type="textarea" />
-          </n-form-item>
-          <n-form-item label="资源标签" path="tag">
-            <n-dynamic-tags v-model:value="resourceTags" />
-          </n-form-item>
-        </n-form>
-        <template #footer>
-          <n-space justify="end">
-            <n-button @click="showModal = false">取消</n-button>
-            <n-button type="primary" @click="saveResource" :loading="saving">保存</n-button>
-          </n-space>
-        </template>
-      </n-modal>
+      </div>
     </div>
+
+    <!-- Modal -->
+    <n-modal v-model:show="showModal" preset="card" :style="modalStyle" :title="editingResource.id ? '编辑资源' : '添加资源'"
+             @after-leave="resetForm" :mask-closable="false">
+      <n-form ref="formRef" :model="editingResource" :rules="rules" label-placement="top" label-width="auto">
+        <n-form-item label="资源名称" path="name">
+          <n-input v-model:value="editingResource.name" placeholder="请输入资源名称" />
+        </n-form-item>
+        <n-form-item label="资源描述" path="description">
+          <n-input v-model:value="editingResource.description" placeholder="请输入资源描述" type="textarea" :autosize="{ minRows: 3 }" />
+        </n-form-item>
+        <n-form-item label="资源标签" path="tag">
+          <n-dynamic-tags v-model:value="resourceTags" />
+        </n-form-item>
+      </n-form>
+      
+      <template #footer>
+        <div class="flex justify-end space-x-3">
+          <n-button @click="showModal = false" quaternary>取消</n-button>
+          <n-button type="primary" @click="saveResource" :loading="saving" class="transition-all duration-200 hover:shadow-md">
+            保存
+          </n-button>
+        </div>
+      </template>
+    </n-modal>
   </div>
 </template>
 
@@ -137,25 +118,20 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useMessage } from 'naive-ui'
 import {
-  NPageHeader,
-  NCard,
+  NButton,
   NInput,
   NModal,
   NForm,
   NFormItem,
-  NButton,
-  NAvatar,
   NIcon,
-  NSpace,
-  NDynamicTags,
-  useDialog,
   NTag,
-  NEmpty
+  NDynamicTags
 } from 'naive-ui'
-import { BookOutline, SearchOutline } from '@vicons/ionicons5'
-import type { DataTableColumns } from 'naive-ui'
+import { ArrowBack, Add, Search, FolderOpen } from '@vicons/ionicons5'
 import { useAuthorizationStore } from '../stores/Authorization'
 import { useLayoutStore } from '../stores/LayoutStore'
+import { ResourceService } from '../services/ResourceService'
+import { ResourceModel } from '../models'
 
 interface Resource {
   id: string
@@ -166,7 +142,6 @@ interface Resource {
 
 const router = useRouter()
 const message = useMessage()
-const dialog = useDialog()
 const authorizationStore = useAuthorizationStore()
 const layoutStore = useLayoutStore()
 
@@ -174,21 +149,15 @@ const showModal = ref(false)
 const searchTerm = ref('')
 const formRef = ref()
 const saving = ref(false)
-const isMobile = ref(window.innerWidth < 768)
 
 const editingResource = ref<Resource>({
   id: '',
   name: '',
   description: '',
-  tag: ''
+  tag: '',
 })
 
 const resourceTags = ref<string[]>([])
-
-// 检测是否为移动设备
-const checkIsMobile = () => {
-  isMobile.value = window.innerWidth < 768
-}
 
 // 页面返回
 const goBack = () => {
@@ -201,7 +170,7 @@ const resetForm = () => {
     id: '',
     name: '',
     description: '',
-    tag: ''
+    tag: '',
   }
   resourceTags.value = []
 }
@@ -219,9 +188,9 @@ const filteredResources = computed(() => {
   }
   const term = searchTerm.value.toLowerCase()
   return resources.value.filter(resource =>
-      resource.name.toLowerCase().includes(term) ||
-      (resource.description && resource.description.toLowerCase().includes(term)) ||
-      (resource.tag && resource.tag.toLowerCase().includes(term))
+    resource.name.toLowerCase().includes(term) ||
+    (resource.description && resource.description.toLowerCase().includes(term)) ||
+    (resource.tag && resource.tag.toLowerCase().includes(term))
   )
 })
 
@@ -236,19 +205,12 @@ const rules = {
   }
 }
 
-// 合并模态框样式（修复重复:style错误的核心）
-const mergedModalStyle = computed(() => {
-  return isMobile.value
-      ? {
-        width: '100%',
-        maxWidth: '100%',
-        padding: '0.5rem'
-      }
-      : {
-        width: '600px',
-        maxWidth: '600px'
-      }
-})
+// 模态框样式
+const modalStyle = {
+  width: '100%',
+  maxWidth: '520px',
+  borderRadius: '12px'
+}
 
 // 显示添加资源模态框
 const showAddResourceModal = () => {
@@ -269,72 +231,53 @@ const editResource = (resource: Resource) => {
 
 // 删除资源
 const deleteResource = (resource: Resource) => {
-  dialog.warning({
+  const dialog = window.$dialog?.warning({
     title: '确认删除',
-    content: `确定要删除资源 "${resource.name}" 吗？`,
-    positiveText: '确定',
+    content: `确定要删除资源 "${resource.name}" 吗？此操作不可撤销。`,
+    positiveText: '删除',
     negativeText: '取消',
     onPositiveClick: async () => {
       try {
-        const token = localStorage.getItem('Authorization')
-        const response = await fetch(`/api/Project/DeleteResource?id=${resource.id}`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        })
-
-        if (response.ok) {
-          message.success('删除成功')
-          fetchResources()
-        } else {
-          message.error('删除失败')
-        }
-      } catch (error) {
+        await ResourceService.deleteResource(resource.id)
+        message.success('删除成功')
+        await fetchResources()
+      } catch (error: any) {
         console.error('删除资源时出错:', error)
-        message.error('删除失败')
+        message.error('删除失败: ' + error.message)
       }
     }
   })
 }
 
 // 保存资源
-const saveResource = async (e: Event) => {
-  e.preventDefault()
+const saveResource = async () => {
   formRef.value?.validate(async (errors: any) => {
     if (!errors) {
       saving.value = true
       try {
-        const token = localStorage.getItem('Authorization')
-        const resourceToSave = {
-          ...editingResource.value,
+        // 创建符合 ResourceModel 接口的对象
+        const resourceToSave: ResourceModel = {
+          id: editingResource.value.id,
+          name: editingResource.value.name,
+          description: editingResource.value.description || '',
           tag: resourceTags.value.join(',')
         }
 
-        const url = editingResource.value.id
-            ? '/api/Project/UpdateResource'
-            : '/api/Project/AddResource'
-
-        const response = await fetch(url, {
-          method: editingResource.value.id ? 'PUT' : 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(resourceToSave)
-        })
-
-        if (response.ok) {
-          message.success(editingResource.value.id ? '更新成功' : '添加成功')
-          showModal.value = false
-          fetchResources()
+        if (editingResource.value.id) {
+          // 更新资源
+          await ResourceService.updateResource(resourceToSave)
+          message.success('更新成功')
         } else {
-          message.error(editingResource.value.id ? '更新失败' : '添加失败')
+          // 创建资源
+          await ResourceService.createResource(resourceToSave)
+          message.success('添加成功')
         }
-      } catch (error) {
+
+        showModal.value = false
+        await fetchResources()
+      } catch (error: any) {
         console.error('保存资源时出错:', error)
-        message.error('保存失败')
+        message.error('保存失败: ' + error.message)
       } finally {
         saving.value = false
       }
@@ -345,58 +288,40 @@ const saveResource = async (e: Event) => {
 // 获取资源列表
 const fetchResources = async () => {
   try {
-    const token = localStorage.getItem('Authorization')
-    const response = await fetch('/api/Project/GetResources', {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    })
-
-    if (response.ok) {
-      const data = await response.json()
-      resources.value = data
-    } else {
-      message.error('获取资源列表失败')
-    }
-  } catch (error) {
+    const data = await ResourceService.getAllResources()
+    resources.value = data.map(resource => ({
+      id: resource.id,
+      name: resource.name,
+      description: resource.description,
+      tag: resource.tag
+    }))
+  } catch (error: any) {
     console.error('获取资源列表时出错:', error)
-    message.error('获取资源列表失败')
+    message.error('获取资源列表失败: ' + error.message)
   }
 }
 
 // 组件挂载时初始化
 onMounted(() => {
-  checkIsMobile()
-  window.addEventListener('resize', checkIsMobile)
   fetchResources()
-})
-
-// 组件卸载时清理
-onUnmounted(() => {
-  window.removeEventListener('resize', checkIsMobile)
 })
 </script>
 
 <style scoped>
-/* 移动端适配补充样式 */
-@media (max-width: 768px) {
-  :deep(.n-card) {
-    margin-top: 0.5rem;
-    border-radius: 8px;
-  }
+.main-content {
+  padding: 0;
+}
 
-  :deep(.n-page-header) {
-    padding: 0.5rem;
+@media (min-width: 768px) {
+  .main-content.with-sidebar {
+    margin-left: 240px;
   }
+}
 
-  :deep(.n-modal .n-form-item) {
-    margin-bottom: 12px;
-  }
-
-  :deep(.n-modal .n-form-item-control) {
-    min-height: auto;
-  }
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 </style>

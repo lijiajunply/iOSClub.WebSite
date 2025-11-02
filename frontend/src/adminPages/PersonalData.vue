@@ -114,6 +114,7 @@ import {
 import { useRouter } from 'vue-router';
 import { useAuthorizationStore } from '../stores/Authorization';
 import { useLayoutStore } from '../stores/LayoutStore';
+import { UserService } from '../services/UserService';
 
 const message = useMessage();
 const router = useRouter();
@@ -249,7 +250,7 @@ const rules = {
       trigger: 'blur'
     },
     {
-      pattern: /[\u4e00-\u9fa5|(|)|（|）]+[0-9]{4}(.*)/,
+      pattern: /[\u4e00-\u9fa5|()（）]+[0-9]{4}(.*)/,
       message: '班级名称格式不正确',
       trigger: 'blur'
     }
@@ -272,44 +273,25 @@ const rules = {
 const fetchUserInfo = async () => {
   try {
     loading.value = true;
-
-    const token = localStorage.getItem('Authorization');
-    if (!token) {
-      message.error('未找到认证信息');
-      router.push('/login');
-      return;
-    }
-
-    const response = await fetch('https://www.xauat.site/api/Member/GetData', {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
+    const data = await UserService.getUserData();
+    Object.assign(userInfo, {
+      userName: data.userName,
+      gender: data.gender,
+      userId: data.userId,
+      academy: data.academy,
+      politicalLandscape: data.politicalLandscape,
+      className: data.className,
+      phoneNum: data.phoneNum,
+      identity: data.identity
     });
-
-    if (response.ok) {
-      const data = await response.json();
-      Object.assign(userInfo, {
-        userName: data.userName,
-        gender: data.gender,
-        userId: data.userId,
-        academy: data.academy,
-        politicalLandscape: data.politicalLandscape,
-        className: data.className,
-        phoneNum: data.phoneNum,
-        identity: data.identity
-      });
-    } else if (response.status === 401) {
-      message.error('认证已过期，请重新登录');
-      authorizationStore.logout();
-      router.push('/login');
-    } else {
-      message.error('获取用户信息失败');
-    }
-  } catch (error) {
+  } catch (error: any) {
     console.error('获取用户信息时出错:', error);
-    message.error('获取用户信息时出错');
+    message.error('获取用户信息时出错: ' + (error instanceof Error ? error.message : String(error)));
+    
+    if (error.message.includes('认证已过期')) {
+      authorizationStore.logout();
+      await router.push('/login');
+    }
   } finally {
     loading.value = false;
   }
@@ -332,47 +314,34 @@ const handleConfirm = async () => {
   try {
     confirmLoading.value = true;
 
-    const token = localStorage.getItem('Authorization');
-    if (!token) {
-      message.error('未找到认证信息');
-      return Promise.reject();
-    }
-
-    // 调用API更新用户信息
-    const response = await fetch('https://www.xauat.site/api/Member/UpdatePersonalData', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        userName: userInfo.userName,
-        gender: userInfo.gender,
-        userId: userInfo.userId,
-        academy: userInfo.academy,
-        politicalLandscape: userInfo.politicalLandscape,
-        className: userInfo.className,
-        phoneNum: userInfo.phoneNum
-      })
+    // 使用 UserService 更新用户信息
+    await UserService.updateProfile({
+      userName: userInfo.userName,
+      gender: userInfo.gender,
+      userId: userInfo.userId,
+      academy: userInfo.academy,
+      politicalLandscape: userInfo.politicalLandscape,
+      className: userInfo.className,
+      phoneNum: userInfo.phoneNum,
+      identity: userInfo.identity,
+      // 添加其他必需字段
+      joinTime: new Date().toISOString(),
+      passwordHash: '',
+      eMail: null
     });
 
-    if (response.ok) {
-      message.success('信息更新成功');
-      showModal.value = false;
-      return Promise.resolve();
-    } else if (response.status === 401) {
-      message.error('认证已过期，请重新登录');
-      authorizationStore.logout();
-      router.push('/login');
-      return Promise.reject();
-    } else {
-      const errorData = await response.json();
-      message.error(errorData.message || '信息更新失败');
-      return Promise.reject();
-    }
-  } catch (error) {
+    message.success('信息更新成功');
+    showModal.value = false;
+    return Promise.resolve();
+  } catch (error: any) {
     console.error('信息更新时出错:', error);
-    message.error('信息更新失败');
+    message.error('信息更新失败: ' + (error instanceof Error ? error.message : String(error)));
+    
+    if (error.message.includes('认证已过期')) {
+      authorizationStore.logout();
+      await router.push('/login');
+    }
+    
     return Promise.reject();
   } finally {
     confirmLoading.value = false;

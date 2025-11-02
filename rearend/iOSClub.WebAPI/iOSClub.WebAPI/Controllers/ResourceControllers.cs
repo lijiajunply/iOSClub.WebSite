@@ -15,7 +15,7 @@ namespace iOSClub.WebAPI.Controllers;
 public class ResourceController(
     IDbContextFactory<iOSContext> factory,
     IHttpContextAccessor httpContextAccessor,
-    ResourceRepository resourceRepository)
+    IResourceRepository resourceRepository)
     : ControllerBase
 {
     /// <summary>
@@ -257,7 +257,7 @@ public class ResourceController(
             // 检查用户身份：必须是社团成员及以上
             if (user == null || !IsClubMember(user.Identity))
                 return Forbid("权限不足，需要社团成员身份");
-
+            
             var tags = await resourceRepository.GetAllTagsAsync();
             return Ok(tags);
         }

@@ -1,23 +1,6 @@
 import { url } from './Url';
 import { AuthService } from './AuthService';
-
-// 待办事项模型接口
-export interface TodoModel {
-  id: string;
-  studentId: string;
-  content: string;
-  completed: boolean;
-  createTime: Date;
-  lastUpdateTime: Date;
-}
-
-// 待办事项统计接口
-export interface TodoStatistics {
-  total: number;
-  completed: number;
-  pending: number;
-  completionRate: number;
-}
+import { TodoModel, TodoStatistics } from '../models';
 
 /**
  * 待办事项服务类 - 处理待办事项相关的API调用
@@ -112,6 +95,104 @@ export class TodoService {
         throw new Error('待办事项不存在');
       }
       throw new Error('获取待办事项详情失败');
+    }
+
+    return await response.json();
+  }
+
+  static async createTodo(todo: TodoModel): Promise<string> {
+    const token = AuthService.getToken();
+    if (!token) {
+      throw new Error('未登录');
+    }
+
+    const response = await fetch(`${url}/Todo`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(todo),
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        AuthService.clearToken();
+        throw new Error('登录已过期，请重新登录');
+      }
+      throw new Error('创建待办事项失败');
+    }
+
+    return await response.text();
+  }
+
+  static async updateTodo(todo: TodoModel): Promise<void> {
+    const token = AuthService.getToken();
+    if (!token) {
+      throw new Error('未登录');
+    }
+
+    const response = await fetch(`${url}/Todo`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(todo),
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        AuthService.clearToken();
+        throw new Error('登录已过期，请重新登录');
+      }
+      throw new Error('更新待办事项失败');
+    }
+  }
+
+  static async deleteTodo(id: string): Promise<void> {
+    const token = AuthService.getToken();
+    if (!token) {
+      throw new Error('未登录');
+    }
+
+    const response = await fetch(`${url}/Todo/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        AuthService.clearToken();
+        throw new Error('登录已过期，请重新登录');
+      }
+      throw new Error('删除待办事项失败');
+    }
+  }
+
+  static async getTodosByPage(page: number, pageSize: number): Promise<TodoModel[]> {
+    const token = AuthService.getToken();
+    if (!token) {
+      throw new Error('未登录');
+    }
+
+    const response = await fetch(`${url}/Todo/Page/${page}/${pageSize}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        AuthService.clearToken();
+        throw new Error('登录已过期，请重新登录');
+      }
+      throw new Error('获取待办事项失败');
     }
 
     return await response.json();

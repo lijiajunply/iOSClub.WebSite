@@ -53,17 +53,4 @@ public class MemberQueryController(IStudentRepository studentRepository) : Contr
 
         return GZipServer.CompressString(JsonConvert.SerializeObject(response));
     }
-
-    /// <summary>
-    /// 分页获取员工数据
-    /// </summary>
-    /// <param name="pageNum">页码，默认1</param>
-    /// <param name="pageSize">每页大小，默认10</param>
-    /// <returns>分页后的员工数据</returns>
-    [HttpGet("staffs/page")]
-    public async Task<ActionResult<string>> GetStaffsByPage(int pageNum = 1, int pageSize = 10)
-    {
-        // 这个功能需要在StaffRepository中实现
-        return StatusCode(501, "此功能需要StaffRepository支持");
-    }
 }

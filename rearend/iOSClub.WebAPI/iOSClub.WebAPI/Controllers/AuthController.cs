@@ -1,6 +1,8 @@
 using iOSClub.Data.DataModels;
 using iOSClub.DataApi.Repositories;
 using iOSClub.DataApi.Services;
+using iOSClub.WebAPI.IdentityModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using LoginModel = iOSClub.Data.ShowModels.LoginModel;
 using MemberModel = iOSClub.Data.ShowModels.MemberModel;
@@ -45,15 +47,7 @@ public class AuthController(
         var studentToken = await loginService.Login(loginModel.Id, loginModel.Name);
         if (!string.IsNullOrEmpty(studentToken))
         {
-            // 学生登录成功，需要获取完整的学生信息和身份信息
-            var student = await studentRepository.Get(loginModel.Id);
-            
-            if (student != null)
-            {
-                var member = MemberModel.AutoCopy<StudentModel, MemberModel>(student);
-                // 对于学生用户，暂时保留默认身份
-                return jwtHelper.GetMemberToken(member);
-            }
+            return studentToken;
         }
         
         // 如果学生登录失败，尝试员工登录
@@ -71,6 +65,7 @@ public class AuthController(
     /// </summary>
     /// <param name="userId">用户ID</param>
     /// <returns>成功返回true，失败返回false</returns>
+    [Authorize]
     [HttpPost("logout")]
     public async Task<ActionResult<bool>> Logout(string userId)
     {
@@ -82,11 +77,14 @@ public class AuthController(
     /// 验证用户token是否有效
     /// </summary>
     /// <param name="userId">用户ID</param>
-    /// <param name="token">要验证的token</param>
     /// <returns>有效返回true，无效返回false</returns>
-    [HttpPost("validate")]
-    public async Task<ActionResult<bool>> ValidateToken(string userId, string token)
+    [HttpGet("validate")]
+    [Authorize]
+    public async Task<ActionResult<bool>> ValidateToken(string userId)
     {
+        var token = HttpContext.GetJwt();
+        if (string.IsNullOrEmpty(token))
+            return Unauthorized(false);
         var result = await loginService.ValidateToken(userId, token);
         return result ? Ok(true) : Unauthorized(false);
     }

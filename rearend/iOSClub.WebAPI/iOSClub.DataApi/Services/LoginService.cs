@@ -34,7 +34,7 @@ public interface ILoginService
     /// <param name="token">token值</param>
     /// <returns>是否有效</returns>
     public Task<bool> ValidateToken(string userId, string token);
-    
+
     /// <summary>
     /// 员工登录
     /// </summary>
@@ -44,39 +44,47 @@ public interface ILoginService
     public Task<string> StaffLogin(string userId, string name);
 }
 
-public class LoginService : ILoginService
+public class LoginService(
+    IStudentRepository studentRepository,
+    IStaffRepository staffRepository,
+    IJwtHelper jwtHelper,
+    IConnectionMultiplexer redis)
+    : ILoginService
 {
-    private readonly IStudentRepository _studentRepository;
-    private readonly IStaffRepository _staffRepository;
-    private readonly IJwtHelper _jwtHelper;
-    private readonly IDatabase _db;
-    
+    private readonly IDatabase _db = redis.GetDatabase();
+
     private const string TokenPrefix = "token:";
     private const int TokenExpiryHours = 2; // 与JwtHelper中的过期时间保持一致
 
-    public LoginService(IStudentRepository studentRepository, IStaffRepository staffRepository, IJwtHelper jwtHelper, IConnectionMultiplexer redis)
-    {
-        _studentRepository = studentRepository;
-        _staffRepository = staffRepository;
-        _jwtHelper = jwtHelper;
-        _db = redis.GetDatabase();
-    }
-
     public async Task<string> Login(string userId, string password)
     {
-        if (!await _studentRepository.Login(userId, password)) return "";
+        if (!await studentRepository.Login(userId, password)) return "";
+        
+        var staff = await staffRepository.GetStaffByIdAsync(userId);
+        var identity = "Member";
+        if (staff != null)
+        {
+            identity = staff.Identity;
+        }
+
         // 关于查询身份信息的，需要完成 StaffRepository 之后，在这里进行查询，我先随便给个值
         var memberModel = new MemberModel()
         {
             UserId = userId,
-            Identity = "Member",
+            Identity = identity,
             PasswordHash = password
         };
 
-        var token = _jwtHelper.GetMemberToken(memberModel);
+        var redisKey = $"{TokenPrefix}{userId}";
+        // var storedToken = await _db.StringGetAsync(redisKey);
+        // if (storedToken.HasValue && !string.IsNullOrEmpty(storedToken))
+        // {
+        //     return storedToken.ToString();
+        // }
+
+        var token = jwtHelper.GetMemberToken(memberModel);
 
         // 将token存储到Redis中，设置过期时间
-        var redisKey = $"{TokenPrefix}{userId}";
         await _db.StringSetAsync(redisKey, token, TimeSpan.FromHours(TokenExpiryHours));
 
         // 存储用户信息，便于后续验证
@@ -91,11 +99,10 @@ public class LoginService : ILoginService
     {
         try
         {
-            var redisKey = $"{TokenPrefix}{userId}";
             var userInfoKey = $"user:{userId}";
 
-            // 同时删除token和用户信息
-            await _db.KeyDeleteAsync([redisKey, userInfoKey]);
+            // 同时删除用户信息
+            await _db.KeyDeleteAsync([userInfoKey]);
             return true;
         }
         catch (Exception)
@@ -109,35 +116,37 @@ public class LoginService : ILoginService
         var redisKey = $"{TokenPrefix}{userId}";
         var storedToken = await _db.StringGetAsync(redisKey);
 
-        // 验证token是否存在且匹配
-        return !string.IsNullOrEmpty(storedToken) && storedToken == token;
+        if (!storedToken.HasValue || string.IsNullOrEmpty(storedToken))
+            return false;
+
+        return storedToken == token;
     }
-    
+
     public async Task<string> StaffLogin(string userId, string name)
     {
-        var staff = await _staffRepository.GetStaffByIdAsync(userId);
-        
+        var staff = await staffRepository.GetStaffByIdAsync(userId);
+
         if (staff == null || staff.Name != name)
             return "";
-        
+
         var memberModel = new MemberModel()
         {
             UserName = staff.Name,
             UserId = staff.UserId,
             Identity = staff.Identity
         };
-        
-        var token = _jwtHelper.GetMemberToken(memberModel);
-        
+
+        var token = jwtHelper.GetMemberToken(memberModel);
+
         // 将token存储到Redis中，设置过期时间
         var redisKey = $"{TokenPrefix}{userId}";
         await _db.StringSetAsync(redisKey, token, TimeSpan.FromHours(TokenExpiryHours));
-        
+
         // 存储用户信息，便于后续验证
         var userInfoKey = $"user:{userId}";
         await _db.StringSetAsync(userInfoKey, JsonSerializer.Serialize(memberModel),
             TimeSpan.FromHours(TokenExpiryHours));
-        
+
         return token;
     }
 }

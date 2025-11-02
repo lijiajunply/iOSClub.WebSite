@@ -123,41 +123,17 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { FolderOutline, CreateOutline, EyeOutline } from '@vicons/ionicons5'
+import { useMessage } from 'naive-ui'
+import { ProjectService } from '../services/ProjectService'
 
+const message = useMessage()
 const showModal = ref(false)
 const formRef = ref(null)
+const loading = ref(false)
 
-const projects = ref([
-  {
-    id: 1,
-    name: 'iOS Club 官网重构',
-    description: '使用Vue 3和Tailwind CSS重构iOS Club官网',
-    startDate: '2025-01-15',
-    endDate: '2025-03-30',
-    status: '进行中',
-    progress: 75
-  },
-  {
-    id: 2,
-    name: '新生培训系统',
-    description: '为新成员开发在线培训和考核系统',
-    startDate: '2025-02-01',
-    endDate: '2025-04-15',
-    status: '进行中',
-    progress: 40
-  },
-  {
-    id: 3,
-    name: '社团管理系统',
-    description: '开发用于管理社团成员、项目和活动的后台系统',
-    startDate: '2024-11-01',
-    endDate: '2025-01-30',
-    status: '已完成',
-    progress: 100
-  }
-])
+const projects = ref([])
 
 const editingProject = ref({
   id: null,
@@ -241,34 +217,74 @@ const editProject = (project) => {
 }
 
 const viewProjectDetails = (project) => {
-  window.$message.info(`查看项目 "${project.name}" 的详细信息`)
+  message.info(`查看项目 "${project.name}" 的详细信息`)
   // 实际项目中可以跳转到项目详情页
 }
 
-const saveProject = (e) => {
+const saveProject = async (e) => {
   e.preventDefault()
-  formRef.value?.validate((errors) => {
+  formRef.value?.validate(async (errors) => {
     if (!errors) {
-      if (editingProject.value.id) {
-        // 更新项目
-        const index = projects.value.findIndex(p => p.id === editingProject.value.id)
-        if (index !== -1) {
-          projects.value[index] = { ...editingProject.value }
-          window.$message.success('项目信息已更新')
+      try {
+        loading.value = true
+        const projectData = {
+          id: editingProject.value.id || undefined,
+          name: editingProject.value.name,
+          description: editingProject.value.description,
+          startTime: editingProject.value.startDate ? new Date(editingProject.value.startDate).toISOString() : null,
+          endTime: editingProject.value.endDate ? new Date(editingProject.value.endDate).toISOString() : null,
+          status: editingProject.value.status,
+          // 进度字段需要根据实际API调整
         }
-      } else {
-        // 添加新项目
-        const newProject = {
-          ...editingProject.value,
-          id: Math.max(0, ...projects.value.map(p => p.id)) + 1
+
+        if (editingProject.value.id) {
+          // 更新项目
+          await ProjectService.createOrUpdateProject(projectData)
+          message.success('项目信息已更新')
+        } else {
+          // 添加新项目
+          await ProjectService.createOrUpdateProject(projectData)
+          message.success('新项目已添加')
         }
-        projects.value.push(newProject)
-        window.$message.success('新项目已添加')
+        
+        showModal.value = false
+        await fetchProjects()
+      } catch (error) {
+        console.error('保存项目时出错:', error)
+        message.error('保存项目失败: ' + error.message)
+      } finally {
+        loading.value = false
       }
-      showModal.value = false
     } else {
-      window.$message.error('请检查表单填写是否正确')
+      message.error('请检查表单填写是否正确')
     }
   })
 }
+
+// 获取项目列表
+const fetchProjects = async () => {
+  try {
+    loading.value = true
+    const data = await ProjectService.getAllProjects()
+    projects.value = data.map(project => ({
+      id: project.id,
+      name: project.name,
+      description: project.description,
+      startDate: project.startTime,
+      endDate: project.endTime,
+      status: project.status || '进行中',
+      progress: 0 // 需要根据实际数据计算
+    }))
+  } catch (error) {
+    console.error('获取项目列表时出错:', error)
+    message.error('获取项目列表失败: ' + error.message)
+  } finally {
+    loading.value = false
+  }
+}
+
+// 组件挂载时获取项目数据
+onMounted(() => {
+  fetchProjects()
+})
 </script>

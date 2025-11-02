@@ -1,14 +1,6 @@
 import { url } from './Url';
 import { AuthService } from './AuthService';
-
-// 员工模型接口
-export interface StaffModel {
-  userId: string;
-  name: string;
-  identity: string;
-  department: string;
-  // 其他必要的员工信息字段
-}
+import {StaffModel} from "../models";
 
 /**
  * 员工服务类 - 处理员工管理相关的API调用
@@ -111,6 +103,119 @@ export class StaffService {
         throw new Error('权限不足，需要管理员身份');
       }
       throw new Error('创建员工失败');
+    }
+
+    return await response.json();
+  }
+
+  static async updateStaff(userId: string, staff: StaffModel): Promise<any> {
+    const token = AuthService.getToken();
+    if (!token) {
+      throw new Error('未登录');
+    }
+
+    const response = await fetch(`${url}/Staff/Update/${userId}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(staff),
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        AuthService.clearToken();
+        throw new Error('登录已过期，请重新登录');
+      }
+      if (response.status === 403) {
+        throw new Error('权限不足，需要管理员身份');
+      }
+      throw new Error('更新员工失败');
+    }
+
+    return await response.json();
+  }
+
+  static async deleteStaff(userId: string): Promise<any> {
+    const token = AuthService.getToken();
+    if (!token) {
+      throw new Error('未登录');
+    }
+
+    const response = await fetch(`${url}/Staff/Delete/${userId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        AuthService.clearToken();
+        throw new Error('登录已过期，请重新登录');
+      }
+      if (response.status === 403) {
+        throw new Error('权限不足，需要管理员身份');
+      }
+      throw new Error('删除员工失败');
+    }
+
+    return await response.json();
+  }
+
+  static async getStaffByIdentity(identity: string): Promise<StaffModel[]> {
+    const token = AuthService.getToken();
+    if (!token) {
+      throw new Error('未登录');
+    }
+
+    const response = await fetch(`${url}/Staff/by-identity/${identity}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        AuthService.clearToken();
+        throw new Error('登录已过期，请重新登录');
+      }
+      if (response.status === 403) {
+        throw new Error('权限不足，需要管理员身份');
+      }
+      throw new Error('获取员工失败');
+    }
+
+    return await response.json();
+  }
+
+  static async changeDepartment(userId: string, departmentName: string): Promise<any> {
+    const token = AuthService.getToken();
+    if (!token) {
+      throw new Error('未登录');
+    }
+
+    const response = await fetch(`${url}/Staff/change-department/${userId}?departmentName=${departmentName}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        AuthService.clearToken();
+        throw new Error('登录已过期，请重新登录');
+      }
+      if (response.status === 403) {
+        throw new Error('权限不足，需要管理员身份');
+      }
+      throw new Error('更改部门失败');
     }
 
     return await response.json();

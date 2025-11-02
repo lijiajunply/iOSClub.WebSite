@@ -256,9 +256,11 @@
 </template>
 
 <script setup>
-import { ref, computed, reactive, h, onMounted } from 'vue'
+import { ref, computed, h, onMounted } from 'vue'
 import { SearchOutline, Refresh, PeopleOutline } from '@vicons/ionicons5'
 import { useDialog, useMessage } from 'naive-ui'
+import { MemberQueryService } from '../services/MemberQueryService'
+import { MemberManagementService } from '../services/MemberManagementService'
 
 const dialog = useDialog()
 const message = useMessage()
@@ -528,37 +530,14 @@ const genderInfo = computed(() => {
 const fetchMembers = async () => {
   try {
     loading.value = true
-    const token = localStorage.getItem('Authorization')
-    if (!token) {
-      message.error('未找到认证信息')
-      return
-    }
+    const data = await MemberQueryService.getAllData()
+    members.value = data
 
-    const response = await fetch('https://www.xauat.site/api/President/GetAllData', {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    })
-
-    if (response.ok) {
-      const compressedData = await response.text()
-      // 这里应该解压缩数据，但为了简化，我们假设后端直接返回JSON
-      // 实际项目中需要处理GZip解压缩
-      const data = JSON.parse(compressedData)
-      members.value = data
-
-      // 处理图表数据
-      processChartData(data)
-    } else if (response.status === 401) {
-      message.error('认证已过期，请重新登录')
-    } else {
-      message.error('获取成员数据失败')
-    }
+    // 处理图表数据
+    processChartData(data)
   } catch (error) {
     console.error('获取成员数据时出错:', error)
-    message.error('获取成员数据时出错')
+    message.error('获取成员数据时出错: ' + error.message)
   } finally {
     loading.value = false
   }
@@ -655,34 +634,17 @@ const deleteMember = async (member) => {
     negativeText: '取消',
     onPositiveClick: async () => {
       try {
-        const token = localStorage.getItem('Authorization')
-        if (!token) {
-          message.error('未找到认证信息')
-          return
-        }
-
-        const response = await fetch(`https://www.xauat.site/api/President/Delete/${member.userId}`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        })
-
-        if (response.ok) {
-          const index = members.value.findIndex(m => m.userId === member.userId)
-          if (index !== -1) {
-            members.value.splice(index, 1)
-            message.success(`删除成员: ${member.userName} 成功`)
-            // 重新处理图表数据
-            processChartData(members.value)
-          }
-        } else {
-          message.error('删除成员失败')
+        await MemberManagementService.deleteMember(member.userId)
+        const index = members.value.findIndex(m => m.userId === member.userId)
+        if (index !== -1) {
+          members.value.splice(index, 1)
+          message.success(`删除成员: ${member.userName} 成功`)
+          // 重新处理图表数据
+          processChartData(members.value)
         }
       } catch (error) {
         console.error('删除成员时出错:', error)
-        message.error('删除成员时出错')
+        message.error('删除成员时出错: ' + error.message)
       }
     }
   })

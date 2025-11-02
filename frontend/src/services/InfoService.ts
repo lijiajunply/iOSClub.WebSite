@@ -1,15 +1,6 @@
 import { url } from './Url';
 import { AuthService } from './AuthService';
-
-// 用户信息响应接口
-export interface UserInfoResponse {
-  tasks?: any[];
-  projects?: any[];
-  resources?: any[];
-  total?: number;
-  staffsCount?: number;
-  departments?: any[];
-}
+import {UserInfoResponse} from "../models";
 
 /**
  * 信息服务类 - 处理系统信息相关的API调用

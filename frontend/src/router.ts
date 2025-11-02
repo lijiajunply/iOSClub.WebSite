@@ -152,7 +152,7 @@ const routes = [
                 path: 'Article',
                 name: 'Article',
                 meta: {title: "社团文章 - 西建大 iOS Club"},
-                component: () => import('./adminPages/CenterArticle.vue'),
+                component: () => import('./adminPages/ArticleManager.vue'),
             }
         ]
     }

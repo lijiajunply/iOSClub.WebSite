@@ -19,7 +19,14 @@ public class StaffController(IStaffRepository staffRepository, IHttpContextAcces
     /// <returns>当前用户的StaffModel对象，如果无法获取则返回null</returns>
     private StaffModel? GetCurrentUser()
     {
-        return httpContextAccessor.HttpContext?.User.GetStaff();
+        var member = httpContextAccessor.HttpContext?.User.GetUser();
+        return member != null
+            ? new StaffModel()
+            {
+                UserId = member.UserId,
+                Identity = member.Identity
+            }
+            : null;
     }
 
     /// <summary>
@@ -65,10 +72,6 @@ public class StaffController(IStaffRepository staffRepository, IHttpContextAcces
     [HttpGet]
     public async Task<ActionResult<IEnumerable<StaffModel>>> GetAllStaff()
     {
-        var currentStaff = GetCurrentUser();
-        if (currentStaff == null || !HasManagementPermission(currentStaff))
-            return Forbid();
-
         var staffs = await staffRepository.GetAllStaffAsync();
         return Ok(staffs);
     }

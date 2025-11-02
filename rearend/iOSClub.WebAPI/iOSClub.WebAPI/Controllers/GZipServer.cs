@@ -66,7 +66,7 @@ public static class GZipServer
             var buffer = new byte[0x1000];
             while (true)
             {
-                int reader = zip.Read(buffer, 0, buffer.Length);
+                var reader = zip.Read(buffer, 0, buffer.Length);
                 if (reader <= 0)
                 {
                     break;

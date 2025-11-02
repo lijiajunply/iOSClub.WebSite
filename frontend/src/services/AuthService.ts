@@ -1,31 +1,5 @@
 import { url } from './Url';
-
-// 登录模型接口
-export interface LoginModel {
-  id: string;
-  name: string;
-}
-
-// 成员模型接口
-export interface MemberModel {
-  userName: string;
-  userId: string;
-  identity: string;
-}
-
-// 详细注册模型接口
-export interface StudentModel {
-    userName: string;
-    userId: string;
-    academy: string;
-    politicalLandscape: string;
-    gender: string;
-    className: string;
-    phoneNum: string;
-    joinTime: string;
-    passwordHash: string;
-    eMail: string | null;
-}
+import type { StudentModel, LoginModel } from '../models';
 
 /**
  * 密码哈希函数
@@ -33,11 +7,11 @@ export interface StudentModel {
  * @returns Promise<string> 哈希后的密码
  */
 export const hashPassword = async (password: string) => {
-    const encoder = new TextEncoder()
-    const data = encoder.encode(password)
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data)
-    const hashArray = Array.from(new Uint8Array(hashBuffer))
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+  const encoder = new TextEncoder()
+  const data = encoder.encode(password)
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+  const hashArray = Array.from(new Uint8Array(hashBuffer))
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
 }
 
 /**
@@ -91,49 +65,30 @@ export class AuthService {
 
     return await response.text();
   }
-  
-  /**
-   * 成员详细注册
-   * @param member 成员详细信息
-   * @returns Promise<string> 响应结果
-   */
-  static async memberSignup(member: StudentModel): Promise<string> {
-    const response = await fetch(`${url}/Member/SignUp`, {
+
+  static async logout(userId: string) {
+    const token = AuthService.getToken();
+    const response = await fetch(`${url}/Auth/logout?userId=${userId}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(member)
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
     });
 
-    if (!response.ok) {
-      throw new Error(`注册失败: ${response.status}`);
-    }
-
-    return await response.text();
+    return response.ok;
   }
-  
-  /**
-   * 成员登录（兼容旧接口）
-   * @param username 用户名
-   * @param studentId 学生ID
-   * @param password 密码
-   * @returns Promise<string> 响应结果
-   */
-  static async memberLogin(username: string, studentId: string, password: string): Promise<string> {
-    const response = await fetch(`${url}/Member/Login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: username,
-        id: studentId,
-        password: password
-      })
+
+  static async validate(userId: string, token: string): Promise<boolean> {
+    const response = await fetch(`${url}/Auth/validate?userId=${userId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
     });
 
-    if (!response.ok) {
-      throw new Error(`登录失败: ${response.status}`);
-    }
-
-    return await response.text();
+    return response.ok;
   }
 
   /**
@@ -141,7 +96,7 @@ export class AuthService {
    * @param token JWT令牌
    */
   static saveToken(token: string): void {
-    localStorage.setItem('token', token);
+    localStorage.setItem('Authorization', token);
   }
 
   /**
@@ -149,14 +104,14 @@ export class AuthService {
    * @returns string | null JWT令牌或null
    */
   static getToken(): string | null {
-    return localStorage.getItem('token');
+    return localStorage.getItem('Authorization');
   }
 
   /**
    * 清除本地存储的令牌
    */
   static clearToken(): void {
-    localStorage.removeItem('token');
+    localStorage.removeItem('Authorization');
   }
 
   /**
@@ -167,3 +122,18 @@ export class AuthService {
     return this.getToken() !== null;
   }
 }
+
+// 组织注册记录类
+export class OrgSignRecord {
+  constructor(
+    public readonly url1: string,
+    public readonly url2: string
+  ) {
+  }
+}
+
+// iOS 俱乐部注册信息
+export const ios = new OrgSignRecord(
+  "mqqapi://card/show_pslcard?src_type=internal&version=1&uin=952954710&card_type=group&source=external",
+  "https://qm.qq.com/cgi-bin/qm/qr?authKey=MUNgIj%2B1gnkiI175qAQla6EcR44Fa0APCv%2FLo1a7YIlYgpeg76Q%2BGYMoedb8gGHU&k=HvhhArSc7tzuySOhXsnmZ6RgLcWkzXgu&noverify=0"
+);

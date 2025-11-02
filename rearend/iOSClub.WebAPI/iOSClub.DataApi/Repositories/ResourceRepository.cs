@@ -13,6 +13,9 @@ public interface IResourceRepository
     Task<bool> AddResourceAsync(ResourceModel resource);
     Task<bool> UpdateResourceAsync(ResourceModel resource);
     Task<bool> DeleteResourceAsync(string id);
+    Task<List<string>> GetAllTagsAsync();
+    Task<int> GetResourceCountAsync();
+    Task<bool> ResourceExistsAsync(string id);
 }
 
 public class ResourceRepository(iOSContext context) : IResourceRepository

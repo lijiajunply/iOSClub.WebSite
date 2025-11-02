@@ -3,9 +3,7 @@ using iOSClub.DataApi.Repositories;
 using iOSClub.WebAPI.IdentityModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
-using iOSClub.Data;
 
 namespace iOSClub.WebAPI.Controllers;
 
@@ -266,7 +264,7 @@ public class ArticleController(
 }
 
 // 创建文章的DTO
-public class ArticleCreateDto
+public class ArticleCreateDto(string? identity)
 {
     [Required(ErrorMessage = "文章路径是必需的")]
     [StringLength(128, ErrorMessage = "路径长度不能超过128个字符")]
@@ -282,7 +280,7 @@ public class ArticleCreateDto
     public string Content { get; set; } = "";
 
     [StringLength(20, ErrorMessage = "身份标识长度不能超过20个字符")]
-    public string? Identity { get; set; }
+    public string? Identity { get; set; } = identity;
 }
 
 // 更新文章的DTO

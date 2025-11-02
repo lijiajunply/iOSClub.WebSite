@@ -57,27 +57,26 @@
               <button
                   v-else
                   class="apple-button-primary ml-4"
-                  @click="logout"
+                  @click="toCentre"
               >
-                退出登录
+                进入中心
               </button>
 
               <div class="toggle-wrapper">
                 <n-switch
+                    size="large"
                     initial-value="false"
                     :checked-value="true"
                     :unchecked-value="false"
                     @update:value="mainToggleTheme"
                 >
-                  <template #checked>🌙</template>
-                  <template #unchecked>☀️</template>
                 </n-switch>
               </div>
             </nav>
 
             <!-- Mobile Menu Button -->
             <button
-                class="md:hidden apple-icon-button"
+                class="md:hidden apple-icon-button dark:text-gray-100"
                 @click="drawerVisible = !drawerVisible"
             >
               <n-icon size="24">
@@ -133,7 +132,7 @@
                 </router-link>
               </div>
 
-              <div class="pt-4 mt-4 border-t border-gray-200">
+              <div class="pt-4 mt-4 ">
                 <button
                     v-if="!isCentreRoute"
                     class="apple-button-primary w-full"
@@ -240,7 +239,6 @@ import {useThemeStore} from "../stores/theme.js";
 import {storeToRefs} from 'pinia'
 
 const themeStore = useThemeStore()
-// 解构响应式属性
 const {isDark} = storeToRefs(themeStore)
 // 解构方法
 const {toggleTheme, setThemePreference} = themeStore
@@ -264,12 +262,16 @@ const isScrolled = ref(false)
 
 // 判断当前是否在Centre路由下
 const isCentreRoute = computed(() => {
-  return route.path.startsWith('/Centre')
+  return authorizationStore.isAuthenticated
 })
 
 // Handle scroll effect
 const handleScroll = () => {
   isScrolled.value = window.scrollY > 10
+}
+
+const toCentre = () => {
+  router.push('/Centre')
 }
 
 // 退出登录功能
@@ -340,6 +342,8 @@ const handleSelect = (key) => {
 </script>
 
 <style scoped>
+@reference "tailwindcss";
+
 /* Apple-style header */
 .apple-header {
   position: fixed;
@@ -412,16 +416,11 @@ const handleSelect = (key) => {
 /* Icon button for mobile */
 .apple-icon-button {
   padding: 0.5rem;
-  color: #1d1d1f;
   background: transparent;
   border: none;
   border-radius: 0.5rem;
   cursor: pointer;
   transition: all 0.2s ease;
-}
-
-.apple-icon-button:hover {
-  background: rgba(0, 0, 0, 0.05);
 }
 
 /* Mobile menu styles */
@@ -430,7 +429,6 @@ const handleSelect = (key) => {
   top: 64px;
   left: 0;
   right: 0;
-  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
@@ -441,16 +439,12 @@ const handleSelect = (key) => {
 
 .mobile-menu-item {
   display: block;
+  @apply text-gray-900 dark:text-gray-300;
   padding: 0.875rem 1rem;
-  color: #1d1d1f;
   font-size: 1rem;
   font-weight: 400;
   border-radius: 0.75rem;
   transition: all 0.2s ease;
-}
-
-.mobile-menu-item:hover {
-  background: rgba(0, 0, 0, 0.05);
 }
 
 .mobile-menu-section {
@@ -459,7 +453,6 @@ const handleSelect = (key) => {
 
 .mobile-menu-section-title {
   padding: 0.5rem 1rem;
-  color: #86868b;
   font-size: 0.875rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -467,17 +460,13 @@ const handleSelect = (key) => {
 }
 
 .mobile-menu-subitem {
+  @apply text-gray-900 dark:text-gray-300;
   display: block;
   padding: 0.75rem 1rem 0.75rem 2rem;
-  color: #1d1d1f;
   font-size: 0.9375rem;
   font-weight: 400;
   border-radius: 0.75rem;
   transition: all 0.2s ease;
-}
-
-.mobile-menu-subitem:hover {
-  background: rgba(0, 0, 0, 0.05);
 }
 
 /* Footer styles */

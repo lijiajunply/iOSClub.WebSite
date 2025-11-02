@@ -56,6 +56,4 @@ public static class SignRecord
     };
 
     #endregion
-
-
 }

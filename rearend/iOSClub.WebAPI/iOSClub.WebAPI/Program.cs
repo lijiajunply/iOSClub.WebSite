@@ -33,8 +33,10 @@ builder.Services.AddAuthentication(options => { options.DefaultScheme = JwtBeare
     {
         options.TokenValidationParameters = new TokenValidationParameters()
         {
-            ValidateIssuer = false, //是否验证Issuer
-            ValidateAudience = false, //是否验证Audience
+            ValidateIssuer = true, //是否验证Issuer
+            ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "iOSClub",
+            ValidateAudience = true, //是否验证Audience
+            ValidAudience = builder.Configuration["Jwt:Audience"] ?? "iOSClubApp",
             ValidateIssuerSigningKey = true, //是否验证SecurityKey
 
             IssuerSigningKey =

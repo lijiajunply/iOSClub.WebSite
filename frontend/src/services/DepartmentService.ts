@@ -1,14 +1,6 @@
 import { url } from './Url';
 import { AuthService } from './AuthService';
-
-// 部门模型接口
-export interface DepartmentModel {
-  id: string;
-  name: string;
-  description: string;
-  staffs?: any[];
-  projects?: any[];
-}
+import {DepartmentModel} from "../models";
 
 /**
  * 部门服务类 - 处理部门相关的API调用
@@ -81,5 +73,85 @@ export class DepartmentService {
     }
 
     return await response.json();
+  }
+
+  static async createDepartment(department: DepartmentModel): Promise<void> {
+    const token = AuthService.getToken();
+    if (!token) {
+      throw new Error('未登录');
+    }
+
+    const response = await fetch(`${url}/Department/Create`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(department),
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        AuthService.clearToken();
+        throw new Error('登录已过期，请重新登录');
+      }
+      if (response.status === 403) {
+        throw new Error('权限不足，需要管理员身份');
+      }
+      throw new Error('创建部门失败');
+    }
+  }
+
+  static async updateDepartment(department: DepartmentModel): Promise<void> {
+    const token = AuthService.getToken();
+    if (!token) {
+      throw new Error('未登录');
+    }
+
+    const response = await fetch(`${url}/Department/Update`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(department),
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        AuthService.clearToken();
+        throw new Error('登录已过期，请重新登录');
+      }
+      if (response.status === 403) {
+        throw new Error('权限不足，需要管理员身份');
+      }
+      throw new Error('更新部门失败');
+    }
+  }
+
+  static async deleteDepartment(name: string): Promise<void> {
+    const token = AuthService.getToken();
+    if (!token) {
+      throw new Error('未登录');
+    }
+
+    const response = await fetch(`${url}/Department/Delete/${name}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        AuthService.clearToken();
+        throw new Error('登录已过期，请重新登录');
+      }
+      if (response.status === 403) {
+        throw new Error('权限不足，需要管理员身份');
+      }
+      throw new Error('删除部门失败');
+    }
   }
 }

@@ -93,7 +93,7 @@ public class DepartmentController(
     /// <summary>
     /// 更新部门信息
     /// </summary>
-    [HttpPut("Update")]
+    [HttpPost("Update")]
     [Authorize(Roles = "Founder,President,Minister")]
     public async Task<IActionResult> UpdateDepartment([FromBody] DepartmentModel model)
     {
@@ -148,7 +148,7 @@ public class DepartmentController(
     /// <summary>
     /// 删除部门
     /// </summary>
-    [HttpDelete("Delete/{name}")]
+    [HttpGet("Delete/{name}")]
     [Authorize(Roles = "Founder,President")]
     public async Task<IActionResult> DeleteDepartment(string name)
     {
