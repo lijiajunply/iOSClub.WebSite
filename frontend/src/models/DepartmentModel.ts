@@ -1,10 +1,12 @@
+import { MemberModel } from "./AuthModel";
+
 // 部门模型接口
 export interface Department {
   id: number;
   name: string;
   description: string;
-  ministers?: Member[];
-  members?: Member[];
+  ministers?: MemberModel[];
+  members?: MemberModel[];
   projects?: Project[];
 }
 
@@ -14,19 +16,6 @@ export interface DepartmentModel {
   description: string;
   staffs?: any[];
   projects?: any[];
-}
-
-export interface Member {
-  id: number;
-  name: string;
-  userName?: string;
-  userId: string;
-  academy?: string;
-  politicalLandscape?: string;
-  gender?: string;
-  className?: string;
-  phoneNum?: string;
-  identity?: string;
 }
 
 export interface Project {

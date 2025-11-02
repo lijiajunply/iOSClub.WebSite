@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300">
+  <div class="min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-300">
     <!-- 页面头部 -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -47,7 +47,7 @@
           </n-button>
           <n-button
               type="primary"
-              @click="openDepartment"
+              @click="() => openDepartment()"
           >
             <template #icon>
               <n-icon>
@@ -85,7 +85,7 @@
                         secondary
                         strong
                         size="small"
-                        @click="openAddMember"
+                        @click="() => openAddMember()"
                     >
                       添加成员
                     </n-button>
@@ -110,7 +110,7 @@
                       @close="() => deleteMember(member, ministers)"
                       class="bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-800 dark:text-blue-200 cursor-pointer rounded-full px-3 py-1"
                   >
-                    {{ member.name }}
+                    {{ member.userName }}
                   </n-tag>
                   <n-tag
                       v-if="ministers.length === 0"
@@ -336,7 +336,7 @@
                 <div class="flex flex-wrap gap-2">
                   <n-tag
                       v-for="member in department.ministers"
-                      :key="member.id"
+                      :key="member.userId"
                       type="primary"
                       closable
                       @close="() => deleteMember(member, department.ministers)"
@@ -564,7 +564,7 @@ import {People as Users, Download, CloudUpload as Upload, Add as Plus, ChevronBa
 import {DepartmentService} from '../services/DepartmentService'
 import {StaffService} from '../services/StaffService'
 import {ProjectService} from '../services/ProjectService'
-import type {Department, MemberModel, Project} from '../models'
+import type {Department, DepartmentModel, MemberModel, Project} from '../models'
 
 const router = useRouter()
 const message = useMessage()
@@ -600,7 +600,7 @@ const pagination = {
 }
 
 // 表格列定义
-const memberColumns: DataTableColumns<Member> = [
+const memberColumns: DataTableColumns<MemberModel> = [
   {title: '姓名', key: 'userName', width: 100},
   {title: '学号', key: 'userId', width: 120},
   {title: '学院', key: 'academy', width: 150},
@@ -624,7 +624,7 @@ const memberColumns: DataTableColumns<Member> = [
   }
 ]
 
-const staffColumns: DataTableColumns<Member> = [
+const staffColumns: DataTableColumns<MemberModel> = [
   {title: '姓名', key: 'name', width: 100},
   {title: '学号', key: 'userId', width: 120},
   {
@@ -722,15 +722,15 @@ const deleteAll = (list: any[] | undefined) => {
   }
 }
 
-const deleteMember = (member: Member, list?: Member[]) => {
+const deleteMember = (member: MemberModel, list?: MemberModel[]) => {
   if (list && Array.isArray(list)) {
-    const index = list.findIndex(m => m.id === member.id)
+    const index = list.findIndex(m => m.userId === member.userId)
     if (index > -1) {
       list.splice(index, 1)
       message.success('成员已删除')
     }
   } else {
-    const index = members.value.findIndex(m => m.id === member.id)
+    const index = members.value.findIndex(m => m.userId === member.userId)
     if (index > -1) {
       members.value.splice(index, 1)
       message.success('成员已删除')
@@ -738,7 +738,7 @@ const deleteMember = (member: Member, list?: Member[]) => {
   }
 }
 
-const deleteStaff = (staff: Member) => {
+const deleteStaff = (staff: MemberModel) => {
   message.success('部员已删除')
 }
 
@@ -843,9 +843,10 @@ const saveDepartment = async () => {
     await departmentFormRef.value?.validate()
 
     const departmentData = {
+      key: editingDepartment.value?.id.toString || '',
       name: departmentForm.value.name,
       description: departmentForm.value.description
-    }
+    } as DepartmentModel
 
     if (editingDepartment.value) {
       // 更新部门
@@ -894,21 +895,17 @@ const fetchData = async () => {
     ministers.value = staffs
         .filter(staff => staff.identity === 'President')
         .map(staff => ({
-          id: staff.userId as unknown as number, // 需要根据实际情况调整
-          name: staff.name,
+          userName: staff.name,
           userId: staff.userId,
           identity: staff.identity,
-          department: staff.department
         })) as MemberModel[]
 
     members.value = staffs
         .filter(staff => staff.identity !== 'Founder')
         .map(staff => ({
-          id: staff.userId as unknown as number, // 需要根据实际情况调整
-          name: staff.name,
+          userName: staff.name,
           userId: staff.userId,
           identity: staff.identity,
-          department: staff.department,
           academy: '', // 需要根据实际情况获取
           politicalLandscape: '',
           gender: '',

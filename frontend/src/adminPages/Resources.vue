@@ -1,15 +1,10 @@
 <template>
-  <div class="min-h-screen transition-colors duration-300 bg-gray-50 dark:bg-neutral-900 main-content"
+  <div class="min-h-screen transition-colors duration-300"
        :class="{ 'with-sidebar': layoutStore.showSidebar && !layoutStore.isMobile }">
     <div class="px-4 py-6 sm:px-6 lg:px-8">
       <!-- Header -->
       <div class="flex items-center justify-between mb-8">
         <div class="flex items-center">
-          <n-button text class="mr-4" @click="goBack">
-            <n-icon size="24">
-              <ArrowBack />
-            </n-icon>
-          </n-button>
           <div>
             <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">社团资源</h1>
             <p class="text-sm text-gray-500 dark:text-gray-400">社团资源管理</p>

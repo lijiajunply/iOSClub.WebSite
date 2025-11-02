@@ -1,26 +1,11 @@
 <template>
-  <div class="min-h-screen py-8 transition-colors duration-300" 
-       :class="{
-         'bg-gray-50': isDarkMode === false,
-         'bg-gray-900': isDarkMode === true,
-         'bg-gray-50': isDarkMode === null
-       }">
+  <div class="min-h-screen py-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="mb-8">
-        <h1 class="text-3xl font-semibold mb-2 transition-colors duration-300"
-            :class="{
-              'text-gray-900': isDarkMode === false,
-              'text-white': isDarkMode === true,
-              'text-gray-900': isDarkMode === null
-            }">
+        <h1 class="text-3xl font-semibold mb-2 text-gray-900 dark:text-white">
           社团文章
         </h1>
-        <p class="transition-colors duration-300"
-           :class="{
-             'text-gray-600': isDarkMode === false,
-             'text-gray-400': isDarkMode === true,
-             'text-gray-600': isDarkMode === null
-           }">
+        <p class="text-gray-600 dark:text-gray-400">
           管理社团的所有文章
         </p>
       </div>
@@ -31,30 +16,15 @@
             v-for="article in articles"
             :key="article.path"
             hoverable
-            class="group cursor-pointer rounded-2xl transition-all duration-300 overflow-hidden"
-            :class="{
-              'bg-white border-gray-200': isDarkMode === false,
-              'bg-gray-800 border-gray-700': isDarkMode === true,
-              'bg-white border-gray-200': isDarkMode === null
-            }"
+            class="group cursor-pointer rounded-2xl transition-all duration-300 overflow-hidden bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
             @click="editArticle(article)"
         >
           <div class="flex flex-col h-full p-5">
             <div class="flex-1">
-              <h3 class="text-lg font-medium mb-2 transition-colors duration-300 line-clamp-2"
-                  :class="{
-                    'text-gray-900 group-hover:text-blue-600': isDarkMode === false,
-                    'text-white group-hover:text-blue-400': isDarkMode === true,
-                    'text-gray-900 group-hover:text-blue-600': isDarkMode === null
-                  }">
+              <h3 class="text-lg font-medium mb-2 line-clamp-2 text-gray-900 group-hover:text-blue-600 dark:text-white dark:group-hover:text-blue-400">
                 {{ article.title }}
               </h3>
-              <p class="text-sm transition-colors duration-300 mb-4"
-                 :class="{
-                   'text-gray-500': isDarkMode === false,
-                   'text-gray-400': isDarkMode === true,
-                   'text-gray-500': isDarkMode === null
-                 }">
+              <p class="text-sm mb-4 text-gray-500 dark:text-gray-400">
                 更新时间: {{ formatDate(article.lastWriteTime) }}
               </p>
               <n-tag 
@@ -101,12 +71,7 @@
         <!-- 空状态 -->
         <div 
           v-if="articles.length === 0 && !loading"
-          class="col-span-full py-16 flex flex-col items-center justify-center rounded-2xl"
-          :class="{
-            'bg-white border border-gray-200': isDarkMode === false,
-            'bg-gray-800 border border-gray-700': isDarkMode === true,
-            'bg-white border border-gray-200': isDarkMode === null
-          }"
+          class="col-span-full py-16 flex flex-col items-center justify-center rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
         >
           <n-empty description="暂无文章" size="large">
             <template #icon>
@@ -159,12 +124,7 @@
               placeholder="请输入文章路径，如：About"
               round
           />
-          <p class="text-xs mt-1"
-             :class="{
-               'text-gray-500': isDarkMode === false,
-               'text-gray-400': isDarkMode === true,
-               'text-gray-500': isDarkMode === null
-             }">
+          <p class="text-xs mt-1 text-gray-500 dark:text-gray-400">
             路径将作为文章的唯一标识，创建后不可修改
           </p>
         </n-form-item>
@@ -200,8 +160,7 @@
         <n-space justify="end">
           <n-button 
             @click="showEditModal = false"
-            :quaternary="isDarkMode"
-            :type="isDarkMode ? 'default' : 'tertiary'"
+            quaternary
             round>
             取消
           </n-button>
@@ -219,7 +178,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import {
   NCard,
   NButton,
@@ -238,7 +197,6 @@ import {
 } from 'naive-ui'
 import { ArticleService } from "../services/ArticleService"
 import { type ArticleModel, type ArticleCreateDto, type ArticleUpdateDto } from '../models'
-import { useThemeStore } from '../stores/theme'
 import { 
   EditOutlined, 
   DeleteOutlined, 
@@ -248,10 +206,6 @@ import {
 
 const message = useMessage()
 const dialog = useDialog()
-
-// 使用主题存储来检测暗黑模式
-const themeStore = useThemeStore()
-const isDarkMode = computed(() => themeStore.isDark)
 
 const articles = ref<ArticleModel[]>([])
 const loading = ref(true)
