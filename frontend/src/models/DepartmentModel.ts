@@ -19,7 +19,7 @@ export interface DepartmentModel {
 }
 
 export interface Project {
-  id: number;
+  id: string;
   title: string;
   description: string;
   department?: {

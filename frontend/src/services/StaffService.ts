@@ -137,7 +137,7 @@ export class StaffService {
         return await response.json();
     }
 
-    static async deleteStaff(userId: string): Promise<any> {
+    static async deleteStaff(userId: string): Promise<boolean> {
         const token = AuthService.getToken();
         if (!token) {
             throw new Error('未登录');
@@ -162,7 +162,7 @@ export class StaffService {
             throw new Error('删除员工失败');
         }
 
-        return await response.json();
+        return true;
     }
 
     static async getStaffByIdentity(identity: string): Promise<StaffModel[]> {

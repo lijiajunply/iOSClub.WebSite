@@ -12,24 +12,10 @@
 
         <div class="flex flex-wrap gap-2">
           <button
-              @click="downloadData"
-              class="px-4 py-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center"
-          >
-            <Icon icon="ion:download" class="mr-1" />
-            下载文件
-          </button>
-          <button
-              @click="uploadData"
-              class="px-4 py-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center"
-          >
-            <Icon icon="ion:cloud-upload" class="mr-1" />
-            上传数据
-          </button>
-          <button
               @click="() => openDepartment()"
               class="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white transition-colors flex items-center"
           >
-            <Icon icon="ion:add" class="mr-1" />
+            <Icon icon="ion:add" class="mr-1"/>
             添加部门
           </button>
         </div>
@@ -38,7 +24,8 @@
 
     <!-- 主内容区 -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-      <div class="overflow-hidden bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
+      <div
+          class="overflow-hidden bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
         <!-- 标签页导航 -->
         <n-tabs
             type="line"
@@ -55,13 +42,13 @@
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
                   <h2 class="text-lg font-medium">社长/团支书/秘书长</h2>
                   <div class="flex gap-2">
-                    <SkeletonLoader type="button" />
-                    <SkeletonLoader type="button" />
+                    <SkeletonLoader type="button"/>
+                    <SkeletonLoader type="button"/>
                   </div>
                 </div>
 
                 <div class="flex flex-wrap gap-2 mt-4">
-                  <SkeletonLoader v-for="i in 3" :key="i" type="tag" />
+                  <SkeletonLoader v-for="i in 3" :key="i" type="tag"/>
                 </div>
               </section>
 
@@ -71,15 +58,15 @@
                   <h2 class="text-lg font-medium">成员</h2>
                   <div class="flex flex-col sm:flex-row sm:items-center gap-4">
                     <div class="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                      <Icon icon="ion:people" class="mr-1" width="16" height="16" />
-                      <span>所有部员: <SkeletonLoader type="text" width="20px" /></span>
+                      <Icon icon="ion:people" class="mr-1" width="16" height="16"/>
+                      <span>所有部员: <SkeletonLoader type="text" width="20px"/></span>
                     </div>
-                    <SkeletonLoader type="button" />
+                    <SkeletonLoader type="button"/>
                   </div>
                 </div>
 
                 <div class="bg-gray-100 dark:bg-gray-700/50 rounded-xl overflow-hidden">
-                  <SkeletonLoader type="table" :count="5" :columns="8" />
+                  <SkeletonLoader type="table" :count="5" :columns="8"/>
                 </div>
               </section>
 
@@ -87,11 +74,11 @@
               <section>
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                   <h2 class="text-lg font-medium">项目</h2>
-                  <SkeletonLoader type="button" />
+                  <SkeletonLoader type="button"/>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                  <SkeletonLoader v-for="i in 3" :key="i" type="card" />
+                  <SkeletonLoader v-for="i in 3" :key="i" type="card"/>
                 </div>
               </section>
 
@@ -104,7 +91,7 @@
                       class="bg-white dark:bg-gray-700 rounded-xl shadow-sm p-5 border border-gray-200 dark:border-gray-600">
                     <h3 class="text-sm font-medium mb-3 text-gray-600 dark:text-gray-300">部门分布</h3>
                     <div class="h-80 flex items-center justify-center">
-                      <SkeletonLoader type="chart" />
+                      <SkeletonLoader type="chart"/>
                     </div>
                   </div>
 
@@ -113,7 +100,7 @@
                       class="bg-white dark:bg-gray-700 rounded-xl shadow-sm p-5 border border-gray-200 dark:border-gray-600">
                     <h3 class="text-sm font-medium mb-3 text-gray-600 dark:text-gray-300">学院分布</h3>
                     <div class="h-80 flex items-center justify-center">
-                      <SkeletonLoader type="chart" />
+                      <SkeletonLoader type="chart"/>
                     </div>
                   </div>
 
@@ -122,7 +109,7 @@
                       class="bg-white dark:bg-gray-700 rounded-xl shadow-sm p-5 border border-gray-200 dark:border-gray-600">
                     <h3 class="text-sm font-medium mb-3 text-gray-600 dark:text-gray-300">男女比例</h3>
                     <div class="h-80 flex items-center justify-center">
-                      <SkeletonLoader type="chart" />
+                      <SkeletonLoader type="chart"/>
                     </div>
                   </div>
                 </div>
@@ -157,7 +144,7 @@
                   >
                     <span>{{ member.userName }}</span>
                     <button @click="() => deleteMember(member, ministers)" class="ml-1 hover:text-red-500">
-                      <Icon icon="ion:close" width="16" height="16" />
+                      <Icon icon="ion:close" width="16" height="16"/>
                     </button>
                   </div>
                   <div
@@ -175,7 +162,7 @@
                   <h2 class="text-lg font-medium">成员</h2>
                   <div class="flex flex-col sm:flex-row sm:items-center gap-4">
                     <div class="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                      <Icon icon="ion:people" class="mr-1" width="16" height="16" />
+                      <Icon icon="ion:people" class="mr-1" width="16" height="16"/>
                       <span>所有部员: {{ members.length }}</span>
                     </div>
                     <button
@@ -207,7 +194,7 @@
                       @click="addProject"
                       class="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white transition-colors flex items-center"
                   >
-                    <Icon icon="ion:add" class="mr-1" />
+                    <Icon icon="ion:add" class="mr-1"/>
                     添加
                   </button>
                 </div>
@@ -229,17 +216,19 @@
                     </div>
                     <p class="text-sm text-gray-500 dark:text-gray-400 mb-4 line-clamp-2">{{ project.description }}</p>
                     <div class="flex justify-end gap-2">
-                      <button class="px-3 py-1 text-sm rounded-lg text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100">
+                      <button
+                          @click="() => openProject(project)"
+                          class="px-3 py-1 text-sm rounded-lg text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100">
                         去看看
                       </button>
-                      <button 
-                        @click="() => editProject(project)"
-                        class="px-3 py-1 text-sm rounded-lg bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-500">
+                      <button
+                          @click="() => editProject(project)"
+                          class="px-3 py-1 text-sm rounded-lg bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-500">
                         编辑
                       </button>
-                      <button 
-                        @click="() => deleteProject(project)"
-                        class="px-3 py-1 text-sm rounded-lg bg-red-500 hover:bg-red-600 text-white">
+                      <button
+                          @click="() => deleteProject(project)"
+                          class="px-3 py-1 text-sm rounded-lg bg-red-500 hover:bg-red-600 text-white">
                         删除
                       </button>
                     </div>
@@ -330,14 +319,18 @@
               <!-- 部门信息头部 -->
               <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                 <div>
-                  <h2 class="text-xl font-medium"><SkeletonLoader type="text" width="150px" /></h2>
-                  <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 max-w-2xl"><SkeletonLoader type="text" width="300px" /></p>
+                  <h2 class="text-xl font-medium">
+                    <SkeletonLoader type="text" width="150px"/>
+                  </h2>
+                  <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 max-w-2xl">
+                    <SkeletonLoader type="text" width="300px"/>
+                  </p>
                 </div>
                 <div class="flex flex-wrap gap-2">
-                  <SkeletonLoader type="button" />
-                  <SkeletonLoader type="button" />
-                  <SkeletonLoader type="button" />
-                  <SkeletonLoader type="button" />
+                  <SkeletonLoader type="button"/>
+                  <SkeletonLoader type="button"/>
+                  <SkeletonLoader type="button"/>
+                  <SkeletonLoader type="button"/>
                 </div>
               </div>
 
@@ -345,7 +338,7 @@
               <section>
                 <h3 class="text-lg font-medium mb-3">部长/副部长</h3>
                 <div class="flex flex-wrap gap-2">
-                  <SkeletonLoader v-for="i in 3" :key="i" type="tag" />
+                  <SkeletonLoader v-for="i in 3" :key="i" type="tag"/>
                 </div>
               </section>
 
@@ -354,13 +347,13 @@
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
                   <h3 class="text-lg font-medium">成员</h3>
                   <div class="flex gap-2">
-                    <SkeletonLoader type="button" />
-                    <SkeletonLoader type="button" />
+                    <SkeletonLoader type="button"/>
+                    <SkeletonLoader type="button"/>
                   </div>
                 </div>
 
                 <div class="bg-gray-100 dark:bg-gray-700/50 rounded-xl overflow-hidden">
-                  <SkeletonLoader type="table" :count="5" :columns="3" />
+                  <SkeletonLoader type="table" :count="5" :columns="3"/>
                 </div>
               </section>
 
@@ -368,11 +361,11 @@
               <section>
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                   <h3 class="text-lg font-medium">项目</h3>
-                  <SkeletonLoader type="button" />
+                  <SkeletonLoader type="button"/>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                  <SkeletonLoader v-for="i in 3" :key="i" type="card" />
+                  <SkeletonLoader v-for="i in 3" :key="i" type="card"/>
                 </div>
               </section>
             </div>
@@ -422,7 +415,7 @@
                   >
                     <span>{{ member.name }}</span>
                     <button @click="() => deleteMember(member, department.ministers)" class="ml-1 hover:text-red-500">
-                      <Icon icon="ion:close" width="16" height="16" />
+                      <Icon icon="ion:close" width="16" height="16"/>
                     </button>
                   </div>
                   <div
@@ -474,7 +467,7 @@
                       @click="addProject"
                       class="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white transition-colors flex items-center"
                   >
-                    <Icon icon="ion:add" class="mr-1" />
+                    <Icon icon="ion:add" class="mr-1"/>
                     添加
                   </button>
                 </div>
@@ -488,17 +481,19 @@
                     <h3 class="font-medium text-gray-900 dark:text-gray-100 mb-3">{{ project.title }}</h3>
                     <p class="text-sm text-gray-500 dark:text-gray-400 mb-4 line-clamp-2">{{ project.description }}</p>
                     <div class="flex justify-end gap-2">
-                      <button class="px-3 py-1 text-sm rounded-lg text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100">
+                      <button
+                          @click="() => openProject(project)"
+                          class="px-3 py-1 text-sm rounded-lg text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100">
                         去看看
                       </button>
-                      <button 
-                        @click="() => editProject(project)"
-                        class="px-3 py-1 text-sm rounded-lg bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-500">
+                      <button
+                          @click="() => editProject(project)"
+                          class="px-3 py-1 text-sm rounded-lg bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-500">
                         编辑
                       </button>
-                      <button 
-                        @click="() => deleteProject(project, department.projects)"
-                        class="px-3 py-1 text-sm rounded-lg bg-red-500 hover:bg-red-600 text-white">
+                      <button
+                          @click="() => deleteProject(project, department.projects)"
+                          class="px-3 py-1 text-sm rounded-lg bg-red-500 hover:bg-red-600 text-white">
                         删除
                       </button>
                     </div>
@@ -536,12 +531,12 @@
               clearable
           >
             <template #prefix>
-              <Icon icon="ion:search" />
+              <Icon icon="ion:search"/>
             </template>
           </n-input>
-          <button 
-            @click="searchMembers"
-            class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors">
+          <button
+              @click="searchMembers"
+              class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors">
             搜索
           </button>
         </div>
@@ -564,16 +559,16 @@
         <div v-else class="text-center py-8 text-gray-500 dark:text-gray-400">
           <n-empty description="请输入关键词搜索成员">
             <template #icon>
-              <Icon icon="ion:search" />
+              <Icon icon="ion:search"/>
             </template>
           </n-empty>
         </div>
       </div>
       <template #footer>
         <div class="flex justify-end gap-2">
-          <button 
-            @click="showAddMemberModal = false"
-            class="px-4 py-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+          <button
+              @click="showAddMemberModal = false"
+              class="px-4 py-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
             取消
           </button>
         </div>
@@ -612,9 +607,9 @@
       </n-form>
       <template #footer>
         <div class="flex justify-end gap-2">
-          <button 
-            @click="showDepartmentModal = false"
-            class="px-4 py-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+          <button
+              @click="showDepartmentModal = false"
+              class="px-4 py-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
             取消
           </button>
           <button
@@ -642,16 +637,15 @@ import {
   NFormItem,
   NDataTable,
   NModal,
-  NTag,
   NEmpty,
   type DataTableColumns
 } from 'naive-ui'
-import { Icon } from '@iconify/vue'
+import {Icon} from '@iconify/vue'
 import SkeletonLoader from '../components/SkeletonLoader.vue'
 import {DepartmentService} from '../services/DepartmentService'
 import {StaffService} from '../services/StaffService'
 import {ProjectService} from '../services/ProjectService'
-import type {Department, DepartmentModel, MemberModel, Project} from '../models'
+import type {Department, DepartmentModel, MemberModel, Project, StudentModel} from '../models'
 import * as echarts from 'echarts'
 
 const router = useRouter()
@@ -670,6 +664,7 @@ const showAddMemberModal = ref(false)
 const showDepartmentModal = ref(false)
 const searchKeyword = ref('')
 const searchResults = ref([])
+const addMemberType = ref('member')
 const departmentFormRef = ref<InstanceType<typeof NForm> | null>(null)
 
 // 表单数据
@@ -758,22 +753,6 @@ const departmentRules = {
   }
 }
 
-// 导航方法
-const goBack = () => {
-  router.push('/Centre')
-}
-
-// 操作方法
-const downloadData = () => {
-  console.log('下载文件')
-  message.success('下载文件功能待实现')
-}
-
-const uploadData = () => {
-  console.log('上传Json数据')
-  message.success('上传数据功能待实现')
-}
-
 const openDepartment = (department: Department | null = null) => {
   if (department) {
     editingDepartment.value = department
@@ -788,11 +767,12 @@ const openDepartment = (department: Department | null = null) => {
   showDepartmentModal.value = true
 }
 
-const openAddMember = (department: Department | null = null, type = '') => {
+const openAddMember = (department: Department | null = null, type = 'member') => {
   currentDepartment.value = department
   showAddMemberModal.value = true
   searchKeyword.value = ''
   searchResults.value = []
+  addMemberType.value = type
 }
 
 const deleteAllMinisters = () => {
@@ -825,7 +805,11 @@ const deleteMember = (member: any, list?: any[]) => {
   }
 }
 
-const deleteStaff = (staff: any) => {
+const deleteStaff = async (staff: any) => {
+  const res = await StaffService.deleteStaff(staff.userId)
+  if (!res) {
+    return message.error('部员删除失败')
+  }
   message.success('部员已删除')
 }
 
@@ -835,13 +819,15 @@ const downloadMemberInfo = () => {
 }
 
 const addProject = () => {
-  console.log('添加项目')
-  message.success('添加项目功能待实现')
+  router.push('/Centre/ProjectEditor')
 }
 
 const editProject = (project: Project) => {
-  console.log('编辑项目', project)
-  message.success('编辑项目功能待实现')
+  router.push(`/Centre/ProjectEditor/${project.id}`)
+}
+
+const openProject = (project: Project) => {
+  router.push(`/Centre/ProjectData/${project.id}`)
 }
 
 const deleteProject = (project: Project, list?: Project[]) => {
@@ -909,17 +895,36 @@ const searchMembers = async () => {
   }
 }
 
-const addMember = (member: any) => {
+const addMember = (member: StudentModel) => {
   if (currentDepartment.value) {
     // 添加到特定部门
     if (!currentDepartment.value.ministers) {
       currentDepartment.value.ministers = []
     }
-    currentDepartment.value.ministers.push(member)
+
+    if (addMemberType.value === 'minister') {
+      currentDepartment.value.ministers?.push({
+        userId: member.userId,
+        name: member.userName,
+        identity: 'Minister',
+        department: currentDepartment.value.name
+      })
+    } else {
+      currentDepartment.value.members?.push({
+        userId: member.userId,
+        name: member.userName,
+        identity: 'Member',
+        department: currentDepartment.value.name
+      })
+    }
+
     message.success(`已添加${member.userName}到${currentDepartment.value.name}`)
   } else {
     // 添加到领导层
-    ministers.value.push(member)
+    ministers.value.push({
+      ...member,
+      identity: 'President'
+    })
     message.success(`已添加${member.userName}到领导层`)
   }
   showAddMemberModal.value = false
@@ -973,7 +978,7 @@ const fetchData = async () => {
       members: dept.staffs?.filter((staff: any) =>
           staff.identity === 'Department') || [],
       projects: (dept.projects || []).map(project => ({
-        id: parseInt(project.id),
+        id: project.id,
         title: project.name,
         description: project.description,
         department: {
@@ -996,7 +1001,7 @@ const fetchData = async () => {
     // 获取项目信息
     const projectsData = await ProjectService.getAllProjects()
     projects.value = projectsData.map(project => ({
-      id: project.id as unknown as number, // 需要根据实际情况调整
+      id: project.id, // 需要根据实际情况调整
       title: project.name,
       description: project.description,
       department: {
