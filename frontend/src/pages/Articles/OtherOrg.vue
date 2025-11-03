@@ -2,19 +2,11 @@
 import { ref } from 'vue'
 import {
   NImage,
-  NImageGroup,
   NDivider,
-  NAnchor,
-  NAnchorLink,
-  NAffix,
-  NBreadcrumb,
-  NBreadcrumbItem
 } from 'naive-ui'
 import xiaomiImg from '/assets/other/xiaomi.jpg'
 import huaweiImg from '/assets/other/huawei.jpg'
 import aircraftImg from '/assets/other/aircraft.jpg'
-import tesheImg from '/assets/other/teshe.jpg'
-import PageTitle from "../../components/PageTitle.vue"
 
 const visible = ref(false)
 
