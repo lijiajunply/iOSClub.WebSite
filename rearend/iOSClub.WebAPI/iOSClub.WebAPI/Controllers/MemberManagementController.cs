@@ -49,7 +49,7 @@ public class MemberManagementController(IStudentRepository studentRepository) : 
     /// <param name="model">成员模型</param>
     /// <returns>操作结果</returns>
     [HttpPost("update")]
-    public async Task<ActionResult> Update([FromBody] MemberModel model)
+    public async Task<ActionResult> Update([FromBody] StudentModel model)
     {
         var result = await studentRepository.UpdateAsync(model);
         if (!result)

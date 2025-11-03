@@ -16,7 +16,7 @@ public interface IStudentRepository
     
     // 新增方法
     public Task<StudentModel?> GetByIdAsync(string id);
-    public Task<bool> UpdateAsync(MemberModel model);
+    public Task<bool> UpdateAsync(StudentModel model);
     public Task<bool> DeleteAsync(string id);
     public Task<List<StudentModel>> UpdateManyAsync(List<StudentModel> list);
     public Task<List<MemberModel>> GetAllMembersAsync();
@@ -81,7 +81,7 @@ public class StudentRepository(ClubContext context) : IStudentRepository
         return await context.Students.FirstOrDefaultAsync(x => x.UserId == id);
     }
 
-    public async Task<bool> UpdateAsync(MemberModel model)
+    public async Task<bool> UpdateAsync(StudentModel model)
     {
         var stu = await GetByIdAsync(model.UserId);
         if (stu == null) return false;

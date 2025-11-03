@@ -9,18 +9,65 @@
             <Icon icon="heroicons:key-solid" class="w-8 h-8 text-blue-500 dark:text-blue-400" />
           </div>
           <h1 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">
-            忘记密码
+            {{ step === 1 ? '忘记密码' : '重置密码' }}
           </h1>
           <p class="text-gray-500 dark:text-gray-400">
-            请输入您的学号以重置密码
+            {{ step === 1 ? '请输入您的学号以重置密码' : '请输入验证码和新密码' }}
           </p>
         </div>
 
-        <n-form :model="form" :rules="rules" ref="formRef">
+        <!-- 第一步：请求重置密码 -->
+        <n-form v-if="step === 1" :model="formStep1" :rules="rulesStep1" ref="formStep1Ref">
           <n-form-item path="studentId" label="学号">
             <n-input
-              v-model:value="form.studentId"
+              v-model:value="formStep1.studentId"
               placeholder="请输入您的学号"
+              size="large"
+              class="rounded-xl"
+              :input-props="{ class: 'dark:bg-neutral-800 dark:text-white dark:placeholder-gray-400' }"
+            />
+          </n-form-item>
+        </n-form>
+
+        <!-- 第二步：输入验证码和新密码 -->
+        <n-form v-else :model="formStep2" :rules="rulesStep2" ref="formStep2Ref">
+          <n-form-item path="studentId" label="学号">
+            <n-input
+              v-model:value="formStep2.studentId"
+              placeholder="请输入您的学号"
+              size="large"
+              class="rounded-xl"
+              :input-props="{ class: 'dark:bg-neutral-800 dark:text-white dark:placeholder-gray-400' }"
+              :disabled="true"
+            />
+          </n-form-item>
+          
+          <n-form-item path="verificationCode" label="验证码">
+            <n-input
+              v-model:value="formStep2.verificationCode"
+              placeholder="请输入邮箱中收到的验证码"
+              size="large"
+              class="rounded-xl"
+              :input-props="{ class: 'dark:bg-neutral-800 dark:text-white dark:placeholder-gray-400' }"
+            />
+          </n-form-item>
+          
+          <n-form-item path="newPassword" label="新密码">
+            <n-input
+              v-model:value="formStep2.newPassword"
+              type="password"
+              placeholder="请输入新密码"
+              size="large"
+              class="rounded-xl"
+              :input-props="{ class: 'dark:bg-neutral-800 dark:text-white dark:placeholder-gray-400' }"
+            />
+          </n-form-item>
+          
+          <n-form-item path="confirmPassword" label="确认新密码">
+            <n-input
+              v-model:value="formStep2.confirmPassword"
+              type="password"
+              placeholder="请再次输入新密码"
               size="large"
               class="rounded-xl"
               :input-props="{ class: 'dark:bg-neutral-800 dark:text-white dark:placeholder-gray-400' }"
@@ -37,7 +84,10 @@
           class="mt-2 rounded-xl font-medium"
           :disabled="loading"
         >
-          {{ loading ? '提交中...' : '发送重置邮件' }}
+          {{ 
+            loading ? '提交中...' : 
+            (step === 1 ? '发送重置邮件' : '重置密码') 
+          }}
         </n-button>
 
         <div v-if="errorMsg" class="text-red-500 text-center mt-4 text-sm">
@@ -50,13 +100,21 @@
 
         <div class="mt-6 text-center">
           <p class="text-sm text-gray-500 dark:text-gray-400">
-            记起来了？
+            {{ step === 1 ? '记起来了？' : '返回登录页' }}
             <router-link
+              v-if="step === 1"
               to="/Login"
               class="text-blue-500 dark:text-blue-400 font-medium hover:underline"
             >
               返回登录页
             </router-link>
+            <button 
+              v-else
+              @click="step = 1"
+              class="text-blue-500 dark:text-blue-400 font-medium hover:underline"
+            >
+              重新发送验证码
+            </button>
           </p>
         </div>
       </div>
@@ -69,21 +127,39 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { NForm, NFormItem, NInput, NButton } from 'naive-ui'
 import { Icon } from '@iconify/vue'
+import { AuthService } from '../services/AuthService';
 
-interface FormState {
+interface FormStep1State {
   studentId: string
 }
 
+interface FormStep2State {
+  studentId: string
+  verificationCode: string
+  newPassword: string
+  confirmPassword: string
+}
+
 const router = useRouter()
-const formRef = ref<InstanceType<typeof NForm> | null>(null)
+const formStep1Ref = ref<InstanceType<typeof NForm> | null>(null)
+const formStep2Ref = ref<InstanceType<typeof NForm> | null>(null)
 const loading = ref(false)
 const errorMsg = ref('')
 const successMsg = ref('')
-const form = ref<FormState>({
+const step = ref(1) // 1: 发送验证码步骤, 2: 重置密码步骤
+
+const formStep1 = ref<FormStep1State>({
   studentId: ''
 })
 
-const rules = {
+const formStep2 = ref<FormStep2State>({
+  studentId: '',
+  verificationCode: '',
+  newPassword: '',
+  confirmPassword: ''
+})
+
+const rulesStep1 = {
   studentId: {
     required: true,
     message: '请输入您的学号',
@@ -91,43 +167,96 @@ const rules = {
   }
 }
 
+const rulesStep2 = {
+  studentId: {
+    required: true,
+    message: '请输入您的学号',
+    trigger: 'blur'
+  },
+  verificationCode: {
+    required: true,
+    message: '请输入验证码',
+    trigger: 'blur'
+  },
+  newPassword: {
+    required: true,
+    message: '请输入新密码',
+    trigger: 'blur'
+  },
+  confirmPassword: {
+    required: true,
+    message: '请确认新密码',
+    trigger: 'blur',
+    validator: (_: any, value: string) => {
+      if (value !== formStep2.value.newPassword) {
+        return new Error('两次输入的密码不一致')
+      }
+      return true
+    }
+  }
+}
+
 const handleSubmit = () => {
   if (loading.value) return
 
-  formRef.value?.validate(async (errors) => {
-    if (!errors) {
-      loading.value = true
-      errorMsg.value = ''
-      successMsg.value = ''
+  if (step.value === 1) {
+    // 第一步：发送验证码
+    formStep1Ref.value?.validate(async (errors) => {
+      if (!errors) {
+        loading.value = true
+        errorMsg.value = ''
+        successMsg.value = ''
 
-      try {
-        const res = await fetch('/api/Member/ForgotPassword', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            studentId: form.value.studentId
-          })
-        })
-
-        if (!res.ok) {
-          const err = await res.json()
-          throw new Error(err.message || '网络请求失败')
+        try {
+          await AuthService.requestPasswordReset(formStep1.value.studentId);
+          
+          // 成功提示
+          successMsg.value = '重置验证码已发送，请查收您的邮箱'
+          
+          // 初始化第二步表单
+          formStep2.value.studentId = formStep1.value.studentId
+          
+          // 延迟切换到第二步
+          setTimeout(() => {
+            step.value = 2
+          }, 2000)
+        } catch (err: any) {
+          errorMsg.value = err.message || '请求失败，请稍后再试'
+        } finally {
+          loading.value = false
         }
-
-        // 成功提示
-        successMsg.value = '重置邮件已发送，请查收您的邮箱'
-
-        // 3秒后跳转到登录页
-        setTimeout(async () => {
-          await router.push('/Login')
-        }, 3000)
-      } catch (err: any) {
-        errorMsg.value = err.message || '请求失败，请稍后再试'
-      } finally {
-        loading.value = false
       }
-    }
-  })
+    })
+  } else {
+    // 第二步：重置密码
+    formStep2Ref.value?.validate(async (errors) => {
+      if (!errors) {
+        loading.value = true
+        errorMsg.value = ''
+        successMsg.value = ''
+
+        try {
+          await AuthService.resetPassword(
+            formStep2.value.studentId,
+            formStep2.value.verificationCode,
+            formStep2.value.newPassword
+          );
+          
+          // 成功提示
+          successMsg.value = '密码重置成功，即将跳转到登录页面'
+
+          // 3秒后跳转到登录页
+          setTimeout(async () => {
+            await router.push('/Login')
+          }, 3000)
+        } catch (err: any) {
+          errorMsg.value = err.message || '密码重置失败，请稍后再试'
+        } finally {
+          loading.value = false
+        }
+      }
+    })
+  }
 }
 </script>
 

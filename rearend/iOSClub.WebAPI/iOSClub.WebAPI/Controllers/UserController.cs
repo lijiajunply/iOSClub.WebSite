@@ -163,7 +163,7 @@ public class UserController(
     [TokenActionFilter]
     [Authorize]
     [HttpPut("profile")]
-    public async Task<IActionResult> UpdateProfile(MemberModel memberModel)
+    public async Task<IActionResult> UpdateProfile(StudentModel memberModel)
     {
         var member = httpContextAccessor.HttpContext?.User.GetUser();
         if (member == null || member.UserId != memberModel.UserId) return Forbid();

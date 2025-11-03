@@ -121,6 +121,75 @@ export class AuthService {
   static isLoggedIn(): boolean {
     return this.getToken() !== null;
   }
+
+  /**
+   * 修改用户密码
+   * @param userId 用户ID
+   * @param oldPassword 旧密码
+   * @param newPassword 新密码
+   * @returns Promise<boolean> 是否修改成功
+   */
+  static async changePassword(userId: string, oldPassword: string, newPassword: string): Promise<boolean> {
+    const token = this.getToken();
+    const response = await fetch(`${url}/Auth/change-password?userId=${userId}&oldPassword=${oldPassword}&newPassword=${newPassword}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('密码修改失败');
+    }
+
+    return true;
+  }
+
+  /**
+   * 请求重置密码的验证码
+   * @param userId 用户ID
+   * @returns Promise<boolean> 是否发送成功
+   */
+  static async requestPasswordReset(userId: string): Promise<boolean> {
+    const response = await fetch(`${url}/Auth/request-password-reset?userId=${userId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        throw new Error('用户不存在');
+      }
+      throw new Error('请联系管理员进行密码更改');
+    }
+
+    return true;
+  }
+
+  /**
+   * 通过验证码重置密码
+   * @param userId 用户ID
+   * @param code 验证码
+   * @param newPassword 新密码
+   * @returns Promise<boolean> 是否重置成功
+   */
+  static async resetPassword(userId: string, code: string, newPassword: string): Promise<boolean> {
+    const response = await fetch(`${url}/Auth/reset-password?userId=${userId}&code=${code}&newPassword=${newPassword}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('验证码无效或密码重置失败');
+    }
+
+    return true;
+  }
 }
 
 // 组织注册记录类

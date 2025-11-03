@@ -80,7 +80,6 @@ public class LoginService(
     : ILoginService
 {
     private readonly IDatabase _db = redis.GetDatabase();
-    private readonly IEmailService _emailService = emailService;
 
     private const string TokenPrefix = "token:";
     private const int TokenExpiryHours = 2; // 与JwtHelper中的过期时间保持一致
@@ -193,7 +192,7 @@ public class LoginService(
 
         // 更新密码
         student.PasswordHash = DataTool.StringToHash(newPassword);
-        var result = await studentRepository.UpdateAsync(MemberModel.AutoCopy<StudentModel, MemberModel>(student));
+        var result = await studentRepository.UpdateAsync(student);
 
         return result;
     }
@@ -209,33 +208,28 @@ public class LoginService(
         if (string.IsNullOrEmpty(student.EMail))
             return false;
 
-        // 生成6位随机验证码
-        var random = new Random();
-        var code = random.Next(100000, 999999).ToString();
-
-        // 将验证码存储到Redis，设置10分钟过期时间
         var redisKey = $"password_reset_code:{userId}";
-        await _db.StringSetAsync(redisKey, code, TimeSpan.FromMinutes(10));
+        string code;
+        var storedCode = await _db.StringGetAsync(redisKey);
+        if (!storedCode.HasValue || string.IsNullOrEmpty(storedCode))
+        {
+            // 生成6位随机验证码
+            var random = new Random();
+            code = random.Next(100000, 999999).ToString();
+            // 将验证码存储到Redis，设置10分钟过期时间
+
+            await _db.StringSetAsync(redisKey, code, TimeSpan.FromMinutes(10));
+        }
+        else
+        {
+            code = storedCode.ToString();
+        }
 
         // 发送邮件
         const string subject = "iOS Club 密码重置验证码";
-        var body = $"""
-                    您好 {student.UserName}，
+        var body = GeneratePasswordResetEmailBody(student.UserName, code);
 
-                    您正在请求重置您的iOS Club账户密码。
-
-                    请使用以下验证码完成密码重置操作：
-
-                    {code}
-
-                    此验证码将在10分钟后过期。
-
-                    如果您没有请求密码重置，请忽略此邮件。
-
-                    感谢您使用iOS Club！
-                    """;
-
-        var result = await _emailService.SendEmailAsync(student.EMail, subject, body);
+        var result = await emailService.SendEmailAsync(student.EMail, subject, body, true);
 
         return result;
     }
@@ -257,11 +251,96 @@ public class LoginService(
 
         // 更新密码
         student.PasswordHash = DataTool.StringToHash(newPassword);
-        var result = await studentRepository.UpdateAsync(MemberModel.AutoCopy<StudentModel, MemberModel>(student));
+        var result = await studentRepository.UpdateAsync(student);
 
         // 删除已使用的验证码
-        await _db.KeyDeleteAsync(redisKey);
+        if (result) await _db.KeyDeleteAsync(redisKey);
 
         return result;
+    }
+
+    /// <summary>
+    /// 生成密码重置邮件内容 - 苹果风格设计
+    /// </summary>
+    /// <param name="userName">用户名</param>
+    /// <param name="code">验证码</param>
+    /// <returns>格式化后的邮件内容</returns>
+    private string GeneratePasswordResetEmailBody(string userName, string code)
+    {
+        return $@"<html>
+<head>
+    <meta charset=""utf-8"">
+    <style>
+        body {{
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f8f8;
+        }}
+        .container {{
+            background-color: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }}
+        .header {{
+            text-align: center;
+            margin-bottom: 30px;
+        }}
+        .code {{
+            font-size: 32px;
+            font-weight: 600;
+            text-align: center;
+            letter-spacing: 8px;
+            padding: 20px;
+            background-color: #f1f1f1;
+            border-radius: 8px;
+            margin: 30px 0;
+            color: #111;
+        }}
+        .footer {{
+            margin-top: 30px;
+            font-size: 14px;
+            color: #888;
+            text-align: center;
+        }}
+        hr {{
+            border: none;
+            height: 1px;
+            background-color: #eee;
+            margin: 30px 0;
+        }}
+    </style>
+</head>
+<body>
+    <div class=""container"">
+        <div class=""header"">
+            <h1>iOS Club</h1>
+            <p>密码重置请求</p>
+        </div>
+        
+        <p>尊敬的 {userName}，</p>
+        
+        <p>您正在请求重置您的 iOS Club 账户密码。</p>
+        
+        <p>请在密码重置页面输入以下验证码：</p>
+        
+        <div class=""code"">{code}</div>
+        
+        <p>此验证码将在 10 分钟后过期。</p>
+        
+        <hr>
+        
+        <p style=""font-size: 14px; color: #666;"">如果您没有请求密码重置，请忽略此邮件。您的账户安全不会受到影响。</p>
+        
+        <div class=""footer"">
+            <p style=""margin-top: 20px; font-size: 12px;"">© 2025 iOS Club of XAUAT. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>";
     }
 }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {nextTick, ref, watch, computed, onMounted} from "vue";
+import {nextTick, ref, watch, computed, onMounted, withDefaults} from "vue";
 import {Icon} from "@iconify/vue";
 import * as echarts from 'echarts'
 
@@ -24,9 +24,12 @@ interface Content {
   content: string
 }
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   content?: Content
-}>()
+  showNav?: boolean
+}>(), {
+  showNav: true
+})
 
 // 存储标题结构
 const headings = ref<Array<{ id: string; text: string; level: number; href: string; children: any[] }>>([])
@@ -253,7 +256,7 @@ onMounted(() => {
 <template>
   <div v-if="content" class="flex flex-col md:flex-row">
     <!-- 文章内容区 -->
-    <div class="w-full md:w-4/5 p-4 md:p-8">
+    <div class="w-full p-4 md:p-8" :class="[showNav && headings.length > 0 ? 'md:w-4/5' : 'md:w-full']">
       <article class="prose prose-gray max-w-none dark:prose-invert">
         <!-- 文章头部 -->
         <header class="mb-8 border-b border-gray-200 pb-6 dark:border-gray-700">
@@ -280,7 +283,7 @@ onMounted(() => {
     </div>
 
     <!-- 目录导航 -->
-    <div v-if="headings.length > 0" class="hidden md:block w-1/5 sticky top-8 h-fit self-start p-4">
+    <div v-if="showNav && headings.length > 0" class="hidden md:block w-1/5 sticky top-8 h-fit self-start p-4">
       <nav class="toc-nav bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
         <h3 class="text-sm font-semibold mb-3 text-gray-900 dark:text-white">
           目录

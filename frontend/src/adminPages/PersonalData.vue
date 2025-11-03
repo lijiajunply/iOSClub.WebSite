@@ -208,7 +208,7 @@
             </div>
 
             <!-- 表单行：手机号 -->
-            <div class="mb-6">
+            <div class="mb-6 grid grid-cols-1 md:grid-cols-2 gap-6">
               <n-form-item label="手机号" path="phoneNum" class="mb-0">
                 <div class="relative">
                   <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -222,10 +222,23 @@
                   />
                 </div>
               </n-form-item>
+              <n-form-item label="邮箱" path="eMail" class="mb-0">
+                <div class="relative">
+                  <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                    <Icon icon="lucide:mail" class="text-gray-400" size="18"/>
+                  </div>
+                  <n-input
+                      v-model:value="userInfo.eMail"
+                      placeholder="请输入邮箱地址"
+                      class="pl-10 bg-gray-50 dark:bg-gray-750 border-gray-200 dark:border-gray-700 rounded-xl"
+                      :bordered="false"
+                  />
+                </div>
+              </n-form-item>
             </div>
 
             <!-- 操作按钮 -->
-            <div class="flex justify-center pt-4">
+            <div class="flex flex-col md:flex-row justify-center gap-4 pt-4">
               <n-button
                   type="primary"
                   @click="handleSubmit"
@@ -237,6 +250,16 @@
                   <Icon icon="lucide:save" size="18"/>
                 </template>
                 保存修改
+              </n-button>
+              <n-button
+                  @click="handlePasswordSubmit"
+                  size="large"
+                  class="w-full md:w-auto px-8 py-2.5 bg-purple-500 hover:bg-purple-600 text-white font-medium rounded-xl shadow-sm transition-all"
+              >
+                <template #icon>
+                  <Icon icon="lucide:lock" size="18"/>
+                </template>
+                修改密码
               </n-button>
             </div>
           </n-form>
@@ -278,6 +301,17 @@
               userInfo.className || '未设置'
             }}</p>
         </div>
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-sm">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">邮箱</h3>
+            <div class="h-8 w-8 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
+              <Icon icon="lucide:mail" class="text-indigo-500" size="16"/>
+            </div>
+          </div>
+          <p class="text-2xl font-semibold text-gray-900 dark:text-white truncate">{{
+              userInfo.eMail || '未设置'
+            }}</p>
+        </div>
       </div>
     </main>
 
@@ -287,6 +321,42 @@
       <div class="space-y-2">
         <p class="text-gray-600 dark:text-gray-300">您确定要保存这些更改吗？</p>
         <p class="text-sm text-gray-500 dark:text-gray-400">请仔细核对您的个人信息</p>
+      </div>
+    </n-modal>
+    
+    <!-- 密码修改对话框 -->
+    <n-modal v-model:show="showPasswordModal" preset="dialog" title="修改密码" positive-text="确认" negative-text="取消"
+             @positive-click="confirmPasswordChange" :loading="passwordLoading">
+      <div class="space-y-4">
+        <n-form :model="passwordForm" :rules="passwordRules" ref="passwordFormRef">
+          <n-form-item path="oldPassword" label="旧密码">
+            <n-input
+              v-model:value="passwordForm.oldPassword"
+              type="password"
+              placeholder="请输入旧密码"
+              class="bg-gray-50 dark:bg-gray-750 border-gray-200 dark:border-gray-700 rounded-xl"
+              :bordered="false"
+            />
+          </n-form-item>
+          <n-form-item path="newPassword" label="新密码">
+            <n-input
+              v-model:value="passwordForm.newPassword"
+              type="password"
+              placeholder="请输入新密码（至少6位）"
+              class="bg-gray-50 dark:bg-gray-750 border-gray-200 dark:border-gray-700 rounded-xl"
+              :bordered="false"
+            />
+          </n-form-item>
+          <n-form-item path="confirmPassword" label="确认新密码">
+            <n-input
+              v-model:value="passwordForm.confirmPassword"
+              type="password"
+              placeholder="请再次输入新密码"
+              class="bg-gray-50 dark:bg-gray-750 border-gray-200 dark:border-gray-700 rounded-xl"
+              :bordered="false"
+            />
+          </n-form-item>
+        </n-form>
       </div>
     </n-modal>
   </div>
@@ -299,6 +369,7 @@ import {Icon} from '@iconify/vue';
 import SkeletonLoader from '../components/SkeletonLoader.vue';
 import {useAuthorizationStore} from '../stores/Authorization';
 import {UserService} from '../services/UserService';
+import {AuthService} from '../services/AuthService';
 import type {MemberModel} from '../models';
 import {useRouter} from 'vue-router';
 
@@ -373,6 +444,48 @@ const academyOptions = [
   '未来技术学院',
   '国际教育学院'
 ].map(academy => ({label: academy, value: academy}));
+
+// 密码修改相关状态
+const showPasswordModal = ref(false);
+const passwordLoading = ref(false);
+const passwordForm = reactive({
+  oldPassword: '',
+  newPassword: '',
+  confirmPassword: ''
+});
+const passwordRules = {
+  oldPassword: {
+    required: true,
+    message: '请输入旧密码',
+    trigger: 'blur'
+  },
+  newPassword: [
+    {
+      required: true,
+      message: '请输入新密码',
+      trigger: 'blur'
+    },
+    {
+      min: 6,
+      message: '密码长度至少为6位',
+      trigger: 'blur'
+    }
+  ],
+  confirmPassword: [
+    {
+      required: true,
+      message: '请确认新密码',
+      trigger: 'blur'
+    },
+    {
+      validator: (_: any, value: string) => {
+        return value === passwordForm.newPassword;
+      },
+      message: '两次输入的密码不一致',
+      trigger: 'blur'
+    }
+  ]
+};
 
 // 表单数据
 const userInfo = reactive<MemberModel>({
@@ -458,6 +571,18 @@ const rules = {
       message: '请输入正确的手机号',
       trigger: 'blur'
     }
+  ],
+  eMail: [
+    {
+      required: false,
+      message: '请输入正确的邮箱地址',
+      trigger: 'blur'
+    },
+    {
+      pattern: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+      message: '请输入正确的邮箱格式',
+      trigger: 'blur'
+    }
   ]
 };
 
@@ -523,6 +648,31 @@ const handleConfirm = async () => {
     }
   } finally {
     confirmLoading.value = false;
+  }
+};
+
+// 处理密码修改
+const handlePasswordSubmit = () => {
+  showPasswordModal.value = true;
+};
+
+// 确认修改密码
+const confirmPasswordChange = async () => {
+  try {
+    passwordLoading.value = true;
+    await AuthService.changePassword(userInfo.userId, passwordForm.oldPassword, passwordForm.newPassword);
+    message.success('密码修改成功');
+    showPasswordModal.value = false;
+    
+    // 重置密码表单
+    passwordForm.oldPassword = '';
+    passwordForm.newPassword = '';
+    passwordForm.confirmPassword = '';
+  } catch (error: any) {
+    console.error('密码修改失败:', error);
+    message.error('密码修改失败: ' + (error instanceof Error ? error.message : String(error)));
+  } finally {
+    passwordLoading.value = false;
   }
 };
 

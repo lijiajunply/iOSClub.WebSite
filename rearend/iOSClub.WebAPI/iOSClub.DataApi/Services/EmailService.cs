@@ -1,6 +1,7 @@
-using System.Net;
-using System.Net.Mail;
+using MailKit.Net.Smtp;
+using MailKit.Security;
 using Microsoft.Extensions.Configuration;
+using MimeKit;
 
 namespace iOSClub.DataApi.Services;
 
@@ -21,45 +22,60 @@ public class EmailService(IConfiguration configuration) : IEmailService
 {
     public async Task<bool> SendEmailAsync(string to, string subject, string body, bool isHtml = false)
     {
+        var smtpServer = configuration["Email:SmtpServer"];
+        var port = int.Parse(configuration["Email:Port"] ?? "587");
+        var username = configuration["Email:Username"];
+        var password = configuration["Email:Password"];
+        var fromAddress = configuration["Email:FromAddress"];
+
+        // 检查必要配置是否存在
+        if (string.IsNullOrEmpty(smtpServer) ||
+            string.IsNullOrEmpty(username) ||
+            string.IsNullOrEmpty(password) ||
+            string.IsNullOrEmpty(fromAddress))
+        {
+            return false;
+        }
+
         try
         {
-            var smtpServer = configuration["Email:SmtpServer"];
-            var port = int.Parse(configuration["Email:Port"] ?? "587");
-            var username = configuration["Email:Username"];
-            var password = configuration["Email:Password"];
-            var fromAddress = configuration["Email:FromAddress"];
-            var fromName = configuration["Email:FromName"] ?? "iOS Club";
-            var enableSsl = bool.Parse(configuration["Email:EnableSsl"] ?? "true");
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress("", fromAddress));
+            message.To.Add(new MailboxAddress("", to));
+            message.Subject = subject;
 
-            // 检查必要配置是否存在
-            if (string.IsNullOrEmpty(smtpServer) ||
-                string.IsNullOrEmpty(username) ||
-                string.IsNullOrEmpty(password) ||
-                string.IsNullOrEmpty(fromAddress))
+            var bodyBuilder = new BodyBuilder();
+            if (isHtml)
             {
-                return false;
+                bodyBuilder.HtmlBody = body;
+            }
+            else
+            {
+                bodyBuilder.TextBody = body;
             }
 
-            using var client = new SmtpClient(smtpServer, port);
-            client.EnableSsl = enableSsl;
-            client.Credentials = new NetworkCredential(username, password);
+            message.Body = bodyBuilder.ToMessageBody();
 
-            var mailMessage = new MailMessage
+            using var client = new SmtpClient();
+
+            // 根据端口选择安全选项
+            var secureSocketOptions = port switch
             {
-                From = new MailAddress(fromAddress, fromName),
-                Subject = subject,
-                Body = body,
-                IsBodyHtml = isHtml
+                587 => SecureSocketOptions.StartTls,
+                465 => SecureSocketOptions.SslOnConnect,
+                _ => SecureSocketOptions.Auto
             };
 
-            mailMessage.To.Add(to);
+            await client.ConnectAsync(smtpServer, port, secureSocketOptions);
+            await client.AuthenticateAsync(fromAddress, password);
 
-            await client.SendMailAsync(mailMessage);
+            await client.SendAsync(message);
+            await client.DisconnectAsync(true);
+
             return true;
         }
-        catch (Exception)
+        catch
         {
-            // 在实际应用中，应该记录日志
             return false;
         }
     }

@@ -3,8 +3,8 @@ export interface ProjectModel {
   id: string;
   name: string;
   description: string;
-  startTime: Date;
-  endTime: Date;
+  startTime: Date | number;
+  endTime: Date | number;
   department: string;
   staffs?: StaffModel[];
   tasks?: TaskModel[];
@@ -26,8 +26,8 @@ export interface TaskModel {
   name: string;
   description: string;
   status: string;
-  startTime: Date;
-  endTime: Date;
+  startTime: Date | number;
+  endTime: Date | number;
   users?: StaffModel[];
 }
 
