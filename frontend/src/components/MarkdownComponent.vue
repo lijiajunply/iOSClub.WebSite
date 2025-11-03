@@ -331,7 +331,7 @@ onMounted(() => {
 
 /* 自定义块样式 */
 .custom-block {
-  @apply rounded-lg p-4 my-4 border border-opacity-20;
+  @apply rounded-lg p-4 my-4 border;
 }
 
 .custom-block-title {
@@ -339,15 +339,15 @@ onMounted(() => {
 }
 
 .warning {
-  @apply bg-amber-50 border-amber-500 dark:bg-amber-900 dark:bg-opacity-20;
+  @apply bg-amber-50 border-amber-500 dark:bg-amber-900;
 }
 
 .danger {
-  @apply bg-red-50 border-red-500 dark:bg-red-900 dark:bg-opacity-20;
+  @apply bg-red-50 border-red-500 dark:bg-red-900;
 }
 
 .tip {
-  @apply bg-blue-50 border-blue-500 dark:bg-blue-900 dark:bg-opacity-20;
+  @apply bg-blue-50 border-blue-500 dark:bg-blue-900;
 }
 
 /* 目录链接活动状态 */

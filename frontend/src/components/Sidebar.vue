@@ -24,13 +24,15 @@
     >
       <!-- 侧边栏头部 -->
       <div class="p-6 border-b border-gray-100 dark:border-gray-700 flex items-center">
-        <img
-            src="/assets/iOS_Club_LOGO.png"
-            alt="iOS Club Logo"
-            class="w-10 h-10 rounded-lg object-contain"
-            @error="handleImageError"
-        />
-        <h2 class="pl-3 text-xl font-semibold text-gray-900 dark:text-white">iMember</h2>
+        <router-link to="/" class="flex items-center gap-3 group">
+          <img
+              src="/assets/iOS_Club_LOGO.png"
+              alt="iOS Club Logo"
+              class="w-10 h-10 rounded-lg object-contain"
+              @error="handleImageError"
+          />
+          <h2 class="text-xl font-semibold text-gray-900 dark:text-white">iMember</h2>
+        </router-link>
       </div>
 
       <!-- 侧边栏导航 -->
@@ -88,7 +90,7 @@ import {useRouter} from 'vue-router'
 import {useAuthorizationStore} from '../stores/Authorization'
 import {useLayoutStore} from '../stores/LayoutStore'
 import {NButton, NIcon} from 'naive-ui'
-import {Menu, LogOut, HomeOutline, Person, Business, Book, DocumentText, People, Cog} from '@vicons/ionicons5'
+import {LogOut, HomeOutline, Person, Business, Book, DocumentText, People, Cog} from '@vicons/ionicons5'
 
 const router = useRouter()
 const authorizationStore = useAuthorizationStore()

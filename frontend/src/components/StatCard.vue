@@ -1,42 +1,31 @@
 <template>
-  <n-card 
-    class="rounded-xl shadow-sm bg-white dark:bg-neutral-800 transition-colors duration-300 hover:shadow-md"
-    :bordered="false"
-  >
+  <div class="rounded-2xl bg-white dark:bg-neutral-800 transition-all duration-300 hover:shadow-lg p-5">
     <div class="flex items-center">
-      <div class="p-2 rounded-lg" :class="bgColorClass">
-        <Icon :icon="iconName" :size="iconSize" :color="iconColor" />
+      <div class="p-3 rounded-xl" :class="bgColorClass">
+        <Icon :icon="iconName" :width="iconSize" :height="iconSize" :color="iconColor" />
       </div>
       <div class="ml-4">
         <p class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ title }}</p>
-        <p class="text-2xl font-semibold text-gray-900 dark:text-white">{{ value }}</p>
+        <p class="text-2xl font-semibold text-gray-900 dark:text-white mt-1">{{ value }}</p>
       </div>
     </div>
-  </n-card>
+  </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
-import { NCard } from 'naive-ui'
 import { Icon } from '@iconify/vue'
 
-const props = defineProps({
-  title: {
-    type: String,
-    required: true
-  },
-  value: {
-    type: [Number, String],
-    required: true
-  },
-  icon: {
-    type: String,
-    default: 'people'
-  },
-  color: {
-    type: String,
-    default: 'blue'
-  }
+interface Props {
+  title: string
+  value: number | string
+  icon?: string
+  color?: string
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  icon: 'people',
+  color: 'blue'
 })
 
 const iconSize = 24
@@ -86,21 +75,21 @@ const iconColor = computed(() => {
 const bgColorClass = computed(() => {
   switch (props.color) {
     case 'blue':
-      return 'bg-blue-100 dark:bg-blue-900/50'
+      return 'bg-blue-100 dark:bg-blue-900/30'
     case 'green':
-      return 'bg-green-100 dark:bg-green-900/50'
+      return 'bg-green-100 dark:bg-green-900/30'
     case 'purple':
-      return 'bg-purple-100 dark:bg-purple-900/50'
+      return 'bg-purple-100 dark:bg-purple-900/30'
     case 'yellow':
-      return 'bg-yellow-100 dark:bg-yellow-900/50'
+      return 'bg-yellow-100 dark:bg-yellow-900/30'
     case 'pink':
-      return 'bg-pink-100 dark:bg-pink-900/50'
+      return 'bg-pink-100 dark:bg-pink-900/30'
     case 'indigo':
-      return 'bg-indigo-100 dark:bg-indigo-900/50'
+      return 'bg-indigo-100 dark:bg-indigo-900/30'
     case 'red':
-      return 'bg-red-100 dark:bg-red-900/50'
+      return 'bg-red-100 dark:bg-red-900/30'
     default:
-      return 'bg-blue-100 dark:bg-blue-900/50'
+      return 'bg-blue-100 dark:bg-blue-900/30'
   }
 })
 </script>

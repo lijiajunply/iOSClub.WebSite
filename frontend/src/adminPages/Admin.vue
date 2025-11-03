@@ -1,42 +1,56 @@
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-neutral-900 transition-colors duration-300">
-    <!-- Header -->
-    <header class="bg-white dark:bg-neutral-800 shadow-sm py-4 px-6 transition-colors duration-300">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center space-x-4">
-          <n-button text @click="goBack" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-neutral-700">
-            <Icon icon="ion:arrow-back" size="24" class="text-gray-600 dark:text-gray-300" />
-          </n-button>
-          <div>
-            <h1 class="text-xl font-semibold text-gray-900 dark:text-white">管理中心</h1>
-            <p class="text-sm text-gray-500 dark:text-gray-400">社团管理系统</p>
-          </div>
+  <div class="min-h-screen bg-white/90 dark:bg-gray-800/90 transition-colors duration-300">
+    <!-- 主内容区域 -->
+    <div class="p-4 md:p-6">
+      <!-- 页面标题 -->
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">管理中心</h1>
+          <p class="text-sm text-gray-500 dark:text-gray-400">社团管理系统数据分析</p>
         </div>
 
-        <div class="flex items-center space-x-3">
-          <n-button
+        <div class="flex items-center space-x-2">
+          <button
               v-if="userInfo.isAdmin"
-              secondary
-              type="info"
               @click="triggerFileInput"
-              class="hidden sm:flex"
+              class="hidden sm:flex items-center px-4 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors text-sm"
           >
-            <template #icon>
-                  <Icon icon="ion:cloud-upload" />
-                </template>
+            <Icon icon="material-symbols:upload" class="mr-1" width="20" height="20" />
             上传数据
-          </n-button>
+          </button>
 
-          <n-dropdown
-              v-if="userInfo.isAdmin"
-              trigger="click"
-              :options="dropdownOptions"
-              @select="handleDropdownSelect"
-          >
-            <n-button circle>
-              <Icon icon="ion:ellipsis-vertical" size="20" />
-            </n-button>
-          </n-dropdown>
+          <div v-if="userInfo.isAdmin" class="relative" ref="dropdownContainer">
+            <button
+                @click="toggleDropdown"
+                class="h-9 w-9 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+            >
+              <Icon icon="material-symbols:more-horiz" width="20" height="20" class="text-gray-700 dark:text-gray-300" />
+            </button>
+            
+            <div 
+                v-if="dropdownOpen" 
+                class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-700 rounded-lg shadow-lg py-1 z-10 border border-gray-200 dark:border-gray-600"
+            >
+              <button
+                  @click="handleDropdownSelect('download')"
+                  class="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
+              >
+                下载所有数据
+              </button>
+              <button
+                  @click="handleDropdownSelect('remove')"
+                  class="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-600"
+              >
+                删除所有数据
+              </button>
+              <button
+                  @click="handleDropdownSelect('upload')"
+                  class="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
+              >
+                上传Json数据
+              </button>
+            </div>
+          </div>
 
           <input
               ref="fileInput"
@@ -48,107 +62,110 @@
           />
         </div>
       </div>
-    </header>
 
-    <main class="p-4 md:p-6">
-      <!-- Stats Overview Section -->
-      <section class="mb-8">
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">数据概览</h2>
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-          <StatCard
-              title="社员人数"
-              :value="studentsCount"
-              icon="people"
-              color="blue"
-          />
-          <StatCard
-              title="部员人数"
-              :value="staffs.length"
-              icon="badge"
-              color="green"
-          />
-          <StatCard
-              title="项目数"
-              :value="projectsCount"
-              icon="folder"
-              color="purple"
-          />
-          <StatCard
-              title="任务数"
-              :value="tasksCount"
-              icon="task"
-              color="yellow"
-          />
-          <StatCard
-              title="资源数"
-              :value="resourcesCount"
-              icon="resource"
-              color="pink"
-          />
-          <StatCard
-              title="部门数"
-              :value="departmentsCount"
-              icon="department"
-              color="indigo"
-          />
-          <StatCard
-              title="待办数"
-              :value="todosCount"
-              icon="todo"
-              color="red"
-          />
+      <!-- 数据概览卡片 -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-8">
+        <StatCard
+            title="社员人数"
+            :value="studentsCount"
+            icon="material-symbols:people"
+            color="blue"
+        />
+        <StatCard
+            title="部员人数"
+            :value="staffs.length"
+            icon="material-symbols:badge"
+            color="green"
+        />
+        <StatCard
+            title="项目数"
+            :value="projectsCount"
+            icon="material-symbols:folder"
+            color="purple"
+        />
+        <StatCard
+            title="任务数"
+            :value="tasksCount"
+            icon="material-symbols:task"
+            color="amber"
+        />
+        <StatCard
+            title="资源数"
+            :value="resourcesCount"
+            icon="material-symbols:folder-open"
+            color="pink"
+        />
+        <StatCard
+            title="部门数"
+            :value="departmentsCount"
+            icon="material-symbols:groups"
+            color="indigo"
+        />
+        <StatCard
+            title="待办数"
+            :value="todosCount"
+            icon="material-symbols:check-box-outline-blank"
+            color="red"
+        />
+      </div>
+
+      <!-- 图表区域 -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- 成员分布图表 -->
+        <div class="rounded-2xl overflow-hidden bg-white dark:bg-gray-700/50 backdrop-blur-sm border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-300">
+          <div class="p-4 border-b border-gray-100 dark:border-gray-700">
+            <h3 class="font-medium text-gray-900 dark:text-white">成员分布</h3>
+          </div>
+          <div class="p-4">
+            <div ref="memberChartRef" class="h-72"></div>
+          </div>
         </div>
-      </section>
 
-      <!-- Charts Section -->
-      <section class="mb-8">
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">数据统计</h2>
-        <n-card
-            class="rounded-xl shadow-sm bg-white dark:bg-neutral-800 transition-colors duration-300"
-            :bordered="false"
-        >
-          <h3 class="font-medium text-gray-900 dark:text-white mb-4">成员分布</h3>
-          <div ref="memberChartRef" class="h-64"></div>
-        </n-card>
-      </section>
-    </main>
+        <!-- 项目进度图表 -->
+        <div class="rounded-2xl overflow-hidden bg-white dark:bg-gray-700/50 backdrop-blur-sm border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-300">
+          <div class="p-4 border-b border-gray-100 dark:border-gray-700">
+            <h3 class="font-medium text-gray-900 dark:text-white">项目概览</h3>
+          </div>
+          <div class="p-4">
+            <div ref="projectChartRef" class="h-72"></div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
-<script setup>
-import {ref, onMounted, onBeforeUnmount, nextTick} from 'vue'
+<script setup lang="ts">
+import {ref, onMounted, onBeforeUnmount, nextTick, watch, onBeforeMount} from 'vue'
 import {useRouter} from 'vue-router'
 import {useMessage, useDialog} from 'naive-ui'
-import {
-  NButton,
-  NCard,
-  NDropdown
-} from 'naive-ui'
-import { Icon } from '@iconify/vue'
+import {Icon} from '@iconify/vue'
 import * as echarts from 'echarts'
 import StatCard from '../components/StatCard.vue'
-import {MemberQueryService} from '../services/MemberQueryService.ts'
-import {StaffService} from '../services/StaffService.ts'
-import {ProjectService} from '../services/ProjectService.ts'
-import {ResourceService} from '../services/ResourceService.ts'
-import {DepartmentService} from '../services/DepartmentService.ts'
-import {TodoService} from '../services/TodoService.ts'
-import {InfoService} from '../services/InfoService.ts'
+import {MemberQueryService} from '../services/MemberQueryService'
+import {StaffService} from '../services/StaffService'
+import {ProjectService} from '../services/ProjectService'
+import {ResourceService} from '../services/ResourceService'
+import {DepartmentService} from '../services/DepartmentService'
+import {TodoService} from '../services/TodoService'
+import {InfoService} from '../services/InfoService'
 
 const router = useRouter()
 const message = useMessage()
 const dialog = useDialog()
 
 // Refs
-const fileInput = ref(null)
-const memberChartRef = ref(null)
-const projectChartRef = ref(null)
-const memberChart = ref(null)
-const projectChart = ref(null)
+const fileInput = ref<HTMLInputElement>()
+const memberChartRef = ref<HTMLElement>()
+const projectChartRef = ref<HTMLElement>()
+const dropdownContainer = ref<HTMLElement>()
+let memberChart: echarts.ECharts | null = null
+let projectChart: echarts.ECharts | null = null
+const dropdownOpen = ref(false)
 
 // Data state
 const studentsCount = ref(0)
-const staffs = ref([])
+const staffs = ref<any[]>([])
 const projectsCount = ref(0)
 const tasksCount = ref(0)
 const resourcesCount = ref(0)
@@ -159,7 +176,7 @@ const userInfo = ref({
 })
 
 // Identity dictionary mapping
-const identityDictionary = {
+const identityDictionary: Record<string, string> = {
   'Founder': '创始人',
   'President': '社长/团支书',
   'Minister': '部长/副部长',
@@ -167,38 +184,23 @@ const identityDictionary = {
   'Member': '普通成员'
 }
 
-// Dropdown options
-const dropdownOptions = [
-  {
-    label: '下载所有数据',
-    key: 'download'
-  },
-  {
-    label: '删除所有数据',
-    key: 'remove'
-  },
-  {
-    label: '上传Json数据',
-    key: 'upload'
-  }
-]
-
 // Navigation methods
-const goBack = () => {
-  router.push('/Centre')
-}
-
-const viewAllStaff = () => {
-  // Implementation for viewing all staff
-  message.info('查看全部功能待实现')
+const navigateTo = (route: string) => {
+  router.push(`/${route}`)
 }
 
 // File handling methods
 const triggerFileInput = () => {
-  fileInput.value.click()
+  fileInput.value?.click()
 }
 
-const handleDropdownSelect = (key) => {
+// Dropdown methods
+const toggleDropdown = () => {
+  dropdownOpen.value = !dropdownOpen.value
+}
+
+const handleDropdownSelect = (key: string) => {
+  dropdownOpen.value = false
   switch (key) {
     case 'download':
       downloadAllData()
@@ -212,10 +214,18 @@ const handleDropdownSelect = (key) => {
   }
 }
 
+// Click outside to close dropdown
+const handleClickOutside = (event: MouseEvent) => {
+  if (dropdownContainer.value && !dropdownContainer.value.contains(event.target as Node)) {
+    dropdownOpen.value = false
+  }
+}
+
 // Upload files
-const uploadFiles = async (event) => {
-  const files = event.target.files
-  if (!files.length) return
+const uploadFiles = async (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const files = target.files
+  if (!files || !files.length) return
 
   try {
     for (let i = 0; i < files.length; i++) {
@@ -224,10 +234,10 @@ const uploadFiles = async (event) => {
 
       reader.onload = async (e) => {
         try {
-          const result = e.target.result
+          const result = e.target?.result
           if (!result) return
 
-          const allData = JSON.parse(result)
+          const allData = JSON.parse(result as string)
           message.success(`文件 "${file.name}" 上传成功`)
         } catch (error) {
           console.error('解析文件时出错:', error)
@@ -294,8 +304,6 @@ const removeAllData = () => {
     negativeText: '取消',
     onPositiveClick: async () => {
       try {
-        // 目前没有在services中找到删除所有数据的服务方法
-        // 使用现有的API调用方式
         const token = localStorage.getItem('Authorization')
         if (!token) {
           message.error('未找到认证信息')
@@ -385,49 +393,54 @@ const fetchData = async () => {
   }
 }
 
-// Initialize charts
-const initCharts = () => {
-  if (memberChartRef.value) {
-    memberChart.value = echarts.init(memberChartRef.value)
-    updateMemberChart()
-  }
-
-  if (projectChartRef.value) {
-    projectChart.value = echarts.init(projectChartRef.value)
-    updateProjectChart()
-  }
-}
-
 // Update member chart
 const updateMemberChart = () => {
-  if (!memberChart.value) return
+  if (!memberChart) return
 
-  const identityCounts = {}
+  // 统计成员身份分布
+  const identityStats: Record<string, number> = {
+    'Founder': 0,
+    'President': 0,
+    'Minister': 0,
+    'Department': 0,
+    'Member': 0
+  }
+
   staffs.value.forEach(staff => {
-    const identity = identityDictionary[staff.identity] || staff.identity
-    identityCounts[identity] = (identityCounts[identity] || 0) + 1
+    if (identityStats.hasOwnProperty(staff.identity)) {
+      identityStats[staff.identity]++
+    }
   })
+
+  const isDark = document.documentElement.classList.contains('dark')
+  const textColor = isDark ? '#e5e7eb' : '#374151'
+  const backgroundColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'
 
   const option = {
     tooltip: {
-      trigger: 'item'
+      trigger: 'item',
+      backgroundColor: isDark ? '#1f2937' : '#ffffff',
+      borderColor: isDark ? '#374151' : '#e5e7eb',
+      textStyle: {
+        color: textColor
+      }
     },
     legend: {
       bottom: '0%',
       left: 'center',
       textStyle: {
-        color: document.documentElement.classList.contains('dark') ? '#fff' : '#000'
+        color: textColor
       }
     },
     series: [
       {
-        name: '成员身份',
+        name: '成员分布',
         type: 'pie',
         radius: ['40%', '70%'],
         avoidLabelOverlap: false,
         itemStyle: {
           borderRadius: 10,
-          borderColor: document.documentElement.classList.contains('dark') ? '#1f1f1f' : '#fff',
+          borderColor: isDark ? '#1f2937' : '#ffffff',
           borderWidth: 2
         },
         label: {
@@ -437,135 +450,175 @@ const updateMemberChart = () => {
         emphasis: {
           label: {
             show: true,
-            fontSize: 14,
-            fontWeight: 'bold'
+            fontSize: '18',
+            fontWeight: 'bold',
+            color: textColor
           }
         },
         labelLine: {
           show: false
         },
-        data: Object.keys(identityCounts).map(key => ({
-          value: identityCounts[key],
-          name: key
-        }))
+        data: [
+          {value: identityStats.Founder, name: identityDictionary.Founder, itemStyle: {color: '#f59e0b'}},
+          {value: identityStats.President, name: identityDictionary.President, itemStyle: {color: '#3b82f6'}},
+          {value: identityStats.Minister, name: identityDictionary.Minister, itemStyle: {color: '#10b981'}},
+          {value: identityStats.Department, name: identityDictionary.Department, itemStyle: {color: '#8b5cf6'}},
+          {value: identityStats.Member, name: identityDictionary.Member, itemStyle: {color: '#6b7280'}}
+        ].filter(item => item.value > 0)
       }
     ]
   }
 
-  memberChart.value.setOption(option)
+  memberChart.setOption(option)
 }
 
 // Update project chart
 const updateProjectChart = () => {
-  if (!projectChart.value) return
+  if (!projectChart) return
+
+  const isDark = document.documentElement.classList.contains('dark')
+  const textColor = isDark ? '#e5e7eb' : '#374151'
+  const backgroundColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'
 
   const option = {
     tooltip: {
       trigger: 'axis',
       axisPointer: {
         type: 'shadow'
+      },
+      backgroundColor: isDark ? '#1f2937' : '#ffffff',
+      borderColor: isDark ? '#374151' : '#e5e7eb',
+      textStyle: {
+        color: textColor
       }
     },
     grid: {
       left: '3%',
       right: '4%',
-      bottom: '15%',
+      bottom: '3%',
       containLabel: true
     },
     xAxis: [
       {
         type: 'category',
-        data: ['计划中', '进行中', '已完成', '已暂停'],
-        axisTick: {
-          alignWithLabel: true
+        data: ['总项目', '任务总数', '待完成'],
+        axisLine: {
+          lineStyle: {
+            color: isDark ? '#374151' : '#e5e7eb'
+          }
         },
         axisLabel: {
-          color: document.documentElement.classList.contains('dark') ? '#ccc' : '#333'
+          color: textColor
         }
       }
     ],
     yAxis: [
       {
         type: 'value',
+        axisLine: {
+          lineStyle: {
+            color: isDark ? '#374151' : '#e5e7eb'
+          }
+        },
         axisLabel: {
-          color: document.documentElement.classList.contains('dark') ? '#ccc' : '#333'
+          color: textColor
         },
         splitLine: {
           lineStyle: {
-            color: document.documentElement.classList.contains('dark') ? '#333' : '#eee'
+            color: backgroundColor
           }
         }
       }
     ],
     series: [
       {
-        name: '项目数量',
+        name: '数量',
         type: 'bar',
-        barWidth: '40%',
-        data: [3, 5, 2, 1],
-        itemStyle: {
-          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            {offset: 0, color: '#83bff6'},
-            {offset: 0.5, color: '#188df0'},
-            {offset: 1, color: '#1890ff'}
-          ])
-        },
+        barWidth: '60%',
+        data: [
+          {value: projectsCount.value, itemStyle: {color: '#8b5cf6'}},
+          {value: tasksCount.value, itemStyle: {color: '#3b82f6'}},
+          {value: todosCount.value, itemStyle: {color: '#f59e0b'}}
+        ],
         emphasis: {
           itemStyle: {
-            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-              {offset: 0, color: '#2378f7'},
-              {offset: 0.7, color: '#2378f7'},
-              {offset: 1, color: '#83bff6'}
-            ])
+            shadowBlur: 10,
+            shadowOffsetX: 0,
+            shadowColor: 'rgba(0, 0, 0, 0.5)'
           }
         }
       }
     ]
   }
 
-  projectChart.value.setOption(option)
+  projectChart.setOption(option)
+}
+
+// Initialize charts
+const initCharts = () => {
+  if (memberChartRef.value) {
+    memberChart = echarts.init(memberChartRef.value)
+    updateMemberChart()
+  }
+
+  if (projectChartRef.value) {
+    projectChart = echarts.init(projectChartRef.value)
+    updateProjectChart()
+  }
+}
+
+// Handle theme change
+const handleThemeChange = () => {
+  if (memberChart) {
+    updateMemberChart()
+  }
+  if (projectChart) {
+    updateProjectChart()
+  }
 }
 
 // Handle window resize
 const handleResize = () => {
-  if (memberChart.value) {
-    memberChart.value.resize()
+  if (memberChart) {
+    memberChart.resize()
   }
-  if (projectChart.value) {
-    projectChart.value.resize()
+  if (projectChart) {
+    projectChart.resize()
   }
 }
 
-// Watch for dark mode changes
-const handleDarkModeChange = () => {
-  nextTick(() => {
-    updateMemberChart()
-    updateProjectChart()
-  })
-}
-
+// Mount and unmount lifecycle
 onMounted(async () => {
   await fetchData()
-  nextTick(() => {
-    initCharts()
-  })
+  await nextTick()
+  initCharts()
 
+  // Listen for theme changes
+  const observer = new MutationObserver(handleThemeChange)
+  observer.observe(document.documentElement, {attributes: true, attributeFilter: ['class']})
+
+  // Listen for window resize
   window.addEventListener('resize', handleResize)
-  const observer = new MutationObserver(handleDarkModeChange)
-  observer.observe(document.documentElement, {
-    attributes: true,
-    attributeFilter: ['class']
-  })
+  
+  // Add click outside listener
+  document.addEventListener('click', handleClickOutside)
 })
 
 onBeforeUnmount(() => {
+  if (memberChart) {
+    memberChart.dispose()
+  }
+  if (projectChart) {
+    projectChart.dispose()
+  }
   window.removeEventListener('resize', handleResize)
-  if (memberChart.value) {
-    memberChart.value.dispose()
-  }
-  if (projectChart.value) {
-    projectChart.value.dispose()
-  }
+  document.removeEventListener('click', handleClickOutside)
+})
+
+// Watch for data changes to update charts
+watch([studentsCount, staffs, projectsCount, tasksCount, todosCount], () => {
+  updateMemberChart()
+  updateProjectChart()
 })
 </script>
 

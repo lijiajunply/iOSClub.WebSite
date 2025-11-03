@@ -1,19 +1,19 @@
 <template>
-  <n-layout class="min-h-screen bg-gray-100 dark:bg-neutral-900">
+  <n-layout class="bg-gray-100 dark:bg-neutral-900" style="height: calc(100vh - 64px);">
     <n-layout has-sider position="absolute" class="macos-layout">
       <!-- Desktop sidebar (macOS style) -->
       <n-layout-sider
-        :collapsed-width="4"
-        :width="280"
-        :native-scrollbar="false"
-        show-trigger="bar"
-        :on-update-collapsed="(b: boolean) => (collapsed = b)"
-        :collapsed="collapsed"
-        class="bg-gray-50 dark:bg-neutral-800 border-r border-gray-200 dark:border-neutral-700 macos-sidebar"
+          :collapsed-width="4"
+          :width="280"
+          :native-scrollbar="false"
+          show-trigger="bar"
+          :on-update-collapsed="(b: boolean) => (collapsed = b)"
+          :collapsed="collapsed"
+          class="bg-gray-50 dark:bg-neutral-800 border-r border-gray-200 dark:border-neutral-700 macos-sidebar"
       >
         <n-scrollbar class="h-screen">
           <div class="pb-20 pt-2">
-            <MenuContent @menu-item-click="handleMenuClick" />
+            <MenuContent @menu-item-click="handleMenuClick"/>
           </div>
         </n-scrollbar>
       </n-layout-sider>
@@ -24,16 +24,16 @@
           <!-- Mobile menu button -->
           <Transition name="fade">
             <button
-              v-if="!drawerVisible"
-              @click="drawerVisible = true"
-              class="md:hidden fixed bottom-6 right-6 z-50 w-14 h-14 bg-blue-500 rounded-full shadow-lg flex items-center justify-center hover:shadow-xl transition-all duration-200"
+                v-if="!drawerVisible"
+                @click="drawerVisible = true"
+                class="md:hidden fixed bottom-6 right-6 z-50 w-14 h-14 bg-blue-500 rounded-full shadow-lg flex items-center justify-center hover:shadow-xl transition-all duration-200"
             >
-              <Icon icon="mdi:menu" width="24" class="text-white" />
+              <Icon icon="mdi:menu" width="24" class="text-white"/>
             </button>
           </Transition>
 
           <!-- Page content slot -->
-          <router-view />
+          <router-view/>
         </div>
       </n-layout-content>
     </n-layout>
@@ -45,7 +45,7 @@
           <h3 class="text-lg font-semibold">文档导航</h3>
         </template>
         <div class="py-2">
-          <MenuContent @menu-item-click="handleMenuClick" />
+          <MenuContent @menu-item-click="handleMenuClick"/>
         </div>
       </n-drawer-content>
     </n-drawer>
@@ -53,8 +53,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import {ref, onMounted, onBeforeUnmount, computed} from 'vue'
+import {useRouter, useRoute} from 'vue-router'
 import {
   NLayout,
   NLayoutSider,
@@ -63,9 +63,9 @@ import {
   NDrawerContent,
   NScrollbar
 } from 'naive-ui'
-import { Icon } from '@iconify/vue'
+import {Icon} from '@iconify/vue'
 import MenuContent from '../components/MenuContent.vue'
-import { useThemeStore } from '../stores/theme'
+import {useThemeStore} from '../stores/theme'
 
 const router = useRouter()
 const route = useRoute()

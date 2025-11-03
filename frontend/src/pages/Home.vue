@@ -109,11 +109,50 @@
       </div>
     </section>
   </div>
+
+  <!-- Footer -->
+  <n-layout-footer class="border-t border-gray-200 dark:border-gray-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div class="text-center space-y-4">
+        <p class="text-sm text-gray-600 dark:text-gray-300">
+          Copyright © 2023 - 2024 XAUAT iOS Club
+        </p>
+        <div class="flex flex-wrap justify-center gap-4 text-sm">
+          <a
+              href="https://cn.xauat.edu.cn/"
+              class="text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+              target="_blank"
+              rel="noopener"
+          >
+            西安建筑科技大学
+          </a>
+          <span class="text-gray-400">·</span>
+          <a
+              href="https://beian.miit.gov.cn/"
+              class="text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+              target="_blank"
+              rel="noopener"
+          >
+            陕ICP备2024031872号
+          </a>
+          <span class="text-gray-400">·</span>
+          <a
+              href="https://gitee.com/XAUATiOSClub"
+              class="text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+              target="_blank"
+              rel="noopener"
+          >
+            Gitee
+          </a>
+        </div>
+      </div>
+    </div>
+  </n-layout-footer>
 </template>
 
 <script setup lang="ts">
 import {useRouter} from 'vue-router'
-import {NButton} from 'naive-ui'
+import {NButton, NLayoutFooter} from 'naive-ui'
 import { Icon } from '@iconify/vue'
 
 interface Card {

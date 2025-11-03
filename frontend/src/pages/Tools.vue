@@ -23,7 +23,7 @@
               <div class="flex items-center gap-4">
                 <template v-if="!link.icon.startsWith('http')">
                   <IconFont
-                      :type="`#icon-${link.icon}`"
+                      :type="link.icon"
                       class="text-[28px] dark:text-gray-100"
                   />
                 </template>

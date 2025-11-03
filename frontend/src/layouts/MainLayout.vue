@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen bg-white dark:bg-black transition-colors duration-300">
-    <n-layout class="min-h-screen">
+    <n-layout>
       <!-- Header with apple-style -->
       <n-layout-header
         class="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-black/80 backdrop-blur-xl border-b border-gray-200 dark:border-gray-800"
@@ -190,49 +190,10 @@
         </transition>
 
         <!-- Page Content -->
-        <div class="min-h-screen">
+        <div class="flex-1">
           <router-view />
         </div>
       </n-layout-content>
-
-      <!-- Footer -->
-      <n-layout-footer class="border-t border-gray-200 dark:border-gray-800">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div class="text-center space-y-4">
-            <p class="text-sm text-gray-600 dark:text-gray-300">
-              Copyright © 2023 - 2024 XAUAT iOS Club
-            </p>
-            <div class="flex flex-wrap justify-center gap-4 text-sm">
-              <a
-                href="https://cn.xauat.edu.cn/"
-                class="text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
-                target="_blank"
-                rel="noopener"
-              >
-                西安建筑科技大学
-              </a>
-              <span class="text-gray-400">·</span>
-              <a
-                href="https://beian.miit.gov.cn/"
-                class="text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
-                target="_blank"
-                rel="noopener"
-              >
-                陕ICP备2024031872号
-              </a>
-              <span class="text-gray-400">·</span>
-              <a
-                href="https://gitee.com/XAUATiOSClub"
-                class="text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
-                target="_blank"
-                rel="noopener"
-              >
-                Gitee
-              </a>
-            </div>
-          </div>
-        </div>
-      </n-layout-footer>
     </n-layout>
   </div>
 </template>

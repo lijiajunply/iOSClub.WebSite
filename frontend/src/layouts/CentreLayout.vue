@@ -1,15 +1,15 @@
 <template>
   <div class="flex min-h-screen bg-gray-50 dark:bg-black transition-colors duration-300">
-    <Sidebar v-if="sidebarVisible"/>
+    <Sidebar/>
 
     <div class="flex-1 flex flex-col overflow-hidden h-screen">
       <!-- Header -->
-      <header class="bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 h-22">
+      <header class="bg-white/90 dark:bg-gray-800/90 backdrop-blur-md h-22">
         <div class="flex items-center justify-between px-4 py-3 h-full">
-          <div class="flex items-center">
+          <div class="md:hidden flex items-center gap-3">
             <button
                 @click="toggleSidebar"
-                class="block md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 mr-2 transition-colors"
+                class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 mr-2 transition-colors"
             >
               <Icon
                   icon="material-symbols:menu"
@@ -18,8 +18,17 @@
                   height="32"
               />
             </button>
+            <router-link to="/" class="flex items-center gap-3 group">
+              <img
+                  src="/assets/iOS_Club_LOGO.png"
+                  alt="iOS Club Logo"
+                  class="w-10 h-10 rounded-lg object-contain"
+                  @error="handleImageError"
+              />
+              <h2 class="text-xl font-semibold text-gray-900 dark:text-white">iMember</h2>
+            </router-link>
           </div>
-
+          <div class=""/>
           <div class="flex items-center space-x-2">
             <!-- Theme Toggle -->
             <button
@@ -58,18 +67,20 @@ import Sidebar from '../components/Sidebar.vue'
 import {useAuthorizationStore} from '../stores/Authorization'
 import {useThemeStore} from '../stores/theme'
 import {storeToRefs} from 'pinia'
+import {useLayoutStore} from "../stores/LayoutStore";
 
 const router = useRouter()
 const store = useAuthorizationStore()
 const themeStore = useThemeStore()
 const {isDark} = storeToRefs(themeStore)
 const {toggleTheme} = themeStore
+const layoutStore = useLayoutStore()
 
 // 控制侧边栏显示状态
-const sidebarVisible = ref(true)
+const sidebarVisible = ref(false)
 
 const toggleSidebar = () => {
-  sidebarVisible.value = !sidebarVisible.value
+  layoutStore.showSidebar = !layoutStore.showSidebar
 }
 
 onMounted(async () => {

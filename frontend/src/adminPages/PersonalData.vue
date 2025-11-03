@@ -1,20 +1,20 @@
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-200">
+  <div class="flex-1 flex flex-col min-h-screen bg-gray-50 dark:bg-black transition-colors duration-300">
     <!-- 顶部导航栏 -->
-    <div class="sticky top-0 z-10 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-700">
-      <div class="container mx-auto px-4 py-4 flex justify-between items-center">
-        <h1 class="text-xl font-semibold">个人信息</h1>
+    <div class="sticky top-0 z-10 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-800">
+      <div class="px-4 py-3 flex justify-between items-center">
+        <h1 class="text-xl font-semibold text-gray-900 dark:text-white">个人信息</h1>
         <div class="flex items-center gap-2">
           <div class="h-8 w-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white">
             <Icon icon="lucide:user" size="18" />
           </div>
-          <span class="text-sm font-medium">{{ userInfo.userName || '未登录' }}</span>
+          <span class="text-sm font-medium text-gray-900 dark:text-white">{{ userInfo.userName || '未登录' }}</span>
         </div>
       </div>
     </div>
 
     <!-- 主内容区域 -->
-    <main class="container mx-auto px-4 py-8 max-w-4xl">
+    <main class="flex-1 overflow-y-auto p-4 md:p-6">
       <!-- 加载状态 -->
       <div v-if="loading" class="py-20 flex flex-col items-center justify-center">
         <div class="h-12 w-12 rounded-full border-4 border-blue-500 border-t-transparent animate-spin"></div>
@@ -22,11 +22,11 @@
       </div>
 
       <!-- 表单卡片 -->
-      <div v-else class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div v-else class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden max-w-4xl mx-auto">
         <!-- 卡片头部 -->
         <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
-          <div class="flex justify-between items-center">
-            <h2 class="text-lg font-medium">基本信息</h2>
+          <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+            <h2 class="text-lg font-medium text-gray-900 dark:text-white">基本信息</h2>
             <div class="flex items-center">
               <span class="text-sm text-gray-500 dark:text-gray-400 mr-2">当前身份:</span>
               <span 
@@ -185,7 +185,7 @@
       </div>
 
       <!-- 数据统计卡片 -->
-      <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
         <div class="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-sm">
           <div class="flex items-center justify-between mb-2">
             <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">成员类型</h3>
@@ -193,7 +193,7 @@
               <Icon icon="lucide:user-check" class="text-blue-500" size="16" />
             </div>
           </div>
-          <p class="text-2xl font-semibold">{{ identityMap[userInfo.identity] || '未设置' }}</p>
+          <p class="text-2xl font-semibold text-gray-900 dark:text-white">{{ identityMap[userInfo.identity] || '未设置' }}</p>
         </div>
         <div class="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-sm">
           <div class="flex items-center justify-between mb-2">
@@ -202,7 +202,7 @@
               <Icon icon="lucide:building-2" class="text-green-500" size="16" />
             </div>
           </div>
-          <p class="text-2xl font-semibold truncate">{{ userInfo.academy || '未设置' }}</p>
+          <p class="text-2xl font-semibold text-gray-900 dark:text-white truncate">{{ userInfo.academy || '未设置' }}</p>
         </div>
         <div class="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-sm">
           <div class="flex items-center justify-between mb-2">
@@ -211,14 +211,14 @@
               <Icon icon="lucide:users-2" class="text-purple-500" size="16" />
             </div>
           </div>
-          <p class="text-2xl font-semibold truncate">{{ userInfo.className || '未设置' }}</p>
+          <p class="text-2xl font-semibold text-gray-900 dark:text-white truncate">{{ userInfo.className || '未设置' }}</p>
         </div>
       </div>
 
       <!-- 图表区域 -->
-      <div class="mt-8 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div class="mt-8 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden max-w-4xl mx-auto">
         <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
-          <h2 class="text-lg font-medium">个人数据统计</h2>
+          <h2 class="text-lg font-medium text-gray-900 dark:text-white">个人数据统计</h2>
         </div>
         <div class="p-6">
           <div ref="chartRef" class="h-64 w-full"></div>
@@ -246,7 +246,6 @@ import { ref, reactive, onMounted, onUnmounted, watch } from 'vue';
 import { NForm, NFormItem, NInput, NSelect, NButton, NModal, useMessage } from 'naive-ui';
 import { useRouter } from 'vue-router';
 import { useAuthorizationStore } from '../stores/Authorization';
-import { useLayoutStore } from '../stores/LayoutStore';
 import { UserService } from '../services/UserService';
 import { MemberModel } from '../models';
 import { Icon } from '@iconify/vue';
@@ -255,7 +254,6 @@ import * as echarts from 'echarts';
 const message = useMessage();
 const router = useRouter();
 const authorizationStore = useAuthorizationStore();
-const layoutStore = useLayoutStore();
 const chartRef = ref<HTMLElement>();
 let chartInstance: echarts.ECharts | null = null;
 
@@ -487,8 +485,15 @@ const initChart = () => {
   chartInstance.setOption(option);
   
   // 响应式调整
-  window.addEventListener('resize', () => {
+  const handleResize = () => {
     chartInstance?.resize();
+  };
+  
+  window.addEventListener('resize', handleResize);
+  
+  // 在组件卸载时清理事件监听器
+  onUnmounted(() => {
+    window.removeEventListener('resize', handleResize);
   });
 };
 
@@ -611,9 +616,6 @@ onUnmounted(() => {
     chartInstance.dispose();
     chartInstance = null;
   }
-  window.removeEventListener('resize', () => {
-    chartInstance?.resize();
-  });
 });
 </script>
 

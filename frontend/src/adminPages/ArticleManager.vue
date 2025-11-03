@@ -5,10 +5,10 @@
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="mb-6">
           <h1 class="text-2xl md:text-3xl font-semibold text-gray-900 dark:text-white">
-            社团文章
+            社团文章管理
           </h1>
           <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">
-            管理社团的所有文章
+            创建、编辑和删除社团文章
           </p>
         </div>
       </div>
@@ -17,40 +17,51 @@
     <!-- 主要内容区域 -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
       <!-- 文章列表网格 -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         <div
             v-for="article in articles"
             :key="article.path"
-            class="group rounded-2xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-2xl border border-gray-200/80 dark:border-gray-700/80 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden cursor-pointer"
+            class="group rounded-2xl bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 overflow-hidden cursor-pointer"
             @click="editArticle(article)"
         >
           <div class="p-5 h-full flex flex-col">
-            <div class="flex-1">
-              <h3 class="font-medium text-base md:text-lg mb-2 line-clamp-2 text-gray-900 group-hover:text-blue-600 dark:text-white dark:group-hover:text-blue-400 transition-colors">
-                {{ article.title || '' }}
-              </h3>
-              <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">
-                更新时间: {{ formatDate(article.lastWriteTime) }}
-              </p>
+            <div class="flex items-center mb-3">
+              <div class="bg-indigo-100 dark:bg-indigo-900/30 p-2.5 rounded-xl mr-3">
+                <Icon icon="material-symbols:article" class="text-indigo-600 dark:text-indigo-400 w-5 h-5" />
+              </div>
               <n-tag
                   size="small"
                   :type="getIdentityType(article.identity)"
-                  :bordered="false">
+                  :bordered="false"
+                  class="rounded-full px-2 py-0.5">
                 {{ getIdentityLabel(article.identity || '') }}
               </n-tag>
             </div>
+            
+            <div class="flex-1">
+              <h3 class="font-medium text-base md:text-lg mb-2 line-clamp-2 text-gray-900 group-hover:text-indigo-600 dark:text-white dark:group-hover:text-indigo-400 transition-colors">
+                {{ article.title || '无标题文章' }}
+              </h3>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                <span class="flex items-center">
+                  <Icon icon="material-symbols:schedule" class="mr-1 w-3 h-3" />
+                  {{ formatDate(article.lastWriteTime) }}
+                </span>
+              </p>
+            </div>
 
             <!-- 操作按钮 -->
-            <div class="flex justify-end space-x-2 pt-3">
+            <div class="flex justify-end space-x-2 pt-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
               <n-button
                   type="primary"
                   size="small"
                   quaternary
                   circle
+                  class="h-8 w-8 p-0 rounded-full"
                   @click.stop="editArticle(article)"
               >
                 <template #icon>
-                  <Icon icon="antd:edit-outlined" size="18"/>
+                  <Icon icon="material-symbols:edit" class="w-4 h-4"/>
                 </template>
               </n-button>
               <n-button
@@ -58,10 +69,11 @@
                   size="small"
                   quaternary
                   circle
+                  class="h-8 w-8 p-0 rounded-full"
                   @click.stop="deleteArticle(article)"
               >
                 <template #icon>
-                  <Icon icon="antd:delete-outlined" size="18"/>
+                  <Icon icon="material-symbols:delete" class="w-4 h-4"/>
                 </template>
               </n-button>
             </div>
@@ -71,17 +83,20 @@
         <!-- 空状态 -->
         <div
             v-if="articles.length === 0 && !loading"
-            class="col-span-full py-16 flex flex-col items-center justify-center rounded-2xl bg-white/50 dark:bg-gray-800/50 border border-dashed border-gray-300 dark:border-gray-600"
+            class="col-span-full py-16 flex flex-col items-center justify-center rounded-2xl bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border border-dashed border-gray-300 dark:border-gray-600"
         >
-          <n-empty description="暂无文章" size="large">
-            <template #icon>
-              <Icon icon="antd:file-text-outlined"/>
-            </template>
-          </n-empty>
+          <div class="w-16 h-16 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-full mb-4">
+            <Icon icon="material-symbols:article-off" class="text-gray-400 dark:text-gray-500 w-7 h-7" />
+          </div>
+          <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-1">暂无文章</h3>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">创建您的第一篇文章开始管理</p>
           <n-button
               type="primary"
-              class="mt-4 rounded-full px-5 py-2 text-sm"
+              class="rounded-full px-6 py-2"
               @click="openCreateModal">
+            <template #icon>
+              <Icon icon="material-symbols:add-circle" class="w-4.5 h-4.5" />
+            </template>
             创建第一篇文章
           </n-button>
         </div>
@@ -89,7 +104,7 @@
 
       <!-- 加载状态 -->
       <div v-if="loading" class="flex justify-center items-center h-64">
-        <n-spin size="large"/>
+        <n-spin size="large" />
       </div>
     </div>
 
@@ -97,10 +112,10 @@
     <div class="fixed bottom-6 right-6 z-10">
       <n-button
           type="primary"
-          class="w-14 h-14 rounded-full shadow-lg backdrop-blur-xl flex items-center justify-center"
+          class="w-14 h-14 rounded-full shadow-lg backdrop-blur-xl flex items-center justify-center hover:scale-105 transition-transform duration-200"
           @click="openCreateModal"
       >
-        <Icon icon="antd:plus-outlined" size="24"/>
+        <Icon icon="material-symbols:add" class="w-6 h-6"/>
       </n-button>
     </div>
 
@@ -108,60 +123,71 @@
     <n-modal
         v-model:show="showEditModal"
         preset="card"
-        style="width: 800px; max-width: 95vw; border-radius: 24px;"
+        style="width: 800px; max-width: 95vw;"
         :title="editingArticle ? '编辑文章' : '新建文章'"
         :bordered="false"
-        segmented
+        :segmented="false"
         @close="handleModalClose"
-    >
-      <n-form :model="editForm" ref="formRef" :rules="rules">
-        <n-form-item label="文章路径 (Path)" path="path">
-          <n-input
-              v-model:value="editForm.path"
-              :disabled="!!editingArticle"
-              placeholder="请输入文章路径，如：About"
-              round
-          />
-          <p class="text-xs mt-1 text-gray-500 dark:text-gray-400">
-            路径将作为文章的唯一标识，创建后不可修改
-          </p>
-        </n-form-item>
+        class="rounded-xl overflow-hidden bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
+      >
+      <n-form 
+        :model="editForm" 
+        ref="formRef" 
+        :rules="rules"
+        class="mt-4"
+      >
+        <div class="space-y-4">
+          <n-form-item label="文章路径 (Path)" path="path">
+            <n-input
+                v-model:value="editForm.path"
+                :disabled="!!editingArticle"
+                placeholder="请输入文章路径，如：About"
+                class="rounded-lg"
+                :bordered="false"
+            />
+            <p class="text-xs mt-1 text-gray-500 dark:text-gray-400">
+              路径将作为文章的唯一标识，创建后不可修改
+            </p>
+          </n-form-item>
 
-        <n-form-item label="文章标题" path="title">
-          <n-input
-              v-model:value="editForm.title"
-              placeholder="请输入文章标题"
-              round
-          />
-        </n-form-item>
+          <n-form-item label="文章标题" path="title">
+            <n-input
+                v-model:value="editForm.title"
+                placeholder="请输入文章标题"
+                class="rounded-lg"
+                :bordered="false"
+            />
+          </n-form-item>
 
-        <n-form-item label="访问权限" path="identity">
-          <n-select
-              v-model:value="editForm.identity"
-              :options="identityOptions"
-              placeholder="请选择可查看权限"
-              round
-          />
-        </n-form-item>
+          <n-form-item label="访问权限" path="identity">
+            <n-select
+                v-model:value="editForm.identity"
+                :options="identityOptions"
+                placeholder="请选择可查看权限"
+                class="rounded-lg"
+                :bordered="false"
+            />
+          </n-form-item>
 
-        <n-form-item label="文章内容" path="content">
-          <n-input
-              v-model:value="editForm.content"
-              type="textarea"
-              :autosize="{ minRows: 12, maxRows: 20 }"
-              placeholder="请输入文章内容（支持Markdown语法）"
-              round
-          />
-        </n-form-item>
+          <n-form-item label="文章内容" path="content">
+            <n-input
+                v-model:value="editForm.content"
+                type="textarea"
+                :autosize="{ minRows: 12, maxRows: 20 }"
+                placeholder="请输入文章内容（支持Markdown语法）"
+                class="rounded-lg"
+                :bordered="false"
+            />
+          </n-form-item>
+        </div>
       </n-form>
 
       <template #footer>
-        <div class="flex justify-end space-x-3">
+        <div class="flex justify-end space-x-4 pt-4">
           <n-button
               @click="showEditModal = false"
-              quaternary
-              round
-              class="px-5"
+              class="rounded-full px-6"
+              :ghost="true"
           >
             取消
           </n-button>
@@ -169,8 +195,7 @@
               type="primary"
               @click="saveArticle"
               :loading="saving"
-              round
-              class="px-5"
+              class="rounded-full px-6"
           >
             保存
           </n-button>
@@ -184,7 +209,6 @@
 import {ref, onMounted} from 'vue'
 import {
   NButton,
-  NEmpty,
   NSpin,
   NModal,
   NForm,
@@ -207,7 +231,7 @@ const loading = ref(true)
 const showEditModal = ref(false)
 const editingArticle = ref<ArticleModel | null>(null)
 const saving = ref(false)
-const formRef = ref()
+const formRef = ref<InstanceType<typeof NForm>>()
 
 // 为编辑表单定义明确的类型
 interface EditFormType {
@@ -327,8 +351,8 @@ const editArticle = (article: ArticleModel) => {
   editingArticle.value = article
   editForm.value = {
     path: article.path,
-    title: article.title,
-    content: article.content,
+    title: article.title || '',
+    content: article.content || '',
     identity: (article.identity as EditFormType['identity']) || 'Member',
     lastWriteTime: article.lastWriteTime || new Date().toISOString()
   }
@@ -344,7 +368,7 @@ const handleModalClose = () => {
 const deleteArticle = (article: ArticleModel) => {
   dialog.warning({
     title: '确认删除',
-    content: `确定要删除文章"${article.title}"吗？此操作不可恢复。`,
+    content: `确定要删除文章"${article.title || '无标题'}"吗？此操作不可恢复。`,
     positiveText: '确定',
     negativeText: '取消',
     onPositiveClick: async () => {
@@ -364,7 +388,9 @@ const deleteArticle = (article: ArticleModel) => {
 
 // 保存文章
 const saveArticle = async () => {
-  const valid = await formRef.value?.validate()
+  if (!formRef.value) return
+  
+  const valid = await formRef.value.validate()
   if (!valid) {
     message.error('请填写必填字段并修正错误')
     return
@@ -413,5 +439,28 @@ onMounted(() => {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* 自定义滚动条样式 */
+:deep(.n-input__textarea-el) {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(107, 114, 128, 0.5) transparent;
+}
+
+:deep(.n-input__textarea-el)::-webkit-scrollbar {
+  width: 6px;
+}
+
+:deep(.n-input__textarea-el)::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+:deep(.n-input__textarea-el)::-webkit-scrollbar-thumb {
+  background-color: rgba(107, 114, 128, 0.5);
+  border-radius: 3px;
+}
+
+:deep(.n-input__textarea-el)::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(107, 114, 128, 0.8);
 }
 </style>

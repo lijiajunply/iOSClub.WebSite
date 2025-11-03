@@ -4,14 +4,6 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div class="flex items-center space-x-3">
-          <n-button
-              text
-              circle
-              @click="goBack"
-              class="hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full"
-          >
-            <Icon icon="ion:chevron-back" size="24" />
-          </n-button>
           <div>
             <h1 class="text-2xl font-semibold tracking-tight">社团部门</h1>
             <p class="text-sm text-gray-500 dark:text-gray-400">社团部门管理</p>
@@ -19,45 +11,34 @@
         </div>
 
         <div class="flex flex-wrap gap-2">
-          <n-button
-              secondary
-              strong
+          <button
               @click="downloadData"
+              class="px-4 py-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center"
           >
-            <template #icon>
-              <Icon icon="ion:download" />
-            </template>
+            <Icon icon="ion:download" class="mr-1" />
             下载文件
-          </n-button>
-          <n-button
-              secondary
-              strong
+          </button>
+          <button
               @click="uploadData"
+              class="px-4 py-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center"
           >
-            <template #icon>
-              <Icon icon="ion:cloud-upload" />
-            </template>
+            <Icon icon="ion:cloud-upload" class="mr-1" />
             上传数据
-          </n-button>
-          <n-button
-              type="primary"
+          </button>
+          <button
               @click="() => openDepartment()"
+              class="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white transition-colors flex items-center"
           >
-            <template #icon>
-              <Icon icon="ion:add" />
-            </template>
+            <Icon icon="ion:add" class="mr-1" />
             添加部门
-          </n-button>
+          </button>
         </div>
       </div>
     </div>
 
     <!-- 主内容区 -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-      <n-card
-          class="overflow-hidden bg-white dark:bg-gray-800 border-0 rounded-2xl shadow-sm"
-          content-style="padding: 0;"
-      >
+      <div class="overflow-hidden bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
         <!-- 标签页导航 -->
         <n-tabs
             type="line"
@@ -74,44 +55,38 @@
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
                   <h2 class="text-lg font-medium">社长/团支书/秘书长</h2>
                   <div class="flex gap-2">
-                    <n-button
-                        secondary
-                        strong
-                        size="small"
+                    <button
                         @click="() => openAddMember()"
+                        class="px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
                     >
                       添加成员
-                    </n-button>
-                    <n-button
-                        type="error"
-                        secondary
-                        strong
-                        size="small"
+                    </button>
+                    <button
                         @click="deleteAllMinisters"
+                        class="px-3 py-1.5 text-sm rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors"
                     >
                       全部删除
-                    </n-button>
+                    </button>
                   </div>
                 </div>
 
                 <div class="flex flex-wrap gap-2 mt-4">
-                  <n-tag
+                  <div
                       v-for="member in ministers"
                       :key="member.userId"
-                      type="primary"
-                      closable
-                      @close="() => deleteMember(member, ministers)"
-                      class="bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-800 dark:text-blue-200 cursor-pointer rounded-full px-3 py-1"
+                      class="bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-800 dark:text-blue-200 cursor-pointer rounded-full px-3 py-1 flex items-center"
                   >
-                    {{ member.userName }}
-                  </n-tag>
-                  <n-tag
+                    <span>{{ member.userName }}</span>
+                    <button @click="() => deleteMember(member, ministers)" class="ml-1 hover:text-red-500">
+                      <Icon icon="ion:close" width="16" height="16" />
+                    </button>
+                  </div>
+                  <div
                       v-if="ministers.length === 0"
-                      type="default"
                       class="bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 rounded-full px-3 py-1"
                   >
                     暂无领导成员
-                  </n-tag>
+                  </div>
                 </div>
               </section>
 
@@ -121,18 +96,15 @@
                   <h2 class="text-lg font-medium">成员</h2>
                   <div class="flex flex-col sm:flex-row sm:items-center gap-4">
                     <div class="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                      <Icon icon="ion:people" class="mr-1" size="16" />
+                      <Icon icon="ion:people" class="mr-1" width="16" height="16" />
                       <span>所有部员: {{ members.length }}</span>
                     </div>
-                    <n-button
-                        type="primary"
-                        secondary
-                        strong
-                        size="small"
+                    <button
                         @click="downloadMemberInfo"
+                        class="px-3 py-1.5 text-sm rounded-lg bg-blue-500 hover:bg-blue-600 text-white transition-colors"
                     >
                       下载部员信息
-                    </n-button>
+                    </button>
                   </div>
                 </div>
 
@@ -152,15 +124,13 @@
               <section>
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                   <h2 class="text-lg font-medium">项目</h2>
-                  <n-button
-                      type="primary"
+                  <button
                       @click="addProject"
+                      class="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white transition-colors flex items-center"
                   >
-                    <template #icon>
-                      <Icon icon="ion:add" />
-                    </template>
+                    <Icon icon="ion:add" class="mr-1" />
                     添加
-                  </n-button>
+                  </button>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -171,21 +141,28 @@
                   >
                     <div class="flex justify-between items-start mb-3">
                       <h3 class="font-medium text-gray-900 dark:text-gray-100">{{ project.title }}</h3>
-                      <n-tag
+                      <div
                           v-if="project.department && project.department.name"
-                          type="info"
-                          class="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 rounded-full"
-                          size="small"
+                          class="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 rounded-full text-xs px-2 py-1"
                       >
                         {{ project.department.name }}
-                      </n-tag>
+                      </div>
                     </div>
                     <p class="text-sm text-gray-500 dark:text-gray-400 mb-4 line-clamp-2">{{ project.description }}</p>
                     <div class="flex justify-end gap-2">
-                      <n-button text size="small">去看看</n-button>
-                      <n-button size="small" @click="() => editProject(project)">编辑</n-button>
-                      <n-button type="error" secondary size="small" @click="() => deleteProject(project)">删除
-                      </n-button>
+                      <button class="px-3 py-1 text-sm rounded-lg text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100">
+                        去看看
+                      </button>
+                      <button 
+                        @click="() => editProject(project)"
+                        class="px-3 py-1 text-sm rounded-lg bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-500">
+                        编辑
+                      </button>
+                      <button 
+                        @click="() => deleteProject(project)"
+                        class="px-3 py-1 text-sm rounded-lg bg-red-500 hover:bg-red-600 text-white">
+                        删除
+                      </button>
                     </div>
                   </div>
                   <div
@@ -278,41 +255,30 @@
                   <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 max-w-2xl">{{ department.description }}</p>
                 </div>
                 <div class="flex flex-wrap gap-2">
-                  <n-button
-                      secondary
-                      strong
-                      size="small"
+                  <button
                       @click="() => openAddMember(department)"
+                      class="px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
                   >
                     添加部长
-                  </n-button>
-                  <n-button
-                      type="error"
-                      secondary
-                      strong
-                      size="small"
+                  </button>
+                  <button
                       @click="() => deleteAll(department.ministers)"
+                      class="px-3 py-1.5 text-sm rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors"
                   >
                     删除所有部长
-                  </n-button>
-                  <n-button
-                      type="primary"
-                      secondary
-                      strong
-                      size="small"
+                  </button>
+                  <button
                       @click="() => openDepartment(department)"
+                      class="px-3 py-1.5 text-sm rounded-lg bg-blue-500 hover:bg-blue-600 text-white transition-colors"
                   >
                     编辑部门
-                  </n-button>
-                  <n-button
-                      type="error"
-                      secondary
-                      strong
-                      size="small"
+                  </button>
+                  <button
                       @click="() => deleteDepartment(department)"
+                      class="px-3 py-1.5 text-sm rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors"
                   >
                     删除部门
-                  </n-button>
+                  </button>
                 </div>
               </div>
 
@@ -320,23 +286,22 @@
               <section>
                 <h3 class="text-lg font-medium mb-3">部长/副部长</h3>
                 <div class="flex flex-wrap gap-2">
-                  <n-tag
+                  <div
                       v-for="member in department.ministers"
                       :key="member.userId"
-                      type="primary"
-                      closable
-                      @close="() => deleteMember(member, department.ministers)"
-                      class="bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-800 dark:text-blue-200 cursor-pointer rounded-full px-3 py-1"
+                      class="bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-800 dark:text-blue-200 cursor-pointer rounded-full px-3 py-1 flex items-center"
                   >
-                    {{ member.name }}
-                  </n-tag>
-                  <n-tag
+                    <span>{{ member.name }}</span>
+                    <button @click="() => deleteMember(member, department.ministers)" class="ml-1 hover:text-red-500">
+                      <Icon icon="ion:close" width="16" height="16" />
+                    </button>
+                  </div>
+                  <div
                       v-if="!department.ministers || department.ministers.length === 0"
-                      type="default"
                       class="bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 rounded-full px-3 py-1"
                   >
                     暂无部长
-                  </n-tag>
+                  </div>
                 </div>
               </section>
 
@@ -345,23 +310,18 @@
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
                   <h3 class="text-lg font-medium">成员</h3>
                   <div class="flex gap-2">
-                    <n-button
-                        secondary
-                        strong
-                        size="small"
+                    <button
                         @click="() => openAddMember(department, 'Department')"
+                        class="px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
                     >
                       添加成员
-                    </n-button>
-                    <n-button
-                        type="error"
-                        secondary
-                        strong
-                        size="small"
+                    </button>
+                    <button
                         @click="() => deleteAll(department.members)"
+                        class="px-3 py-1.5 text-sm rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors"
                     >
                       全部删除
-                    </n-button>
+                    </button>
                   </div>
                 </div>
 
@@ -381,17 +341,13 @@
               <section>
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                   <h3 class="text-lg font-medium">项目</h3>
-                  <n-button
-                      type="primary"
+                  <button
                       @click="addProject"
+                      class="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white transition-colors flex items-center"
                   >
-                    <template #icon>
-                      <n-icon>
-                        <Plus/>
-                      </n-icon>
-                    </template>
+                    <Icon icon="ion:add" class="mr-1" />
                     添加
-                  </n-button>
+                  </button>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -403,11 +359,19 @@
                     <h3 class="font-medium text-gray-900 dark:text-gray-100 mb-3">{{ project.title }}</h3>
                     <p class="text-sm text-gray-500 dark:text-gray-400 mb-4 line-clamp-2">{{ project.description }}</p>
                     <div class="flex justify-end gap-2">
-                      <n-button text size="small">去看看</n-button>
-                      <n-button size="small" @click="() => editProject(project)">编辑</n-button>
-                      <n-button type="error" secondary size="small"
-                                @click="() => deleteProject(project, department.projects)">删除
-                      </n-button>
+                      <button class="px-3 py-1 text-sm rounded-lg text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100">
+                        去看看
+                      </button>
+                      <button 
+                        @click="() => editProject(project)"
+                        class="px-3 py-1 text-sm rounded-lg bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-500">
+                        编辑
+                      </button>
+                      <button 
+                        @click="() => deleteProject(project, department.projects)"
+                        class="px-3 py-1 text-sm rounded-lg bg-red-500 hover:bg-red-600 text-white">
+                        删除
+                      </button>
                     </div>
                   </div>
                   <div
@@ -422,7 +386,7 @@
             </div>
           </n-tab-pane>
         </n-tabs>
-      </n-card>
+      </div>
     </div>
 
     <!-- 添加成员模态框 -->
@@ -432,7 +396,7 @@
         style="width: 90%; max-width: 600px;"
         title="添加成员"
         :bordered="false"
-        class="rounded-2xl overflow-hidden"
+        class="rounded-2xl overflow-hidden bg-white dark:bg-gray-800"
     >
       <div class="space-y-4">
         <div class="flex gap-2">
@@ -446,7 +410,11 @@
               <Icon icon="ion:search" />
             </template>
           </n-input>
-          <n-button type="primary" @click="searchMembers">搜索</n-button>
+          <button 
+            @click="searchMembers"
+            class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors">
+            搜索
+          </button>
         </div>
 
         <n-data-table
@@ -474,7 +442,11 @@
       </div>
       <template #footer>
         <div class="flex justify-end gap-2">
-          <n-button @click="showAddMemberModal = false">取消</n-button>
+          <button 
+            @click="showAddMemberModal = false"
+            class="px-4 py-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+            取消
+          </button>
         </div>
       </template>
     </n-modal>
@@ -486,7 +458,7 @@
         style="width: 90%; max-width: 500px;"
         :title="editingDepartment ? '编辑部门' : '添加部门'"
         :bordered="false"
-        class="rounded-2xl overflow-hidden"
+        class="rounded-2xl overflow-hidden bg-white dark:bg-gray-800"
     >
       <n-form
           :model="departmentForm"
@@ -511,13 +483,17 @@
       </n-form>
       <template #footer>
         <div class="flex justify-end gap-2">
-          <n-button @click="showDepartmentModal = false">取消</n-button>
-          <n-button
-              type="primary"
+          <button 
+            @click="showDepartmentModal = false"
+            class="px-4 py-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+            取消
+          </button>
+          <button
               @click="saveDepartment"
+              class="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white transition-colors"
           >
             {{ editingDepartment ? '保存' : '添加' }}
-          </n-button>
+          </button>
         </div>
       </template>
     </n-modal>
@@ -530,7 +506,6 @@ import {useRouter} from 'vue-router'
 import {
   useMessage,
   NButton,
-  NCard,
   NTabs,
   NTabPane,
   NInput,
@@ -1146,10 +1121,6 @@ const handleTabChange = (name: string) => {
 .n-button {
   transition: all 0.2s ease;
   border-radius: 8px;
-}
-
-.n-card {
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .n-tabs-nav {

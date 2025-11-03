@@ -1,25 +1,5 @@
 <template>
   <div class="min-h-screen bg-white dark:bg-zinc-950 text-zinc-800 dark:text-zinc-100 transition-colors duration-300">
-    <!-- 顶部导航栏 -->
-    <div
-        class="sticky top-0 z-10 backdrop-blur-lg bg-white/80 dark:bg-zinc-950/80 border-b border-zinc-200 dark:border-zinc-800">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center h-16">
-          <div class="flex items-center">
-            <h1 class="text-xl font-medium">iOS Club 管理中心</h1>
-          </div>
-          <div>
-            <n-button text @click="logout" class="rounded-full">
-              <template #icon>
-                <IconFont type="#icon-logout" class="w-5 h-5"/>
-              </template>
-              退出登录
-            </n-button>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <!-- 个人信息卡片 -->
       <div class="mb-8">
@@ -51,7 +31,7 @@
                     @click="goToPersonalData"
                 >
                   <template #icon>
-                    <IconFont type="#icon-user" class="w-4 h-4"/>
+                    <IconFont type="user" class="w-4 h-4"/>
                   </template>
                   编辑个人信息
                 </n-button>
@@ -84,7 +64,7 @@
                     class="w-14 h-14 mb-3 flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 rounded-xl group-hover:bg-blue-50 dark:group-hover:bg-blue-900/30 transition-colors duration-200">
                   <template v-if="!tool.icon.startsWith('http')">
                     <IconFont
-                        :type="`#icon-${tool.icon}`"
+                        :type="tool.icon"
                         class="w-7 h-7 group-hover:text-blue-500 transition-colors"
                     />
                   </template>
@@ -242,7 +222,7 @@
                         </div>
                         <div
                             class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-800/50 flex items-center justify-center">
-                          <IconFont type="#icon-people" class="w-4 h-4 text-blue-600 dark:text-blue-400"/>
+                          <IconFont type="people" class="w-4 h-4 text-blue-600 dark:text-blue-400"/>
                         </div>
                       </div>
                     </div>
@@ -257,8 +237,9 @@
                         </div>
                         <div
                             class="w-8 h-8 rounded-full bg-green-100 dark:bg-green-800/50 flex items-center justify-center">
-                          <IconFont type="#icon-users" class="w-4 h-4 text-green-600 dark:text-green-400"/>
+                          <IconFont type="users" class="w-4 h-4 text-green-600 dark:text-green-400"/>
                         </div>
+
                       </div>
                     </div>
                     <div
@@ -271,8 +252,9 @@
                         </div>
                         <div
                             class="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-800/50 flex items-center justify-center">
-                          <IconFont type="#icon-briefcase" class="w-4 h-4 text-purple-600 dark:text-purple-400"/>
+                          <IconFont type="briefcase" class="w-4 h-4 text-purple-600 dark:text-purple-400"/>
                         </div>
+
                       </div>
                     </div>
                     <div
@@ -286,8 +268,9 @@
                         </div>
                         <div
                             class="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-800/50 flex items-center justify-center">
-                          <IconFont type="#icon-check-square" class="w-4 h-4 text-amber-600 dark:text-amber-400"/>
+                          <IconFont type="check-square" class="w-4 h-4 text-amber-600 dark:text-amber-400"/>
                         </div>
+
                       </div>
                     </div>
                     <div
@@ -301,8 +284,9 @@
                         </div>
                         <div
                             class="w-8 h-8 rounded-full bg-red-100 dark:bg-red-800/50 flex items-center justify-center">
-                          <IconFont type="#icon-database" class="w-4 h-4 text-red-600 dark:text-red-400"/>
+                          <IconFont type="database" class="w-4 h-4 text-red-600 dark:text-red-400"/>
                         </div>
+
                       </div>
                     </div>
                     <div
@@ -315,7 +299,7 @@
                         </div>
                         <div
                             class="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-800/50 flex items-center justify-center">
-                          <IconFont type="#icon-building" class="w-4 h-4 text-indigo-600 dark:text-indigo-400"/>
+                          <IconFont type="building" class="w-4 h-4 text-indigo-600 dark:text-indigo-400"/>
                         </div>
                       </div>
                     </div>
@@ -334,7 +318,6 @@
 import {ref, onMounted} from 'vue'
 import {useRouter} from 'vue-router'
 import {NTag, NButton, NEmpty} from 'naive-ui'
-import {useAuthorizationStore} from '../stores/Authorization.js'
 import '../lib/iconfont.js'
 import IconFont from '../components/IconFont.vue'
 import {ToolService} from '../services/ToolService.ts'
@@ -346,7 +329,6 @@ import {StaffService} from '../services/StaffService.ts'
 import {MemberQueryService} from '../services/MemberQueryService.ts'
 
 const router = useRouter()
-const authorizationStore = useAuthorizationStore()
 
 // 用户信息
 const userInfo = ref({
@@ -464,12 +446,6 @@ const goToDepartment = () => {
 // 打开工具链接
 const openTool = (url) => {
   window.open(url, '_blank')
-}
-
-// 退出登录
-const logout = () => {
-  authorizationStore.logout()
-  router.push('/login')
 }
 
 // 获取工具数据
