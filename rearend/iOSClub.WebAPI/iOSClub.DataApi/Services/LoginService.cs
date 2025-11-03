@@ -76,11 +76,11 @@ public class LoginService(
         };
 
         var redisKey = $"{TokenPrefix}{userId}";
-        // var storedToken = await _db.StringGetAsync(redisKey);
-        // if (storedToken.HasValue && !string.IsNullOrEmpty(storedToken))
-        // {
-        //     return storedToken.ToString();
-        // }
+        var storedToken = await _db.StringGetAsync(redisKey);
+        if (storedToken.HasValue && !string.IsNullOrEmpty(storedToken))
+        {
+            return storedToken.ToString();
+        }
 
         var token = jwtHelper.GetMemberToken(memberModel);
 

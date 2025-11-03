@@ -1,3 +1,4 @@
+using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -52,8 +53,15 @@ public class SSOController(
         var encryptedState = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(
             System.Text.Json.JsonSerializer.Serialize(authState)));
 
+        // 检查是否配置了OAuth
+        var clientIdConfig = HttpContext.RequestServices.GetRequiredService<IConfiguration>()["OAuth2:ClientId"];
+        if (string.IsNullOrEmpty(clientIdConfig))
+        {
+            return BadRequest("OAuth2 未正确配置");
+        }
+
         // 重定向到OAuth提供商
-        var provider = "OAuth2";
+        const string provider = "OAuth2";
         var redirectUrl = Url.Action(nameof(Callback), "SSO", new { state = encryptedState });
         var properties = new AuthenticationProperties { RedirectUri = redirectUrl };
         return Challenge(properties, provider);
@@ -67,6 +75,13 @@ public class SSOController(
     [HttpGet("callback")]
     public async Task<IActionResult> Callback([FromQuery] string state)
     {
+        // 检查是否配置了OAuth
+        var clientIdConfig = HttpContext.RequestServices.GetRequiredService<IConfiguration>()["OAuth2:ClientId"];
+        if (string.IsNullOrEmpty(clientIdConfig))
+        {
+            return BadRequest("OAuth2 未正确配置");
+        }
+
         var authenticateResult = await HttpContext.AuthenticateAsync("OAuth2");
 
         if (!authenticateResult.Succeeded)
@@ -80,7 +95,6 @@ public class SSOController(
         var enumerable = claims as Claim[] ?? claims.ToArray();
         var userId = enumerable.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
         var userName = enumerable.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value;
-        var email = enumerable.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
 
         if (string.IsNullOrEmpty(userId))
             return BadRequest("无法获取用户ID");
@@ -191,9 +205,29 @@ public class SSOController(
     /// <returns>令牌是否有效</returns>
     private async Task<bool> ValidateToken(string token)
     {
-        // 在实际应用中，这里应该有更复杂的令牌验证逻辑
-        // 包括检查令牌是否过期、是否被撤销等
-        return !string.IsNullOrEmpty(token);
+        // 检查令牌是否为空
+        if (string.IsNullOrEmpty(token))
+            return false;
+
+        try
+        {
+            // 使用JwtHelper中的配置来验证令牌
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadJwtToken(token);
+
+            // 从令牌中提取用户ID
+            var userId = jsonToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+                return false;
+
+            // 使用loginService来验证令牌
+            return await loginService.ValidateToken(userId, token);
+        }
+        catch (Exception)
+        {
+            // 如果解析令牌时出现任何异常，认为令牌无效
+            return false;
+        }
     }
 
     /// <summary>

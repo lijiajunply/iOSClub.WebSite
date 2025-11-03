@@ -446,9 +446,4 @@ onMounted(() => {
 .markdown-content :deep(hr) {
   @apply border-gray-300 dark:border-gray-700 my-8;
 }
-
-/* ECharts 容器 */
-.echarts-chart {
-  @apply w-full h-64 my-4 rounded-lg;
-}
 </style>

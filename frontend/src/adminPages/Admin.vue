@@ -137,20 +137,16 @@
 
 <script setup lang="ts">
 import {ref, onMounted, onBeforeUnmount, nextTick, watch} from 'vue'
-import {useRouter} from 'vue-router'
 import {useMessage, useDialog} from 'naive-ui'
 import {Icon} from '@iconify/vue'
 import * as echarts from 'echarts'
 import StatCard from '../components/StatCard.vue'
 import {MemberQueryService} from '../services/MemberQueryService'
-import {StaffService} from '../services/StaffService'
 import {ProjectService} from '../services/ProjectService'
 import {ResourceService} from '../services/ResourceService'
 import {DepartmentService} from '../services/DepartmentService'
 import {TodoService} from '../services/TodoService'
-import {InfoService} from '../services/InfoService'
 
-const router = useRouter()
 const message = useMessage()
 const dialog = useDialog()
 

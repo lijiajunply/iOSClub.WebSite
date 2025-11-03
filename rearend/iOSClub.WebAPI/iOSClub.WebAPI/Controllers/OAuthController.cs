@@ -7,11 +7,18 @@ namespace iOSClub.WebAPI.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class OAuthController(ILoginService loginService) : ControllerBase
+public class OAuthController(ILoginService loginService, IConfiguration configuration) : ControllerBase
 {
     [HttpGet("login")]
     public IActionResult Login(string provider = "OAuth2", string? returnUrl = "/")
     {
+        // 检查是否配置了OAuth
+        var clientId = configuration["OAuth2:ClientId"];
+        if (string.IsNullOrEmpty(clientId))
+        {
+            return BadRequest("OAuth2 未正确配置");
+        }
+
         var redirectUrl = Url.Action(nameof(Callback), "OAuth", new { returnUrl });
         var properties = new AuthenticationProperties { RedirectUri = redirectUrl };
         return Challenge(properties, provider);
@@ -20,6 +27,13 @@ public class OAuthController(ILoginService loginService) : ControllerBase
     [HttpGet("callback")]
     public async Task<IActionResult> Callback(string? returnUrl = "/")
     {
+        // 检查是否配置了OAuth
+        var clientId = configuration["OAuth2:ClientId"];
+        if (string.IsNullOrEmpty(clientId))
+        {
+            return BadRequest("OAuth2 未正确配置");
+        }
+
         var authenticateResult = await HttpContext.AuthenticateAsync("OAuth2");
 
         if (!authenticateResult.Succeeded)
@@ -33,7 +47,6 @@ public class OAuthController(ILoginService loginService) : ControllerBase
         var enumerable = claims as Claim[] ?? claims.ToArray();
         var userId = enumerable.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
         var userName = enumerable.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value;
-        var email = enumerable.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
 
         if (string.IsNullOrEmpty(userId))
             return BadRequest("无法获取用户ID");

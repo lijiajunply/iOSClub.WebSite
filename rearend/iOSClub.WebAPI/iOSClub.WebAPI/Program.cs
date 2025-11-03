@@ -30,10 +30,18 @@ builder.Services.AddOpenApi(opt => { opt.AddDocumentTransformer<BearerSecuritySc
 #region 身份验证
 
 builder.Services.AddAuthorizationCore();
-builder.Services.AddAuthentication(options =>
+// 只有在配置了 OAuth2 的情况下才添加 OAuth2 认证
+var oAuthConfig = builder.Configuration.GetSection("OAuth2");
+var clientId = oAuthConfig["ClientId"];
+
+var authenticationBuilder = builder.Services.AddAuthentication(options =>
     {
         options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = "OAuth2";
+        // 只有配置了 OAuth2 时才设置 DefaultChallengeScheme
+        if (!string.IsNullOrEmpty(clientId))
+        {
+            options.DefaultChallengeScheme = "OAuth2";
+        }
     })
     .AddJwtBearer(options =>
     {
@@ -51,18 +59,20 @@ builder.Services.AddAuthentication(options =>
             ClockSkew = TimeSpan.FromSeconds(30), //过期时间容错值，解决服务器端时间不同步问题（秒）
             RequireExpirationTime = true,
         };
-    })
-    // 添加通用 OAuth2 认证支持
-    .AddOAuth("OAuth2", options =>
-    {
-        // 这些配置项应该从 appsettings.json 中读取
-        options.ClientId = builder.Configuration["OAuth2:ClientId"] ?? "";
-        options.ClientSecret = builder.Configuration["OAuth2:ClientSecret"] ?? "";
-        options.CallbackPath = builder.Configuration["OAuth2:CallbackPath"] ?? "/auth/callback";
+    });
 
-        options.AuthorizationEndpoint = builder.Configuration["OAuth2:AuthorizationEndpoint"] ?? "";
-        options.TokenEndpoint = builder.Configuration["OAuth2:TokenEndpoint"] ?? "";
-        options.UserInformationEndpoint = builder.Configuration["OAuth2:UserInformationEndpoint"] ?? "";
+// 只有在配置了 OAuth2 的情况下才添加 OAuth2 认证
+if (!string.IsNullOrEmpty(clientId))
+{
+    authenticationBuilder.AddOAuth("OAuth2", options =>
+    {
+        options.ClientId = clientId;
+        options.ClientSecret = oAuthConfig["ClientSecret"] ?? "";
+        options.CallbackPath = oAuthConfig["CallbackPath"] ?? "/auth/callback";
+
+        options.AuthorizationEndpoint = oAuthConfig["AuthorizationEndpoint"] ?? "";
+        options.TokenEndpoint = oAuthConfig["TokenEndpoint"] ?? "";
+        options.UserInformationEndpoint = oAuthConfig["UserInformationEndpoint"] ?? "";
 
         options.Scope.Add("openid");
         options.Scope.Add("profile");
@@ -90,6 +100,7 @@ builder.Services.AddAuthentication(options =>
             }
         };
     });
+}
 
 #endregion
 
