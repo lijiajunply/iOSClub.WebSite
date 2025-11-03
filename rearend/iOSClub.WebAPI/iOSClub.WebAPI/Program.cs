@@ -110,10 +110,21 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.AllowAnyOrigin() //允许任何来源的主机访问
+        policy.WithOrigins("https://ios.zeabur.app", "http://localhost:5176") // 允许指定来源
             .AllowAnyMethod()
-            .AllowAnyHeader();
+            .AllowAnyHeader()
+            .AllowCredentials(); // 如果需要发送凭据（如cookies、认证头等）
     });
+    
+    // 备用策略：如果需要允许多个特定来源
+    options.AddPolicy("AllowSpecificOrigins",
+        policy =>
+        {
+            policy.WithOrigins("https://ios.zeabur.app", "https://localhost:3000", "http://localhost:3000")
+                .AllowAnyMethod()
+                .AllowAnyHeader()
+                .AllowCredentials();
+        });
 });
 
 #endregion
