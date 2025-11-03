@@ -2,7 +2,7 @@
   <div class="min-h-screen transition-colors duration-500">
 
     <!-- Hero Section - Apple Style -->
-    <section class="relative min-h-screen flex items-center justify-center px-6 lg:px-8 overflow-hidden">
+    <section class="relative flex items-center justify-center px-6 lg:px-8 overflow-hidden" style="height: calc(100vh - 64px);">
       <!-- Background Gradient -->
       <div
           class="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-pink-500/5 dark:from-blue-500/10 dark:via-purple-500/10 dark:to-pink-500/10"></div>
@@ -84,11 +84,6 @@
             </div>
           </div>
         </div>
-      </div>
-
-      <!-- Scroll Indicator -->
-      <div class="absolute bottom-12 left-1/2 -translate-x-1/2 animate-bounce">
-        <Icon icon="heroicons:chevron-down-20-solid" class="text-3xl text-gray-400 dark:text-gray-600"/>
       </div>
     </section>
 

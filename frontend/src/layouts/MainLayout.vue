@@ -6,7 +6,7 @@
         class="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-black/80 backdrop-blur-xl border-b border-gray-200 dark:border-gray-800"
         :class="{ 'shadow-md': isScrolled }"
       >
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="mx-auto px-4 sm:px-6 lg:px-8">
           <div class="flex items-center justify-between h-16">
             <!-- Logo and Title -->
             <router-link to="/" class="flex items-center gap-3 group">
@@ -16,7 +16,7 @@
                 class="w-8 h-8 transition-transform group-hover:scale-105"
               />
               <div class="text-lg font-semibold text-gray-900 dark:text-gray-100 hidden sm:block">
-                XAUAT iOS Club
+                iOS Club of XAUAT
               </div>
             </router-link>
 
