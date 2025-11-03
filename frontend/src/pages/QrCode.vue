@@ -41,7 +41,7 @@
 
           <img
               alt="二维码"
-              src="../../public/assets/other/二维码.jpg"
+              src="../../public/assets/other/qrcord.jpg"
               class="w-full"
           />
 
