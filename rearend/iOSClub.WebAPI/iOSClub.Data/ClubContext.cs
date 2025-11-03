@@ -16,8 +16,8 @@ public sealed class ClubContext(DbContextOptions<ClubContext> options) : DbConte
     public DbSet<ProjectModel> Projects { get; init; }
     public DbSet<ResourceModel> Resources { get; init; }
     public DbSet<DepartmentModel> Departments { get; init; }
-
     public DbSet<ArticleModel> Articles { get; init; }
+    public DbSet<ClientApplication> ClientApplications { get; init; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

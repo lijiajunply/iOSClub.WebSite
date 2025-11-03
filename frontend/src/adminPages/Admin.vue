@@ -136,7 +136,7 @@
 </template>
 
 <script setup lang="ts">
-import {ref, onMounted, onBeforeUnmount, nextTick, watch, onBeforeMount} from 'vue'
+import {ref, onMounted, onBeforeUnmount, nextTick, watch} from 'vue'
 import {useRouter} from 'vue-router'
 import {useMessage, useDialog} from 'naive-ui'
 import {Icon} from '@iconify/vue'
@@ -182,11 +182,6 @@ const identityDictionary: Record<string, string> = {
   'Minister': '部长/副部长',
   'Department': '部员',
   'Member': '普通成员'
-}
-
-// Navigation methods
-const navigateTo = (route: string) => {
-  router.push(`/${route}`)
 }
 
 // File handling methods
@@ -336,35 +331,21 @@ const removeAllData = () => {
 const fetchData = async () => {
   try {
     // 并行获取所有数据
-    const [membersData, staffsData, projectsData, resourcesData, departmentsData, todoStats, userData] = await Promise.all([
+    const [membersData, projectsData, resourcesData, departmentsData, todoStats] = await Promise.all([
       // 获取成员数据
-      MemberQueryService.getAllDataByPage(1, 1).catch(() => ({Total: 0, Data: []})),
-      // 获取部员数据
-      StaffService.getAllStaff().catch(() => []),
+      MemberQueryService.getAllDataByPage(1, 1),
       // 获取项目数据
-      ProjectService.getAllProjects().catch(() => []),
+      ProjectService.getAllProjects(),
       // 获取资源数据
-      ResourceService.getAllResources().catch(() => []),
+      ResourceService.getAllResources(),
       // 获取部门数据
-      DepartmentService.getAllDepartments().catch(() => []),
+      DepartmentService.getAllDepartments(),
       // 获取待办统计数据
-      TodoService.getTodoStatistics().catch(() => ({TotalCount: 0})),
-      // 获取用户信息
-      InfoService.getUserInfo().catch(() => ({isAdmin: false}))
+      TodoService.getTodoStatistics(),
     ])
 
     // 更新成员数据
     studentsCount.value = membersData.totalCount || 0
-
-    // 处理 staffs 数据，确保每个对象都有必要的属性
-    staffs.value = (staffsData || []).map(staff => {
-      return {
-        id: staff.id || staff.Id || Math.random().toString(36).substr(2, 9),
-        name: staff.name || staff.Name || '未知成员',
-        identity: staff.identity || staff.Identity || 'Member',
-        ...staff
-      }
-    }).filter(staff => staff.name && staff.name.length > 0) // 过滤掉空名称的成员
 
     // 更新项目和任务数据
     projectsCount.value = projectsData.length || 0
@@ -383,10 +364,7 @@ const fetchData = async () => {
     departmentsCount.value = departmentsData.length || 0
 
     // 更新待办数据
-    todosCount.value = todoStats.TotalCount || 0
-
-    // 更新用户信息
-    userInfo.value.isAdmin = userData.isAdmin || false
+    todosCount.value = todoStats.total || 0
   } catch (error) {
     console.error('获取数据时出错:', error)
     message.error('获取数据时出错')
@@ -414,7 +392,6 @@ const updateMemberChart = () => {
 
   const isDark = document.documentElement.classList.contains('dark')
   const textColor = isDark ? '#e5e7eb' : '#374151'
-  const backgroundColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'
 
   const option = {
     tooltip: {

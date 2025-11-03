@@ -113,7 +113,7 @@ import { NEmpty, NSpin, NCard } from 'naive-ui';
 import PageStart from "../components/PageStart.vue";
 
 // 导入头部图片
-import articleHeaderImg from '../../public/assets/Centre/Article.jpg';
+import articleHeaderImg from '/assets/Centre/Article.jpg';
 
 const isMobile = ref(window.innerWidth < 640);
 

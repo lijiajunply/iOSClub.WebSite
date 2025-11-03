@@ -5,6 +5,7 @@ using iOSClub.DataApi.Repositories;
 using iOSClub.DataApi.Services;
 using iOSClub.WebAPI.IdentityModels;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -12,6 +13,10 @@ using Microsoft.IdentityModel.Tokens;
 using NpgsqlDataProtection;
 using Scalar.AspNetCore;
 using StackExchange.Redis;
+using System.Security.Claims;
+using System.Net.Http.Headers;
+using Microsoft.AspNetCore.Authentication;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,7 +30,11 @@ builder.Services.AddOpenApi(opt => { opt.AddDocumentTransformer<BearerSecuritySc
 #region 身份验证
 
 builder.Services.AddAuthorizationCore();
-builder.Services.AddAuthentication(options => { options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme; })
+builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = "OAuth2";
+    })
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters()
@@ -41,6 +50,44 @@ builder.Services.AddAuthentication(options => { options.DefaultScheme = JwtBeare
             ValidateLifetime = true, //是否验证失效时间
             ClockSkew = TimeSpan.FromSeconds(30), //过期时间容错值，解决服务器端时间不同步问题（秒）
             RequireExpirationTime = true,
+        };
+    })
+    // 添加通用 OAuth2 认证支持
+    .AddOAuth("OAuth2", options =>
+    {
+        // 这些配置项应该从 appsettings.json 中读取
+        options.ClientId = builder.Configuration["OAuth2:ClientId"] ?? "";
+        options.ClientSecret = builder.Configuration["OAuth2:ClientSecret"] ?? "";
+        options.CallbackPath = builder.Configuration["OAuth2:CallbackPath"] ?? "/auth/callback";
+
+        options.AuthorizationEndpoint = builder.Configuration["OAuth2:AuthorizationEndpoint"] ?? "";
+        options.TokenEndpoint = builder.Configuration["OAuth2:TokenEndpoint"] ?? "";
+        options.UserInformationEndpoint = builder.Configuration["OAuth2:UserInformationEndpoint"] ?? "";
+
+        options.Scope.Add("openid");
+        options.Scope.Add("profile");
+        options.Scope.Add("email");
+
+        options.ClaimActions.MapJsonKey(ClaimTypes.NameIdentifier, "sub");
+        options.ClaimActions.MapJsonKey(ClaimTypes.Name, "name");
+        options.ClaimActions.MapJsonKey(ClaimTypes.Email, "email");
+
+        options.Events = new OAuthEvents
+        {
+            OnCreatingTicket = async context =>
+            {
+                var request = new HttpRequestMessage(HttpMethod.Get, context.Options.UserInformationEndpoint);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", context.AccessToken);
+                request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                var response = await context.Backchannel.SendAsync(request, context.HttpContext.RequestAborted);
+                if (!response.IsSuccessStatusCode)
+                    return;
+
+                var json = await response.Content.ReadAsStringAsync();
+                var user = JsonSerializer.Deserialize<JsonElement>(json);
+                context.RunClaimActions(user);
+            }
         };
     });
 
@@ -121,6 +168,7 @@ builder.Services.AddScoped<ITodoRepository, TodoRepository>();
 
 builder.Services.AddScoped<ILoginService, LoginService>();
 builder.Services.AddScoped<IDataCentreService, DataCentreService>();
+builder.Services.AddScoped<IClientApplicationRepository, ClientApplicationRepository>();
 
 #endregion
 
@@ -189,6 +237,7 @@ using (var scope = app.Services.CreateScope())
 app.MapOpenApi();
 
 app.UseHttpsRedirection();
+app.UseAuthentication(); // 添加这行以启用身份验证中间件
 app.UseAuthorization();
 app.UseCors();
 app.MapControllers();

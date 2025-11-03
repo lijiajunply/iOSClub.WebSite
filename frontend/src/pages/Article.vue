@@ -6,7 +6,8 @@
 import {ref, watch, computed} from 'vue'
 import {useRoute} from 'vue-router'
 import MarkdownComponent from "../components/MarkdownComponent.vue";
-import {type ArticleModel, ArticleService} from "../services/ArticleService";
+import {ArticleService} from "../services/ArticleService";
+import {ArticleModel} from "../models";
 
 const roomArticle = ref<ArticleModel>({
   path: "",

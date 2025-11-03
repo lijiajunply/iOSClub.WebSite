@@ -78,7 +78,8 @@ import '../lib/iconfont'
 import {ref, onMounted} from 'vue';
 import {NCard} from 'naive-ui';
 import PageStart from "../components/PageStart.vue";
-import {LinkModel, ToolService} from "../services/ToolService";
+import {ToolService} from "../services/ToolService";
+import {LinkModel} from "../models";
 import toolsImage from '/assets/Centre/AppleLogo.jpg';
 import IconFont from "../components/IconFont.vue";
 
