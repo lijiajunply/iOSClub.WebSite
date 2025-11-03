@@ -9,8 +9,6 @@ export default defineConfig({
         rollupOptions: {
             output: {
                 manualChunks: {
-                    // 将较大的依赖或特定模块分离到固定名称的块中
-                    'client-application': ['./src/adminPages/ClientApplication.vue'],
                     // 对较大的第三方库进行单独打包
                     'naive-ui': ['naive-ui'],
                     'echarts-core': ['echarts/core'],
@@ -18,6 +16,7 @@ export default defineConfig({
                     'echarts-components': ['echarts/components'],
                     'markdown-it': ['markdown-it'],
                     'prismjs': ['prismjs']
+                    // 移除了 'client-application' 的手动分块，避免循环依赖问题
                 }
             }
         },
