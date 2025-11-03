@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { nextTick, ref, watch, computed, onMounted } from "vue";
-import { Icon } from "@iconify/vue";
+import {nextTick, ref, watch, computed, onMounted} from "vue";
+import {Icon} from "@iconify/vue";
 import * as echarts from 'echarts'
 
 import MarkdownIt from 'markdown-it'
@@ -75,10 +75,10 @@ const containerOptions = [
 
 containerOptions.forEach(({name, className}) => {
   md.use(markdownItContainer, name, {
-    validate: (params) => {
+    validate: (params: string) => {
       return params.trim().match(new RegExp(`^${name}\\s+(.*)$`))
     },
-    render: (tokens, idx) => {
+    render: (tokens: any[], idx: number) => {
       const m = tokens[idx].info.trim().match(new RegExp(`^${name}\\s+(.*)$`))
       if (tokens[idx].nesting === 1) {
         return `<div class="${className} custom-block"><p class="custom-block-title">${md.utils.escapeHtml(m[1])}</p>\n`
@@ -163,25 +163,25 @@ const render = async (markdown: string) => {
     // 初始化 ECharts 图表
     const chartElements = document.querySelectorAll('.echarts-chart')
     chartElements.forEach(element => {
-      const chartConfig = element.getAttribute('data-config')
-      if (chartConfig) {
-        try {
-          const option = JSON.parse(chartConfig)
-          const chart = echarts.init(element as HTMLElement)
-          chart.setOption(option)
-          
-          // 响应式调整
-          const resizeObserver = new ResizeObserver(() => {
-            chart.resize()
-          })
-          resizeObserver.observe(element)
-        } catch (e) {
-          console.error('ECharts配置解析失败:', e)
+          const chartConfig = element.getAttribute('data-config')
+          if (chartConfig) {
+            try {
+              const option = JSON.parse(chartConfig)
+              const chart = echarts.init(element as HTMLElement)
+              chart.setOption(option)
+
+              // 响应式调整
+              const resizeObserver = new ResizeObserver(() => {
+                chart.resize()
+              })
+              resizeObserver.observe(element)
+            } catch (e) {
+              console.error('ECharts配置解析失败:', e)
+            }
+          }
         }
-      }
-    }
     )
-    
+
     // 代码高亮
     Prism.highlightAll()
   }, 50)
@@ -199,8 +199,14 @@ watch(() => props.content, async (newValue) => {
 )
 
 // 递归渲染导航链接
-const renderAnchorLinks = (items: Array<{ id: string; text: string; level: number; href: string; children: any[] }>, depth = 0) => {
-  return items.map(item => ({
+const renderAnchorLinks = (items: Array<{
+  id: string;
+  text: string;
+  level: number;
+  href: string;
+  children: any[]
+}>, depth = 0): Array<{ title: string; href: string; children?: Array<{ title: string; href: string }> }> => {
+  return items.map((item: any) => ({
     title: item.text,
     href: item.href,
     children: item.children?.length > 0 ? renderAnchorLinks(item.children, depth + 1) : undefined
@@ -216,7 +222,7 @@ onMounted(() => {
   const handleScroll = () => {
     const headings = document.querySelectorAll('h1, h2, h3, h4, h5, h6')
     let activeHeadingId = ''
-    
+
     for (let i = headings.length - 1; i >= 0; i--) {
       const heading = headings[i]
       const rect = heading.getBoundingClientRect()
@@ -225,12 +231,12 @@ onMounted(() => {
         break
       }
     }
-    
+
     // 移除所有活动类
     document.querySelectorAll('.toc-link').forEach(link => {
       link.classList.remove('active')
     })
-    
+
     // 为当前活动标题添加活动类
     if (activeHeadingId) {
       const activeLink = document.querySelector(`.toc-link[href="#${activeHeadingId}"]`)
@@ -239,7 +245,7 @@ onMounted(() => {
       }
     }
   }
-  
+
   window.addEventListener('scroll', handleScroll)
 })
 </script>
@@ -256,11 +262,11 @@ onMounted(() => {
           </h1>
           <div class="flex items-center gap-4 text-gray-500 dark:text-gray-400 text-sm">
             <time class="flex items-center gap-1">
-              <Icon icon="mdi:calendar" width="16" height="16" />
+              <Icon icon="mdi:calendar" width="16" height="16"/>
               {{ date }}
             </time>
             <span class="flex items-center gap-1">
-              <Icon icon="mdi:eye" width="16" height="16" />
+              <Icon icon="mdi:eye" width="16" height="16"/>
               {{ content.watch }} 次阅读
             </span>
           </div>
@@ -280,29 +286,29 @@ onMounted(() => {
           目录
         </h3>
         <ul class="space-y-1">
-          <li 
-            v-for="link in anchorLinks" 
-            :key="link.href"
-            class="toc-item"
+          <li
+              v-for="link in anchorLinks"
+              :key="link.href"
+              class="toc-item"
           >
-            <a 
-              :href="link.href" 
-              class="toc-link block py-1 text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
-              :class="{ 'active font-medium text-blue-600 dark:text-blue-400': false }"
+            <a
+                :href="link.href"
+                class="toc-link block py-1 text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
+                :class="{ 'active font-medium text-blue-600 dark:text-blue-400': false }"
             >
               {{ link.title }}
             </a>
-            
+
             <!-- 子目录 -->
             <ul v-if="link.children && link.children.length > 0" class="ml-3 mt-1 space-y-1">
-              <li 
-                v-for="subLink in link.children" 
-                :key="subLink.href"
+              <li
+                  v-for="subLink in link.children"
+                  :key="subLink.href"
               >
-                <a 
-                  :href="subLink.href" 
-                  class="toc-link block py-1 text-xs text-gray-500 hover:text-gray-900 dark:text-gray-500 dark:hover:text-white transition-colors"
-                  :class="{ 'active font-medium text-blue-600 dark:text-blue-400': false }"
+                <a
+                    :href="subLink.href"
+                    class="toc-link block py-1 text-xs text-gray-500 hover:text-gray-900 dark:text-gray-500 dark:hover:text-white transition-colors"
+                    :class="{ 'active font-medium text-blue-600 dark:text-blue-400': false }"
                 >
                   {{ subLink.title }}
                 </a>
@@ -316,8 +322,9 @@ onMounted(() => {
 
   <!-- 空状态 -->
   <div v-else class="flex flex-col items-center justify-center h-full p-8 text-center">
-    <div class="bg-gray-200 dark:bg-gray-700 border-2 border-dashed rounded-xl w-16 h-16 flex items-center justify-center mb-4">
-      <Icon icon="mdi:file-document-outline" width="32" height="32" class="text-gray-500 dark:text-gray-400" />
+    <div
+        class="bg-gray-200 dark:bg-gray-700 border-2 border-dashed rounded-xl w-16 h-16 flex items-center justify-center mb-4">
+      <Icon icon="mdi:file-document-outline" width="32" height="32" class="text-gray-500 dark:text-gray-400"/>
     </div>
     <p class="text-gray-500 dark:text-gray-400 text-lg">
       请选择一篇文章阅读
