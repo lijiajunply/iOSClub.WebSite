@@ -26,7 +26,7 @@ public class AuthController(
     public async Task<ActionResult<string>> SignUp(StudentModel model)
     {
         var createdStudent = await studentRepository.Create(model);
-        
+
         if (createdStudent == null)
         {
             return Conflict();
@@ -49,7 +49,7 @@ public class AuthController(
         {
             return studentToken;
         }
-        
+
         // 如果学生登录失败，尝试员工登录
         var staffToken = await loginService.StaffLogin(loginModel.Id, loginModel.Name);
         if (!string.IsNullOrEmpty(staffToken))
@@ -59,7 +59,7 @@ public class AuthController(
 
         return NotFound();
     }
-    
+
     /// <summary>
     /// 用户登出接口
     /// </summary>
@@ -72,7 +72,7 @@ public class AuthController(
         var result = await loginService.Logout(userId);
         return result ? Ok(true) : BadRequest(false);
     }
-    
+
     /// <summary>
     /// 验证用户token是否有效
     /// </summary>
@@ -87,5 +87,72 @@ public class AuthController(
             return Unauthorized(false);
         var result = await loginService.ValidateToken(userId, token);
         return result ? Ok(true) : Unauthorized(false);
+    }
+
+    /// <summary>
+    /// 修改用户密码
+    /// </summary>
+    /// <param name="userId">用户ID</param>
+    /// <param name="oldPassword">旧密码</param>
+    /// <param name="newPassword">新密码</param>
+    /// <returns>成功返回true，失败返回相应的错误信息</returns>
+    [Authorize]
+    [HttpPut("change-password")]
+    public async Task<ActionResult<bool>> ChangePassword(string userId, string oldPassword, string newPassword)
+    {
+        // 验证用户身份
+        var token = HttpContext.GetJwt();
+        if (string.IsNullOrEmpty(token))
+            return Unauthorized(false);
+
+        var isValid = await loginService.ValidateToken(userId, token);
+        if (!isValid)
+            return Unauthorized(false);
+
+        // 尝试更改密码
+        var result = await loginService.ChangePassword(userId, oldPassword, newPassword);
+
+        if (!result)
+            return BadRequest("密码更新失败，可能是旧密码错误或用户不存在");
+
+        return Ok(true);
+    }
+
+    /// <summary>
+    /// 请求重置密码的验证码
+    /// </summary>
+    /// <param name="userId">用户ID</param>
+    /// <returns>成功返回true，失败返回相应的错误信息</returns>
+    [HttpPost("request-password-reset")]
+    public async Task<ActionResult<bool>> RequestPasswordReset(string userId)
+    {
+        var result = await loginService.RequestPasswordResetCode(userId);
+
+        if (result) return Ok(true);
+        // 检查用户是否存在
+        var student = await studentRepository.GetByIdAsync(userId);
+        if (student == null)
+            return NotFound("用户不存在");
+
+        // 用户存在但没有邮箱
+        return BadRequest("请联系管理员进行密码更改");
+    }
+
+    /// <summary>
+    /// 通过验证码重置密码
+    /// </summary>
+    /// <param name="userId">用户ID</param>
+    /// <param name="code">验证码</param>
+    /// <param name="newPassword">新密码</param>
+    /// <returns>成功返回true，失败返回相应的错误信息</returns>
+    [HttpPost("reset-password")]
+    public async Task<ActionResult<bool>> ResetPassword(string userId, string code, string newPassword)
+    {
+        var result = await loginService.ResetPasswordWithCode(userId, code, newPassword);
+
+        if (!result)
+            return BadRequest("验证码无效或密码重置失败");
+
+        return Ok(true);
     }
 }

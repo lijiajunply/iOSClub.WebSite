@@ -50,7 +50,10 @@
             <p class="text-sm text-gray-500 dark:text-gray-400">iOS Club 出品的小工具</p>
           </div>
           <div class="px-6 py-5">
-            <div v-if="tools.length === 0" class="flex flex-col items-center justify-center py-12 text-center">
+            <div v-if="loading.tools" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
+              <SkeletonLoader v-for="i in 5" :key="i" type="card" />
+            </div>
+            <div v-else-if="tools.length === 0" class="flex flex-col items-center justify-center py-12 text-center">
               <n-empty description="暂无可用工具"/>
             </div>
             <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
@@ -96,7 +99,10 @@
               <p class="text-sm text-gray-500 dark:text-gray-400">待完成的工作任务</p>
             </div>
             <div class="p-6">
-              <div v-if="tasks.length === 0" class="flex flex-col items-center justify-center py-10 text-center">
+              <div v-if="loading.tasks" class="space-y-4">
+                <SkeletonLoader v-for="i in 3" :key="i" type="list" :count="1" />
+              </div>
+              <div v-else-if="tasks.length === 0" class="flex flex-col items-center justify-center py-10 text-center">
                 <n-empty description="暂无待完成任务"/>
               </div>
               <div v-else class="space-y-4 max-h-96 overflow-y-auto pr-2">
@@ -137,7 +143,10 @@
               <p class="text-sm text-gray-500 dark:text-gray-400">iOS Club 资源全览</p>
             </div>
             <div class="p-6">
-              <div v-if="resources.length === 0" class="flex flex-col items-center justify-center py-10 text-center">
+              <div v-if="loading.resources" class="space-y-4">
+                <SkeletonLoader v-for="i in 3" :key="i" type="list" :count="1" />
+              </div>
+              <div v-else-if="resources.length === 0" class="flex flex-col items-center justify-center py-10 text-center">
                 <n-empty description="暂无可用资源"/>
               </div>
               <div v-else class="space-y-4 max-h-96 overflow-y-auto pr-2">
@@ -181,7 +190,10 @@
                 <p class="text-sm text-gray-500 dark:text-gray-400">iOS 部门管理</p>
               </div>
               <div class="p-6">
-                <div v-if="departments.length === 0"
+                <div v-if="loading.departments" class="space-y-3">
+                  <SkeletonLoader v-for="i in 4" :key="i" type="list" :count="1" />
+                </div>
+                <div v-else-if="departments.length === 0"
                      class="flex flex-col items-center justify-center py-10 text-center">
                   <n-empty description="暂无部门信息"/>
                 </div>
@@ -210,7 +222,10 @@
                   <p class="text-sm text-gray-500 dark:text-gray-400">展示社团数据</p>
                 </div>
                 <div class="p-6">
-                  <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  <div v-if="loading.statistics" class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    <SkeletonLoader v-for="i in 6" :key="i" type="card" />
+                  </div>
+                  <div v-else class="grid grid-cols-2 sm:grid-cols-3 gap-4">
                     <div
                         class="p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30">
                       <div class="flex justify-between items-start">
@@ -325,6 +340,7 @@ import {ref, onMounted} from 'vue'
 import {useRouter} from 'vue-router'
 import {NTag, NButton, NEmpty} from 'naive-ui'
 import {Icon} from '@iconify/vue'
+import SkeletonLoader from '../components/SkeletonLoader.vue'
 import {ToolService} from '../services/ToolService.ts'
 import {UserService} from '../services/UserService.ts'
 import {ProjectService} from '../services/ProjectService.ts'
@@ -364,6 +380,15 @@ const statistics = ref({
   tasks: 0,
   resources: 0,
   departments: 0
+})
+
+// 加载状态
+const loading = ref({
+  tools: true,
+  tasks: true,
+  resources: true,
+  departments: true,
+  statistics: true
 })
 
 // 获取用户头像
@@ -456,6 +481,7 @@ const openTool = (url) => {
 // 获取工具数据
 const fetchTools = async () => {
   try {
+    loading.value.tools = true
     const res = await ToolService.getTools()
     tools.value = res.links || []
   } catch (error) {
@@ -498,6 +524,8 @@ const fetchTools = async () => {
         description: 'iOS Club 官方网站'
       }
     ]
+  } finally {
+    loading.value.tools = false
   }
 }
 
@@ -528,6 +556,7 @@ const fetchUserInfo = async () => {
 // 获取任务数据
 const fetchTasks = async () => {
   try {
+    loading.value.tasks = true
     const todoData = await ProjectService.getYourTasks()
     tasks.value = todoData.map(task => ({
       id: task.id,
@@ -566,12 +595,15 @@ const fetchTasks = async () => {
         status: true
       }
     ]
+  } finally {
+    loading.value.tasks = false
   }
 }
 
 // 获取资源数据
 const fetchResources = async () => {
   try {
+    loading.value.resources = true
     const resourceData = await ResourceService.getAllResources()
     resources.value = resourceData.map(resource => ({
       id: resource.id,
@@ -604,12 +636,15 @@ const fetchResources = async () => {
       }
     ]
     statistics.value.resources = resources.value.length
+  } finally {
+    loading.value.resources = false
   }
 }
 
 // 获取部门数据
 const fetchDepartments = async () => {
   try {
+    loading.value.departments = true
     const departmentData = await DepartmentService.getAllDepartments()
     departments.value = departmentData.map(dept => ({
       name: dept.name,
@@ -638,12 +673,15 @@ const fetchDepartments = async () => {
       }
     ]
     statistics.value.departments = departments.value.length
+  } finally {
+    loading.value.departments = false
   }
 }
 
 // 获取统计数据
 const fetchStatistics = async () => {
   try {
+    loading.value.statistics = true
     // 获取统计数据需要从多个服务中组合
     const memberData = await MemberQueryService.getAllData()
     const staffData = await StaffService.getAllStaff()
@@ -671,6 +709,8 @@ const fetchStatistics = async () => {
       resources: 24,
       departments: 4
     }
+  } finally {
+    loading.value.statistics = false
   }
 }
 

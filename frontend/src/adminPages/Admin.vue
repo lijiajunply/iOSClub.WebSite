@@ -63,8 +63,21 @@
         </div>
       </div>
 
+      <!-- 加载状态 -->
+      <div v-if="loading" class="space-y-8">
+        <!-- 数据概览卡片骨架 -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-8">
+          <SkeletonLoader v-for="i in 7" :key="i" type="card" />
+        </div>
+
+        <!-- 图表区域骨架 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <SkeletonLoader v-for="i in 2" :key="i" type="chart" />
+        </div>
+      </div>
+
       <!-- 数据概览卡片 -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-8">
+      <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-8">
         <StatCard
             title="社员人数"
             :value="studentsCount"
@@ -110,7 +123,7 @@
       </div>
 
       <!-- 图表区域 -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div v-if="!loading" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <!-- 成员分布图表 -->
         <div class="rounded-2xl overflow-hidden bg-white dark:bg-gray-700/50 backdrop-blur-sm border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-300">
           <div class="p-4 border-b border-gray-100 dark:border-gray-700">
@@ -139,6 +152,7 @@
 import {ref, onMounted, onBeforeUnmount, nextTick, watch} from 'vue'
 import {useMessage, useDialog} from 'naive-ui'
 import {Icon} from '@iconify/vue'
+import SkeletonLoader from '../components/SkeletonLoader.vue'
 import * as echarts from 'echarts'
 import StatCard from '../components/StatCard.vue'
 import {MemberQueryService} from '../services/MemberQueryService'
@@ -158,6 +172,7 @@ const dropdownContainer = ref<HTMLElement>()
 let memberChart: echarts.ECharts | null = null
 let projectChart: echarts.ECharts | null = null
 const dropdownOpen = ref(false)
+const loading = ref(false)
 
 // Data state
 const studentsCount = ref(0)

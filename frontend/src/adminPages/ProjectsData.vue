@@ -27,7 +27,10 @@
     >
       <n-tabs v-model:value="activeTab" class="mt-2" size="large">
         <n-tab-pane name="active" tab="进行中">
-          <div v-if="activeProjects.length > 0" class="mt-4 space-y-4">
+          <div v-if="loading" class="mt-4 space-y-4">
+            <SkeletonLoader v-for="i in 3" :key="i" type="card" />
+          </div>
+          <div v-else-if="activeProjects.length > 0" class="mt-4 space-y-4">
             <div
                 v-for="project in activeProjects"
                 :key="project.id"
@@ -108,7 +111,10 @@
           </div>
         </n-tab-pane>
         <n-tab-pane name="completed" tab="已完成">
-          <div v-if="completedProjects.length > 0" class="mt-4 space-y-4">
+          <div v-if="loading" class="mt-4 space-y-4">
+            <SkeletonLoader v-for="i in 3" :key="i" type="card" />
+          </div>
+          <div v-else-if="completedProjects.length > 0" class="mt-4 space-y-4">
             <div
                 v-for="project in completedProjects"
                 :key="project.id"
@@ -255,6 +261,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useMessage } from 'naive-ui'
 import { NButton, NCard, NModal, NForm, NFormItem, NInput, NDatePicker, NSelect, NTabs, NTabPane, NTag, NProgress, NInputNumber } from 'naive-ui'
 import { Icon } from '@iconify/vue'
+import SkeletonLoader from '../components/SkeletonLoader.vue'
 import { ProjectService } from '../services/ProjectService'
 
 // 定义项目类型

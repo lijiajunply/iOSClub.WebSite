@@ -58,7 +58,36 @@
             </tr>
             </thead>
             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-            <template v-if="filteredClientApps.length > 0">
+            <template v-if="isLoading">
+              <tr v-for="i in 5" :key="i" class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="flex items-center">
+                    <SkeletonLoader type="avatar" />
+                    <div class="ml-4">
+                      <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-32 mb-2"></div>
+                      <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="h-6 bg-gray-200 dark:bg-gray-700 rounded w-32"></div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="h-6 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-right">
+                  <div class="flex justify-end space-x-2">
+                    <div class="h-5 w-5 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                    <div class="h-5 w-5 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                    <div class="h-5 w-5 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                  </div>
+                </td>
+              </tr>
+            </template>
+            <template v-else-if="filteredClientApps.length > 0">
               <tr v-for="app in filteredClientApps" :key="app.ClientId"
                   class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                 <td class="px-6 py-4 whitespace-nowrap">
@@ -203,7 +232,7 @@
             </button>
             <button type="submit" :disabled="isSubmitting"
                     class="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-              {{ isSubmitting ? '创建中...' : '创建' }}
+              {{ isSubmitting ? '保存中...' : '保存' }}
             </button>
           </div>
         </form>
@@ -265,25 +294,17 @@
               </p>
             </div>
 
-            <div>
+            <div class="col-span-1 md:col-span-2">
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 状态
               </label>
               <div class="flex items-center">
-                <input v-model="editForm.IsActive" type="checkbox" id="status-toggle"
-                       class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"/>
-                <label for="status-toggle" class="ml-2 block text-sm text-gray-900 dark:text-gray-100">
-                  {{ editForm.IsActive ? '启用' : '禁用' }}
+                <input v-model="editForm.IsActive" type="checkbox" id="isActive"
+                       class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"/>
+                <label for="isActive" class="ml-2 block text-sm text-gray-900 dark:text-white">
+                  启用客户端
                 </label>
               </div>
-            </div>
-
-            <div>
-              <button type="button" @click="confirmRegenerateSecret"
-                      class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors flex items-center justify-center">
-                <Icon icon="ion:refresh-outline" class="mr-1" width="18" height="18"/>
-                重新生成密钥
-              </button>
             </div>
           </div>
 
@@ -430,6 +451,7 @@
 import {ref, computed, onMounted} from 'vue';
 import {useMessage, useDialog, NModal} from 'naive-ui';
 import {Icon} from '@iconify/vue';
+import SkeletonLoader from '../components/SkeletonLoader.vue';
 import {ClientAppService} from '../services/ClientAppService';
 import type {ClientApplication, CreateClientAppModel, UpdateClientAppModel, RegenerateSecretResult} from '../models';
 

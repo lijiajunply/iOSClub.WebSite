@@ -27,7 +27,7 @@
       </div>
 
       <!-- Empty State -->
-      <div v-if="filteredResources.length === 0" class="flex flex-col items-center justify-center py-20 rounded-3xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm">
+      <div v-if="!loading && filteredResources.length === 0" class="flex flex-col items-center justify-center py-20 rounded-3xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm">
         <div class="w-20 h-20 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mb-6">
           <Icon icon="ion:folder-open" class="w-10 h-10 text-gray-400 dark:text-gray-500" />
         </div>
@@ -40,7 +40,7 @@
       </div>
 
       <!-- Resource Grid -->
-      <div v-else class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div v-else-if="!loading" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         <div v-for="resource in filteredResources" :key="resource.id"
              class="overflow-hidden transition-all duration-300 bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-xl">
           <div class="p-6">
@@ -75,6 +75,11 @@
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- Skeleton Loading -->
+      <div v-else class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <SkeletonLoader v-for="i in 6" :key="i" type="card" />
       </div>
     </div>
 
@@ -148,6 +153,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { Icon } from '@iconify/vue'
+import SkeletonLoader from '../components/SkeletonLoader.vue'
 import { useAuthorizationStore } from '../stores/Authorization'
 import { ResourceService } from '../services/ResourceService'
 import { useDialog } from 'naive-ui'
@@ -167,6 +173,7 @@ const showModal = ref(false)
 const searchTerm = ref('')
 const saving = ref(false)
 const newTag = ref('')
+const loading = ref(false)
 
 const editingResource = ref<Resource>({
   id: '',
@@ -302,6 +309,7 @@ const saveResource = async () => {
 // 获取资源列表
 const fetchResources = async () => {
   try {
+    loading.value = true
     const data = await ResourceService.getAllResources()
       resources.value = data.map(resource => ({
         id: resource.id,
@@ -312,6 +320,8 @@ const fetchResources = async () => {
   } catch (error: any) {
     console.error('获取资源列表时出错:', error)
     alert('获取资源列表失败: ' + error.message)
+  } finally {
+    loading.value = false
   }
 }
 

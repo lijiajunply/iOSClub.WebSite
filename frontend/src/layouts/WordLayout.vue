@@ -53,8 +53,8 @@
 </template>
 
 <script setup lang="ts">
-import {ref, onMounted, onBeforeUnmount, computed} from 'vue'
-import {useRouter, useRoute} from 'vue-router'
+import {ref, onMounted, onBeforeUnmount} from 'vue'
+import {useRouter} from 'vue-router'
 import {
   NLayout,
   NLayoutSider,
@@ -65,39 +65,14 @@ import {
 } from 'naive-ui'
 import {Icon} from '@iconify/vue'
 import MenuContent from '../components/MenuContent.vue'
-import {useThemeStore} from '../stores/theme'
 
 const router = useRouter()
-const route = useRoute()
-const themeStore = useThemeStore()
 const drawerVisible = ref(false)
 const collapsed = ref(false)
-const isDark = computed(() => themeStore.isDark)
 
 const handleMenuClick = (key: string) => {
   drawerVisible.value = false
   router.push(key)
-}
-
-const goBack = () => {
-  router.back()
-}
-
-const goForward = () => {
-  // Forward functionality would require more complex history management
-  // This is a simplified version
-}
-
-const refresh = () => {
-  window.location.reload()
-}
-
-const toggleSearch = () => {
-  // Search functionality can be implemented as needed
-}
-
-const toggleTheme = () => {
-  themeStore.toggleTheme()
 }
 
 // Handle window resize

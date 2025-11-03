@@ -12,37 +12,34 @@
           gradient-class="bg-gradient-to-r from-purple-600 to-pink-600"
       />
 
-      <!-- 文章卡片区域 - 使用Naive UI NCard统一样式 -->
+      <!-- 文章卡片区域 - 使用 TailwindCSS 实现苹果风格 -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pb-16 ml-4 mr-4 mt-8">
-        <n-card
+        <div
             v-for="(article, index) in rssArticles"
             :key="index"
-            hoverable
-            class="group cursor-pointer animate-slide-up dark:bg-neutral-800 dark:text-gray-100"
+            class="group cursor-pointer animate-slide-up dark:bg-neutral-800 dark:text-gray-100 bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 ease-out"
             :style="`animation-delay: ${index * 100}ms`"
             @click="openArticle(article.url)"
         >
           <!-- 卡片封面（图片区域） -->
-          <template #cover>
-            <div class="h-48 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-neutral-900 dark:to-neutral-800 flex items-center justify-center overflow-hidden">
-              <template v-if="article.image">
-                <img
-                    :src="article.image"
-                    :alt="article.title"
-                    class="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500"
-                    @error="handleImageError($event, index)"
-                    @load="handleImageLoad"
-                />
-              </template>
-              <template v-else>
-                <span class="text-gray-500 dark:text-gray-400 text-5xl">📰</span>
-              </template>
-            </div>
-          </template>
+          <div class="h-48 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-neutral-900 dark:to-neutral-800 flex items-center justify-center overflow-hidden">
+            <template v-if="article.image">
+              <img
+                  :src="article.image"
+                  :alt="article.title"
+                  class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
+                  @error="handleImageError($event, index)"
+                  @load="handleImageLoad"
+              />
+            </template>
+            <template v-else>
+              <span class="text-gray-500 dark:text-gray-400 text-5xl">📰</span>
+            </template>
+          </div>
 
           <!-- 卡片内容区 -->
           <div class="p-6 space-y-4">
-            <h3 class="text-2xl font-semibold text-gray-700 dark:text-gray-200 group-hover:text-purple-600 transition-colors duration-300 text-center">
+            <h3 class="text-2xl font-semibold text-gray-700 dark:text-gray-200 group-hover:text-purple-600 transition-colors duration-300 text-center line-clamp-2">
               {{ article.title }}
             </h3>
             <div class="flex items-center justify-center text-purple-600 font-medium">
@@ -52,23 +49,25 @@
               </svg>
             </div>
           </div>
-        </n-card>
+        </div>
       </div>
 
       <!-- 空状态显示 -->
-      <n-empty
+      <div
           v-if="rssArticles.length === 0 && !loading"
-          image="https://gw.alipayobjects.com/zos/antfincdn/ZHrcdLPrvN/empty.svg"
           class="text-center py-16"
       >
-        <template #description>
-          <span>暂无文章</span>
-        </template>
-      </n-empty>
+        <div class="flex justify-center mb-4">
+          <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path>
+          </svg>
+        </div>
+        <p class="text-gray-500 dark:text-gray-400 text-lg">暂无文章</p>
+      </div>
 
       <!-- 加载状态 -->
       <div v-if="loading" class="flex justify-center items-center h-64">
-        <n-spin size="large" />
+        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
       </div>
 
       <!-- 更多订阅 - 优化后的版本 -->
@@ -81,15 +80,15 @@
           <div
               v-for="(entry, index) in entries"
               :key="index"
-              class="subscription-item animate-slide-up"
+              class="subscription-item animate-slide-up bg-white dark:bg-neutral-800 rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-300 ease-out"
               :style="`animation-delay: ${index * 80}ms`"
               @click="openLink(entry.link[0].href)"
           >
             <div class="flex justify-between items-center">
-              <span class="text-lg font-medium">
+              <span class="text-lg font-medium text-gray-800 dark:text-gray-200">
                 {{ entry.title }}
               </span>
-              <span class="text-gray-500 text-sm px-3 py-1 rounded-full backdrop-blur-sm">
+              <span class="text-gray-500 text-sm px-3 py-1 rounded-full bg-gray-100 dark:bg-neutral-700">
                 {{ formatDate(entry.updated) }}
               </span>
             </div>
@@ -109,8 +108,8 @@
 <script setup>
 // 脚本部分保持不变
 import { onMounted, ref } from 'vue';
-import { NEmpty, NSpin, NCard } from 'naive-ui';
 import PageStart from "../components/PageStart.vue";
+import { loadRssArticles, loadAtomEntries } from '../services/RssService'; // 引入新的RSS服务
 
 // 导入头部图片
 import articleHeaderImg from '/assets/Centre/Article.jpg';
@@ -152,102 +151,24 @@ const handleImageLoad = (event) => {
   console.log('图片加载成功:', event.target.src);
 };
 
-// 获取RSS文章数据（带超时控制）
-const loadRssArticles = async () => {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
-  try {
-    const response = await fetch('https://test.xauat.site/feeds/MP_WXS_3226711201.json', { signal: controller.signal });
-    if (!response.ok) {
-      throw new Error(`HTTP 错误！状态码: ${response.status}`);
-    }
-    const text = await response.text();
-    let data;
-    try {
-      data = JSON.parse(text);
-    } catch (parseError) {
-      console.error('JSON 解析失败:', parseError, '原始响应内容:', text);
-      throw parseError;
-    }
-    console.log('RSS 数据:', data);
-
-    if (data && data.items) {
-      rssArticles.value = data.items.map(item => ({
-        title: item.title || '',
-        url: item.url || '',
-        image: item.image || ''
-      }));
-      console.log('处理后的文章数据:', rssArticles.value);
-    } else {
-      console.warn('RSS 数据结构异常，未找到 items 字段');
-      rssArticles.value = [];
-    }
-  } catch (error) {
-    if (error.name === 'AbortError') {
-      console.error('获取 RSS 文章超时！');
-    } else {
-      console.error('获取 RSS 文章失败:', error);
-    }
-    rssArticles.value = [];
-  } finally {
-    clearTimeout(timeoutId);
-  }
-};
-
-// 获取更多订阅数据（带超时控制）
-const loadWebArticles = async () => {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
-  try {
-    const response = await fetch('https://test.xauat.site/feeds/all.atom', { signal: controller.signal });
-    if (!response.ok) {
-      throw new Error(`HTTP 错误！状态码: ${response.status}`);
-    }
-    const xmlText = await response.text();
-    console.log('Atom Feed 数据:', xmlText);
-
-    const parser = new DOMParser();
-    const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
-    const entryElements = xmlDoc.getElementsByTagName('entry');
-    const entryList = [];
-
-    for (let i = 0; i < entryElements.length; i++) {
-      const entry = entryElements[i];
-      const title = entry.getElementsByTagName('title')[0]?.textContent || '';
-      const updated = entry.getElementsByTagName('updated')[0]?.textContent || '';
-      const linkElements = entry.getElementsByTagName('link');
-      const links = [];
-      for (let j = 0; j < linkElements.length; j++) {
-        const href = linkElements[j].getAttribute('href');
-        if (href) {
-          links.push({ href });
-        }
-      }
-      entryList.push({ title, updated, link: links });
-    }
-    entries.value = entryList;
-    console.log('处理后的订阅数据:', entries.value);
-  } catch (error) {
-    if (error.name === 'AbortError') {
-      console.error('获取订阅文章超时！');
-    } else {
-      console.error('获取订阅文章失败:', error);
-    }
-    entries.value = [];
-  } finally {
-    clearTimeout(timeoutId);
-  }
-};
-
 // 页面初始化时加载数据
 onMounted(async () => {
   try {
     loading.value = true;
-    // 并行加载，带错误捕获
-    await Promise.allSettled([
+    // 使用从服务导入的方法并行加载，带错误捕获
+    const [rssResult, atomResult] = await Promise.allSettled([
       loadRssArticles(),
-      loadWebArticles()
+      loadAtomEntries()
     ]);
+    
+    // 处理结果
+    if (rssResult.status === 'fulfilled') {
+      rssArticles.value = rssResult.value;
+    }
+    
+    if (atomResult.status === 'fulfilled') {
+      entries.value = atomResult.value;
+    }
   } catch (error) {
     console.error('数据加载过程中发生未捕获错误:', error);
   } finally {
@@ -292,58 +213,38 @@ onMounted(async () => {
   animation: float 6s ease-in-out 3s infinite;
 }
 
-/* NaiveUI 卡片样式统一 */
-:deep(.n-card) {
-  border: none;
-  border-radius: 20px;
-  overflow: hidden;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-:deep(.n-card:hover) {
-  transform: translateY(-8px);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-}
-
-:deep(.n-card__cover) {
-  background: linear-gradient(135deg, #fafafa 0%, #f3f4f6 100%);
-}
-
 /* 优化后的订阅项样式 */
 .subscription-item {
   cursor: pointer;
   width: 100%;
-  border-radius: 12px;
-  padding: 18px 20px;
-  margin: 0 0 6px 0;
-  font-size: 18px;
-  backdrop-filter: blur(8px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
   overflow: hidden;
   position: relative;
 }
 
-/* 添加与背景装饰呼应的微妙效果 */
+.subscription-item:hover {
+  transform: translateY(-2px);
+}
+
+/* 添加线条动画效果 */
 .subscription-item::before {
   content: '';
   position: absolute;
   top: 0;
   left: 0;
-  width: 4px;
+  width: 0;
   height: 100%;
-  background: linear-gradient(to bottom, #9333ea, #ec4899);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.subscription-item:hover {
-  transform: translateY(-4px) scale(1.005);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+  background: linear-gradient(to right, rgba(147, 51, 234, 0.1), rgba(236, 72, 153, 0.1));
+  transition: width 0.3s ease;
+  z-index: 0;
 }
 
 .subscription-item:hover::before {
-  opacity: 1;
+  width: 100%;
+}
+
+.subscription-item > * {
+  position: relative;
+  z-index: 1;
 }
 </style>

@@ -49,7 +49,86 @@
         >
           <!-- 总览标签页 -->
           <n-tab-pane name="overview" tab="总览">
-            <div class="p-6 space-y-8">
+            <div v-if="loading" class="p-6 space-y-8">
+              <!-- 领导层部分 -->
+              <section>
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                  <h2 class="text-lg font-medium">社长/团支书/秘书长</h2>
+                  <div class="flex gap-2">
+                    <SkeletonLoader type="button" />
+                    <SkeletonLoader type="button" />
+                  </div>
+                </div>
+
+                <div class="flex flex-wrap gap-2 mt-4">
+                  <SkeletonLoader v-for="i in 3" :key="i" type="tag" />
+                </div>
+              </section>
+
+              <!-- 成员列表 -->
+              <section>
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                  <h2 class="text-lg font-medium">成员</h2>
+                  <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+                    <div class="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                      <Icon icon="ion:people" class="mr-1" width="16" height="16" />
+                      <span>所有部员: <SkeletonLoader type="text" width="20px" /></span>
+                    </div>
+                    <SkeletonLoader type="button" />
+                  </div>
+                </div>
+
+                <div class="bg-gray-100 dark:bg-gray-700/50 rounded-xl overflow-hidden">
+                  <SkeletonLoader type="table" :count="5" :columns="8" />
+                </div>
+              </section>
+
+              <!-- 项目卡片 -->
+              <section>
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                  <h2 class="text-lg font-medium">项目</h2>
+                  <SkeletonLoader type="button" />
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                  <SkeletonLoader v-for="i in 3" :key="i" type="card" />
+                </div>
+              </section>
+
+              <!-- 数据统计卡片 -->
+              <section>
+                <h2 class="text-lg font-medium mb-4">数据统计</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                  <!-- 部门分布 -->
+                  <div
+                      class="bg-white dark:bg-gray-700 rounded-xl shadow-sm p-5 border border-gray-200 dark:border-gray-600">
+                    <h3 class="text-sm font-medium mb-3 text-gray-600 dark:text-gray-300">部门分布</h3>
+                    <div class="h-80 flex items-center justify-center">
+                      <SkeletonLoader type="chart" />
+                    </div>
+                  </div>
+
+                  <!-- 学院分布 -->
+                  <div
+                      class="bg-white dark:bg-gray-700 rounded-xl shadow-sm p-5 border border-gray-200 dark:border-gray-600">
+                    <h3 class="text-sm font-medium mb-3 text-gray-600 dark:text-gray-300">学院分布</h3>
+                    <div class="h-80 flex items-center justify-center">
+                      <SkeletonLoader type="chart" />
+                    </div>
+                  </div>
+
+                  <!-- 男女比例 -->
+                  <div
+                      class="bg-white dark:bg-gray-700 rounded-xl shadow-sm p-5 border border-gray-200 dark:border-gray-600">
+                    <h3 class="text-sm font-medium mb-3 text-gray-600 dark:text-gray-300">男女比例</h3>
+                    <div class="h-80 flex items-center justify-center">
+                      <SkeletonLoader type="chart" />
+                    </div>
+                  </div>
+                </div>
+              </section>
+            </div>
+            <div v-else class="p-6 space-y-8">
               <!-- 领导层部分 -->
               <section>
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
@@ -247,7 +326,57 @@
               :name="department.id"
               :tab="department.name"
           >
-            <div class="p-6 space-y-8">
+            <div v-if="loading" class="p-6 space-y-8">
+              <!-- 部门信息头部 -->
+              <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                <div>
+                  <h2 class="text-xl font-medium"><SkeletonLoader type="text" width="150px" /></h2>
+                  <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 max-w-2xl"><SkeletonLoader type="text" width="300px" /></p>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                  <SkeletonLoader type="button" />
+                  <SkeletonLoader type="button" />
+                  <SkeletonLoader type="button" />
+                  <SkeletonLoader type="button" />
+                </div>
+              </div>
+
+              <!-- 部长列表 -->
+              <section>
+                <h3 class="text-lg font-medium mb-3">部长/副部长</h3>
+                <div class="flex flex-wrap gap-2">
+                  <SkeletonLoader v-for="i in 3" :key="i" type="tag" />
+                </div>
+              </section>
+
+              <!-- 部门成员 -->
+              <section>
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                  <h3 class="text-lg font-medium">成员</h3>
+                  <div class="flex gap-2">
+                    <SkeletonLoader type="button" />
+                    <SkeletonLoader type="button" />
+                  </div>
+                </div>
+
+                <div class="bg-gray-100 dark:bg-gray-700/50 rounded-xl overflow-hidden">
+                  <SkeletonLoader type="table" :count="5" :columns="3" />
+                </div>
+              </section>
+
+              <!-- 部门项目 -->
+              <section>
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                  <h3 class="text-lg font-medium">项目</h3>
+                  <SkeletonLoader type="button" />
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                  <SkeletonLoader v-for="i in 3" :key="i" type="card" />
+                </div>
+              </section>
+            </div>
+            <div v-else class="p-6 space-y-8">
               <!-- 部门信息头部 -->
               <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                 <div>
@@ -518,6 +647,7 @@ import {
   type DataTableColumns
 } from 'naive-ui'
 import { Icon } from '@iconify/vue'
+import SkeletonLoader from '../components/SkeletonLoader.vue'
 import {DepartmentService} from '../services/DepartmentService'
 import {StaffService} from '../services/StaffService'
 import {ProjectService} from '../services/ProjectService'
@@ -533,6 +663,7 @@ const members = ref<MemberModel[]>([])
 const projects = ref<Project[]>([])
 const departments = ref<Department[]>([])
 const staffs = ref<MemberModel[]>([])
+const loading = ref(false)
 
 // 模态框状态
 const showAddMemberModal = ref(false)

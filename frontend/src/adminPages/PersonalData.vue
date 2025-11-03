@@ -3,9 +3,78 @@
     <!-- 主内容区域 -->
     <main class="flex-1 overflow-y-auto p-4 md:p-6">
       <!-- 加载状态 -->
-      <div v-if="loading" class="py-20 flex flex-col items-center justify-center">
-        <div class="h-12 w-12 rounded-full border-4 border-blue-500 border-t-transparent animate-spin"></div>
-        <p class="mt-4 text-gray-500 dark:text-gray-400">加载中...</p>
+      <div v-if="loading" class="py-6">
+        <div
+            class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden max-w-4xl mx-auto">
+          <!-- 卡片头部骨架 -->
+          <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+              <div class="h-6 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
+              <div class="flex items-center">
+                <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-16 mr-2"></div>
+                <div class="h-6 bg-gray-200 dark:bg-gray-700 rounded-full w-20"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 表单内容骨架 -->
+          <div class="p-6">
+            <!-- 表单行：姓名和性别 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div>
+                <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-12 mb-2"></div>
+                <div class="h-12 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+              </div>
+
+              <div>
+                <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-12 mb-2"></div>
+                <div class="h-12 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+              </div>
+            </div>
+
+            <!-- 表单行：学号和学院 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div>
+                <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-12 mb-2"></div>
+                <div class="h-12 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+              </div>
+
+              <div>
+                <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-12 mb-2"></div>
+                <div class="h-12 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+              </div>
+            </div>
+
+            <!-- 表单行：政治面貌和专业班级 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div>
+                <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-16 mb-2"></div>
+                <div class="h-12 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+              </div>
+
+              <div>
+                <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-16 mb-2"></div>
+                <div class="h-12 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+              </div>
+            </div>
+
+            <!-- 表单行：手机号 -->
+            <div class="mb-6">
+              <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-12 mb-2"></div>
+              <div class="h-12 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="flex justify-center pt-4">
+              <div class="h-12 bg-gray-200 dark:bg-gray-700 rounded-xl w-40"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 数据统计卡片骨架 -->
+        <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
+          <SkeletonLoader v-for="i in 3" :key="i" type="card"/>
+        </div>
       </div>
 
       <!-- 表单卡片 -->
@@ -41,7 +110,7 @@
               <n-form-item label="姓名" path="userName" class="mb-0">
                 <div class="relative">
                   <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <Icon icon="lucide:user" class="text-gray-400" size="18"/>
+                    <Icon icon="lucide:user" class="text-gray-800 dark:text-gray-200" size="18"/>
                   </div>
                   <n-input
                       v-model:value="userInfo.userName"
@@ -78,7 +147,7 @@
               <n-form-item label="学号" path="userId" class="mb-0">
                 <div class="relative">
                   <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <Icon icon="lucide:id-badge" class="text-gray-400" size="18"/>
+                    <Icon icon="iconoir:hashtag" class="text-gray-800 dark:text-gray-200" size="18"/>
                   </div>
                   <n-input
                       v-model:value="userInfo.userId"
@@ -92,14 +161,14 @@
               <n-form-item label="学院" path="academy" class="mb-0">
                 <div class="relative">
                   <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <Icon icon="lucide:building" class="text-gray-400" size="18"/>
+                    <Icon icon="iconoir:graduation-cap" class="text-gray-800 dark:text-gray-200" size="18"/>
                   </div>
                   <n-select
                       v-model:value="userInfo.academy"
                       :options="academyOptions"
                       placeholder="请选择学院"
                       filterable
-                      class="pl-10 bg-gray-50 dark:bg-gray-750 border-gray-200 dark:border-gray-700 rounded-xl"
+                      class="pl-10 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-700 rounded-xl"
                       :bordered="false"
                   />
                 </div>
@@ -117,7 +186,7 @@
                       v-model:value="userInfo.politicalLandscape"
                       :options="politicalLandscapeOptions"
                       placeholder="请选择政治面貌"
-                      class="pl-10 bg-gray-50 dark:bg-gray-750 border-gray-200 dark:border-gray-700 rounded-xl"
+                      class="pl-10 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-700 rounded-xl"
                       :bordered="false"
                   />
                 </div>
@@ -131,7 +200,7 @@
                   <n-input
                       v-model:value="userInfo.className"
                       placeholder="请输入专业班级"
-                      class="pl-10 bg-gray-50 dark:bg-gray-750 border-gray-200 dark:border-gray-700 rounded-xl"
+                      class="pl-10 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-700 rounded-xl"
                       :bordered="false"
                   />
                 </div>
@@ -175,7 +244,7 @@
       </div>
 
       <!-- 数据统计卡片 -->
-      <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
+      <div v-if="!loading" class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
         <div class="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-sm">
           <div class="flex items-center justify-between mb-2">
             <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">成员类型</h3>
@@ -213,40 +282,34 @@
     </main>
 
     <!-- 确认对话框 -->
-    <n-modal
-        v-model:show="showModal"
-        preset="dialog"
-        title="确认保存"
-        content="确定要保存修改吗？"
-        positive-text="确认"
-        negative-text="取消"
-        :loading="confirmLoading"
-        @positive-click="handleConfirm"
-        class="rounded-xl"
-    />
+    <n-modal v-model:show="showModal" preset="dialog" title="确认更改" positive-text="确认" negative-text="取消"
+             @positive-click="handleConfirm" :loading="confirmLoading">
+      <div class="space-y-2">
+        <p class="text-gray-600 dark:text-gray-300">您确定要保存这些更改吗？</p>
+        <p class="text-sm text-gray-500 dark:text-gray-400">请仔细核对您的个人信息</p>
+      </div>
+    </n-modal>
   </div>
 </template>
 
 <script setup lang="ts">
 import {ref, reactive, onMounted} from 'vue';
-import {NForm, NFormItem, NInput, NSelect, NButton, NModal, useMessage} from 'naive-ui';
-import {useRouter} from 'vue-router';
+import {useMessage, NButton, NForm, NFormItem, NInput, NSelect, NModal} from 'naive-ui';
+import {Icon} from '@iconify/vue';
+import SkeletonLoader from '../components/SkeletonLoader.vue';
 import {useAuthorizationStore} from '../stores/Authorization';
 import {UserService} from '../services/UserService';
-import {MemberModel} from '../models';
-import {Icon} from '@iconify/vue';
+import type {MemberModel} from '../models';
+import {useRouter} from 'vue-router';
 
 const message = useMessage();
-const router = useRouter();
 const authorizationStore = useAuthorizationStore();
+const router = useRouter();
 
-// 表单引用
-const formRef = ref();
-
-// 加载状态
 const loading = ref(false);
 const confirmLoading = ref(false);
 const showModal = ref(false);
+const formRef = ref<InstanceType<typeof NForm> | null>(null);
 
 // 身份映射
 const identityMap: Record<string, string> = {
@@ -462,6 +525,7 @@ const handleConfirm = async () => {
     confirmLoading.value = false;
   }
 };
+
 // 组件挂载时获取用户信息
 onMounted(() => {
   fetchUserInfo();

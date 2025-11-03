@@ -18,93 +18,114 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
       <!-- 文章列表网格 -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        <div
-            v-for="article in articles"
-            :key="article.path"
-            class="group rounded-2xl bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 overflow-hidden cursor-pointer"
-            @click="editArticle(article)"
-        >
-          <div class="p-5 h-full flex flex-col">
-            <div class="flex items-center mb-3">
-              <div class="bg-indigo-100 dark:bg-indigo-900/30 p-2.5 rounded-xl mr-3">
-                <Icon icon="material-symbols:article" class="text-indigo-600 dark:text-indigo-400 w-5 h-5" />
+        <!-- 骨架加载 -->
+        <template v-if="loading">
+          <div v-for="i in 8" :key="i" class="rounded-2xl bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+            <div class="p-5 h-full flex flex-col">
+              <div class="flex items-center mb-3">
+                <div class="bg-gray-200 dark:bg-gray-700 p-2.5 rounded-xl mr-3 w-10 h-10"></div>
+                <div class="bg-gray-200 dark:bg-gray-700 rounded-full h-5 w-16"></div>
               </div>
-              <n-tag
-                  size="small"
-                  :type="getIdentityType(article.identity)"
-                  :bordered="false"
-                  class="rounded-full px-2 py-0.5">
-                {{ getIdentityLabel(article.identity || '') }}
-              </n-tag>
-            </div>
-            
-            <div class="flex-1">
-              <h3 class="font-medium text-base md:text-lg mb-2 line-clamp-2 text-gray-900 group-hover:text-indigo-600 dark:text-white dark:group-hover:text-indigo-400 transition-colors">
-                {{ article.title || '无标题文章' }}
-              </h3>
-              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                <span class="flex items-center">
-                  <Icon icon="material-symbols:schedule" class="mr-1 w-3 h-3" />
-                  {{ formatDate(article.lastWriteTime) }}
-                </span>
-              </p>
-            </div>
+              
+              <div class="flex-1">
+                <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
+                <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+                <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mt-3"></div>
+              </div>
 
-            <!-- 操作按钮 -->
-            <div class="flex justify-end space-x-2 pt-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-              <n-button
-                  type="primary"
-                  size="small"
-                  quaternary
-                  circle
-                  class="h-8 w-8 p-0 rounded-full"
-                  @click.stop="editArticle(article)"
-              >
-                <template #icon>
-                  <Icon icon="material-symbols:edit" class="w-4 h-4"/>
-                </template>
-              </n-button>
-              <n-button
-                  type="error"
-                  size="small"
-                  quaternary
-                  circle
-                  class="h-8 w-8 p-0 rounded-full"
-                  @click.stop="deleteArticle(article)"
-              >
-                <template #icon>
-                  <Icon icon="material-symbols:delete" class="w-4 h-4"/>
-                </template>
-              </n-button>
+              <div class="flex justify-end space-x-2 pt-3">
+                <div class="bg-gray-200 dark:bg-gray-700 rounded-full w-8 h-8"></div>
+                <div class="bg-gray-200 dark:bg-gray-700 rounded-full w-8 h-8"></div>
+              </div>
             </div>
           </div>
-        </div>
+        </template>
+        
+        <!-- 文章卡片 -->
+        <template v-else>
+          <div
+              v-for="article in articles"
+              :key="article.path"
+              class="group rounded-2xl bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 overflow-hidden cursor-pointer"
+              @click="editArticle(article)"
+          >
+            <div class="p-5 h-full flex flex-col">
+              <div class="flex items-center mb-3">
+                <div class="bg-indigo-100 dark:bg-indigo-900/30 p-2.5 rounded-xl mr-3">
+                  <Icon icon="material-symbols:article" class="text-indigo-600 dark:text-indigo-400 w-5 h-5" />
+                </div>
+                <n-tag
+                    size="small"
+                    :type="getIdentityType(article.identity)"
+                    :bordered="false"
+                    class="rounded-full px-2 py-0.5">
+                  {{ getIdentityLabel(article.identity || '') }}
+                </n-tag>
+              </div>
+              
+              <div class="flex-1">
+                <h3 class="font-medium text-base md:text-lg mb-2 line-clamp-2 text-gray-900 group-hover:text-indigo-600 dark:text-white dark:group-hover:text-indigo-400 transition-colors">
+                  {{ article.title || '无标题文章' }}
+                </h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  <span class="flex items-center">
+                    <Icon icon="material-symbols:schedule" class="mr-1 w-3 h-3" />
+                    {{ formatDate(article.lastWriteTime) }}
+                  </span>
+                </p>
+              </div>
 
-        <!-- 空状态 -->
-        <div
-            v-if="articles.length === 0 && !loading"
-            class="col-span-full py-16 flex flex-col items-center justify-center rounded-2xl bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border border-dashed border-gray-300 dark:border-gray-600"
-        >
-          <div class="w-16 h-16 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-full mb-4">
-            <Icon icon="material-symbols:article-off" class="text-gray-400 dark:text-gray-500 w-7 h-7" />
+              <!-- 操作按钮 -->
+              <div class="flex justify-end space-x-2 pt-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <n-button
+                    type="primary"
+                    size="small"
+                    quaternary
+                    circle
+                    class="h-8 w-8 p-0 rounded-full"
+                    @click.stop="editArticle(article)"
+                >
+                  <template #icon>
+                    <Icon icon="material-symbols:edit" class="w-4 h-4"/>
+                  </template>
+                </n-button>
+                <n-button
+                    type="error"
+                    size="small"
+                    quaternary
+                    circle
+                    class="h-8 w-8 p-0 rounded-full"
+                    @click.stop="deleteArticle(article)"
+                >
+                  <template #icon>
+                    <Icon icon="material-symbols:delete" class="w-4 h-4"/>
+                  </template>
+                </n-button>
+              </div>
+            </div>
           </div>
-          <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-1">暂无文章</h3>
-          <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">创建您的第一篇文章开始管理</p>
-          <n-button
-              type="primary"
-              class="rounded-full px-6 py-2"
-              @click="openCreateModal">
-            <template #icon>
-              <Icon icon="material-symbols:add-circle" class="w-4.5 h-4.5" />
-            </template>
-            创建第一篇文章
-          </n-button>
-        </div>
-      </div>
 
-      <!-- 加载状态 -->
-      <div v-if="loading" class="flex justify-center items-center h-64">
-        <n-spin size="large" />
+          <!-- 空状态 -->
+          <div
+              v-if="articles.length === 0 && !loading"
+              class="col-span-full py-16 flex flex-col items-center justify-center rounded-2xl bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border border-dashed border-gray-300 dark:border-gray-600"
+          >
+            <div class="w-16 h-16 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-full mb-4">
+              <Icon icon="material-symbols:article-off" class="text-gray-400 dark:text-gray-500 w-7 h-7" />
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-1">暂无文章</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">创建您的第一篇文章开始管理</p>
+            <n-button
+                type="primary"
+                class="rounded-full px-6 py-2"
+                @click="openCreateModal">
+              <template #icon>
+                <Icon icon="material-symbols:add-circle" class="w-4.5 h-4.5" />
+              </template>
+              创建第一篇文章
+            </n-button>
+          </div>
+        </template>
       </div>
     </div>
 
@@ -206,34 +227,12 @@
 </template>
 
 <script setup lang="ts">
-import {ref, onMounted} from 'vue'
-import {
-  NButton,
-  NSpin,
-  NModal,
-  NForm,
-  NFormItem,
-  NInput,
-  NSelect,
-  useMessage,
-  useDialog,
-  NTag
-} from 'naive-ui'
-import {ArticleService} from "../services/ArticleService"
-import {type ArticleModel, type ArticleCreateDto, type ArticleUpdateDto} from '../models'
-import {Icon} from '@iconify/vue'
+import { ref, onMounted } from 'vue'
+import { useDialog, useMessage, NButton, NCard, NForm, NFormItem, NInput, NModal, NSpin, NTag, NSelect } from 'naive-ui'
+import { Icon } from '@iconify/vue'
+import { ArticleService } from '../services/ArticleService'
+import type { ArticleModel, ArticleCreateDto, ArticleUpdateDto } from '../models'
 
-const message = useMessage()
-const dialog = useDialog()
-
-const articles = ref<ArticleModel[]>([])
-const loading = ref(true)
-const showEditModal = ref(false)
-const editingArticle = ref<ArticleModel | null>(null)
-const saving = ref(false)
-const formRef = ref<InstanceType<typeof NForm>>()
-
-// 为编辑表单定义明确的类型
 interface EditFormType {
   path: string
   title: string
@@ -241,6 +240,16 @@ interface EditFormType {
   identity: 'Member' | 'Department' | 'Minister' | 'President' | 'Founder'
   lastWriteTime: string
 }
+
+const dialog = useDialog()
+const message = useMessage()
+
+const articles = ref<ArticleModel[]>([])
+const loading = ref(false)
+const saving = ref(false)
+const showEditModal = ref(false)
+const editingArticle = ref<ArticleModel | null>(null)
+const formRef = ref<InstanceType<typeof NForm> | null>(null)
 
 const editForm = ref<EditFormType>({
   path: '',
@@ -448,19 +457,3 @@ onMounted(() => {
 }
 
 :deep(.n-input__textarea-el)::-webkit-scrollbar {
-  width: 6px;
-}
-
-:deep(.n-input__textarea-el)::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-:deep(.n-input__textarea-el)::-webkit-scrollbar-thumb {
-  background-color: rgba(107, 114, 128, 0.5);
-  border-radius: 3px;
-}
-
-:deep(.n-input__textarea-el)::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(107, 114, 128, 0.8);
-}
-</style>

@@ -19,6 +19,7 @@ import {
   NRadio
 } from 'naive-ui'
 import { Icon } from '@iconify/vue'
+import SkeletonLoader from '../components/SkeletonLoader.vue'
 import { MemberQueryService } from '../services/MemberQueryService'
 import { MemberManagementService } from '../services/MemberManagementService'
 import { AcademyCount, DateCentreService, GenderCount, GradeCount, PoliticalCount, YearCount } from '../services/DateCentreService'
@@ -734,7 +735,10 @@ onMounted(() => {
               </n-button>
             </div>
 
-            <n-data-table remote :columns="columns" :data="filteredMembers" @update:page-size="onUpdatePageSize" @update:page="onChange" :pagination="paginationConfig" :bordered="false"
+            <div v-if="loading">
+              <SkeletonLoader type="table" :count="pageSize" :columns="8" />
+            </div>
+            <n-data-table v-else remote :columns="columns" :data="filteredMembers" @update:page-size="onUpdatePageSize" @update:page="onChange" :pagination="paginationConfig" :bordered="false"
               :loading="loading" class="rounded-lg overflow-hidden" />
           </div>
         </n-tab-pane>
@@ -743,7 +747,10 @@ onMounted(() => {
           <div class="grid grid-cols-1 gap-6 mt-4">
             <n-card class="rounded-xl bg-white dark:bg-gray-800 transition-colors duration-200">
               <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">历年人数变化</h3>
-              <div ref="yearChartRef" class="h-80 w-full"></div>
+              <div v-if="loading" class="h-80 flex items-center justify-center">
+                <SkeletonLoader type="chart" />
+              </div>
+              <div v-else ref="yearChartRef" class="h-80 w-full"></div>
             </n-card>
           </div>
         </n-tab-pane>
@@ -752,7 +759,10 @@ onMounted(() => {
           <div class="grid grid-cols-1 gap-6 mt-4">
             <n-card class="rounded-xl bg-white dark:bg-gray-800 transition-colors duration-200">
               <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">学院分布</h3>
-              <div ref="collegeChartRef" class="h-80 w-full"></div>
+              <div v-if="loading" class="h-80 flex items-center justify-center">
+                <SkeletonLoader type="chart" />
+              </div>
+              <div v-else ref="collegeChartRef" class="h-80 w-full"></div>
             </n-card>
           </div>
         </n-tab-pane>
@@ -761,7 +771,10 @@ onMounted(() => {
           <div class="grid grid-cols-1 gap-6 mt-4">
             <n-card class="rounded-xl bg-white dark:bg-gray-800 transition-colors duration-200">
               <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">年级分布</h3>
-              <div ref="gradeChartRef" class="h-80 w-full"></div>
+              <div v-if="loading" class="h-80 flex items-center justify-center">
+                <SkeletonLoader type="chart" />
+              </div>
+              <div v-else ref="gradeChartRef" class="h-80 w-full"></div>
             </n-card>
           </div>
         </n-tab-pane>
@@ -770,7 +783,10 @@ onMounted(() => {
           <div class="grid grid-cols-1 gap-6 mt-4">
             <n-card class="rounded-xl bg-white dark:bg-gray-800 transition-colors duration-200">
               <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">性别分布</h3>
-              <div ref="genderChartRef" class="h-80 w-full"></div>
+              <div v-if="loading" class="h-80 flex items-center justify-center">
+                <SkeletonLoader type="chart" />
+              </div>
+              <div v-else ref="genderChartRef" class="h-80 w-full"></div>
             </n-card>
           </div>
         </n-tab-pane>
@@ -779,7 +795,10 @@ onMounted(() => {
           <div class="grid grid-cols-1 gap-6 mt-4">
             <n-card class="rounded-xl bg-white dark:bg-gray-800 transition-colors duration-200">
               <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">政治面貌分布</h3>
-              <div ref="politicalChartRef" class="h-80 w-full"></div>
+              <div v-if="loading" class="h-80 flex items-center justify-center">
+                <SkeletonLoader type="chart" />
+              </div>
+              <div v-else ref="politicalChartRef" class="h-80 w-full"></div>
             </n-card>
           </div>
         </n-tab-pane>
