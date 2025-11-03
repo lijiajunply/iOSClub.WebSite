@@ -15,10 +15,11 @@ namespace iOSClub.Data.Migrations
                 name: "Articles",
                 columns: table => new
                 {
-                    Path = table.Column<string>(type: "varchar(128)", nullable: false),
-                    Title = table.Column<string>(type: "varchar(32)", nullable: false),
-                    Content = table.Column<string>(type: "TEXT", nullable: false),
-                    LastWriteTime = table.Column<DateTime>(type: "DATE", nullable: false)
+                    Path = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
+                    Title = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
+                    Content = table.Column<string>(type: "text", nullable: false),
+                    LastWriteTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Identity = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -29,8 +30,9 @@ namespace iOSClub.Data.Migrations
                 name: "Departments",
                 columns: table => new
                 {
-                    Name = table.Column<string>(type: "varchar(20)", nullable: false),
-                    Description = table.Column<string>(type: "varchar(32)", nullable: true)
+                    Name = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    Key = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
+                    Description = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -41,10 +43,10 @@ namespace iOSClub.Data.Migrations
                 name: "Resources",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "varchar(33)", nullable: false),
-                    Name = table.Column<string>(type: "varchar(20)", nullable: false),
-                    Description = table.Column<string>(type: "varchar(512)", nullable: true),
-                    Tag = table.Column<string>(type: "varchar(50)", nullable: true)
+                    Id = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
+                    Name = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    Description = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: true),
+                    Tag = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -55,14 +57,16 @@ namespace iOSClub.Data.Migrations
                 name: "Students",
                 columns: table => new
                 {
-                    UserId = table.Column<string>(type: "varchar(10)", nullable: false),
-                    UserName = table.Column<string>(type: "varchar(50)", nullable: false),
-                    Academy = table.Column<string>(type: "varchar(50)", nullable: false),
-                    PoliticalLandscape = table.Column<string>(type: "varchar(10)", nullable: false),
-                    Gender = table.Column<string>(type: "varchar(2)", nullable: false),
-                    ClassName = table.Column<string>(type: "varchar(20)", nullable: false),
-                    PhoneNum = table.Column<string>(type: "varchar(11)", nullable: false),
-                    JoinTime = table.Column<DateTime>(type: "DATE", nullable: false)
+                    UserId = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
+                    UserName = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Academy = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    PoliticalLandscape = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
+                    Gender = table.Column<string>(type: "character varying(2)", maxLength: 2, nullable: false),
+                    ClassName = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    PhoneNum = table.Column<string>(type: "character varying(14)", maxLength: 14, nullable: false),
+                    JoinTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    PasswordHash = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
+                    EMail = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -73,12 +77,12 @@ namespace iOSClub.Data.Migrations
                 name: "Projects",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "varchar(33)", nullable: false),
-                    DepartmentName = table.Column<string>(type: "varchar(20)", nullable: true),
-                    Title = table.Column<string>(type: "varchar(20)", nullable: false),
-                    Description = table.Column<string>(type: "varchar(512)", nullable: false),
-                    StartTime = table.Column<string>(type: "varchar(20)", nullable: true),
-                    EndTime = table.Column<string>(type: "varchar(20)", nullable: true)
+                    Id = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
+                    DepartmentName = table.Column<string>(type: "character varying(20)", nullable: true),
+                    Title = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    Description = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: false),
+                    StartTime = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
+                    EndTime = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -94,10 +98,10 @@ namespace iOSClub.Data.Migrations
                 name: "Staffs",
                 columns: table => new
                 {
-                    UserId = table.Column<string>(type: "varchar(10)", nullable: false),
-                    Name = table.Column<string>(type: "varchar(50)", nullable: false),
-                    Identity = table.Column<string>(type: "varchar(20)", nullable: false),
-                    DepartmentName = table.Column<string>(type: "varchar(20)", nullable: true)
+                    UserId = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
+                    Name = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Identity = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    DepartmentName = table.Column<string>(type: "character varying(20)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -113,13 +117,14 @@ namespace iOSClub.Data.Migrations
                 name: "Todos",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "varchar(33)", nullable: false),
-                    Title = table.Column<string>(type: "varchar(20)", nullable: false),
-                    Description = table.Column<string>(type: "varchar(200)", nullable: false),
-                    StartTime = table.Column<string>(type: "varchar(20)", nullable: false),
-                    EndTime = table.Column<string>(type: "varchar(20)", nullable: false),
+                    Id = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
+                    Title = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    Description = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    StartTime = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    EndTime = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     Status = table.Column<bool>(type: "boolean", nullable: false),
-                    StudentId = table.Column<string>(type: "varchar(10)", nullable: false)
+                    StudentId = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
+                    CreatedTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -136,12 +141,12 @@ namespace iOSClub.Data.Migrations
                 name: "Tasks",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "varchar(33)", nullable: false),
-                    ProjectId = table.Column<string>(type: "varchar(33)", nullable: false),
-                    Title = table.Column<string>(type: "varchar(20)", nullable: false),
-                    Description = table.Column<string>(type: "varchar(200)", nullable: false),
-                    StartTime = table.Column<string>(type: "varchar(20)", nullable: false),
-                    EndTime = table.Column<string>(type: "varchar(20)", nullable: false),
+                    Id = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
+                    ProjectId = table.Column<string>(type: "character varying(32)", nullable: false),
+                    Title = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    Description = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    StartTime = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    EndTime = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     Status = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
@@ -159,8 +164,8 @@ namespace iOSClub.Data.Migrations
                 name: "ProjectModelStaffModel",
                 columns: table => new
                 {
-                    ProjectsId = table.Column<string>(type: "varchar(33)", nullable: false),
-                    StaffsUserId = table.Column<string>(type: "varchar(10)", nullable: false)
+                    ProjectsId = table.Column<string>(type: "character varying(32)", nullable: false),
+                    StaffsUserId = table.Column<string>(type: "character varying(10)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -183,8 +188,8 @@ namespace iOSClub.Data.Migrations
                 name: "StaffModelTaskModel",
                 columns: table => new
                 {
-                    TasksId = table.Column<string>(type: "varchar(33)", nullable: false),
-                    UsersUserId = table.Column<string>(type: "varchar(10)", nullable: false)
+                    TasksId = table.Column<string>(type: "character varying(32)", nullable: false),
+                    UsersUserId = table.Column<string>(type: "character varying(10)", nullable: false)
                 },
                 constraints: table =>
                 {

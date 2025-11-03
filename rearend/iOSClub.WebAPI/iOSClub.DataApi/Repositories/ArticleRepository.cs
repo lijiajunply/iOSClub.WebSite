@@ -12,7 +12,7 @@ public interface IArticleRepository
     public Task<bool> Delete(string key);
 }
 
-public class ArticleRepository(IDbContextFactory<iOSContext> factory) : IArticleRepository
+public class ArticleRepository(IDbContextFactory<ClubContext> factory) : IArticleRepository
 {
     public async Task<IEnumerable<ArticleModel>> GetAll()
     {
@@ -34,13 +34,13 @@ public class ArticleRepository(IDbContextFactory<iOSContext> factory) : IArticle
         var article = await context.Articles.FirstOrDefaultAsync(x => x.Path == model.Path);
         if (article == null)
         {
-            model.LastWriteTime = DateTime.Now;
+            model.LastWriteTime = DateTime.UtcNow;
             context.Articles.Add(model);
         }
         else
         {
             article.Content = model.Content;
-            article.LastWriteTime = DateTime.Now;
+            article.LastWriteTime = DateTime.UtcNow;
             article.Title = model.Title;
             article.Identity = model.Identity;
             

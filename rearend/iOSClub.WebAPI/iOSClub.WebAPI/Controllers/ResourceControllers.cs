@@ -13,7 +13,7 @@ namespace iOSClub.WebAPI.Controllers;
 [ApiController]
 [Route("[controller]")]  // 使用C#推荐的API路径格式
 public class ResourceController(
-    IDbContextFactory<iOSContext> factory,
+    IDbContextFactory<ClubContext> factory,
     IHttpContextAccessor httpContextAccessor,
     IResourceRepository resourceRepository)
     : ControllerBase

@@ -22,9 +22,9 @@ public interface ITodoRepository
     Task<List<TodoModel>> GetTodosPagedAsync(string userId, int page, int pageSize);
 }
 
-public class TodoRepository(iOSContext context) : ITodoRepository
+public class TodoRepository(ClubContext context) : ITodoRepository
 {
-    private readonly iOSContext _context = context;
+    private readonly ClubContext _context = context;
 
     /// <summary>
     /// 获取用户的所有待办事项

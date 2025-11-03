@@ -14,9 +14,9 @@ public interface IDepartmentRepository
     Task<bool> DeleteDepartmentAsync(string name);
 }
 
-public class DepartmentRepository(iOSContext context) : IDepartmentRepository
+public class DepartmentRepository(ClubContext context) : IDepartmentRepository
 {
-    private readonly iOSContext _context = context;
+    private readonly ClubContext _context = context;
 
     /// <summary>
     /// 获取所有部门

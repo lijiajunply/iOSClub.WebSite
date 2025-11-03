@@ -18,7 +18,7 @@ public interface IStaffRepository
     Task<bool> ChangeStaffDepartmentAsync(string userId, string? departmentName);
 }
 
-public class StaffRepository(IDbContextFactory<iOSContext> factory) : IStaffRepository
+public class StaffRepository(IDbContextFactory<ClubContext> factory) : IStaffRepository
 {
     public async Task<IEnumerable<StaffModel>> GetAllStaffAsync()
     {
@@ -46,7 +46,7 @@ public class StaffRepository(IDbContextFactory<iOSContext> factory) : IStaffRepo
                 Gender = student != null ? student.Gender : "",
                 ClassName = student != null ? student.ClassName : "",
                 PhoneNum = student != null ? student.PhoneNum : "",
-                JoinTime = student != null ? student.JoinTime : DateTime.Today,
+                JoinTime = student != null ? student.JoinTime : DateTime.SpecifyKind(DateTime.Today, DateTimeKind.Utc),
                 PasswordHash = student != null ? student.PasswordHash : "",
                 EMail = student != null ? student.EMail : null,
                 Identity = staff.Identity

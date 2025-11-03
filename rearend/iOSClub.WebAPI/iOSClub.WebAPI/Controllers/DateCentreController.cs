@@ -9,7 +9,7 @@ namespace iOSClub.WebAPI.Controllers;
 
 [ApiController]
 [Route("[controller]")] // 使用C#推荐的API路径格式
-public class DateCentreController(IDbContextFactory<iOSContext> dbContextFactory, IDataCentreService dataCentreService)
+public class DateCentreController(IDbContextFactory<ClubContext> dbContextFactory, IDataCentreService dataCentreService)
     : ControllerBase
 {
     [HttpGet("year")]
@@ -47,31 +47,6 @@ public class DateCentreController(IDbContextFactory<iOSContext> dbContextFactory
         return Ok(genderData);
     }
 
-    [HttpPost("update")]
-    public async Task<IActionResult> UpdateNeedData([FromBody] AllDataModel allData)
-    {
-        foreach (var student in allData.Students.Where(student => student.JoinTime.Year == 0))
-        {
-            student.JoinTime = DateTime.Parse("2023-10-18");
-        }
-
-        await using var context = await dbContextFactory.CreateDbContextAsync();
-
-        await context.Students.AddRangeAsync(allData.Students);
-        await context.SaveChangesAsync();
-        await context.Departments.AddRangeAsync(allData.Departments);
-        await context.Staffs.AddRangeAsync(allData.Presidents.Where(staff => staff.Identity == "President"));
-        await context.SaveChangesAsync();
-        await context.Tasks.AddRangeAsync(allData.Tasks);
-        await context.Projects.AddRangeAsync(allData.Projects);
-        await context.Resources.AddRangeAsync(allData.Resources);
-        await context.Todos.AddRangeAsync(allData.Todos);
-        await context.Articles.AddRangeAsync(allData.Articles);
-        await context.SaveChangesAsync();
-
-        return Ok();
-    }
-
     [HttpPost("update-from-json")]
     public async Task<IActionResult> UpdateDataFromJson(IFormFile? file)
     {
@@ -103,9 +78,23 @@ public class DateCentreController(IDbContextFactory<iOSContext> dbContextFactory
             }
 
             // 处理学生数据，与现有方法保持一致
-            foreach (var student in allData.Students.Where(student => student.JoinTime.Year == 0))
+            foreach (var student in allData.Students)
             {
-                student.JoinTime = DateTime.Parse("2023-10-18");
+                student.JoinTime =
+                    DateTime.SpecifyKind(student.JoinTime.Year == 0 ? DateTime.Parse("2023-10-18") : student.JoinTime,
+                        DateTimeKind.Utc);
+            }
+
+            // 确保所有DateTime值都是UTC时间
+            foreach (var todo in allData.Todos.Where(todo => todo.CreatedTime.Kind == DateTimeKind.Unspecified))
+            {
+                todo.CreatedTime = DateTime.SpecifyKind(todo.CreatedTime, DateTimeKind.Utc);
+            }
+
+            foreach (var article in allData.Articles.Where(article =>
+                         article.LastWriteTime.Kind == DateTimeKind.Unspecified))
+            {
+                article.LastWriteTime = DateTime.SpecifyKind(article.LastWriteTime, DateTimeKind.Utc);
             }
 
             // 使用相同的数据更新逻辑
@@ -128,10 +117,6 @@ public class DateCentreController(IDbContextFactory<iOSContext> dbContextFactory
         catch (JsonException ex)
         {
             return BadRequest($"JSON解析错误: {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, $"服务器内部错误: {ex.Message}");
         }
     }
 }

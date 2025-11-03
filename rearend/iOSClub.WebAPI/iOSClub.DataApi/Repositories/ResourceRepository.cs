@@ -18,9 +18,9 @@ public interface IResourceRepository
     Task<bool> ResourceExistsAsync(string id);
 }
 
-public class ResourceRepository(iOSContext context) : IResourceRepository
+public class ResourceRepository(ClubContext context) : IResourceRepository
 {
-    private readonly iOSContext _context = context;
+    private readonly ClubContext _context = context;
 
     /// <summary>
     /// 获取所有资源

@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace iOSClub.Data.DataModels;
 
@@ -25,7 +25,7 @@ public class ArticleModel
     /// <summary>
     /// 最后修改时间
     /// </summary>
-    public DateTime LastWriteTime { get; set; } = DateTime.Now;
+    public DateTime LastWriteTime { get; set; } = DateTime.UtcNow;
 
     /// <summary>
     /// Founder : 创始人
@@ -36,4 +36,3 @@ public class ArticleModel
     [MaxLength(20)]
     public string? Identity { get; set; }
 }
-    

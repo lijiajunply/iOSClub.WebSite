@@ -26,7 +26,7 @@ public interface IStudentRepository
     public Task<(List<MemberModel>, int)> GetMembersPagedAsync(int pageNum, int pageSize, string? searchTerm, string? searchCondition);
 }
 
-public class StudentRepository(iOSContext context) : IStudentRepository
+public class StudentRepository(ClubContext context) : IStudentRepository
 {
     public async Task<List<StudentModel>> GetAll()
     {

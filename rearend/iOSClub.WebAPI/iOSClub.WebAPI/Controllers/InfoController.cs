@@ -10,7 +10,7 @@ namespace iOSClub.WebAPI.Controllers;
 [ApiController]
 [Route("[controller]")]
 public class InfoController(
-    IDbContextFactory<iOSContext> factory,
+    IDbContextFactory<ClubContext> factory,
     IHttpContextAccessor httpContextAccessor)
     : ControllerBase
 {

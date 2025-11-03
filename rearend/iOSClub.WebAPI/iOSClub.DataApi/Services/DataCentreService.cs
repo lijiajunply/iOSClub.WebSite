@@ -1,4 +1,5 @@
 using iOSClub.Data;
+using iOSClub.Data.DataModels;
 using Microsoft.EntityFrameworkCore;
 
 namespace iOSClub.DataApi.Services;
@@ -28,16 +29,16 @@ public record LandscapeCount(string Type, int Sales);
 [Serializable]
 public record GenderCount(string Type, int Value);
 
-public class DataCentreService(IDbContextFactory<iOSContext> contextFactory) : IDataCentreService
+public class DataCentreService(IDbContextFactory<ClubContext> contextFactory) : IDataCentreService
 {
-    // 获取按年份统计数据
+    // 获取按学年统计数据
     public async Task<List<YearCount>> GetYearDataAsync()
     {
         await using var context = await contextFactory.CreateDbContextAsync();
         var yearData = new List<YearCount>();
 
         var total = await context.Students.CountAsync();
-        var (year, month, _) = DateTime.Today;
+        var (year, month, _) = DateTime.SpecifyKind(DateTime.Today, DateTimeKind.Utc);
 
         // 添加历史学年数据
         yearData.AddRange([
@@ -51,7 +52,7 @@ public class DataCentreService(IDbContextFactory<iOSContext> contextFactory) : I
         var students = await context.Students.ToListAsync();
         for (var i = year - 2024; i >= 0; i--)
         {
-            var date = new DateTime(year - i, 9, 1);
+            var date = new DateTime(year - i, 9, 1, 0, 0, 0, DateTimeKind.Utc);
             var a = year - i - 2005;
 
             // 使用客户端评估来处理字符串到整数的转换

@@ -29,7 +29,7 @@ public interface IProjectRepository
     Task<List<ProjectModel>> SearchProjectsAsync(string searchTerm);
 }
 
-public class ProjectRepository(iOSContext context) : IProjectRepository
+public class ProjectRepository(ClubContext context) : IProjectRepository
 {
     /// <summary>
     /// 获取所有项目（包含关联数据）

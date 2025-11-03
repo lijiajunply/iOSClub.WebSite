@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using iOSClub.Data.DataModels;
@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore.Design;
 
 namespace iOSClub.Data;
 
-public sealed class iOSContext(DbContextOptions<iOSContext> options) : DbContext(options)
+public sealed class ClubContext(DbContextOptions<ClubContext> options) : DbContext(options)
 {
     public DbSet<StudentModel> Students { get; init; }
     public DbSet<StaffModel> Staffs { get; init; }
@@ -47,13 +47,13 @@ public sealed class iOSContext(DbContextOptions<iOSContext> options) : DbContext
 }
 
 [Serializable]
-public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<iOSContext>
+public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<ClubContext>
 {
-    public iOSContext CreateDbContext(string[] args)
+    public ClubContext CreateDbContext(string[] args)
     {
-        var optionsBuilder = new DbContextOptionsBuilder<iOSContext>();
-        optionsBuilder.UseSqlite("Data Source=Data.db");
-        return new iOSContext(optionsBuilder.Options);
+        var optionsBuilder = new DbContextOptionsBuilder<ClubContext>();
+        optionsBuilder.UseNpgsql("");
+        return new ClubContext(optionsBuilder.Options);
     }
 }
 
@@ -73,7 +73,7 @@ public static class DataTool
 
     public static string GetProperties<T>(T t)
     {
-        StringBuilder builder = new StringBuilder();
+        var builder = new StringBuilder();
         if (t == null) return builder.ToString();
 
         var properties = t.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public);

@@ -64,14 +64,14 @@ builder.Services.AddCors(options =>
 
 var sql = Environment.GetEnvironmentVariable("SQL", EnvironmentVariableTarget.Process);
 
-// if (string.IsNullOrEmpty(sql) && builder.Environment.IsDevelopment())
-// {
-//     sql = builder.Configuration["SQL"];
-// }
+if (string.IsNullOrEmpty(sql) && builder.Environment.IsDevelopment())
+{
+    sql = builder.Configuration["SQL"];
+}
 
 if (string.IsNullOrEmpty(sql))
 {
-    builder.Services.AddDbContextFactory<iOSContext>(opt =>
+    builder.Services.AddDbContextFactory<ClubContext>(opt =>
         opt.UseSqlite("Data Source=Data.db",
             o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)));
 
@@ -80,7 +80,7 @@ if (string.IsNullOrEmpty(sql))
 }
 else
 {
-    builder.Services.AddDbContextFactory<iOSContext>(opt =>
+    builder.Services.AddDbContextFactory<ClubContext>(opt =>
     {
         opt.UseNpgsql(sql,
             o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
@@ -131,7 +131,7 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
-    var context = services.GetRequiredService<iOSContext>();
+    var context = services.GetRequiredService<ClubContext>();
 
     var pending = context.Database.GetPendingMigrations();
     var enumerable = pending as string[] ?? pending.ToArray();

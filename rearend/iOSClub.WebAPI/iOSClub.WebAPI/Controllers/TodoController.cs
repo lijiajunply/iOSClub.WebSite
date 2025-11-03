@@ -119,7 +119,7 @@ public class TodoController(
             // 设置待办事项属性
             todoModel.StudentId = student.UserId;
             todoModel.Id = todoModel.ToHash();
-            todoModel.CreatedTime = DateTime.Now;
+            todoModel.CreatedTime = DateTime.UtcNow;
 
             var result = await todoRepository.AddTodoAsync(todoModel);
             if (!result)

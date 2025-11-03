@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.Text;
 using System.Text.Json.Serialization;
 
@@ -15,7 +15,7 @@ public class StudentModel
     [MaxLength(2)] public string Gender { get; set; } = "";
     [MaxLength(20)] public string ClassName { get; set; } = "";
     [MaxLength(14)] public string PhoneNum { get; set; } = "";
-    public DateTime JoinTime { get; set; } = DateTime.Today;
+    public DateTime JoinTime { get; set; } = DateTime.UtcNow;
     [MaxLength(256)] public string PasswordHash { get; set; } = "";
     [MaxLength(256)] public string? EMail { get; set; }
 
@@ -30,8 +30,8 @@ public class StudentModel
         if (JoinTime.Year == 0)
         {
             JoinTime = string.IsNullOrEmpty(time)
-                ? DateTime.Today
-                : DateTime.Parse(time);
+                ? DateTime.UtcNow
+                : DateTime.SpecifyKind(DateTime.Parse(time), DateTimeKind.Utc);
         }
 
         return this;

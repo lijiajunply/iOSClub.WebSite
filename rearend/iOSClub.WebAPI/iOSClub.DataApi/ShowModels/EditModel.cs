@@ -1,4 +1,4 @@
-﻿using iOSClub.Data.DataModels;
+using iOSClub.Data.DataModels;
 
 namespace iOSClub.DataApi.ShowModels;
 
@@ -7,15 +7,15 @@ public class TaskEditModel
     public string Id { get; private init; } = "";
     public string Title { get; set; } = "";
     public string Description { get; set; } = "";
-    public DateTime StartTime { get; set; } = DateTime.Today;
-    public DateTime EndTime { get; set; } = DateTime.Today;
+    public DateTime StartTime { get; set; } = DateTime.SpecifyKind(DateTime.Today, DateTimeKind.Utc);
+    public DateTime EndTime { get; set; } = DateTime.SpecifyKind(DateTime.Today, DateTimeKind.Utc);
 
     public static TaskEditModel FromTask(TaskModel project)
         => new()
         {
             Title = project.Title,
-            StartTime = DateTime.TryParse(project.StartTime, out var startTime) ? startTime : DateTime.Today,
-            EndTime = DateTime.TryParse(project.EndTime, out var endTime) ? endTime : DateTime.Today.AddDays(7),
+            StartTime = DateTime.TryParse(project.StartTime, out var startTime) ? startTime : DateTime.SpecifyKind(DateTime.Today, DateTimeKind.Utc),
+            EndTime = DateTime.TryParse(project.EndTime, out var endTime) ? endTime : DateTime.SpecifyKind(DateTime.Today, DateTimeKind.Utc).AddDays(7),
             Description = project.Description,
             Id = project.Id
         };
@@ -35,8 +35,8 @@ public class ProjectEditModel
 {
     public string Title { get; set; } = "";
     public DepartmentModel? Department { get; set; } = new();
-    public DateTime StartTime { get; set; } = DateTime.Today;
-    public DateTime EndTime { get; set; } = DateTime.Today;
+    public DateTime StartTime { get; set; } = DateTime.SpecifyKind(DateTime.Today, DateTimeKind.Utc);
+    public DateTime EndTime { get; set; } = DateTime.SpecifyKind(DateTime.Today, DateTimeKind.Utc);
     public string Description { get; set; } = "";
 
     public static ProjectEditModel FromProject(ProjectModel project)
@@ -44,8 +44,8 @@ public class ProjectEditModel
         {
             Title = project.Title,
             Department = project.Department,
-            StartTime = DateTime.TryParse(project.StartTime, out var startTime) ? startTime : DateTime.Today,
-            EndTime = DateTime.TryParse(project.EndTime, out var endTime) ? endTime : DateTime.Today.AddDays(7),
+            StartTime = DateTime.TryParse(project.StartTime, out var startTime) ? startTime : DateTime.SpecifyKind(DateTime.Today, DateTimeKind.Utc),
+            EndTime = DateTime.TryParse(project.EndTime, out var endTime) ? endTime : DateTime.SpecifyKind(DateTime.Today, DateTimeKind.Utc).AddDays(7),
             Description = project.Description
         };
 
