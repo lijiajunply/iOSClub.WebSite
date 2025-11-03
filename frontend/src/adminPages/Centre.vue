@@ -1,24 +1,24 @@
 <template>
-  <div class="min-h-screen bg-white dark:bg-zinc-950 text-zinc-800 dark:text-zinc-100 transition-colors duration-300">
+  <div class="min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-300">
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <!-- 个人信息卡片 -->
       <div class="mb-8">
         <div
-            class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden transition-all duration-300 hover:shadow-md">
+            class="bg-white dark:bg-neutral-800 rounded-2xl border border-gray-200 dark:border-neutral-700 overflow-hidden transition-all duration-300 hover:shadow-lg">
           <div class="p-6 flex flex-col sm:flex-row items-center sm:items-start space-y-6 sm:space-y-0 sm:space-x-8">
             <div class="relative">
               <img
                   :src="getUserAvatar()"
                   :alt="userInfo.name"
-                  class="w-24 h-24 rounded-full object-cover border-4 border-zinc-100 dark:border-zinc-800"
+                  class="w-24 h-24 rounded-full object-cover border-4 border-gray-100 dark:border-neutral-700"
                   @error="handleImageError"
               />
             </div>
             <div class="text-center sm:text-left flex-1">
               <h2 class="text-2xl font-semibold tracking-tight">{{ userInfo.name }}</h2>
               <div class="mt-1 flex flex-wrap items-center justify-center sm:justify-start gap-3">
-                <span class="text-zinc-500 dark:text-zinc-400 text-sm">ID: {{ userInfo.id }}</span>
-                <div class="h-2 w-2 rounded-full bg-zinc-400 dark:bg-zinc-600"></div>
+                <span class="text-gray-500 dark:text-gray-400 text-sm">ID: {{ userInfo.id }}</span>
+                <div class="h-2 w-2 rounded-full bg-gray-400 dark:bg-neutral-600"></div>
                 <n-tag :type="getRoleType(userInfo.role)" class="rounded-full px-3 py-1">
                   {{ userInfo.role }}
                 </n-tag>
@@ -31,7 +31,7 @@
                     @click="goToPersonalData"
                 >
                   <template #icon>
-                    <IconFont type="user" class="w-4 h-4"/>
+                    <Icon icon="material-symbols:person-outline" class="w-4 h-4"/>
                   </template>
                   编辑个人信息
                 </n-button>
@@ -44,10 +44,10 @@
       <!-- iTool 工具卡片 -->
       <section class="mb-8">
         <div
-            class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden transition-all duration-300">
-          <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800">
+            class="bg-white dark:bg-neutral-800 rounded-2xl border border-gray-200 dark:border-neutral-700 overflow-hidden transition-all duration-300">
+          <div class="px-6 py-4 border-b border-gray-200 dark:border-neutral-700">
             <h2 class="text-lg font-semibold tracking-tight">iTool</h2>
-            <p class="text-sm text-zinc-500 dark:text-zinc-400">iOS Club 出品的小工具</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400">iOS Club 出品的小工具</p>
           </div>
           <div class="px-6 py-5">
             <div v-if="tools.length === 0" class="flex flex-col items-center justify-center py-12 text-center">
@@ -57,14 +57,14 @@
               <div
                   v-for="(tool, index) in tools"
                   :key="index"
-                  class="flex flex-col items-center text-center p-4 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-800/50 cursor-pointer transition-all duration-200 group"
+                  class="flex flex-col items-center text-center p-4 rounded-xl hover:bg-gray-50 dark:hover:bg-neutral-700 cursor-pointer transition-all duration-200 group"
                   @click="openTool(tool.url)"
               >
                 <div
-                    class="w-14 h-14 mb-3 flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 rounded-xl group-hover:bg-blue-50 dark:group-hover:bg-blue-900/30 transition-colors duration-200">
+                    class="w-14 h-14 mb-3 flex items-center justify-center bg-gray-100 dark:bg-neutral-700 rounded-xl group-hover:bg-blue-50 dark:group-hover:bg-blue-900/30 transition-colors duration-200">
                   <template v-if="!tool.icon.startsWith('http')">
-                    <IconFont
-                        :type="tool.icon"
+                    <Icon
+                        :icon="`material-symbols:${tool.icon}`"
                         class="w-7 h-7 group-hover:text-blue-500 transition-colors"
                     />
                   </template>
@@ -90,10 +90,10 @@
         <!-- 我的任务 -->
         <section class="max-h-100 h-full">
           <div
-              class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden transition-all duration-300 h-full">
-            <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800">
+              class="bg-white dark:bg-neutral-800 rounded-2xl border border-gray-200 dark:border-neutral-700 overflow-hidden transition-all duration-300 h-full">
+            <div class="px-6 py-4 border-b border-gray-200 dark:border-neutral-700">
               <h2 class="text-lg font-semibold tracking-tight">我的任务</h2>
-              <p class="text-sm text-zinc-500 dark:text-zinc-400">待完成的工作任务</p>
+              <p class="text-sm text-gray-500 dark:text-gray-400">待完成的工作任务</p>
             </div>
             <div class="p-6">
               <div v-if="tasks.length === 0" class="flex flex-col items-center justify-center py-10 text-center">
@@ -103,7 +103,7 @@
                 <div
                     v-for="task in tasks"
                     :key="task.id"
-                    class="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors duration-200"
+                    class="p-4 rounded-xl bg-gray-50 dark:bg-neutral-700 hover:bg-gray-100 dark:hover:bg-neutral-600 transition-colors duration-200"
                 >
                   <div class="flex justify-between items-start">
                     <h3 class="font-medium text-sm">{{ task.title }}</h3>
@@ -115,9 +115,9 @@
                       {{ getTaskStatusText(task.status) }}
                     </n-tag>
                   </div>
-                  <p v-if="task.description" class="text-xs text-zinc-500 dark:text-zinc-400 mt-1 line-clamp-2">
+                  <p v-if="task.description" class="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
                     {{ task.description }}</p>
-                  <div class="mt-3 text-xs text-zinc-400">
+                  <div class="mt-3 text-xs text-gray-400">
                     {{ formatDateRange(task.startTime, task.endTime) }}
                   </div>
                 </div>
@@ -129,12 +129,12 @@
         <!-- 社团资源 -->
         <section class="max-h-100 h-full">
           <div
-              class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden transition-all duration-300 cursor-pointer hover:shadow-md h-full"
+              class="bg-white dark:bg-neutral-800 rounded-2xl border border-gray-200 dark:border-neutral-700 overflow-hidden transition-all duration-300 cursor-pointer hover:shadow-lg h-full"
               @click="goToResources"
           >
-            <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800">
+            <div class="px-6 py-4 border-b border-gray-200 dark:border-neutral-700">
               <h2 class="text-lg font-semibold tracking-tight">社团资源</h2>
-              <p class="text-sm text-zinc-500 dark:text-zinc-400">iOS Club 资源全览</p>
+              <p class="text-sm text-gray-500 dark:text-gray-400">iOS Club 资源全览</p>
             </div>
             <div class="p-6">
               <div v-if="resources.length === 0" class="flex flex-col items-center justify-center py-10 text-center">
@@ -144,10 +144,10 @@
                 <div
                     v-for="resource in resources"
                     :key="resource.id"
-                    class="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors duration-200"
+                    class="p-4 rounded-xl bg-gray-50 dark:bg-neutral-700 hover:bg-gray-100 dark:hover:bg-neutral-600 transition-colors duration-200"
                 >
                   <h3 class="font-medium text-sm">{{ resource.name }}</h3>
-                  <p v-if="resource.description" class="text-xs text-zinc-500 dark:text-zinc-400 mt-1 line-clamp-2">
+                  <p v-if="resource.description" class="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
                     {{ resource.description }}</p>
                   <div v-if="resource.tag" class="mt-3 flex flex-wrap gap-2">
                     <n-tag
@@ -155,7 +155,7 @@
                         :key="tag"
                         type="default"
                         size="small"
-                        class="rounded-full bg-zinc-100 dark:bg-zinc-800 text-xs"
+                        class="rounded-full bg-gray-100 dark:bg-neutral-600 text-xs"
                     >
                       {{ tag }}
                     </n-tag>
@@ -173,12 +173,12 @@
           <!-- 社团部门 -->
           <div class="lg:col-span-1 max-h-100 h-full">
             <div
-                class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden transition-all duration-300 cursor-pointer hover:shadow-md h-full"
+                class="bg-white dark:bg-neutral-800 rounded-2xl border border-gray-200 dark:border-neutral-700 overflow-hidden transition-all duration-300 cursor-pointer hover:shadow-lg h-full"
                 @click="goToDepartment"
             >
-              <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800">
+              <div class="px-6 py-4 border-b border-gray-200 dark:border-neutral-700">
                 <h2 class="text-lg font-semibold tracking-tight">社团部门</h2>
-                <p class="text-sm text-zinc-500 dark:text-zinc-400">iOS 部门管理</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">iOS 部门管理</p>
               </div>
               <div class="p-6">
                 <div v-if="departments.length === 0"
@@ -189,10 +189,10 @@
                   <div
                       v-for="department in departments"
                       :key="department.name"
-                      class="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors duration-200"
+                      class="p-3 rounded-lg bg-gray-50 dark:bg-neutral-700 hover:bg-gray-100 dark:hover:bg-neutral-600 transition-colors duration-200"
                   >
                     <h3 class="font-medium text-sm">{{ department.name }}</h3>
-                    <p v-if="department.description" class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                    <p v-if="department.description" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                       {{ department.description }}</p>
                   </div>
                 </div>
@@ -204,10 +204,10 @@
           <div class="lg:col-span-2 max-h-100 h-full">
             <router-link to="/Centre/Memberdata" class="block h-full">
               <div
-                  class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden transition-all duration-300 hover:shadow-md h-full">
-                <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800">
+                  class="bg-white dark:bg-neutral-800 rounded-2xl border border-gray-200 dark:border-neutral-700 overflow-hidden transition-all duration-300 hover:shadow-lg h-full">
+                <div class="px-6 py-4 border-b border-gray-200 dark:border-neutral-700">
                   <h2 class="text-lg font-semibold tracking-tight">数据中心</h2>
-                  <p class="text-sm text-zinc-500 dark:text-zinc-400">展示社团数据</p>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">展示社团数据</p>
                 </div>
                 <div class="p-6">
                   <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -215,14 +215,15 @@
                         class="p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30">
                       <div class="flex justify-between items-start">
                         <div>
-                          <p class="text-xs text-zinc-500 dark:text-zinc-400">当前成员</p>
+                          <p class="text-xs text-gray-500 dark:text-gray-400">当前成员</p>
                           <p class="text-2xl font-semibold mt-1 text-blue-600 dark:text-blue-400">{{
                               statistics.members
                             }}</p>
                         </div>
                         <div
                             class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-800/50 flex items-center justify-center">
-                          <IconFont type="people" class="w-4 h-4 text-blue-600 dark:text-blue-400"/>
+                          <Icon icon="material-symbols:groups-outline"
+                                class="w-4 h-4 text-blue-600 dark:text-blue-400"/>
                         </div>
                       </div>
                     </div>
@@ -230,14 +231,15 @@
                         class="p-4 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800/30">
                       <div class="flex justify-between items-start">
                         <div>
-                          <p class="text-xs text-zinc-500 dark:text-zinc-400">部员数量</p>
+                          <p class="text-xs text-gray-500 dark:text-gray-400">部员数量</p>
                           <p class="text-2xl font-semibold mt-1 text-green-600 dark:text-green-400">{{
                               statistics.staffs
                             }}</p>
                         </div>
                         <div
                             class="w-8 h-8 rounded-full bg-green-100 dark:bg-green-800/50 flex items-center justify-center">
-                          <IconFont type="users" class="w-4 h-4 text-green-600 dark:text-green-400"/>
+                          <Icon icon="material-symbols:person-outline"
+                                class="w-4 h-4 text-green-600 dark:text-green-400"/>
                         </div>
 
                       </div>
@@ -246,13 +248,14 @@
                         class="p-4 rounded-xl bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800/30">
                       <div class="flex justify-between items-start">
                         <div>
-                          <p class="text-xs text-zinc-500 dark:text-zinc-400">项目数量</p>
+                          <p class="text-xs text-gray-500 dark:text-gray-400">项目数量</p>
                           <p class="text-2xl font-semibold mt-1 text-purple-600 dark:text-purple-400">
                             {{ statistics.projects }}</p>
                         </div>
                         <div
                             class="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-800/50 flex items-center justify-center">
-                          <IconFont type="briefcase" class="w-4 h-4 text-purple-600 dark:text-purple-400"/>
+                          <Icon icon="material-symbols:work-outline"
+                                class="w-4 h-4 text-purple-600 dark:text-purple-400"/>
                         </div>
 
                       </div>
@@ -261,14 +264,15 @@
                         class="p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800/30">
                       <div class="flex justify-between items-start">
                         <div>
-                          <p class="text-xs text-zinc-500 dark:text-zinc-400">任务数量</p>
+                          <p class="text-xs text-gray-500 dark:text-gray-400">任务数量</p>
                           <p class="text-2xl font-semibold mt-1 text-amber-600 dark:text-amber-400">{{
                               statistics.tasks
                             }}</p>
                         </div>
                         <div
                             class="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-800/50 flex items-center justify-center">
-                          <IconFont type="check-square" class="w-4 h-4 text-amber-600 dark:text-amber-400"/>
+                          <Icon icon="material-symbols:check-circle-outline"
+                                class="w-4 h-4 text-amber-600 dark:text-amber-400"/>
                         </div>
 
                       </div>
@@ -277,14 +281,15 @@
                         class="p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/30">
                       <div class="flex justify-between items-start">
                         <div>
-                          <p class="text-xs text-zinc-500 dark:text-zinc-400">资源数量</p>
+                          <p class="text-xs text-gray-500 dark:text-gray-400">资源数量</p>
                           <p class="text-2xl font-semibold mt-1 text-red-600 dark:text-red-400">{{
                               statistics.resources
                             }}</p>
                         </div>
                         <div
                             class="w-8 h-8 rounded-full bg-red-100 dark:bg-red-800/50 flex items-center justify-center">
-                          <IconFont type="database" class="w-4 h-4 text-red-600 dark:text-red-400"/>
+                          <Icon icon="material-symbols:database-outline"
+                                class="w-4 h-4 text-red-600 dark:text-red-400"/>
                         </div>
 
                       </div>
@@ -293,13 +298,14 @@
                         class="p-4 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800/30">
                       <div class="flex justify-between items-start">
                         <div>
-                          <p class="text-xs text-zinc-500 dark:text-zinc-400">部门数量</p>
+                          <p class="text-xs text-gray-500 dark:text-gray-400">部门数量</p>
                           <p class="text-2xl font-semibold mt-1 text-indigo-600 dark:text-indigo-400">
                             {{ statistics.departments }}</p>
                         </div>
                         <div
                             class="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-800/50 flex items-center justify-center">
-                          <IconFont type="building" class="w-4 h-4 text-indigo-600 dark:text-indigo-400"/>
+                          <Icon icon="material-symbols:apartment-outline"
+                                class="w-4 h-4 text-indigo-600 dark:text-indigo-400"/>
                         </div>
                       </div>
                     </div>
@@ -318,8 +324,7 @@
 import {ref, onMounted} from 'vue'
 import {useRouter} from 'vue-router'
 import {NTag, NButton, NEmpty} from 'naive-ui'
-import '../lib/iconfont.js'
-import IconFont from '../components/IconFont.vue'
+import {Icon} from '@iconify/vue'
 import {ToolService} from '../services/ToolService.ts'
 import {UserService} from '../services/UserService.ts'
 import {ProjectService} from '../services/ProjectService.ts'

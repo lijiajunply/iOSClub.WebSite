@@ -4,7 +4,7 @@
 
     <div class="flex-1 flex flex-col overflow-hidden h-screen">
       <!-- Header -->
-      <header class="bg-white/90 dark:bg-gray-800/90 backdrop-blur-md h-22">
+      <header class="bg-white/90 dark:bg-gray-800/90 backdrop-blur-md h-22 border-b border-gray-100 dark:border-gray-700">
         <div class="flex items-center justify-between px-4 py-3 h-full">
           <div class="md:hidden flex items-center gap-3">
             <button
@@ -23,7 +23,6 @@
                   src="/assets/iOS_Club_LOGO.png"
                   alt="iOS Club Logo"
                   class="w-10 h-10 rounded-lg object-contain"
-                  @error="handleImageError"
               />
               <h2 class="text-xl font-semibold text-gray-900 dark:text-white">iMember</h2>
             </router-link>
@@ -60,7 +59,7 @@
 </template>
 
 <script setup lang="ts">
-import {onMounted, ref} from 'vue'
+import {onMounted} from 'vue'
 import {useRouter} from 'vue-router'
 import {Icon} from '@iconify/vue'
 import Sidebar from '../components/Sidebar.vue'
@@ -75,9 +74,6 @@ const themeStore = useThemeStore()
 const {isDark} = storeToRefs(themeStore)
 const {toggleTheme} = themeStore
 const layoutStore = useLayoutStore()
-
-// 控制侧边栏显示状态
-const sidebarVisible = ref(false)
 
 const toggleSidebar = () => {
   layoutStore.showSidebar = !layoutStore.showSidebar

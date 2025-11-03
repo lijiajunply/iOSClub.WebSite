@@ -1,18 +1,5 @@
 <template>
-  <div class="flex-1 flex flex-col min-h-screen bg-gray-50 dark:bg-black transition-colors duration-300">
-    <!-- 顶部导航栏 -->
-    <div class="sticky top-0 z-10 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-800">
-      <div class="px-4 py-3 flex justify-between items-center">
-        <h1 class="text-xl font-semibold text-gray-900 dark:text-white">个人信息</h1>
-        <div class="flex items-center gap-2">
-          <div class="h-8 w-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white">
-            <Icon icon="lucide:user" size="18" />
-          </div>
-          <span class="text-sm font-medium text-gray-900 dark:text-white">{{ userInfo.userName || '未登录' }}</span>
-        </div>
-      </div>
-    </div>
-
+  <div class="flex-1 flex flex-col min-h-screen transition-colors duration-300">
     <!-- 主内容区域 -->
     <main class="flex-1 overflow-y-auto p-4 md:p-6">
       <!-- 加载状态 -->
@@ -598,7 +585,7 @@ const handleConfirm = async () => {
 };
 
 // 监听暗黑模式变化，更新图表样式
-watch(() => document.documentElement.classList.contains('dark'), (isDark) => {
+watch(() => document.documentElement.classList.contains('dark'), (_) => {
   if (chartInstance) {
     chartInstance.dispose();
     initChart();
