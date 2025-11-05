@@ -71,7 +71,7 @@ export const useAuthorizationStore = defineStore('AuthorizationId', {
             return await AuthService.validate(id, this.Authorization);
         },
         isAdmin() {
-            return this.getRole === 'Admin';
+            return this.getRole === 'Founder' || this.getRole === 'President' || this.getRole === 'Minister'
         }
     }
 });

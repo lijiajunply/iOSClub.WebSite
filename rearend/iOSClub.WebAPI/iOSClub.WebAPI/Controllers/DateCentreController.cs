@@ -1,9 +1,11 @@
+using System.Text;
 using iOSClub.Data;
 using iOSClub.DataApi.Services;
 using iOSClub.DataApi.ShowModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
+using Microsoft.AspNetCore.Authorization;
 
 namespace iOSClub.WebAPI.Controllers;
 
@@ -46,7 +48,8 @@ public class DateCentreController(IDbContextFactory<ClubContext> dbContextFactor
         var genderData = await dataCentreService.GetGenderDataAsync();
         return Ok(genderData);
     }
-
+    
+    [Authorize(Roles = "Founder, President, Minister")]
     [HttpPost("update-from-json")]
     public async Task<IActionResult> UpdateDataFromJson(IFormFile? file)
     {
@@ -120,6 +123,7 @@ public class DateCentreController(IDbContextFactory<ClubContext> dbContextFactor
         }
     }
 
+    [Authorize(Roles = "Founder, President, Minister")]
     [HttpGet]
     public async Task<IActionResult> GetCentreData()
     {
@@ -134,5 +138,31 @@ public class DateCentreController(IDbContextFactory<ClubContext> dbContextFactor
             Resources = await context.Resources.CountAsync(),
             Todos = await context.Todos.CountAsync()
         });
+    }
+
+    [Authorize(Roles = "Founder, President, Minister")]
+    [HttpGet("export-json")]
+    public async Task<IActionResult> ExportJson()
+    {
+        // 我想把所有数据都输出成一个 Json 文件
+        await using var context = await dbContextFactory.CreateDbContextAsync();
+        var allData = new AllDataModel
+        {
+            Students = await context.Students.ToListAsync(),
+            Departments = await context.Departments.ToListAsync(),
+            Presidents = await context.Staffs.Where(staff => staff.Identity == "President").ToListAsync(),
+            Tasks = await context.Tasks.ToListAsync(),
+            Projects = await context.Projects.ToListAsync(),
+            Resources = await context.Resources.ToListAsync(),
+            Todos = await context.Todos.ToListAsync(),
+        };
+
+        var options = new JsonSerializerOptions
+        {
+            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.Create(System.Text.Unicode.UnicodeRanges.All),
+            WriteIndented = true
+        };
+
+        return File(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(allData, options)), "application/json", "all-data.json");
     }
 }

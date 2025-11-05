@@ -1,4 +1,5 @@
 import {url} from './Url';
+import {AuthService} from "./AuthService";
 
 // 定义数据模型
 export interface YearCount {
@@ -30,7 +31,15 @@ export interface PoliticalCount {
 // HTTP请求工具函数
 async function fetchData<T>(endpoint: string): Promise<T> {
     try {
-        const response = await fetch(`${url}/DateCentre/${endpoint}`);
+        const token = AuthService.getToken();
+        if (!token) {
+            throw new Error('未登录');
+        }
+        const response = await fetch(`${url}/DateCentre/${endpoint}`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -42,7 +51,7 @@ async function fetchData<T>(endpoint: string): Promise<T> {
 }
 
 // 数据中心服务
-export class DateCentreService {
+export class DataCentreService {
     // 获取历年人数数据
     static async getYearData(): Promise<YearCount[]> {
         return fetchData<YearCount[]>('year');
@@ -70,5 +79,38 @@ export class DateCentreService {
 
     static async getCentreData(): Promise<any> {
         return fetchData<any>('');
+    }
+
+    static async updateDataFromJson(file: File): Promise<void> {
+        const token = AuthService.getToken();
+        if (!token) {
+            throw new Error('未登录');
+        }
+        const response = await fetch(`${url}/DateCentre/update-from-json`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+            body: file,
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+    }
+
+    static async exportJson(): Promise<Blob> {
+        const token = AuthService.getToken();
+        if (!token) {
+            throw new Error('未登录');
+        }
+        return await fetch(`${url}/DateCentre/export-json`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        }).then(response => response.blob());
     }
 }

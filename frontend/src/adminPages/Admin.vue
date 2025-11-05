@@ -15,7 +15,7 @@
               @click="triggerFileInput"
               class="hidden sm:flex items-center px-4 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors text-sm"
           >
-            <Icon icon="material-symbols:upload" class="mr-1" width="20" height="20" />
+            <Icon icon="material-symbols:upload" class="mr-1" width="20" height="20"/>
             上传数据
           </button>
 
@@ -24,11 +24,11 @@
                 @click="toggleDropdown"
                 class="h-9 w-9 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
             >
-              <Icon icon="material-symbols:more-horiz" width="20" height="20" class="text-gray-700 dark:text-gray-300" />
+              <Icon icon="material-symbols:more-horiz" width="20" height="20" class="text-gray-700 dark:text-gray-300"/>
             </button>
-            
-            <div 
-                v-if="dropdownOpen" 
+
+            <div
+                v-if="dropdownOpen"
                 class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-700 rounded-lg shadow-lg py-1 z-10 border border-gray-200 dark:border-gray-600"
             >
               <button
@@ -67,12 +67,12 @@
       <div v-if="loading" class="space-y-8">
         <!-- 数据概览卡片骨架 -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-8">
-          <SkeletonLoader v-for="i in 7" :key="i" type="card" />
+          <SkeletonLoader v-for="i in 7" :key="i" type="card"/>
         </div>
 
         <!-- 图表区域骨架 -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          <SkeletonLoader v-for="i in 2" :key="i" type="chart" />
+          <SkeletonLoader v-for="i in 2" :key="i" type="chart"/>
         </div>
       </div>
 
@@ -131,10 +131,12 @@ import {useMessage, useDialog} from 'naive-ui'
 import {Icon} from '@iconify/vue'
 import SkeletonLoader from '../components/SkeletonLoader.vue'
 import StatCard from '../components/StatCard.vue'
-import {DateCentreService} from "../services/DateCentreService";
+import {DataCentreService} from "../services/DataCentreService";
+import {useAuthorizationStore} from "../stores/Authorization";
 
 const message = useMessage()
 const dialog = useDialog()
+const authorizationStore = useAuthorizationStore()
 
 // Refs
 const fileInput = ref<HTMLInputElement>()
@@ -195,21 +197,14 @@ const uploadFiles = async (event: Event) => {
   try {
     for (let i = 0; i < files.length; i++) {
       const file = files[i]
-      const reader = new FileReader()
+      try {
+        await DataCentreService.updateDataFromJson(file)
 
-      reader.onload = async (e) => {
-        try {
-          const result = e.target?.result
-          if (!result) return
-
-          message.success(`文件 "${file.name}" 上传成功`)
-        } catch (error) {
-          console.error('解析文件时出错:', error)
-          message.error(`解析文件 "${file.name}" 时出错`)
-        }
+        message.success(`文件 "${file.name}" 上传成功`)
+      } catch (error) {
+        console.error('解析文件时出错:', error)
+        message.error(`解析文件 "${file.name}" 时出错`)
       }
-
-      reader.readAsText(file)
     }
   } catch (error) {
     console.error('上传文件时出错:', error)
@@ -226,19 +221,7 @@ const downloadAllData = async () => {
       return
     }
 
-    const data = {
-      students: [],
-      presidents: [],
-      tasks: [],
-      projects: [],
-      resources: [],
-      departments: [],
-      todos: [],
-      articles: []
-    }
-
-    const jsonString = JSON.stringify(data, null, 2)
-    const blob = new Blob([jsonString], {type: 'application/json'})
+    const blob = await DataCentreService.exportJson()
     const url = URL.createObjectURL(blob)
 
     const a = document.createElement('a')
@@ -300,7 +283,8 @@ const removeAllData = () => {
 const fetchData = async () => {
   try {
     // 并行获取所有数据
-    statistics.value = await DateCentreService.getCentreData();
+    statistics.value = await DataCentreService.getCentreData();
+
   } catch (error) {
     console.error('获取数据时出错:', error)
     message.error('获取数据时出错')
@@ -309,9 +293,10 @@ const fetchData = async () => {
 
 // Mount and unmount lifecycle
 onMounted(async () => {
+  isAdmin.value = authorizationStore.isAdmin()
   await fetchData()
   await nextTick()
-  
+
   // Add click outside listener
   document.addEventListener('click', handleClickOutside)
 })

@@ -331,7 +331,7 @@ import {UserService} from '../services/UserService.ts'
 import {ProjectService} from '../services/ProjectService.ts'
 import {ResourceService} from '../services/ResourceService.ts'
 import {DepartmentService} from '../services/DepartmentService.ts'
-import {DateCentreService} from "../services/DateCentreService.ts";
+import {DataCentreService} from "../services/DataCentreService.ts";
 import IconFont from "../components/IconFont.vue";
 
 const router = useRouter()
@@ -541,11 +541,11 @@ const fetchTasks = async () => {
     const todoData = await ProjectService.getYourTasks()
     tasks.value = todoData.map(task => ({
       id: task.id,
-      title: task.content,
+      title: task.name,
       description: '',
-      startTime: task.createTime ? new Date(task.createTime).toLocaleDateString() : '',
-      endTime: task.lastUpdateTime ? new Date(task.lastUpdateTime).toLocaleDateString() : '',
-      status: task.completed || false
+      startTime: task.startTime ? new Date(task.startTime).toLocaleDateString() : '',
+      endTime: task.endTime ? new Date(task.endTime).toLocaleDateString() : '',
+      status: task.status === 'Done' || false
     }))
   } catch (error) {
     console.error('获取任务数据时发生错误:', error)
@@ -664,7 +664,7 @@ const fetchStatistics = async () => {
     loading.value.statistics = true
     // 获取统计数据需要从多个服务中组合
 
-    statistics.value = await DateCentreService.getCentreData();
+    statistics.value = await DataCentreService.getCentreData();
   } catch (error) {
     console.error('获取统计数据时发生错误:', error)
     // 使用mock数据

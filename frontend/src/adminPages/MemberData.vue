@@ -24,12 +24,12 @@ import {MemberQueryService} from '../services/MemberQueryService'
 import {MemberManagementService} from '../services/MemberManagementService'
 import {
   AcademyCount,
-  DateCentreService,
+  DataCentreService,
   GenderCount,
   GradeCount,
   PoliticalCount,
   YearCount
-} from '../services/DateCentreService'
+} from '../services/DataCentreService'
 import type {MemberModel, PaginatedMemberResponse} from '../models'
 import * as echarts from 'echarts'
 
@@ -333,11 +333,11 @@ const loadChartData = async () => {
 
     // 并行获取所有图表数据
     const [yearResult, collegeResult, gradeResult, genderResult, landscapeResult] = await Promise.all([
-      DateCentreService.getYearData(),
-      DateCentreService.getCollegeData(),
-      DateCentreService.getGradeData(),
-      DateCentreService.getGenderData(),
-      DateCentreService.getLandscapeData()
+      DataCentreService.getYearData(),
+      DataCentreService.getCollegeData(),
+      DataCentreService.getGradeData(),
+      DataCentreService.getGenderData(),
+      DataCentreService.getLandscapeData()
     ])
 
     // 处理历年人数数据
