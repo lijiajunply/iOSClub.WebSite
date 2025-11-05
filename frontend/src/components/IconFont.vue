@@ -1,17 +1,24 @@
 <template>
   <div :style="style">
-    <svg class="icon" aria-hidden="true">
-      <use :href="type"></use>
+    <svg :class="className" aria-hidden="true">
+      <use :href="str"></use>
     </svg>
   </div>
 </template>
 
 <script setup>
-defineProps({
+import {computed} from "vue";
+
+const props = defineProps({
   type: {
     type: String,
     required: true
   },
-  style: String
+  style: String,
+  className: String,
+})
+
+const str = computed(() => {
+  return `#icon-${props.type}`
 })
 </script>

@@ -348,21 +348,37 @@ onMounted(() => {
   @apply font-bold text-base mb-2;
 }
 
-.warning {
-  @apply bg-amber-50 border-amber-500 dark:bg-amber-900;
+.custom-block .warning {
+  @apply bg-amber-50 border-amber-500;
 }
 
-.danger {
-  @apply bg-red-50 border-red-500 dark:bg-red-900;
+.dark .custom-block .warning {
+  @apply bg-amber-900;
 }
 
-.tip {
-  @apply bg-blue-50 border-blue-500 dark:bg-blue-900;
+.custom-block .danger {
+  @apply bg-red-50 border-red-500;
+}
+
+.dark .custom-block .danger {
+  @apply bg-red-900;
+}
+
+.custom-block .tip {
+  @apply bg-blue-50 border-blue-500;
+}
+
+.dark .custom-block .tip {
+  @apply bg-blue-900;
 }
 
 /* 目录链接活动状态 */
 .toc-link.active {
-  @apply font-medium text-blue-600 dark:text-blue-400;
+  @apply font-medium text-blue-600;
+}
+
+.dark .toc-link.active {
+  @apply text-blue-400;
 }
 
 /* Markdown 内容样式 */
@@ -372,7 +388,7 @@ onMounted(() => {
 .markdown-content :deep(h4),
 .markdown-content :deep(h5),
 .markdown-content :deep(h6) {
-  @apply font-semibold text-gray-900 dark:text-white;
+  @apply font-semibold;
 }
 
 .markdown-content :deep(h1) {
@@ -388,11 +404,39 @@ onMounted(() => {
 }
 
 .markdown-content :deep(p) {
-  @apply text-gray-700 dark:text-gray-300 mb-4 leading-relaxed;
+  @apply mb-4 leading-relaxed;
+}
+
+.markdown-content :deep(h1),
+.markdown-content :deep(h2),
+.markdown-content :deep(h3),
+.markdown-content :deep(h4),
+.markdown-content :deep(h5),
+.markdown-content :deep(h6),
+.markdown-content :deep(p) {
+  @apply text-gray-900;
+}
+
+.dark .markdown-content :deep(h1),
+.dark .markdown-content :deep(h2),
+.dark .markdown-content :deep(h3),
+.dark .markdown-content :deep(h4),
+.dark .markdown-content :deep(h5),
+.dark .markdown-content :deep(h6),
+.dark .markdown-content :deep(p) {
+  @apply text-white;
 }
 
 .markdown-content :deep(a) {
-  @apply text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline;
+  @apply underline;
+}
+
+.markdown-content :deep(a) {
+  @apply text-blue-600 hover:text-blue-800;
+}
+
+.dark .markdown-content :deep(a) {
+  @apply text-blue-400 hover:text-blue-300;
 }
 
 .markdown-content :deep(strong) {
@@ -421,15 +465,39 @@ onMounted(() => {
 }
 
 .markdown-content :deep(blockquote) {
-  @apply border-l-4 border-gray-300 dark:border-gray-600 pl-4 ml-2 py-1 my-4 text-gray-600 dark:text-gray-400;
+  @apply border-l-4 pl-4 ml-2 py-1 my-4;
+}
+
+.markdown-content :deep(blockquote) {
+  @apply border-gray-300 text-gray-600;
+}
+
+.dark .markdown-content :deep(blockquote) {
+  @apply border-gray-600 text-gray-400;
 }
 
 .markdown-content :deep(code) {
-  @apply bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-sm font-mono;
+  @apply px-1.5 py-0.5 rounded text-sm font-mono;
+}
+
+.markdown-content :deep(code) {
+  @apply bg-gray-100;
+}
+
+.dark .markdown-content :deep(code) {
+  @apply bg-gray-800;
 }
 
 .markdown-content :deep(pre) {
-  @apply bg-gray-800 dark:bg-gray-900 rounded-lg p-4 my-4 overflow-x-auto;
+  @apply rounded-lg p-4 my-4 overflow-x-auto;
+}
+
+.markdown-content :deep(pre) {
+  @apply bg-gray-800;
+}
+
+.dark .markdown-content :deep(pre) {
+  @apply bg-gray-900;
 }
 
 .markdown-content :deep(pre code) {
@@ -442,11 +510,29 @@ onMounted(() => {
 
 .markdown-content :deep(th),
 .markdown-content :deep(td) {
-  @apply border border-gray-300 dark:border-gray-700 px-4 py-2;
+  @apply px-4 py-2;
+}
+
+.markdown-content :deep(th),
+.markdown-content :deep(td) {
+  @apply border border-gray-300;
+}
+
+.dark .markdown-content :deep(th),
+.dark .markdown-content :deep(td) {
+  @apply border border-gray-700;
 }
 
 .markdown-content :deep(th) {
-  @apply bg-gray-100 dark:bg-gray-800 font-semibold;
+  @apply font-semibold;
+}
+
+.markdown-content :deep(th) {
+  @apply bg-gray-100;
+}
+
+.dark .markdown-content :deep(th) {
+  @apply bg-gray-800;
 }
 
 .markdown-content :deep(img) {
@@ -454,6 +540,14 @@ onMounted(() => {
 }
 
 .markdown-content :deep(hr) {
-  @apply border-gray-300 dark:border-gray-700 my-8;
+  @apply my-8;
+}
+
+.markdown-content :deep(hr) {
+  @apply border-gray-300;
+}
+
+.dark .markdown-content :deep(hr) {
+  @apply border-gray-700;
 }
 </style>

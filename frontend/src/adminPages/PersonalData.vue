@@ -1,5 +1,5 @@
 <template>
-  <div class="flex-1 flex flex-col min-h-screen transition-colors duration-300">
+  <div class="flex-1 flex flex-col transition-colors duration-300">
     <!-- 主内容区域 -->
     <main class="flex-1 overflow-y-auto p-4 md:p-6">
       <!-- 加载状态 -->
@@ -108,17 +108,16 @@
             <!-- 表单行：姓名和性别 -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <n-form-item label="姓名" path="userName" class="mb-0">
-                <div class="relative">
-                  <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <Icon icon="lucide:user" class="text-gray-800 dark:text-gray-200" size="18"/>
-                  </div>
-                  <n-input
-                      v-model:value="userInfo.userName"
-                      placeholder="请输入姓名"
-                      class="pl-10 bg-gray-50 dark:bg-gray-750 border-gray-200 dark:border-gray-700 rounded-xl"
-                      :bordered="false"
-                  />
-                </div>
+                <n-input
+                    v-model:value="userInfo.userName"
+                    placeholder="请输入姓名"
+                    class="bg-gray-50 dark:bg-gray-750 border-gray-200 dark:border-gray-700 rounded-xl"
+                    :bordered="false"
+                >
+                  <template #prefix>
+                    <Icon icon="lucide:user" class="text-gray-700 dark:text-gray-300" size="18"/>
+                  </template>
+                </n-input>
               </n-form-item>
 
               <n-form-item label="性别" path="gender" class="mb-0">
@@ -145,23 +144,22 @@
             <!-- 表单行：学号和学院 -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <n-form-item label="学号" path="userId" class="mb-0">
-                <div class="relative">
-                  <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <Icon icon="iconoir:hashtag" class="text-gray-800 dark:text-gray-200" size="18"/>
-                  </div>
-                  <n-input
-                      v-model:value="userInfo.userId"
-                      placeholder="请输入10位学号"
-                      class="pl-10 bg-gray-50 dark:bg-gray-750 border-gray-200 dark:border-gray-700 rounded-xl"
-                      :bordered="false"
-                  />
-                </div>
+                <n-input
+                    v-model:value="userInfo.userId"
+                    placeholder="请输入10位学号"
+                    class=" bg-gray-50 dark:bg-gray-750 border-gray-200 dark:border-gray-700 rounded-xl"
+                    :bordered="false"
+                >
+                  <template #prefix>
+                    <Icon icon="iconoir:hashtag" class="text-gray-700 dark:text-gray-300" size="18"/>
+                  </template>
+                </n-input>
               </n-form-item>
 
               <n-form-item label="学院" path="academy" class="mb-0">
                 <div class="relative">
-                  <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <Icon icon="iconoir:graduation-cap" class="text-gray-800 dark:text-gray-200" size="18"/>
+                  <div class="absolute z-10 inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                    <Icon icon="iconoir:graduation-cap" class="text-gray-700 dark:text-gray-300" size="18"/>
                   </div>
                   <n-select
                       v-model:value="userInfo.academy"
@@ -179,8 +177,8 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <n-form-item label="政治面貌" path="politicalLandscape" class="mb-0">
                 <div class="relative">
-                  <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <Icon icon="lucide:flag" class="text-gray-400" size="18"/>
+                  <div class="absolute z-10 inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                    <Icon icon="lucide:flag" class="text-gray-700 dark:text-gray-300" size="18"/>
                   </div>
                   <n-select
                       v-model:value="userInfo.politicalLandscape"
@@ -193,47 +191,44 @@
               </n-form-item>
 
               <n-form-item label="专业班级" path="className" class="mb-0">
-                <div class="relative">
-                  <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <Icon icon="lucide:users" class="text-gray-400" size="18"/>
-                  </div>
-                  <n-input
-                      v-model:value="userInfo.className"
-                      placeholder="请输入专业班级"
-                      class="pl-10 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-700 rounded-xl"
-                      :bordered="false"
-                  />
-                </div>
+                <n-input
+                    v-model:value="userInfo.className"
+                    placeholder="请输入专业班级"
+                    class="bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-700 rounded-xl"
+                    :bordered="false"
+                >
+                  <template #prefix>
+                    <Icon icon="lucide:users" class="text-gray-700 dark:text-gray-300" size="18"/>
+                  </template>
+                </n-input>
               </n-form-item>
             </div>
 
             <!-- 表单行：手机号 -->
             <div class="mb-6 grid grid-cols-1 md:grid-cols-2 gap-6">
               <n-form-item label="手机号" path="phoneNum" class="mb-0">
-                <div class="relative">
-                  <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <Icon icon="lucide:phone" class="text-gray-400" size="18"/>
-                  </div>
-                  <n-input
-                      v-model:value="userInfo.phoneNum"
-                      placeholder="请输入手机号"
-                      class="pl-10 bg-gray-50 dark:bg-gray-750 border-gray-200 dark:border-gray-700 rounded-xl"
-                      :bordered="false"
-                  />
-                </div>
+                <n-input
+                    v-model:value="userInfo.phoneNum"
+                    placeholder="请输入手机号"
+                    class="bg-gray-50 dark:bg-gray-750 border-gray-200 dark:border-gray-700 rounded-xl"
+                    :bordered="false"
+                >
+                  <template #prefix>
+                    <Icon icon="lucide:phone" class="text-gray-700 dark:text-gray-300" size="18"/>
+                  </template>
+                </n-input>
               </n-form-item>
               <n-form-item label="邮箱" path="eMail" class="mb-0">
-                <div class="relative">
-                  <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <Icon icon="lucide:mail" class="text-gray-400" size="18"/>
-                  </div>
-                  <n-input
-                      v-model:value="userInfo.eMail"
-                      placeholder="请输入邮箱地址"
-                      class="pl-10 bg-gray-50 dark:bg-gray-750 border-gray-200 dark:border-gray-700 rounded-xl"
-                      :bordered="false"
-                  />
-                </div>
+                <n-input
+                    v-model:value="userInfo.eMail"
+                    placeholder="请输入邮箱地址"
+                    class="bg-gray-50 dark:bg-gray-750 border-gray-200 dark:border-gray-700 rounded-xl"
+                    :bordered="false"
+                >
+                  <template #prefix>
+                    <Icon icon="lucide:mail" class="text-gray-700 dark:text-gray-300" size="18"/>
+                  </template>
+                </n-input>
               </n-form-item>
             </div>
 
@@ -265,54 +260,6 @@
           </n-form>
         </div>
       </div>
-
-      <!-- 数据统计卡片 -->
-      <div v-if="!loading" class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
-        <div class="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-sm">
-          <div class="flex items-center justify-between mb-2">
-            <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">成员类型</h3>
-            <div class="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-              <Icon icon="lucide:user-check" class="text-blue-500" size="16"/>
-            </div>
-          </div>
-          <p class="text-2xl font-semibold text-gray-900 dark:text-white">{{
-              identityMap[userInfo.identity] || '未设置'
-            }}</p>
-        </div>
-        <div class="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-sm">
-          <div class="flex items-center justify-between mb-2">
-            <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">学院</h3>
-            <div class="h-8 w-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-              <Icon icon="lucide:building-2" class="text-green-500" size="16"/>
-            </div>
-          </div>
-          <p class="text-2xl font-semibold text-gray-900 dark:text-white truncate">{{
-              userInfo.academy || '未设置'
-            }}</p>
-        </div>
-        <div class="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-sm">
-          <div class="flex items-center justify-between mb-2">
-            <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">班级</h3>
-            <div class="h-8 w-8 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-              <Icon icon="lucide:users-2" class="text-purple-500" size="16"/>
-            </div>
-          </div>
-          <p class="text-2xl font-semibold text-gray-900 dark:text-white truncate">{{
-              userInfo.className || '未设置'
-            }}</p>
-        </div>
-        <div class="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-sm">
-          <div class="flex items-center justify-between mb-2">
-            <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">邮箱</h3>
-            <div class="h-8 w-8 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
-              <Icon icon="lucide:mail" class="text-indigo-500" size="16"/>
-            </div>
-          </div>
-          <p class="text-2xl font-semibold text-gray-900 dark:text-white truncate">{{
-              userInfo.eMail || '未设置'
-            }}</p>
-        </div>
-      </div>
     </main>
 
     <!-- 确认对话框 -->
@@ -323,7 +270,7 @@
         <p class="text-sm text-gray-500 dark:text-gray-400">请仔细核对您的个人信息</p>
       </div>
     </n-modal>
-    
+
     <!-- 密码修改对话框 -->
     <n-modal v-model:show="showPasswordModal" preset="dialog" title="修改密码" positive-text="确认" negative-text="取消"
              @positive-click="confirmPasswordChange" :loading="passwordLoading">
@@ -331,29 +278,29 @@
         <n-form :model="passwordForm" :rules="passwordRules" ref="passwordFormRef">
           <n-form-item path="oldPassword" label="旧密码">
             <n-input
-              v-model:value="passwordForm.oldPassword"
-              type="password"
-              placeholder="请输入旧密码"
-              class="bg-gray-50 dark:bg-gray-750 border-gray-200 dark:border-gray-700 rounded-xl"
-              :bordered="false"
+                v-model:value="passwordForm.oldPassword"
+                type="password"
+                placeholder="请输入旧密码"
+                class="bg-gray-50 dark:bg-gray-750 border-gray-200 dark:border-gray-700 rounded-xl"
+                :bordered="false"
             />
           </n-form-item>
           <n-form-item path="newPassword" label="新密码">
             <n-input
-              v-model:value="passwordForm.newPassword"
-              type="password"
-              placeholder="请输入新密码（至少6位）"
-              class="bg-gray-50 dark:bg-gray-750 border-gray-200 dark:border-gray-700 rounded-xl"
-              :bordered="false"
+                v-model:value="passwordForm.newPassword"
+                type="password"
+                placeholder="请输入新密码（至少6位）"
+                class="bg-gray-50 dark:bg-gray-750 border-gray-200 dark:border-gray-700 rounded-xl"
+                :bordered="false"
             />
           </n-form-item>
           <n-form-item path="confirmPassword" label="确认新密码">
             <n-input
-              v-model:value="passwordForm.confirmPassword"
-              type="password"
-              placeholder="请再次输入新密码"
-              class="bg-gray-50 dark:bg-gray-750 border-gray-200 dark:border-gray-700 rounded-xl"
-              :bordered="false"
+                v-model:value="passwordForm.confirmPassword"
+                type="password"
+                placeholder="请再次输入新密码"
+                class="bg-gray-50 dark:bg-gray-750 border-gray-200 dark:border-gray-700 rounded-xl"
+                :bordered="false"
             />
           </n-form-item>
         </n-form>
@@ -663,7 +610,7 @@ const confirmPasswordChange = async () => {
     await AuthService.changePassword(userInfo.userId, passwordForm.oldPassword, passwordForm.newPassword);
     message.success('密码修改成功');
     showPasswordModal.value = false;
-    
+
     // 重置密码表单
     passwordForm.oldPassword = '';
     passwordForm.newPassword = '';

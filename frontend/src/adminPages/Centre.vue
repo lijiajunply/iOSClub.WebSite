@@ -11,7 +11,6 @@
                   :src="getUserAvatar()"
                   :alt="userInfo.name"
                   class="w-24 h-24 rounded-full object-cover border-4 border-gray-100 dark:border-neutral-700"
-                  @error="handleImageError"
               />
             </div>
             <div class="text-center sm:text-left flex-1">
@@ -20,7 +19,7 @@
                 <span class="text-gray-500 dark:text-gray-400 text-sm">ID: {{ userInfo.id }}</span>
                 <div class="h-2 w-2 rounded-full bg-gray-400 dark:bg-neutral-600"></div>
                 <n-tag :type="getRoleType(userInfo.role)" class="rounded-full px-3 py-1">
-                  {{ userInfo.role }}
+                  {{ identityDictionary[userInfo.role] }}
                 </n-tag>
               </div>
               <div class="mt-4">
@@ -51,7 +50,7 @@
           </div>
           <div class="px-6 py-5">
             <div v-if="loading.tools" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
-              <SkeletonLoader v-for="i in 5" :key="i" type="card" />
+              <SkeletonLoader v-for="i in 5" :key="i" type="card"/>
             </div>
             <div v-else-if="tools.length === 0" class="flex flex-col items-center justify-center py-12 text-center">
               <n-empty description="暂无可用工具"/>
@@ -65,18 +64,14 @@
               >
                 <div
                     class="w-14 h-14 mb-3 flex items-center justify-center bg-gray-100 dark:bg-neutral-700 rounded-xl group-hover:bg-blue-50 dark:group-hover:bg-blue-900/30 transition-colors duration-200">
-                  <template v-if="!tool.icon.startsWith('http')">
-                    <Icon
-                        :icon="`material-symbols:${tool.icon}`"
-                        class="w-7 h-7 group-hover:text-blue-500 transition-colors"
-                    />
+                  <template v-if="tool.icon && !tool.icon.startsWith('http')">
+                    <IconFont :type="tool.icon" className="w-6 h-6"/>
                   </template>
                   <template v-else>
                     <img
-                        :src="fixImageUrl(tool.icon)"
-                        class="w-7 h-7 object-contain rounded"
+                        :src="fixImageUrl(tool)"
+                        class="w-6 h-6 object-contain rounded"
                         :alt="`${tool.name}的图标`"
-                        @error="(e) => handleImageError(e, tool)"
                     />
                   </template>
                 </div>
@@ -100,12 +95,12 @@
             </div>
             <div class="p-6">
               <div v-if="loading.tasks" class="space-y-4">
-                <SkeletonLoader v-for="i in 3" :key="i" type="list" :count="1" />
+                <SkeletonLoader v-for="i in 3" :key="i" type="list" :count="1"/>
               </div>
               <div v-else-if="tasks.length === 0" class="flex flex-col items-center justify-center py-10 text-center">
                 <n-empty description="暂无待完成任务"/>
               </div>
-              <div v-else class="space-y-4 max-h-96 overflow-y-auto pr-2">
+              <div v-else class="space-y-4 max-h-64 overflow-y-auto pr-2">
                 <div
                     v-for="task in tasks"
                     :key="task.id"
@@ -144,12 +139,13 @@
             </div>
             <div class="p-6">
               <div v-if="loading.resources" class="space-y-4">
-                <SkeletonLoader v-for="i in 3" :key="i" type="list" :count="1" />
+                <SkeletonLoader v-for="i in 3" :key="i" type="list" :count="1"/>
               </div>
-              <div v-else-if="resources.length === 0" class="flex flex-col items-center justify-center py-10 text-center">
+              <div v-else-if="resources.length === 0"
+                   class="flex flex-col items-center justify-center py-10 text-center">
                 <n-empty description="暂无可用资源"/>
               </div>
-              <div v-else class="space-y-4 max-h-96 overflow-y-auto pr-2">
+              <div v-else class="space-y-4 max-h-64 overflow-y-auto pr-2">
                 <div
                     v-for="resource in resources"
                     :key="resource.id"
@@ -158,17 +154,6 @@
                   <h3 class="font-medium text-sm">{{ resource.name }}</h3>
                   <p v-if="resource.description" class="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
                     {{ resource.description }}</p>
-                  <div v-if="resource.tag" class="mt-3 flex flex-wrap gap-2">
-                    <n-tag
-                        v-for="tag in splitTags(resource.tag)"
-                        :key="tag"
-                        type="default"
-                        size="small"
-                        class="rounded-full bg-gray-100 dark:bg-neutral-600 text-xs"
-                    >
-                      {{ tag }}
-                    </n-tag>
-                  </div>
                 </div>
               </div>
             </div>
@@ -191,13 +176,13 @@
               </div>
               <div class="p-6">
                 <div v-if="loading.departments" class="space-y-3">
-                  <SkeletonLoader v-for="i in 4" :key="i" type="list" :count="1" />
+                  <SkeletonLoader v-for="i in 4" :key="i" type="list" :count="1"/>
                 </div>
                 <div v-else-if="departments.length === 0"
                      class="flex flex-col items-center justify-center py-10 text-center">
                   <n-empty description="暂无部门信息"/>
                 </div>
-                <div v-else class="space-y-3">
+                <div v-else class="space-y-3 max-h-64 overflow-y-auto pr-2">
                   <div
                       v-for="department in departments"
                       :key="department.name"
@@ -223,7 +208,7 @@
                 </div>
                 <div class="p-6">
                   <div v-if="loading.statistics" class="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                    <SkeletonLoader v-for="i in 6" :key="i" type="card" />
+                    <SkeletonLoader v-for="i in 6" :key="i" type="card"/>
                   </div>
                   <div v-else class="grid grid-cols-2 sm:grid-cols-3 gap-4">
                     <div
@@ -346,8 +331,8 @@ import {UserService} from '../services/UserService.ts'
 import {ProjectService} from '../services/ProjectService.ts'
 import {ResourceService} from '../services/ResourceService.ts'
 import {DepartmentService} from '../services/DepartmentService.ts'
-import {StaffService} from '../services/StaffService.ts'
-import {MemberQueryService} from '../services/MemberQueryService.ts'
+import {DateCentreService} from "../services/DateCentreService.ts";
+import IconFont from "../components/IconFont.vue";
 
 const router = useRouter()
 
@@ -382,6 +367,14 @@ const statistics = ref({
   departments: 0
 })
 
+const identityDictionary = {
+  'Founder': '创始人',
+  'President': '社长/团支书',
+  'Minister': '部长/副部长',
+  'Department': '部员',
+  'Member': '普通成员'
+}
+
 // 加载状态
 const loading = ref({
   tools: true,
@@ -402,7 +395,7 @@ const getUserAvatar = () => {
   } catch (error) {
     console.error('获取头像失败:', error)
     // 返回默认头像
-    return 'https://via.placeholder.com/100?text=User'
+    return ''
   }
 }
 
@@ -437,25 +430,13 @@ const formatDateRange = (start, end) => {
 }
 
 // 修复图片URL中的重复斜杠问题
-const fixImageUrl = (url) => {
-  // 简单替换重复斜杠，同时保留 http:// 中的双斜杠
-  return url.replace(/\/\/+/g, '/');
-}
-
-// 图标加载失败时替换为备用图标
-const handleImageError = (event, tool) => {
-  try {
-    // 使用默认图标
-    const defaultIcon = 'https://via.placeholder.com/32?text=?'
-    if (event.target.src === defaultIcon) return
-
-    event.target.src = defaultIcon
-    if (tool) {
-      console.debug(`[${tool.name}] 图标加载失败，已使用备用图标`)
-    }
-  } catch (error) {
-    console.error('处理图片错误时发生问题:', error)
+const fixImageUrl = (tool) => {
+  if (tool.icon) {
+    return tool.icon.replace(/([^:])(\/\/)/g, '$1/')
   }
+
+  const domain = tool.url.replace("https://", "").replace("http://", "").split('/')[0];
+  return `https://${domain}/favicon.ico`;
 }
 
 // 导航到个人数据页面
@@ -609,7 +590,6 @@ const fetchResources = async () => {
       id: resource.id,
       name: resource.name,
       description: resource.description,
-      tag: resource.tags ? resource.tags.join(',') : ''
     }))
     statistics.value.resources = resources.value.length
   } catch (error) {
@@ -683,21 +663,8 @@ const fetchStatistics = async () => {
   try {
     loading.value.statistics = true
     // 获取统计数据需要从多个服务中组合
-    const memberData = await MemberQueryService.getAllData()
-    const staffData = await StaffService.getAllStaff()
-    const projectData = await ProjectService.getAllProjects()
-    const todoData = await ProjectService.getYourTasks()
-    const resourceData = await ResourceService.getAllResources()
-    const departmentData = await DepartmentService.getAllDepartments()
 
-    statistics.value = {
-      members: memberData.length,
-      staffs: staffData.length,
-      projects: projectData.length,
-      tasks: todoData.length,
-      resources: resourceData.length,
-      departments: departmentData.length
-    }
+    statistics.value = await DateCentreService.getCentreData();
   } catch (error) {
     console.error('获取统计数据时发生错误:', error)
     // 使用mock数据

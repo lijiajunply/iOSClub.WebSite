@@ -119,4 +119,20 @@ public class DateCentreController(IDbContextFactory<ClubContext> dbContextFactor
             return BadRequest($"JSON解析错误: {ex.Message}");
         }
     }
+
+    [HttpGet]
+    public async Task<IActionResult> GetCentreData()
+    {
+        await using var context = await dbContextFactory.CreateDbContextAsync();
+        return Ok(new
+        {
+            Members = await context.Students.CountAsync(),
+            Departments = await context.Departments.CountAsync(),
+            Staffs = await context.Staffs.Where(staff => staff.Identity != "Founder").CountAsync(),
+            Tasks = await context.Tasks.CountAsync(),
+            Projects = await context.Projects.CountAsync(),
+            Resources = await context.Resources.CountAsync(),
+            Todos = await context.Todos.CountAsync()
+        });
+    }
 }

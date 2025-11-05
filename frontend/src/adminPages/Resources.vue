@@ -84,7 +84,7 @@
     </div>
 
     <!-- Modal -->
-    <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-60 backdrop-blur-sm">
+    <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <div class="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden w-full max-w-md transform transition-all duration-300 ease-out shadow-2xl">
         <div class="p-6">
           <div class="flex items-center justify-between mb-5">

@@ -108,4 +108,40 @@ export class MemberManagementService {
             throw new Error('更新成员信息失败');
         }
     }
+    
+    /**
+     * 管理员重置成员密码
+     * @param userId 成员ID
+     * @param newPassword 新密码
+     * @returns Promise<void>
+     */
+    static async resetMemberPassword(userId: string, newPassword: string): Promise<void> {
+        const token = AuthService.getToken();
+        if (!token) {
+            throw new Error('未登录');
+        }
+
+        const response = await fetch(`${url}/MemberManagement/reset-password`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ userId, newPassword }),
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                AuthService.clearToken();
+                throw new Error('登录已过期，请重新登录');
+            }
+            if (response.status === 403) {
+                throw new Error('权限不足，需要管理员身份');
+            }
+            if (response.status === 404) {
+                throw new Error('成员不存在');
+            }
+            throw new Error('重置密码失败');
+        }
+    }
 }

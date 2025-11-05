@@ -67,4 +67,8 @@ export class DateCentreService {
     static async getGenderData(): Promise<GenderCount[]> {
         return fetchData<GenderCount[]>('gender');
     }
+
+    static async getCentreData(): Promise<any> {
+        return fetchData<any>('');
+    }
 }

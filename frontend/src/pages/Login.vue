@@ -27,6 +27,7 @@
               type="password"
               v-model:value="form.password"
               placeholder="请输入密码 (未设置时为手机号码)"
+              show-password-on="click"
               @keyup.enter="handleLogin"
               class="dark:text-gray-100 dark:bg-neutral-800"
           />

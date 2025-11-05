@@ -10,12 +10,13 @@
 </template>
 
 <script setup>
-import { ref, computed, h } from 'vue'
-import { useRoute } from 'vue-router'
-import { NMenu } from 'naive-ui'
+import {computed} from 'vue'
+import {useRoute, useRouter} from 'vue-router'
+import {NMenu} from 'naive-ui'
 
 const emit = defineEmits(['menu-item-click'])
 const route = useRoute()
+const router = useRouter()
 
 const activeKey = computed(() => route.path)
 

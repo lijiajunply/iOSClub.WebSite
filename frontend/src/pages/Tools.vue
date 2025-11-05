@@ -21,15 +21,15 @@
           <n-card hoverable class="w-full dark:bg-neutral-800 dark:text-gray-100">
             <div class="flex items-center justify-between p-6">
               <div class="flex items-center gap-4">
-                <template v-if="!link.icon.startsWith('http')">
+                <template v-if="link.icon && !link.icon.startsWith('http')">
                   <IconFont
                       :type="link.icon"
-                      class="text-[28px] dark:text-gray-100"
+                      className="w-7 h-7 dark:text-gray-100"
                   />
                 </template>
                 <template v-else>
                   <img
-                      :src="fixImageUrl(link.icon)"
+                      :src="fixImageUrl(link)"
                       :style="{ height: '28px', width: '28px', borderRadius: '6px' }"
                       :alt="`${link.name}的图标`"
                       @error="(e) => handleImageError(e, link)"
@@ -74,7 +74,6 @@
 </template>
 
 <script setup lang="ts">
-import '../lib/iconfont'
 import {ref, onMounted} from 'vue';
 import {NCard} from 'naive-ui';
 import PageStart from "../components/PageStart.vue";
@@ -89,8 +88,13 @@ const models = ref<LinkModel[]>([] as LinkModel[]);
 const isMobile = ref(window.innerWidth < 640);
 
 // 修复图片URL中的重复斜杠问题
-const fixImageUrl = (url: string) => {
-  return url.replace(/([^:]\/)\/+/g, '$1');
+const fixImageUrl = (tool: any) => {
+  if (tool.icon) {
+    return tool.icon.replace(/([^:])(\/\/)/g, '$1/')
+  }
+
+  const domain = tool.url.replace("https://", "").replace("http://", "").split('/')[0];
+  return `https://${domain}/favicon.ico`;
 };
 
 // 图标加载失败时替换为备用图标
@@ -107,7 +111,6 @@ const handleImageError = (event: any, link: any) => {
 onMounted(async () => {
   const res = await ToolService.getTools();
   models.value = res.links;
-  console.log(res.links)
 })
 </script>
 

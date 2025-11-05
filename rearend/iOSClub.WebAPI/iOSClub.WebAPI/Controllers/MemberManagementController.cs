@@ -1,5 +1,5 @@
+using iOSClub.Data;
 using iOSClub.Data.DataModels;
-using iOSClub.Data.ShowModels;
 using iOSClub.DataApi.Repositories;
 using iOSClub.WebAPI.IdentityModels;
 using Microsoft.AspNetCore.Authorization;
@@ -57,4 +57,21 @@ public class MemberManagementController(IStudentRepository studentRepository) : 
 
         return NoContent();
     }
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword(ResetPasswordData data)
+    {
+        var student = await studentRepository.GetByIdAsync(data.UserId);
+        if (student == null)
+            return NotFound();
+
+        student.PasswordHash = data.NewPassword.ToHash();
+        var result = await studentRepository.UpdateAsync(student);
+        if (!result)
+            return NotFound();
+
+        return Ok();
+    }
 }
+
+public record ResetPasswordData(string UserId, string NewPassword);

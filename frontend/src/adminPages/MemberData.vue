@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, h, onMounted, nextTick } from 'vue'
-import { useDialog, useMessage } from 'naive-ui'
+import {ref, computed, h, onMounted, nextTick} from 'vue'
+import {useDialog, useMessage} from 'naive-ui'
 // 导入所有需要的 NaiveUI 组件
 import {
   NCard,
@@ -18,20 +18,29 @@ import {
   NSpace,
   NRadio
 } from 'naive-ui'
-import { Icon } from '@iconify/vue'
+import {Icon} from '@iconify/vue'
 import SkeletonLoader from '../components/SkeletonLoader.vue'
-import { MemberQueryService } from '../services/MemberQueryService'
-import { MemberManagementService } from '../services/MemberManagementService'
-import { AcademyCount, DateCentreService, GenderCount, GradeCount, PoliticalCount, YearCount } from '../services/DateCentreService'
-import type { MemberModel, PaginatedMemberResponse } from '../models'
+import {MemberQueryService} from '../services/MemberQueryService'
+import {MemberManagementService} from '../services/MemberManagementService'
+import {
+  AcademyCount,
+  DateCentreService,
+  GenderCount,
+  GradeCount,
+  PoliticalCount,
+  YearCount
+} from '../services/DateCentreService'
+import type {MemberModel, PaginatedMemberResponse} from '../models'
 import * as echarts from 'echarts'
 
 const dialog = useDialog()
 const message = useMessage()
 const showModal = ref(false)
+const showPasswordModal = ref(false)
 const searchTerm = ref('')
 const searchItem = ref('姓名')
 const formRef = ref<any>(null)
+const passwordFormRef = ref<any>(null)
 const loading = ref(false)
 const activeTab = ref('memberData')
 
@@ -56,17 +65,17 @@ let politicalChart: echarts.ECharts | null = null
 
 // 搜索选项 - 与后端API匹配
 const searchItems = [
-  { label: '姓名', value: 'username' },
-  { label: '学号', value: 'userid' },
-  { label: '学院', value: 'academy' },
-  { label: '专业班级', value: 'classname' },
-  { label: '手机号', value: 'phone_num' }
+  {label: '姓名', value: 'username'},
+  {label: '学号', value: 'userid'},
+  {label: '学院', value: 'academy'},
+  {label: '专业班级', value: 'classname'},
+  {label: '手机号', value: 'phone_num'}
 ]
 
 // 下载选项
 const downloadOptions = [
-  { label: '下载CSV文件', key: 'csv' },
-  { label: '下载JSON文件', key: 'json' }
+  {label: '下载CSV文件', key: 'csv'},
+  {label: '下载JSON文件', key: 'json'}
 ]
 
 // 学院选项
@@ -89,14 +98,14 @@ const academyOptions = [
   '马克思主义学院',
   '体育学院',
   '继续教育学院'
-].map(academy => ({ label: academy, value: academy }))
+].map(academy => ({label: academy, value: academy}))
 
 // 政治面貌选项
 const politicalLandscapeOptions = [
   '群众',
   '共青团员',
   '中共党员'
-].map(political => ({ label: political, value: political }))
+].map(political => ({label: political, value: political}))
 
 // 性别选项
 const genderOptions = ['男', '女']
@@ -117,6 +126,11 @@ const currentMember = ref<MemberModel>({
   passwordHash: '',
   eMail: null as string | null
 } as MemberModel)
+
+const passwordForm = ref({
+  newPassword: '',
+  confirmPassword: ''
+})
 
 const rules = {
   userName: {
@@ -171,6 +185,35 @@ const rules = {
   }
 }
 
+const passwordRules = {
+  newPassword: [
+    {
+      required: true,
+      message: '请输入新密码',
+      trigger: 'blur'
+    },
+    {
+      min: 6,
+      message: '密码长度至少6位',
+      trigger: 'blur'
+    }
+  ],
+  confirmPassword: [
+    {
+      required: true,
+      message: '请确认密码',
+      trigger: 'blur'
+    },
+    {
+      validator: (_: any, value: string) => {
+        return value === passwordForm.value.newPassword;
+      },
+      message: '两次输入的密码不一致',
+      trigger: 'blur'
+    }
+  ]
+}
+
 const columns = [
   {
     title: '姓名',
@@ -214,25 +257,36 @@ const columns = [
     render(row: MemberModel) {
       return [
         h(
-          NButton,
-          {
-            strong: true,
-            tertiary: true,
-            size: 'small',
-            onClick: () => editMember(row)
-          },
-          { default: () => '编辑' }
+            NButton,
+            {
+              strong: true,
+              tertiary: true,
+              size: 'small',
+              onClick: () => editMember(row)
+            },
+            {default: () => '编辑'}
         ),
         h(
-          NButton,
-          {
-            strong: true,
-            tertiary: true,
-            size: 'small',
-            type: 'error',
-            onClick: () => deleteMember(row)
-          },
-          { default: () => '删除' }
+            NButton,
+            {
+              strong: true,
+              tertiary: true,
+              size: 'small',
+              type: 'primary',
+              onClick: () => showPasswordModalFn(row)
+            },
+            {default: () => '改密'}
+        ),
+        h(
+            NButton,
+            {
+              strong: true,
+              tertiary: true,
+              size: 'small',
+              type: 'error',
+              onClick: () => deleteMember(row)
+            },
+            {default: () => '删除'}
         )
       ]
     }
@@ -276,7 +330,7 @@ const politicalData = ref<PoliticalCount[]>([])
 const loadChartData = async () => {
   try {
     loading.value = true
-    
+
     // 并行获取所有图表数据
     const [yearResult, collegeResult, gradeResult, genderResult, landscapeResult] = await Promise.all([
       DateCentreService.getYearData(),
@@ -285,28 +339,28 @@ const loadChartData = async () => {
       DateCentreService.getGenderData(),
       DateCentreService.getLandscapeData()
     ])
-    
+
     // 处理历年人数数据
     yearData.value = yearResult
-    
+
     // 处理学院分布数据
     collegeData.value = collegeResult
-    
+
     // 处理年级分布数据
     gradeData.value = gradeResult.map(item => ({
       grade: item.grade,
       value: item.value
     }))
-    
+
     // 处理性别分布数据
     genderData.value = genderResult
-    
+
     // 处理政治面貌数据
     politicalData.value = landscapeResult.map(item => ({
       type: item.type,
       sales: item.sales
     }))
-    
+
     // 渲染当前激活的图表
     if (activeTab.value !== 'memberData') {
       handleTabChange(activeTab.value)
@@ -324,14 +378,14 @@ const fetchMembers = async () => {
   try {
     loading.value = true
     const response: PaginatedMemberResponse = await MemberQueryService.getAllDataByPage(
-      currentPage.value,
-      pageSize.value,
-      searchTerm.value,
-      searchItem.value
+        currentPage.value,
+        pageSize.value,
+        searchTerm.value,
+        searchItem.value
     )
 
     console.log(response)
-    
+
     members.value = response.data
     totalCount.value = response.totalCount
   } catch (error: any) {
@@ -540,7 +594,7 @@ const showAddMemberModal = () => {
 }
 
 const editMember = (member: MemberModel) => {
-  currentMember.value = { ...member }
+  currentMember.value = {...member}
   showModal.value = true
 }
 
@@ -577,12 +631,12 @@ const saveMember = async () => {
           await MemberManagementService.updateMember(currentMember.value)
           const index = members.value.findIndex(m => m.identity === currentMember.value.identity)
           if (index !== -1) {
-            members.value[index] = { ...currentMember.value }
+            members.value[index] = {...currentMember.value}
           }
           message.success('成员信息已更新')
         } else {
           // 添加新成员 (这里需要根据实际情况调整)
-          members.value.push({ ...currentMember.value })
+          members.value.push({...currentMember.value})
           message.success('新成员已添加')
           // 更新总数
           totalCount.value++
@@ -607,26 +661,26 @@ const searchMembers = () => {
 }
 
 // 导出数据
-const handleDownloadSelect = (key: string) => {
+const handleDownloadSelect = async (key: string) => {
   if (key === 'csv') {
-    exportToCSV()
+    await exportToCSV()
   } else if (key === 'json') {
-    exportToJSON()
+    await exportToJSON()
   }
 }
 
 // 导出为 CSV 格式
-const exportToCSV = () => {
+const exportToCSV = async () => {
   try {
     // 定义 CSV 头部
-    const headers = ['姓名', '学号', '学院', '专业班级', '手机号', '政治面貌', '性别']
-    const keys = ['userName', 'userId', 'academy', 'className', 'phoneNum', 'politicalLandscape', 'gender'] as const
+    const headers = ['姓名', '学号', '学院', '专业班级', '手机号', '政治面貌', '性别', '邮件']
+    const keys = ['userName', 'userId', 'academy', 'className', 'phoneNum', 'politicalLandscape', 'gender', 'eMail'] as const
 
     // 创建 CSV 内容
     let csvContent = '\uFEFF' + headers.join(',') + '\n' // 添加 UTF-8 BOM
 
-    // 添加数据行
-    members.value.forEach(member => {
+    const allMembers = await MemberQueryService.getAllData();
+    allMembers.forEach(member => {
       const row = keys.map(key => {
         const value = member[key] || ''
         // 转义包含逗号或引号的值
@@ -636,7 +690,7 @@ const exportToCSV = () => {
     })
 
     // 创建并下载文件
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const blob = new Blob([csvContent], {type: 'text/csv;charset=utf-8;'})
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.setAttribute('href', url)
@@ -654,10 +708,11 @@ const exportToCSV = () => {
 }
 
 // 导出为 JSON 格式
-const exportToJSON = () => {
+const exportToJSON = async () => {
   try {
-    const dataStr = JSON.stringify(members.value, null, 2)
-    const blob = new Blob([dataStr], { type: 'application/json;charset=utf-8;' })
+    const allMembers = await MemberQueryService.getAllData();
+    const dataStr = JSON.stringify(allMembers, null, 2)
+    const blob = new Blob([dataStr], {type: 'application/json;charset=utf-8;'})
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.setAttribute('href', url)
@@ -673,6 +728,35 @@ const exportToJSON = () => {
     message.error('导出JSON数据失败')
   }
 }
+
+const showPasswordModalFn = (member: MemberModel) => {
+  currentMember.value = {...member}
+  passwordForm.value.newPassword = ''
+  passwordForm.value.confirmPassword = ''
+  showPasswordModal.value = true
+}
+
+const changePassword = async () => {
+  passwordFormRef.value?.validate(async (errors: any) => {
+    if (!errors) {
+      try {
+        // 使用MemberManagementService中的新方法修改密码
+        await MemberManagementService.resetMemberPassword(
+            currentMember.value.userId,
+            passwordForm.value.newPassword
+        );
+
+        message.success(`成员 ${currentMember.value.userName} 的密码已重置`);
+        showPasswordModal.value = false;
+      } catch (error: any) {
+        console.error('修改密码时出错:', error);
+        message.error('修改密码时出错: ' + (error.message || '未知错误'));
+      }
+    } else {
+      message.error('请检查表单填写是否正确');
+    }
+  });
+};
 
 // 窗口大小变化时重置图表大小
 const handleResize = () => {
@@ -699,21 +783,21 @@ onMounted(() => {
         <div class="flex flex-wrap gap-2">
           <n-button type="primary" @click="showAddMemberModal">
             <template #icon>
-              <Icon icon="ion:person-add" />
+              <Icon icon="ion:person-add"/>
             </template>
             添加成员
           </n-button>
           <n-dropdown trigger="hover" :options="downloadOptions" @select="handleDownloadSelect">
             <n-button>
               <template #icon>
-                <Icon icon="ion:download" />
+                <Icon icon="ion:download"/>
               </template>
               导出数据
             </n-button>
           </n-dropdown>
           <n-button @click="fetchMembers">
             <template #icon>
-              <Icon icon="ion:refresh" />
+              <Icon icon="ion:refresh"/>
             </template>
             刷新
           </n-button>
@@ -724,10 +808,10 @@ onMounted(() => {
         <n-tab-pane name="memberData" tab="成员数据">
           <div class="space-y-4">
             <div class="flex flex-col sm:flex-row gap-2">
-              <n-select v-model:value="searchItem" :options="searchItems" style="width: 150px" class="flex-shrink-0" />
+              <n-select v-model:value="searchItem" :options="searchItems" style="width: 150px" class="flex-shrink-0"/>
               <n-input v-model:value="searchTerm" placeholder="请输入搜索项" clearable @keyup.enter="searchMembers">
                 <template #suffix>
-                  <Icon icon="ion:search-outline" />
+                  <Icon icon="ion:search-outline"/>
                 </template>
               </n-input>
               <n-button type="primary" @click="searchMembers">
@@ -736,10 +820,11 @@ onMounted(() => {
             </div>
 
             <div v-if="loading">
-              <SkeletonLoader type="table" :count="pageSize" :columns="8" />
+              <SkeletonLoader type="table" :count="pageSize" :columns="8"/>
             </div>
-            <n-data-table v-else remote :columns="columns" :data="filteredMembers" @update:page-size="onUpdatePageSize" @update:page="onChange" :pagination="paginationConfig" :bordered="false"
-              :loading="loading" class="rounded-lg overflow-hidden" />
+            <n-data-table v-else remote :columns="columns" :data="filteredMembers" @update:page-size="onUpdatePageSize"
+                          @update:page="onChange" :pagination="paginationConfig" :bordered="false"
+                          :loading="loading" class="rounded-lg overflow-hidden"/>
           </div>
         </n-tab-pane>
 
@@ -748,7 +833,7 @@ onMounted(() => {
             <n-card class="rounded-xl bg-white dark:bg-gray-800 transition-colors duration-200">
               <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">历年人数变化</h3>
               <div v-if="loading" class="h-80 flex items-center justify-center">
-                <SkeletonLoader type="chart" />
+                <SkeletonLoader type="chart"/>
               </div>
               <div v-else ref="yearChartRef" class="h-80 w-full"></div>
             </n-card>
@@ -760,7 +845,7 @@ onMounted(() => {
             <n-card class="rounded-xl bg-white dark:bg-gray-800 transition-colors duration-200">
               <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">学院分布</h3>
               <div v-if="loading" class="h-80 flex items-center justify-center">
-                <SkeletonLoader type="chart" />
+                <SkeletonLoader type="chart"/>
               </div>
               <div v-else ref="collegeChartRef" class="h-80 w-full"></div>
             </n-card>
@@ -772,7 +857,7 @@ onMounted(() => {
             <n-card class="rounded-xl bg-white dark:bg-gray-800 transition-colors duration-200">
               <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">年级分布</h3>
               <div v-if="loading" class="h-80 flex items-center justify-center">
-                <SkeletonLoader type="chart" />
+                <SkeletonLoader type="chart"/>
               </div>
               <div v-else ref="gradeChartRef" class="h-80 w-full"></div>
             </n-card>
@@ -784,7 +869,7 @@ onMounted(() => {
             <n-card class="rounded-xl bg-white dark:bg-gray-800 transition-colors duration-200">
               <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">性别分布</h3>
               <div v-if="loading" class="h-80 flex items-center justify-center">
-                <SkeletonLoader type="chart" />
+                <SkeletonLoader type="chart"/>
               </div>
               <div v-else ref="genderChartRef" class="h-80 w-full"></div>
             </n-card>
@@ -796,7 +881,7 @@ onMounted(() => {
             <n-card class="rounded-xl bg-white dark:bg-gray-800 transition-colors duration-200">
               <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">政治面貌分布</h3>
               <div v-if="loading" class="h-80 flex items-center justify-center">
-                <SkeletonLoader type="chart" />
+                <SkeletonLoader type="chart"/>
               </div>
               <div v-else ref="politicalChartRef" class="h-80 w-full"></div>
             </n-card>
@@ -807,26 +892,30 @@ onMounted(() => {
 
     <!-- 添加/编辑成员模态框 -->
     <n-modal v-model:show="showModal" preset="card" class="w-full max-w-md rounded-xl"
-      :title="currentMember.identity ? '编辑成员' : '添加成员'">
+             :title="currentMember.identity ? '编辑成员' : '添加成员'">
       <n-form :model="currentMember" :rules="rules" ref="formRef">
         <n-form-item label="姓名" path="userName">
-          <n-input v-model:value="currentMember.userName" placeholder="请输入姓名" />
+          <n-input v-model:value="currentMember.userName" placeholder="请输入姓名"/>
         </n-form-item>
         <n-form-item label="学号" path="userId">
-          <n-input v-model:value="currentMember.userId" placeholder="请输入学号" />
+          <n-input v-model:value="currentMember.userId" placeholder="请输入学号"/>
         </n-form-item>
         <n-form-item label="学院" path="academy">
-          <n-select v-model:value="currentMember.academy" :options="academyOptions" filterable placeholder="请选择学院" />
+          <n-select v-model:value="currentMember.academy" :options="academyOptions" filterable
+                    placeholder="请选择学院"/>
         </n-form-item>
         <n-form-item label="专业班级" path="className">
-          <n-input v-model:value="currentMember.className" placeholder="请输入专业班级" />
+          <n-input v-model:value="currentMember.className" placeholder="请输入专业班级"/>
         </n-form-item>
         <n-form-item label="手机号" path="phoneNum">
-          <n-input v-model:value="currentMember.phoneNum" placeholder="请输入手机号" />
+          <n-input v-model:value="currentMember.phoneNum" placeholder="请输入手机号"/>
         </n-form-item>
         <n-form-item label="政治面貌" path="politicalLandscape">
           <n-select v-model:value="currentMember.politicalLandscape" :options="politicalLandscapeOptions"
-            placeholder="请选择政治面貌" />
+                    placeholder="请选择政治面貌"/>
+        </n-form-item>
+        <n-form-item label="邮件" path="eMail">
+          <n-input v-model:value="currentMember.eMail" placeholder="请输入邮件"/>
         </n-form-item>
         <n-form-item label="性别" path="gender">
           <n-radio-group v-model:value="currentMember.gender" name="gender">
@@ -842,6 +931,30 @@ onMounted(() => {
         <div class="flex justify-end gap-2">
           <n-button @click="showModal = false">取消</n-button>
           <n-button type="primary" @click="saveMember">保存</n-button>
+        </div>
+      </template>
+    </n-modal>
+
+    <!-- 修改密码模态框 -->
+    <n-modal v-model:show="showPasswordModal" preset="card" class="w-full max-w-md rounded-xl" title="修改密码">
+      <n-form :model="passwordForm" :rules="passwordRules" ref="passwordFormRef">
+        <n-form-item label="学号">
+          <n-input v-model:value="currentMember.userId" disabled/>
+        </n-form-item>
+        <n-form-item label="姓名">
+          <n-input v-model:value="currentMember.userName" disabled/>
+        </n-form-item>
+        <n-form-item label="新密码" path="newPassword">
+          <n-input v-model:value="passwordForm.newPassword" type="password" placeholder="请输入新密码"/>
+        </n-form-item>
+        <n-form-item label="确认密码" path="confirmPassword">
+          <n-input v-model:value="passwordForm.confirmPassword" type="password" placeholder="请再次输入新密码"/>
+        </n-form-item>
+      </n-form>
+      <template #footer>
+        <div class="flex justify-end gap-2">
+          <n-button @click="showPasswordModal = false">取消</n-button>
+          <n-button type="primary" @click="changePassword">确认修改</n-button>
         </div>
       </template>
     </n-modal>
