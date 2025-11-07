@@ -175,6 +175,7 @@ public class ClientAppController(IClientApplicationRepository clientAppRepositor
 /// <summary>
 /// 创建客户端应用模型
 /// </summary>
+[Serializable]
 public class CreateClientAppModel
 {
     /// <summary>
@@ -206,6 +207,7 @@ public class CreateClientAppModel
 /// <summary>
 /// 更新客户端应用模型
 /// </summary>
+[Serializable]
 public class UpdateClientAppModel
 {
     /// <summary>
@@ -242,6 +244,7 @@ public class UpdateClientAppModel
 /// <summary>
 /// 客户端应用结果模型（包含密钥）
 /// </summary>
+[Serializable]
 public class ClientAppResultModel
 {
     /// <summary>
@@ -288,6 +291,7 @@ public class ClientAppResultModel
 /// <summary>
 /// 重新生成密钥结果
 /// </summary>
+[Serializable]
 public class RegenerateSecretResult
 {
     /// <summary>
