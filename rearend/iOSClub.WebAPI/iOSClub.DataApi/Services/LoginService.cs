@@ -3,7 +3,6 @@ using iOSClub.DataApi.Repositories;
 using StackExchange.Redis;
 using System.Text.Json;
 using iOSClub.Data;
-using iOSClub.Data.DataModels;
 
 namespace iOSClub.DataApi.Services;
 

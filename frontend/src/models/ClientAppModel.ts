@@ -5,52 +5,52 @@ export interface ClientApplication {
     /**
      * 客户端ID（主键）
      */
-    ClientId: string;
+    clientId: string;
     
     /**
      * 客户端密钥
      */
-    ClientSecret: string;
+    clientSecret: string;
     
     /**
      * 应用名称
      */
-    ApplicationName: string;
+    applicationName: string;
     
     /**
      * 应用描述
      */
-    Description: string;
+    description: string;
     
     /**
      * 应用主页URL
      */
-    HomepageUrl: string;
+    homepageUrl: string;
     
     /**
      * 回调URL白名单（多个URL用分号分隔）
      */
-    RedirectUris: string;
+    redirectUris: string;
     
     /**
      * 应用图标URL
      */
-    LogoUrl: string;
+    logoUrl: string;
     
     /**
      * 是否启用
      */
-    IsActive: boolean;
+    isActive: boolean;
     
     /**
      * 创建时间
      */
-    CreatedAt: string;
+    createdAt: string;
     
     /**
      * 最后更新时间
      */
-    UpdatedAt: string;
+    updatedAt: string;
 }
 
 /**
@@ -60,27 +60,27 @@ export interface CreateClientAppModel {
     /**
      * 应用名称
      */
-    ApplicationName: string;
+    applicationName: string;
     
     /**
      * 应用描述
      */
-    Description: string;
+    description: string;
     
     /**
      * 应用主页URL
      */
-    HomepageUrl: string;
+    homepageUrl: string;
     
     /**
      * 回调URL列表
      */
-    RedirectUris: string[];
+    redirectUris: string[];
     
     /**
      * 应用图标URL
      */
-    LogoUrl: string;
+    logoUrl: string;
 }
 
 /**
@@ -90,32 +90,32 @@ export interface UpdateClientAppModel {
     /**
      * 应用名称
      */
-    ApplicationName: string;
+    applicationName: string;
     
     /**
      * 应用描述
      */
-    Description: string;
+    description: string;
     
     /**
      * 应用主页URL
      */
-    HomepageUrl: string;
+    homepageUrl: string;
     
     /**
      * 回调URL列表
      */
-    RedirectUris: string[];
+    redirectUris: string[];
     
     /**
      * 应用图标URL
      */
-    LogoUrl: string;
+    logoUrl: string;
     
     /**
      * 是否启用
      */
-    IsActive: boolean;
+    isActive: boolean;
 }
 
 /**
@@ -125,42 +125,42 @@ export interface ClientAppResultModel {
     /**
      * 客户端ID
      */
-    ClientId: string;
+    clientId: string;
     
     /**
      * 客户端密钥
      */
-    ClientSecret: string;
+    clientSecret: string;
     
     /**
      * 应用名称
      */
-    ApplicationName: string;
+    applicationName: string;
     
     /**
      * 应用描述
      */
-    Description: string;
+    description: string;
     
     /**
      * 应用主页URL
      */
-    HomepageUrl: string;
+    homepageUrl: string;
     
     /**
      * 回调URL列表
      */
-    RedirectUris: string[];
+    redirectUris: string[];
     
     /**
      * 应用图标URL
      */
-    LogoUrl: string;
+    logoUrl: string;
     
     /**
      * 是否启用
      */
-    IsActive: boolean;
+    isActive: boolean;
 }
 
 /**
@@ -170,10 +170,10 @@ export interface RegenerateSecretResult {
     /**
      * 客户端ID
      */
-    ClientId: string;
+    clientId: string;
     
     /**
      * 新的客户端密钥
      */
-    NewSecret: string;
+    newSecret: string;
 }

@@ -28,6 +28,12 @@ const routes = [
                 component: () => import('./pages/Login.vue'),
             },
             {
+                path: 'oauth-login',
+                name: 'OAuthLogin',
+                meta: {title: "OAuth授权登录 - 西建大 iOS Club"},
+                component: () => import('./pages/OAuthLogin.vue'),
+            },
+            {
                 path: 'signup',
                 name: 'SignUp',
                 meta: {title: "注册账号 - 西建大 iOS Club"},

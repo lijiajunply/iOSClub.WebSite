@@ -62,7 +62,7 @@
               <tr v-for="i in 5" :key="i" class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                 <td class="px-6 py-4 whitespace-nowrap">
                   <div class="flex items-center">
-                    <SkeletonLoader type="avatar" />
+                    <SkeletonLoader type="avatar"/>
                     <div class="ml-4">
                       <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-32 mb-2"></div>
                       <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
@@ -88,11 +88,11 @@
               </tr>
             </template>
             <template v-else-if="filteredClientApps.length > 0">
-              <tr v-for="app in filteredClientApps" :key="app.ClientId"
+              <tr v-for="app in filteredClientApps" :key="app.clientId"
                   class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                 <td class="px-6 py-4 whitespace-nowrap">
                   <div class="flex items-center">
-                    <img v-if="app.LogoUrl" :src="app.LogoUrl" :alt="app.ApplicationName"
+                    <img v-if="app.logoUrl" :src="app.logoUrl" :alt="app.applicationName"
                          class="h-8 w-8 rounded-md object-cover"/>
                     <div v-else
                          class="h-8 w-8 rounded-md bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
@@ -100,10 +100,10 @@
                     </div>
                     <div class="ml-4">
                       <div class="text-sm font-medium text-gray-900 dark:text-white">
-                        {{ app.ApplicationName }}
+                        {{ app.applicationName }}
                       </div>
                       <div class="text-xs text-gray-500 dark:text-gray-400 line-clamp-1 max-w-xs">
-                        {{ app.Description }}
+                        {{ app.description }}
                       </div>
                     </div>
                   </div>
@@ -112,9 +112,9 @@
                   <div class="flex items-center">
                     <code
                         class="text-xs text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded font-mono select-all">
-                      {{ app.ClientId }}
+                      {{ app.clientId }}
                     </code>
-                    <button @click="copyToClipboard(app.ClientId)"
+                    <button @click="copyToClipboard(app.clientId)"
                             class="ml-2 text-gray-400 hover:text-blue-500 transition-colors" title="复制客户端ID">
                       <Icon icon="ion:copy-outline" width="16" height="16"/>
                     </button>
@@ -123,15 +123,15 @@
                 <td class="px-6 py-4 whitespace-nowrap">
                     <span :class="[
                       'px-2 inline-flex text-xs leading-5 font-semibold rounded-full',
-                      app.IsActive
+                      app.isActive
                         ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
                         : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
                     ]">
-                      {{ app.IsActive ? '启用' : '禁用' }}
+                      {{ app.isActive ? '启用' : '禁用' }}
                     </span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                  {{ formatDate(app.CreatedAt) }}
+                  {{ formatDate(app.createdAt) }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <div class="flex items-center justify-end space-x-2">
@@ -180,7 +180,7 @@
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 应用名称 <span class="text-red-500">*</span>
               </label>
-              <input v-model="createForm.ApplicationName" type="text" required
+              <input v-model="createForm.applicationName" type="text" required
                      class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
                      placeholder="输入应用名称"/>
             </div>
@@ -189,7 +189,7 @@
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 应用描述
               </label>
-              <textarea v-model="createForm.Description" rows="3"
+              <textarea v-model="createForm.description" rows="3"
                         class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors resize-none"
                         placeholder="描述您的应用..."></textarea>
             </div>
@@ -198,7 +198,7 @@
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 应用主页URL <span class="text-red-500">*</span>
               </label>
-              <input v-model="createForm.HomepageUrl" type="url" required
+              <input v-model="createForm.homepageUrl" type="url" required
                      class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
                      placeholder="https://example.com"/>
             </div>
@@ -207,7 +207,7 @@
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 应用图标URL
               </label>
-              <input v-model="createForm.LogoUrl" type="url"
+              <input v-model="createForm.logoUrl" type="url"
                      class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
                      placeholder="https://example.com/logo.png"/>
             </div>
@@ -250,7 +250,7 @@
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 应用名称 <span class="text-red-500">*</span>
               </label>
-              <input v-model="editForm.ApplicationName" type="text" required
+              <input v-model="editForm.applicationName" type="text" required
                      class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
                      placeholder="输入应用名称"/>
             </div>
@@ -259,7 +259,7 @@
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 应用描述
               </label>
-              <textarea v-model="editForm.Description" rows="3"
+              <textarea v-model="editForm.description" rows="3"
                         class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors resize-none"
                         placeholder="描述您的应用..."></textarea>
             </div>
@@ -268,7 +268,7 @@
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 应用主页URL <span class="text-red-500">*</span>
               </label>
-              <input v-model="editForm.HomepageUrl" type="url" required
+              <input v-model="editForm.homepageUrl" type="url" required
                      class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
                      placeholder="https://example.com"/>
             </div>
@@ -277,7 +277,7 @@
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 应用图标URL
               </label>
-              <input v-model="editForm.LogoUrl" type="url"
+              <input v-model="editForm.logoUrl" type="url"
                      class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
                      placeholder="https://example.com/logo.png"/>
             </div>
@@ -299,7 +299,7 @@
                 状态
               </label>
               <div class="flex items-center">
-                <input v-model="editForm.IsActive" type="checkbox" id="isActive"
+                <input v-model="editForm.isActive" type="checkbox" id="isActive"
                        class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"/>
                 <label for="isActive" class="ml-2 block text-sm text-gray-900 dark:text-white">
                   启用客户端
@@ -328,16 +328,16 @@
              class="rounded-xl overflow-hidden bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
       <div class="p-4">
         <div class="flex flex-col items-center mb-6">
-          <img v-if="selectedApp?.LogoUrl" :src="selectedApp.LogoUrl" :alt="selectedApp.ApplicationName"
+          <img v-if="selectedApp?.logoUrl" :src="selectedApp.logoUrl" :alt="selectedApp.applicationName"
                class="h-24 w-24 rounded-lg object-cover mb-4"/>
           <div v-else class="h-24 w-24 rounded-lg bg-gray-200 dark:bg-gray-600 flex items-center justify-center mb-4">
             <Icon icon="ion:app" width="48" height="48" class="text-gray-500 dark:text-gray-400"/>
           </div>
           <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
-            {{ selectedApp?.ApplicationName }}
+            {{ selectedApp?.applicationName }}
           </h2>
           <p class="text-gray-500 dark:text-gray-400 mt-1">
-            创建于 {{ formatDate(selectedApp?.CreatedAt) }}
+            创建于 {{ formatDate(selectedApp?.createdAt) }}
           </p>
         </div>
 
@@ -347,7 +347,7 @@
               描述
             </h3>
             <p class="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
-              {{ selectedApp?.Description || '无描述' }}
+              {{ selectedApp?.description || '无描述' }}
             </p>
           </div>
 
@@ -359,9 +359,9 @@
               <div class="flex items-center">
                 <code
                     class="text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded font-mono select-all flex-grow break-all">
-                  {{ selectedApp?.ClientId }}
+                  {{ selectedApp?.clientId }}
                 </code>
-                <button @click="copyToClipboard(selectedApp?.ClientId)"
+                <button @click="copyToClipboard(selectedApp?.clientId)"
                         class="ml-2 text-gray-400 hover:text-blue-500 transition-colors flex-shrink-0"
                         title="复制客户端ID">
                   <Icon icon="ion:copy-outline" width="20" height="20"/>
@@ -372,9 +372,9 @@
                 <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 mt-4">
                   应用主页
                 </h3>
-                <a v-if="selectedApp?.HomepageUrl" :href="selectedApp.HomepageUrl" target="_blank"
+                <a v-if="selectedApp?.homepageUrl" :href="selectedApp.homepageUrl" target="_blank"
                    rel="noopener noreferrer" class="text-blue-500 hover:text-blue-600 transition-colors break-all">
-                  {{ selectedApp.HomepageUrl }}
+                  {{ selectedApp.homepageUrl }}
                 </a>
                 <span v-else class="text-gray-500 dark:text-gray-400">无</span>
               </div>
@@ -385,13 +385,13 @@
                 客户端密钥
               </h3>
               <div class="relative">
-                <input :value="selectedApp?.ClientSecret" type="password" readonly
+                <input :value="selectedApp?.clientSecret" type="password" readonly
                        class="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white focus:outline-none font-mono text-sm"/>
                 <button @click="toggleSecretVisibility"
                         class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
                   <Icon :icon="showSecret ? 'ion:eye-off-outline' : 'ion:eye-outline'" width="20" height="20"/>
                 </button>
-                <button @click="copyToClipboard(selectedApp?.ClientSecret)"
+                <button @click="copyToClipboard(selectedApp?.clientSecret)"
                         class="absolute right-8 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-blue-500 transition-colors"
                         title="复制客户端密钥">
                   <Icon icon="ion:copy-outline" width="20" height="20"/>
@@ -404,11 +404,11 @@
                 </h3>
                 <span :class="[
                   'px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full',
-                  selectedApp?.IsActive
+                  selectedApp?.isActive
                     ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
                     : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
                 ]">
-                  {{ selectedApp?.IsActive ? '启用' : '禁用' }}
+                  {{ selectedApp?.isActive ? '启用' : '禁用' }}
                 </span>
               </div>
             </div>
@@ -419,7 +419,7 @@
               回调URL
             </h3>
             <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
-              <div v-for="(uri, index) in selectedApp?.RedirectUris.split(';')" :key="index"
+              <div v-for="(uri, index) in selectedApp?.redirectUris.split(';')" :key="index"
                    class="flex items-start mb-2 last:mb-0">
                 <Icon icon="ion:link" width="16" height="16" class="text-gray-400 mr-2 mt-0.5 flex-shrink-0"/>
                 <div class="flex-grow">
@@ -453,7 +453,7 @@ import {useMessage, useDialog, NModal} from 'naive-ui';
 import {Icon} from '@iconify/vue';
 import SkeletonLoader from '../components/SkeletonLoader.vue';
 import {ClientAppService} from '../services/ClientAppService';
-import type {ClientApplication, CreateClientAppModel, UpdateClientAppModel, RegenerateSecretResult} from '../models';
+import type {ClientApplication, CreateClientAppModel, UpdateClientAppModel} from '../models';
 
 const message = useMessage();
 const dialog = useDialog();
@@ -473,22 +473,22 @@ const showSecret = ref(false);
 
 // 创建表单
 const createForm = ref<CreateClientAppModel>({
-  ApplicationName: '',
-  Description: '',
-  HomepageUrl: '',
-  RedirectUris: [],
-  LogoUrl: ''
+  applicationName: '',
+  description: '',
+  homepageUrl: '',
+  redirectUris: [],
+  logoUrl: ''
 });
 const redirectUrisText = ref('');
 
 // 编辑表单
 const editForm = ref<UpdateClientAppModel>({
-  ApplicationName: '',
-  Description: '',
-  HomepageUrl: '',
-  RedirectUris: [],
-  LogoUrl: '',
-  IsActive: true
+  applicationName: '',
+  description: '',
+  homepageUrl: '',
+  redirectUris: [],
+  logoUrl: '',
+  isActive: true
 });
 const editRedirectUrisText = ref('');
 const currentEditClientId = ref('');
@@ -501,8 +501,8 @@ const filteredClientApps = computed(() => {
 
   const query = searchQuery.value.toLowerCase().trim();
   return clientApps.value.filter(app =>
-      app.ApplicationName.toLowerCase().includes(query) ||
-      app.ClientId.toLowerCase().includes(query)
+      app.applicationName.toLowerCase().includes(query) ||
+      app.clientId.toLowerCase().includes(query)
   );
 });
 
@@ -545,11 +545,11 @@ const copyToClipboard = async (text?: string) => {
 // 创建模态框
 const openCreateModal = () => {
   createForm.value = {
-    ApplicationName: '',
-    Description: '',
-    HomepageUrl: '',
-    RedirectUris: [],
-    LogoUrl: ''
+    applicationName: '',
+    description: '',
+    homepageUrl: '',
+    redirectUris: [],
+    logoUrl: ''
   };
   redirectUrisText.value = '';
   showCreateModal.value = true;
@@ -559,11 +559,11 @@ const handleCreateModalClose = () => {
   showCreateModal.value = false;
   // 重置表单
   createForm.value = {
-    ApplicationName: '',
-    Description: '',
-    HomepageUrl: '',
-    RedirectUris: [],
-    LogoUrl: ''
+    applicationName: '',
+    description: '',
+    homepageUrl: '',
+    redirectUris: [],
+    logoUrl: ''
   };
   redirectUrisText.value = '';
 };
@@ -580,7 +580,7 @@ const handleCreateSubmit = async () => {
     return;
   }
 
-  createForm.value.RedirectUris = redirectUris;
+  createForm.value.redirectUris = redirectUris;
 
   isSubmitting.value = true;
   try {
@@ -598,16 +598,16 @@ const handleCreateSubmit = async () => {
 // 编辑模态框
 const openEditModal = (app: ClientApplication) => {
   selectedApp.value = app;
-  currentEditClientId.value = app.ClientId;
+  currentEditClientId.value = app.clientId;
   editForm.value = {
-    ApplicationName: app.ApplicationName,
-    Description: app.Description,
-    HomepageUrl: app.HomepageUrl,
-    RedirectUris: app.RedirectUris.split(';'),
-    LogoUrl: app.LogoUrl,
-    IsActive: app.IsActive
+    applicationName: app.applicationName,
+    description: app.description,
+    homepageUrl: app.homepageUrl,
+    redirectUris: app.redirectUris.split(';'),
+    logoUrl: app.logoUrl,
+    isActive: app.isActive
   };
-  editRedirectUrisText.value = app.RedirectUris.split(';').join('\n');
+  editRedirectUrisText.value = app.redirectUris.split(';').join('\n');
   showEditModal.value = true;
 };
 
@@ -629,7 +629,7 @@ const handleEditSubmit = async () => {
     return;
   }
 
-  editForm.value.RedirectUris = redirectUris;
+  editForm.value.redirectUris = redirectUris;
 
   isSubmitting.value = true;
   try {
@@ -665,7 +665,7 @@ const toggleSecretVisibility = () => {
 const confirmDelete = (app: ClientApplication) => {
   dialog.warning({
     title: '确认删除',
-    content: `确定要删除客户端应用 "${app.ApplicationName}" 吗？此操作不可撤销。`,
+    content: `确定要删除客户端应用 "${app.applicationName}" 吗？此操作不可撤销。`,
     positiveText: '删除',
     negativeText: '取消',
     positiveButtonProps: {
@@ -673,72 +673,11 @@ const confirmDelete = (app: ClientApplication) => {
     },
     onPositiveClick: async () => {
       try {
-        await ClientAppService.deleteClientApplication(app.ClientId);
+        await ClientAppService.deleteClientApplication(app.clientId);
         message.success('客户端应用删除成功');
         await loadClientApps();
       } catch (error) {
         message.error((error as Error).message || '删除客户端应用失败');
-      }
-    }
-  });
-};
-
-// 重新生成密钥确认
-const confirmRegenerateSecret = () => {
-  dialog.warning({
-    title: '重新生成密钥',
-    content: '确定要重新生成客户端密钥吗？这将使当前密钥失效，可能会影响正在使用该应用的用户。',
-    positiveText: '生成新密钥',
-    negativeText: '取消',
-    onPositiveClick: async () => {
-      try {
-        const result: RegenerateSecretResult = await ClientAppService.regenerateClientSecret(currentEditClientId.value);
-
-        // 显示新密钥的临时提示框
-        dialog.info({
-          title: '新的客户端密钥',
-          content: `
-            <div class="space-y-4">
-              <p>请立即保存以下新密钥，它只在本次会话中显示一次。</p>
-              <div class="flex">
-                <code class="text-sm text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 px-3 py-2 rounded font-mono select-all flex-grow break-all">
-                  ${result.NewSecret}
-                </code>
-                <button
-                  id="copy-secret-btn"
-                  class="ml-2 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors flex-shrink-0"
-                >
-                  复制
-                </button>
-              </div>
-            </div>
-          `,
-          positiveText: '已保存',
-          closable: false,
-          onPositiveClick: () => {
-            // 可以在这里添加清理逻辑
-          }
-        });
-
-        // 添加点击复制按钮的事件监听器
-        setTimeout(() => {
-          const copyBtn = document.getElementById('copy-secret-btn');
-          if (copyBtn) {
-            copyBtn.onclick = () => {
-              copyToClipboard(result.NewSecret);
-            };
-          }
-        }, 100);
-
-        // 更新本地数据
-        await loadClientApps();
-        // 重新打开编辑模态框，确保显示最新数据
-        const updatedApp = clientApps.value.find(app => app.ClientId === currentEditClientId.value);
-        if (updatedApp) {
-          openEditModal(updatedApp);
-        }
-      } catch (error) {
-        message.error((error as Error).message || '重新生成密钥失败');
       }
     }
   });

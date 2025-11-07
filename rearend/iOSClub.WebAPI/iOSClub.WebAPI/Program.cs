@@ -5,7 +5,6 @@ using iOSClub.DataApi.Repositories;
 using iOSClub.DataApi.Services;
 using iOSClub.WebAPI.IdentityModels;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -13,10 +12,6 @@ using Microsoft.IdentityModel.Tokens;
 using NpgsqlDataProtection;
 using Scalar.AspNetCore;
 using StackExchange.Redis;
-using System.Security.Claims;
-using System.Net.Http.Headers;
-using Microsoft.AspNetCore.Authentication;
-using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,17 +26,13 @@ builder.Services.AddOpenApi(opt => { opt.AddDocumentTransformer<BearerSecuritySc
 
 builder.Services.AddAuthorizationCore();
 // 只有在配置了 OAuth2 的情况下才添加 OAuth2 认证
-var oAuthConfig = builder.Configuration.GetSection("OAuth2");
-var clientId = oAuthConfig["ClientId"];
+// var oAuthConfig = builder.Configuration.GetSection("OAuth2");
+// var clientId = oAuthConfig["ClientId"];
 
 var authenticationBuilder = builder.Services.AddAuthentication(options =>
     {
         options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-        // 只有配置了 OAuth2 时才设置 DefaultChallengeScheme
-        if (!string.IsNullOrEmpty(clientId))
-        {
-            options.DefaultChallengeScheme = "OAuth2";
-        }
+        options.DefaultChallengeScheme = "OAuth2"; // 总是使用OAuth2作为默认挑战方案
     })
     .AddJwtBearer(options =>
     {
@@ -50,7 +41,7 @@ var authenticationBuilder = builder.Services.AddAuthentication(options =>
             ValidateIssuer = true, //是否验证Issuer
             ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "iOSClub",
             ValidateAudience = true, //是否验证Audience
-            ValidAudience = builder.Configuration["Jwt:Audience"] ?? "iOSClubApp",
+            ValidAudience = builder.Configuration["Jwt:Audience"] ?? "iOSClub",
             ValidateIssuerSigningKey = true, //是否验证SecurityKey
 
             IssuerSigningKey =
@@ -61,46 +52,33 @@ var authenticationBuilder = builder.Services.AddAuthentication(options =>
         };
     });
 
-// 只有在配置了 OAuth2 的情况下才添加 OAuth2 认证
-if (!string.IsNullOrEmpty(clientId))
+// 配置我们自己的OAuth2认证系统
+// 由于我们是OAuth提供商，我们需要提供登录页面和回调处理
+// 这里我们使用Cookie认证作为基础，因为我们自己处理登录流程
+authenticationBuilder.AddCookie("OAuth2", options =>
 {
-    authenticationBuilder.AddOAuth("OAuth2", options =>
-    {
-        options.ClientId = clientId;
-        options.ClientSecret = oAuthConfig["ClientSecret"] ?? "";
-        options.CallbackPath = oAuthConfig["CallbackPath"] ?? "/auth/callback";
+    options.LoginPath = "/oauth-login"; // 指向我们的OAuth登录页面
+    options.LogoutPath = "/logout";
+    options.AccessDeniedPath = "/access-denied";
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
+    options.SlidingExpiration = true;
+});
 
-        options.AuthorizationEndpoint = oAuthConfig["AuthorizationEndpoint"] ?? "";
-        options.TokenEndpoint = oAuthConfig["TokenEndpoint"] ?? "";
-        options.UserInformationEndpoint = oAuthConfig["UserInformationEndpoint"] ?? "";
+#endregion
 
-        options.Scope.Add("openid");
-        options.Scope.Add("profile");
-        options.Scope.Add("email");
+#region 会话支持
 
-        options.ClaimActions.MapJsonKey(ClaimTypes.NameIdentifier, "sub");
-        options.ClaimActions.MapJsonKey(ClaimTypes.Name, "name");
-        options.ClaimActions.MapJsonKey(ClaimTypes.Email, "email");
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+    options.Cookie.SameSite = SameSiteMode.None; // 允许跨站点发送Cookie
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest; // 根据请求类型决定是否使用安全Cookie
+});
 
-        options.Events = new OAuthEvents
-        {
-            OnCreatingTicket = async context =>
-            {
-                var request = new HttpRequestMessage(HttpMethod.Get, context.Options.UserInformationEndpoint);
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", context.AccessToken);
-                request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                var response = await context.Backchannel.SendAsync(request, context.HttpContext.RequestAborted);
-                if (!response.IsSuccessStatusCode)
-                    return;
-
-                var json = await response.Content.ReadAsStringAsync();
-                var user = JsonSerializer.Deserialize<JsonElement>(json);
-                context.RunClaimActions(user);
-            }
-        };
-    });
-}
+// 添加内存缓存支持，解决会话存储需要IDistributedCache的问题
+builder.Services.AddDistributedMemoryCache();
 
 #endregion
 
@@ -110,7 +88,7 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.WithOrigins("https://ios.zeabur.app", "http://localhost:5173") // 允许指定来源
+        policy.WithOrigins("https://ios.zeabur.app", "http://localhost:5173", "https://*.xauat.site/", "http://localhost:3000") // 允许指定来源
             .AllowAnyMethod()
             .AllowAnyHeader()
             .AllowCredentials(); // 如果需要发送凭据（如cookies、认证头等）
@@ -258,6 +236,9 @@ using (var scope = app.Services.CreateScope())
 
 // 别动
 app.MapOpenApi();
+
+// 先配置会话中间件
+app.UseSession(); // 会话中间件应该在认证和跨域中间件之前
 
 app.UseHttpsRedirection();
 app.UseAuthentication(); // 添加这行以启用身份验证中间件
