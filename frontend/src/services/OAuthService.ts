@@ -5,7 +5,7 @@ export class OAuthService {
         if (!clientId) return null;
 
         try {
-            const response = await fetch(`${url}/SSO/client-info?client_id=${clientId}`);
+            const response = await fetch(`${url}/SSO/client-info?clientId=${clientId}`);
             if (response.ok) {
                 return await response.json();
             }

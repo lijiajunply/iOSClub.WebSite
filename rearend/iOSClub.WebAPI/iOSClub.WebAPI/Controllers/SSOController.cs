@@ -398,15 +398,15 @@ public class SSOController(
     /// <summary>
     /// 获取客户端应用信息
     /// </summary>
-    /// <param name="client_id">客户端ID</param>
+    /// <param name="clientId">客户端ID</param>
     /// <returns>客户端应用信息</returns>
     [HttpGet("client-info")]
-    public async Task<IActionResult> GetClientInfo(string client_id)
+    public async Task<IActionResult> GetClientInfo(string clientId)
     {
-        if (string.IsNullOrEmpty(client_id))
+        if (string.IsNullOrEmpty(clientId))
             return BadRequest("无效的客户端ID");
 
-        var clientApp = await clientAppRepository.GetByClientIdAsync(client_id);
+        var clientApp = await clientAppRepository.GetByClientIdAsync(clientId);
         if (clientApp is not { IsActive: true })
             return NotFound("客户端应用不存在或已禁用");
 
