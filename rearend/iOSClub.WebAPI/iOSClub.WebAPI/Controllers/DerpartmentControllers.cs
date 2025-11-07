@@ -3,6 +3,7 @@ using iOSClub.DataApi.Repositories;
 using iOSClub.WebAPI.IdentityModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
 
 namespace iOSClub.WebAPI.Controllers;
 
@@ -195,6 +196,34 @@ public class DepartmentController(
     {
         // 这个操作需要在StaffRepository中实现，因为涉及Staff实体的更新
         return StatusCode(501, "此功能需要在StaffController中实现");
+    }
+
+    /// <summary>
+    /// 导出所有部员数据为JSON文件
+    /// </summary>
+    [Authorize(Roles = "Founder,President,Minister")]
+    [HttpGet("export-json")]
+    public async Task<IActionResult> ExportJson()
+    {
+        try
+        {
+            var members = await staffRepository.GetAllStaffToMembers();
+
+            var jsonOptions = new JsonSerializerOptions
+            {
+                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.Create(System.Text.Unicode.UnicodeRanges.All),
+                WriteIndented = true
+            };
+
+            var json = JsonSerializer.Serialize(members, jsonOptions);
+            var bytes = System.Text.Encoding.UTF8.GetBytes(json);
+
+            return File(bytes, "application/json", "members.json");
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"导出失败: {ex.Message}");
+        }
     }
 
     /// <summary>

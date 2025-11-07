@@ -35,7 +35,7 @@ async function fetchData<T>(endpoint: string): Promise<T> {
         if (!token) {
             throw new Error('未登录');
         }
-        const response = await fetch(`${url}/DateCentre/${endpoint}`, {
+        const response = await fetch(`${url}/DataCentre/${endpoint}`, {
             headers: {
                 Authorization: `Bearer ${token}`,
             },
@@ -86,7 +86,7 @@ export class DataCentreService {
         if (!token) {
             throw new Error('未登录');
         }
-        const response = await fetch(`${url}/DateCentre/update-from-json`, {
+        const response = await fetch(`${url}/DataCentre/update-from-json`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -105,7 +105,7 @@ export class DataCentreService {
         if (!token) {
             throw new Error('未登录');
         }
-        return await fetch(`${url}/DateCentre/export-json`, {
+        return await fetch(`${url}/DataCentre/export-json`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',

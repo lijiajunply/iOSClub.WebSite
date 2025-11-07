@@ -154,4 +154,18 @@ export class DepartmentService {
       throw new Error('删除部门失败');
     }
   }
+
+  static async exportJson(): Promise<Blob> {
+      const token = AuthService.getToken();
+      if (!token) {
+          throw new Error('未登录');
+      }
+      return await fetch(`${url}/Department/export-json`, {
+          method: 'GET',
+          headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
+          },
+      }).then(response => response.blob());
+  }
 }

@@ -813,9 +813,14 @@ const deleteStaff = async (staff: any) => {
   message.success('部员已删除')
 }
 
-const downloadMemberInfo = () => {
-  console.log('下载部员信息')
-  message.success('下载部员信息功能待实现')
+const downloadMemberInfo = async () => {
+  try {
+    await DepartmentService.exportJson()
+    message.success('导出成功')
+  }catch (error) {
+    console.error('导出失败:', error)
+    message.error('导出失败')
+  }
 }
 
 const addProject = () => {

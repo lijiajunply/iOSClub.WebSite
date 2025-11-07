@@ -11,7 +11,7 @@ namespace iOSClub.WebAPI.Controllers;
 
 [ApiController]
 [Route("[controller]")] // 使用C#推荐的API路径格式
-public class DateCentreController(IDbContextFactory<ClubContext> dbContextFactory, IDataCentreService dataCentreService)
+public class DataCentreController(IDbContextFactory<ClubContext> dbContextFactory, IDataCentreService dataCentreService)
     : ControllerBase
 {
     [HttpGet("year")]
@@ -144,7 +144,6 @@ public class DateCentreController(IDbContextFactory<ClubContext> dbContextFactor
     [HttpGet("export-json")]
     public async Task<IActionResult> ExportJson()
     {
-        // 我想把所有数据都输出成一个 Json 文件
         await using var context = await dbContextFactory.CreateDbContextAsync();
         var allData = new AllDataModel
         {
