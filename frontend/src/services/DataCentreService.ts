@@ -30,24 +30,22 @@ export interface PoliticalCount {
 
 // HTTP请求工具函数
 async function fetchData<T>(endpoint: string): Promise<T> {
-    try {
-        const token = AuthService.getToken();
-        if (!token) {
-            throw new Error('未登录');
-        }
-        const response = await fetch(`${url}/DataCentre/${endpoint}`, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        });
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return await response.json();
-    } catch (error) {
-        console.error(`Error fetching ${endpoint}:`, error);
-        throw error;
+    const token = AuthService.getToken();
+    if (!token) {
+        throw new Error('未登录');
     }
+    
+    const response = await fetch(`${url}/DataCentre/${endpoint}`, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
+    
+    if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    return await response.json();
 }
 
 // 数据中心服务

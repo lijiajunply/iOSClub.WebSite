@@ -18,7 +18,6 @@ export class OAuthService {
 
     static async storeSession(state: string, clientId: string, authorization: string): Promise<boolean> {
         try {
-            console.log("asdf",authorization)
             const sessionResponse = await fetch(`${url}/SSO/store-session`, {
                 method: 'POST',
                 headers: {
