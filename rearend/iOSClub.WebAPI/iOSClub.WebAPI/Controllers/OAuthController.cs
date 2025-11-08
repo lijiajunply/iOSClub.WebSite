@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using iOSClub.Data.ShowModels;
 using iOSClub.DataApi.Services;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using StackExchange.Redis;
 
 namespace iOSClub.WebAPI.Controllers;
@@ -101,6 +102,44 @@ public class OAuthController(ILoginService loginService, IConnectionMultiplexer 
             return BadRequest("用户登录失败");
 
         return Ok(new { Token = token });
+    }
+
+    [HttpPost("logout")]
+    [HttpGet("logout")]
+    public async Task<IActionResult> Logout(string? returnUrl = "/")
+    {
+        // 清除认证Cookie
+        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+
+        var clientAppUrl = GetClientAppUrl();
+        var logoutUrl = $"{clientAppUrl}/logout";
+
+        if (!string.IsNullOrEmpty(returnUrl))
+        {
+            logoutUrl += $"?returnUrl={Uri.EscapeDataString(returnUrl)}";
+        }
+
+        return Redirect(logoutUrl);
+    }
+
+    [HttpGet("access-denied")]
+    public IActionResult AccessDenied()
+    {
+        var clientAppUrl = GetClientAppUrl();
+        var accessDeniedUrl = $"{clientAppUrl}/access-denied";
+        return Redirect(accessDeniedUrl);
+    }
+
+    private string GetClientAppUrl()
+    {
+        var clientAppUrl = Environment.GetEnvironmentVariable("CLIENTAPPURL");
+
+        if (string.IsNullOrEmpty(clientAppUrl))
+        {
+            clientAppUrl = configuration["ClientAppUrl"] ?? "http://localhost:5173";
+        }
+
+        return clientAppUrl.TrimEnd('/');
     }
 }
 

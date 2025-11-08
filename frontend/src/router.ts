@@ -34,6 +34,18 @@ const routes = [
                 component: () => import('./pages/OAuthLogin.vue'),
             },
             {
+                path: 'logout',
+                name: 'Logout',
+                meta: {title: "退出登录 - 西建大 iOS Club"},
+                component: () => import('./pages/Logout.vue'),
+            },
+            {
+                path: 'access-denied',
+                name: 'AccessDenied',
+                meta: {title: "访问被拒绝 - 西建大 iOS Club"},
+                component: () => import('./pages/AccessDenied.vue'),
+            },
+            {
                 path: 'signup',
                 name: 'SignUp',
                 meta: {title: "注册账号 - 西建大 iOS Club"},
