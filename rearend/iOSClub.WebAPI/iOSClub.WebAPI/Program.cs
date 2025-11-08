@@ -47,6 +47,20 @@ builder.Services.AddAuthentication(options =>
             ClockSkew = TimeSpan.FromSeconds(30), //过期时间容错值，解决服务器端时间不同步问题（秒）
             RequireExpirationTime = true,
         };
+    }).AddCookie("OAuth2", options =>
+    {
+        var clientAppUrl = Environment.GetEnvironmentVariable("CLIENTAPPURL", EnvironmentVariableTarget.Process);
+
+        if (string.IsNullOrEmpty(clientAppUrl))
+        {
+            clientAppUrl = builder.Configuration["ClientAppUrl"] ?? "http://localhost:5173";
+        }
+
+        options.LoginPath = $"{clientAppUrl}/oauth-login";
+        options.LogoutPath = $"{clientAppUrl}/logout";
+        options.AccessDeniedPath = $"{clientAppUrl}/access-denied";
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
+        options.SlidingExpiration = true;
     });
 
 #endregion
