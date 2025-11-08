@@ -6,14 +6,20 @@ using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 using iOSClub.Data.ShowModels;
 using Microsoft.AspNetCore.Authorization;
+using StackExchange.Redis;
 
 namespace iOSClub.WebAPI.Controllers;
 
 [ApiController]
 [Route("[controller]")] // 使用C#推荐的API路径格式
-public class DataCentreController(IDbContextFactory<ClubContext> dbContextFactory, IDataCentreService dataCentreService)
+public class DataCentreController(
+    IDbContextFactory<ClubContext> dbContextFactory,
+    IDataCentreService dataCentreService,
+    IConnectionMultiplexer redis)
     : ControllerBase
 {
+    private readonly IDatabase _db = redis.GetDatabase();
+
     [HttpGet("year")]
     public async Task<ActionResult<List<YearCount>>> GetYearData()
     {
@@ -48,7 +54,7 @@ public class DataCentreController(IDbContextFactory<ClubContext> dbContextFactor
         var genderData = await dataCentreService.GetGenderDataAsync();
         return Ok(genderData);
     }
-    
+
     [Authorize(Roles = "Founder, President, Minister")]
     [HttpPost("update-from-json")]
     public async Task<IActionResult> UpdateDataFromJson(IFormFile? file)
@@ -162,6 +168,15 @@ public class DataCentreController(IDbContextFactory<ClubContext> dbContextFactor
             WriteIndented = true
         };
 
-        return File(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(allData, options)), "application/json", "all-data.json");
+        return File(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(allData, options)), "application/json",
+            "all-data.json");
+    }
+
+    [HttpGet("clean")]
+    public async Task<IActionResult> CleanData()
+    {
+        // 清除所有缓存
+        await _db.KeyDeleteAsync("*");
+        return Ok("缓存已清除");
     }
 }
