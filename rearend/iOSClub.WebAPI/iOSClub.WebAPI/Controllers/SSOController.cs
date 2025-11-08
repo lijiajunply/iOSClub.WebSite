@@ -351,7 +351,8 @@ public class SSOController(
             }
 
             // 从请求头获取token
-            var token = HttpContext.Request.Headers.Authorization.ToString().Replace("Bearer ", "");
+            var authHeader = HttpContext.Request.Headers.Authorization.ToString();
+            var token = authHeader.StartsWith("Bearer ") ? authHeader["Bearer ".Length..].Trim() : authHeader;
 
             // 存储用户信息到会话中，供callback方法使用
             HttpContext.Session.SetString("OAuthAuthenticatedUserId", user.UserId);
@@ -410,7 +411,7 @@ public class SSOController(
     /// <param name="clientId">客户端ID</param>
     /// <returns>客户端应用信息</returns>
     [HttpGet("client-info")]
-    public async Task<IActionResult> GetClientInfo([FromQuery(Name = "client_id")]string clientId)
+    public async Task<IActionResult> GetClientInfo([FromQuery(Name = "client_id")] string clientId)
     {
         if (string.IsNullOrEmpty(clientId))
             return BadRequest("无效的客户端ID");
