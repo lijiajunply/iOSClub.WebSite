@@ -29,29 +29,29 @@ builder.Services.AddAuthorizationCore();
 builder.Services.AddAuthentication(options =>
     {
         options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = "OAuth2"; // 总是使用OAuth2作为默认方案
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
     })
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters()
         {
-            ValidateIssuer = true, //是否验证Issuer
+            ValidateIssuer = true,
             ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "iOSClub",
-            ValidateAudience = true, //是否验证Audience
+            ValidateAudience = true,
             ValidAudience = builder.Configuration["Jwt:Audience"] ?? "iOSClub",
-            ValidateIssuerSigningKey = true, //是否验证SecurityKey
-
+            ValidateIssuerSigningKey = true,
             IssuerSigningKey =
-                new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:SecretKey"]!)), //SecurityKey
-            ValidateLifetime = true, //是否验证失效时间
-            ClockSkew = TimeSpan.FromSeconds(30), //过期时间容错值，解决服务器端时间不同步问题（秒）
+                new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:SecretKey"]!)),
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromSeconds(30),
             RequireExpirationTime = true,
         };
-    }).AddCookie("OAuth2", options =>
+    })
+    .AddCookie("OAuth2", options =>
     {
-        options.LoginPath = "/oauth-login"; // 指向我们的OAuth登录页面
-        options.LogoutPath = "/logout";
-        options.AccessDeniedPath = "/access-denied";
+        options.LoginPath = "/OAuth/login";
+        options.LogoutPath = "/OAuth/logout";
+        options.AccessDeniedPath = "/OAuth/access-denied";
         options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
         options.SlidingExpiration = true;
     });
@@ -80,22 +80,11 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.WithOrigins("https://ios.zeabur.app", "http://localhost:5173", "https://*.xauat.site/",
-                "http://localhost:3000") // 允许指定来源
+        policy.WithOrigins("https://*.zeabur.app", "http://localhost:*", "https://*.xauat.site/")
             .AllowAnyMethod()
             .AllowAnyHeader()
             .AllowCredentials(); // 如果需要发送凭据（如cookies、认证头等）
     });
-
-    // 备用策略：如果需要允许多个特定来源
-    options.AddPolicy("AllowSpecificOrigins",
-        policy =>
-        {
-            policy.WithOrigins("https://ios.zeabur.app", "https://localhost:3000", "http://localhost:3000")
-                .AllowAnyMethod()
-                .AllowAnyHeader()
-                .AllowCredentials();
-        });
 });
 
 #endregion
@@ -104,7 +93,7 @@ builder.Services.AddCors(options =>
 
 var sql = Environment.GetEnvironmentVariable("SQL", EnvironmentVariableTarget.Process);
 
-if (string.IsNullOrEmpty(sql) && builder.Environment.IsDevelopment())
+if (string.IsNullOrEmpty(sql))
 {
     sql = builder.Configuration["SQL"];
 }
