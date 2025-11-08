@@ -87,14 +87,22 @@ public class LoginService(
 
         var staff = await staffRepository.GetStaffByIdAsync(model.UserId);
         var identity = "Member";
+        string name;
         if (staff != null)
         {
             identity = staff.Identity;
+            name = staff.Name;
+        }
+        else
+        {
+            var stu = await studentRepository.GetByIdAsync(model.UserId);
+            name = stu?.UserName ?? "";
         }
 
         // 关于查询身份信息的，需要完成 StaffRepository 之后，在这里进行查询，我先随便给个值
         var memberModel = new MemberModel()
         {
+            UserName = name,
             UserId = model.UserId,
             Identity = identity,
             PasswordHash = model.Password
