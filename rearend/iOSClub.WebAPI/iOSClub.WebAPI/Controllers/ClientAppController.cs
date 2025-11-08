@@ -61,6 +61,9 @@ public class ClientAppController(IClientApplicationRepository clientAppRepositor
             IsActive = true
         };
 
+        // 保存原始密钥用于返回给客户端
+        var originalClientSecret = clientApp.ClientSecret;
+
         var result = await clientAppRepository.CreateAsync(clientApp);
         if (!result)
             return BadRequest("创建客户端应用失败");
@@ -69,7 +72,8 @@ public class ClientAppController(IClientApplicationRepository clientAppRepositor
         var resultModel = new ClientAppResultModel
         {
             ClientId = clientApp.ClientId,
-            ClientSecret = clientApp.ClientSecret,
+            // 返回原始密钥而不是哈希值
+            ClientSecret = originalClientSecret,
             ApplicationName = clientApp.ApplicationName,
             Description = clientApp.Description,
             HomepageUrl = clientApp.HomepageUrl,
@@ -137,6 +141,7 @@ public class ClientAppController(IClientApplicationRepository clientAppRepositor
             return NotFound();
 
         var newSecret = GenerateClientSecret();
+        // 保存原始密钥用于返回给客户端，但存储到数据库的是哈希值
         existingClientApp.ClientSecret = newSecret;
         existingClientApp.UpdatedAt = DateTime.UtcNow;
 
