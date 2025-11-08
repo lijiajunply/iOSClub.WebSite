@@ -102,7 +102,8 @@ public class ClientApplicationRepository(IDbContextFactory<ClubContext> contextF
         await using var context = await contextFactory.CreateDbContextAsync();
         var clientApplication = await context.ClientApplications.FirstOrDefaultAsync(c => c.ClientId == clientId);
 
-        if (clientApplication is { IsActive: true }) return clientApplication;
+        if (clientApplication is { IsActive: true })
+            return clientSecret == clientApplication.ClientSecret ? clientApplication : null;
         Console.WriteLine("客户端应用已禁用");
         return null;
     }
