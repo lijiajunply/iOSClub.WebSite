@@ -32,13 +32,46 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { ArticleService } from '../../services/ArticleService';
 import MarkdownComponent from '../../components/MarkdownComponent.vue';
 
+const route = useRoute();
 const router = useRouter();
+
 const article = ref(null);
 const loading = ref(true);
+
+// 根据权限值获取显示标签
+const getIdentityLabel = (identity) => {
+  const options = [
+    {label: '所有人', value: 'Member'},
+    {label: '部员', value: 'Department'},
+    {label: '部长', value: 'Minister'},
+    {label: '社长', value: 'President'},
+    {label: '创始人', value: 'Founder'}
+  ];
+  const option = options.find(item => item.value === identity);
+  return option ? option.label : '未知';
+};
+
+// 根据权限值获取标签样式
+const getIdentityClass = (identity) => {
+  switch (identity) {
+    case 'Member':
+      return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100';
+    case 'Department':
+      return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100';
+    case 'Minister':
+      return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100';
+    case 'President':
+      return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100';
+    case 'Founder':
+      return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-100';
+    default:
+      return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-100';
+  }
+};
 
 // 日期格式化函数
 const formatDate = (dateString) => {
@@ -85,8 +118,14 @@ const loadArticle = async (path) => {
 };
 
 onMounted(() => {
-  console.log('开始加载Structure文章'); // 添加调试日志
-  loadArticle('Structure');
+  const path = route.params.id;
+  console.log('路由参数中的文章ID:', path); // 添加调试日志
+  if (path) {
+    loadArticle(path);
+  } else {
+    loading.value = false;
+    article.value = null;
+  }
 });
 </script>
 
