@@ -327,7 +327,6 @@ public class SSOController(
         {
             sub = user.UserId,
             name = user.UserName,
-            id = user.UserId,
             email = user.EMail,
             role = user.Identity
         });
