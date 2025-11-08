@@ -32,10 +32,10 @@ public class SSOController(
     /// <returns>重定向到OAuth提供商</returns>
     [HttpGet("authorize")]
     public async Task<IActionResult> Authorize(
-        [FromQuery] string clientId,
-        [FromQuery] string redirectUri,
-        [FromQuery] string state,
-        [FromQuery] string responseType = "code")
+        [FromQuery(Name = "client_id")] string clientId,
+        [FromQuery(Name = "redirect_uri")] string redirectUri,
+        [FromQuery(Name = "state")] string state,
+        [FromQuery(Name = "response_type")] string responseType = "code")
     {
         // 验证clientId是否有效
         var clientApp = await clientAppRepository.GetByClientIdAsync(clientId);
@@ -410,7 +410,7 @@ public class SSOController(
     /// <param name="clientId">客户端ID</param>
     /// <returns>客户端应用信息</returns>
     [HttpGet("client-info")]
-    public async Task<IActionResult> GetClientInfo(string clientId)
+    public async Task<IActionResult> GetClientInfo([FromQuery(Name = "client_id")]string clientId)
     {
         if (string.IsNullOrEmpty(clientId))
             return BadRequest("无效的客户端ID");
