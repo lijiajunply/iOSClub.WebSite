@@ -257,7 +257,7 @@ public class LoginService(
     }
 
     /// <summary>
-    /// 生成密码重置邮件内容 - 苹果风格设计
+    /// 生成密码重置邮件内容
     /// </summary>
     /// <param name="userName">用户名</param>
     /// <param name="code">验证码</param>
