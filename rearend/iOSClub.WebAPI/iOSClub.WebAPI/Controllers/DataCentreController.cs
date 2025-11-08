@@ -176,7 +176,7 @@ public class DataCentreController(
     public async Task<IActionResult> CleanData()
     {
         // 清除所有缓存
-        await _db.KeyDeleteAsync("*");
-        return Ok("缓存已清除");
+        var deletedKeys = await _db.KeyDeleteAsync("*");
+        return deletedKeys? BadRequest("出现问题") : Ok("缓存已清除");
     }
 }
