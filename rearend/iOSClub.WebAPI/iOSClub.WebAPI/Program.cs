@@ -47,13 +47,6 @@ builder.Services.AddAuthentication(options =>
             ClockSkew = TimeSpan.FromSeconds(30), //过期时间容错值，解决服务器端时间不同步问题（秒）
             RequireExpirationTime = true,
         };
-    }).AddCookie("OAuth2", options =>
-    {
-        options.LoginPath = "/oauth-login"; // 指向我们的OAuth登录页面
-        options.LogoutPath = "/logout";
-        options.AccessDeniedPath = "/access-denied";
-        options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
-        options.SlidingExpiration = true;
     });
 
 #endregion
