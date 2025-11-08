@@ -100,10 +100,11 @@ public class ClientApplicationRepository(IDbContextFactory<ClubContext> contextF
     public async Task<ClientApplication?> ValidateCredentialsAsync(string clientId, string clientSecret)
     {
         await using var context = await contextFactory.CreateDbContextAsync();
-        var clientApplication = await context.ClientApplications.FirstOrDefaultAsync(c => c.ClientId == clientId);
+        var clientApplication =
+            await context.ClientApplications.FirstOrDefaultAsync(c =>
+                c.ClientId == clientId && c.ClientSecret == clientSecret);
 
-        if (clientApplication is { IsActive: true })
-            return clientSecret == clientApplication.ClientSecret ? clientApplication : null;
+        if (clientApplication is { IsActive: true }) return clientApplication;
         Console.WriteLine("客户端应用已禁用");
         return null;
     }
