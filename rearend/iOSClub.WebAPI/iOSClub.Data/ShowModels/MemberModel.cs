@@ -1,5 +1,4 @@
-﻿using System.Text;
-using iOSClub.Data.DataModels;
+﻿using iOSClub.Data.DataModels;
 
 namespace iOSClub.Data.ShowModels;
 
@@ -26,9 +25,9 @@ public class MemberModel : StudentModel
     public static TChild AutoCopy<TParent, TChild>(TParent parent) where TChild : TParent, new()
     {
         var child = new TChild();
-        var ParentType = typeof(TParent);
-        var Properties = ParentType.GetProperties();
-        foreach (var property in Properties)
+        var parentType = typeof(TParent);
+        var properties = parentType.GetProperties();
+        foreach (var property in properties)
         {
             //循环遍历属性
             if (property is { CanRead: true, CanWrite: true })
@@ -40,17 +39,12 @@ public class MemberModel : StudentModel
 
         return child;
     }
-    
-    public bool IsAdmin()
-    {
-        return Identity is "Founder" or "President" or "Minister";
-    }
 
     public static MemberModel CopyFrom(StudentModel model)
     {
         return AutoCopy<StudentModel, MemberModel>(model);
     }
-    
+
     public static MemberModel CopyFrom(StudentModel model, string identity)
     {
         var a = AutoCopy<StudentModel, MemberModel>(model);
@@ -58,15 +52,6 @@ public class MemberModel : StudentModel
         a.Identity = identity;
 
         return a;
-    }
-
-    public static string GetCsv(List<MemberModel> models)
-    {
-        var builder = new StringBuilder("姓名,学号,性别,学院,政治面貌,专业班级,电话号码,身份");
-        foreach (var model in models)
-            builder.Append("\n" + model);
-
-        return builder.ToString();
     }
 
     public override string ToString()

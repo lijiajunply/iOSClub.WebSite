@@ -1,10 +1,10 @@
 using System.Text;
 using iOSClub.Data;
 using iOSClub.DataApi.Services;
-using iOSClub.DataApi.ShowModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
+using iOSClub.Data.ShowModels;
 using Microsoft.AspNetCore.Authorization;
 
 namespace iOSClub.WebAPI.Controllers;

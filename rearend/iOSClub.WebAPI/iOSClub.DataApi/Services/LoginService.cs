@@ -8,7 +8,7 @@ namespace iOSClub.DataApi.Services;
 
 public interface IJwtHelper
 {
-    public string GetMemberToken(MemberModel model);
+    public string GetMemberToken(MemberModel model, bool rememberMe = false);
 }
 
 public interface ILoginService
@@ -16,10 +16,9 @@ public interface ILoginService
     /// <summary>
     /// 登录
     /// </summary>
-    /// <param name="userId">学号</param>
-    /// <param name="password">密码（初始密码为手机号）</param>
+    /// <param name="model">数据</param>
     /// <returns>凭证</returns>
-    public Task<string> Login(string userId, string password);
+    public Task<string> Login(LoginModel model);
 
     /// <summary>
     /// 登出
@@ -39,10 +38,9 @@ public interface ILoginService
     /// <summary>
     /// 员工登录
     /// </summary>
-    /// <param name="userId">员工ID</param>
-    /// <param name="name">员工姓名</param>
+    /// <param name="model">数据</param>
     /// <returns>凭证</returns>
-    public Task<string> StaffLogin(string userId, string name);
+    public Task<string> StaffLogin(LoginModel model);
 
     /// <summary>
     /// 修改用户密码
@@ -83,11 +81,11 @@ public class LoginService(
     private const string TokenPrefix = "token:";
     private const int TokenExpiryHours = 2; // 与JwtHelper中的过期时间保持一致
 
-    public async Task<string> Login(string userId, string password)
+    public async Task<string> Login(LoginModel model)
     {
-        if (!await studentRepository.Login(userId, password)) return "";
+        if (!await studentRepository.Login(model.UserId, model.Password)) return "";
 
-        var staff = await staffRepository.GetStaffByIdAsync(userId);
+        var staff = await staffRepository.GetStaffByIdAsync(model.UserId);
         var identity = "Member";
         if (staff != null)
         {
@@ -97,27 +95,27 @@ public class LoginService(
         // 关于查询身份信息的，需要完成 StaffRepository 之后，在这里进行查询，我先随便给个值
         var memberModel = new MemberModel()
         {
-            UserId = userId,
+            UserId = model.UserId,
             Identity = identity,
-            PasswordHash = password
+            PasswordHash = model.Password
         };
 
-        var redisKey = $"{TokenPrefix}{userId}";
+        var redisKey = $"{TokenPrefix}{model.UserId}";
         var storedToken = await _db.StringGetAsync(redisKey);
         if (storedToken.HasValue && !string.IsNullOrEmpty(storedToken))
         {
             return storedToken.ToString();
         }
 
-        var token = jwtHelper.GetMemberToken(memberModel);
+        var token = jwtHelper.GetMemberToken(memberModel, model.RememberMe);
 
         // 将token存储到Redis中，设置过期时间
-        await _db.StringSetAsync(redisKey, token, TimeSpan.FromHours(TokenExpiryHours));
+        await _db.StringSetAsync(redisKey, token, TimeSpan.FromHours(TokenExpiryHours * (model.RememberMe ? 12 : 2)));
 
         // 存储用户信息，便于后续验证
-        var userInfoKey = $"user:{userId}";
+        var userInfoKey = $"user:{model.UserId}";
         await _db.StringSetAsync(userInfoKey, JsonSerializer.Serialize(memberModel),
-            TimeSpan.FromHours(TokenExpiryHours));
+            TimeSpan.FromHours(TokenExpiryHours * (model.RememberMe ? 12 : 2)));
 
         return token;
     }
@@ -149,11 +147,11 @@ public class LoginService(
         return storedToken == token;
     }
 
-    public async Task<string> StaffLogin(string userId, string name)
+    public async Task<string> StaffLogin(LoginModel model)
     {
-        var staff = await staffRepository.GetStaffByIdAsync(userId);
+        var staff = await staffRepository.GetStaffByIdAsync(model.Password);
 
-        if (staff == null || staff.Name != name)
+        if (staff == null || staff.Name != model.UserId)
             return "";
 
         var memberModel = new MemberModel()
@@ -163,16 +161,16 @@ public class LoginService(
             Identity = staff.Identity
         };
 
-        var token = jwtHelper.GetMemberToken(memberModel);
+        var token = jwtHelper.GetMemberToken(memberModel, model.RememberMe);
 
         // 将token存储到Redis中，设置过期时间
-        var redisKey = $"{TokenPrefix}{userId}";
-        await _db.StringSetAsync(redisKey, token, TimeSpan.FromHours(TokenExpiryHours));
+        var redisKey = $"{TokenPrefix}{model.Password}";
+        await _db.StringSetAsync(redisKey, token, TimeSpan.FromHours(TokenExpiryHours * (model.RememberMe ? 12 : 2)));
 
         // 存储用户信息，便于后续验证
-        var userInfoKey = $"user:{userId}";
+        var userInfoKey = $"user:{model.Password}";
         await _db.StringSetAsync(userInfoKey, JsonSerializer.Serialize(memberModel),
-            TimeSpan.FromHours(TokenExpiryHours));
+            TimeSpan.FromHours(TokenExpiryHours * (model.RememberMe ? 12 : 2)));
 
         return token;
     }

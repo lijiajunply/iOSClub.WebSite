@@ -1,16 +1,21 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using iOSClub.Data.ShowModels;
 using iOSClub.DataApi.Services;
+using StackExchange.Redis;
 
 namespace iOSClub.WebAPI.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class OAuthController(ILoginService loginService, IConfiguration configuration) : ControllerBase
+public class OAuthController(ILoginService loginService, IConnectionMultiplexer redis, IConfiguration configuration)
+    : ControllerBase
 {
+    private readonly IDatabase _db = redis.GetDatabase();
+
     [HttpGet("login")]
-    public IActionResult Login(string provider = "OAuth2", string? returnUrl = "/")
+    public IActionResult Login(string provider = "OAuth2", string? returnUrl = "/", bool rememberMe = false)
     {
         // 检查是否配置了OAuth
         var clientId = configuration["OAuth2:ClientId"];
@@ -19,13 +24,13 @@ public class OAuthController(ILoginService loginService, IConfiguration configur
             return BadRequest("OAuth2 未正确配置");
         }
 
-        var redirectUrl = Url.Action(nameof(Callback), "OAuth", new { returnUrl });
+        var redirectUrl = Url.Action(nameof(Callback), "OAuth", new { returnUrl, rememberMe });
         var properties = new AuthenticationProperties { RedirectUri = redirectUrl };
         return Challenge(properties, provider);
     }
 
     [HttpGet("callback")]
-    public async Task<IActionResult> Callback(string? returnUrl = "/")
+    public async Task<IActionResult> Callback(string? returnUrl = "/", bool rememberMe = false)
     {
         // 检查是否配置了OAuth
         var clientId = configuration["OAuth2:ClientId"];
@@ -46,22 +51,12 @@ public class OAuthController(ILoginService loginService, IConfiguration configur
         // 获取用户标识信息
         var enumerable = claims as Claim[] ?? claims.ToArray();
         var userId = enumerable.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
-        var userName = enumerable.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value;
+        // var userName = enumerable.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value;
 
         if (string.IsNullOrEmpty(userId))
             return BadRequest("无法获取用户ID");
 
-        // 使用 loginService 进行用户登录并生成 Token
-        // 首先尝试员工登录
-        var token = await loginService.StaffLogin(userId, userName ?? userId);
-
-        // 如果员工登录失败，尝试普通用户登录
-        // 注意：这里需要一个默认密码，实际应用中应该有更安全的方式
-        if (string.IsNullOrEmpty(token))
-        {
-            // 这里使用一个默认密码，实际应用中应该从安全的地方获取
-            token = await loginService.Login(userId, "defaultPassword");
-        }
+        var token = _db.StringGet($"token:{userId}").ToString();
 
         // 如果登录仍然失败，返回错误
         if (string.IsNullOrEmpty(token))
@@ -84,14 +79,21 @@ public class OAuthController(ILoginService loginService, IConfiguration configur
         if (string.IsNullOrEmpty(request.UserId) || string.IsNullOrEmpty(request.UserName))
             return BadRequest("用户ID和用户名不能为空");
 
-        // 首先尝试员工登录
-        var token = await loginService.StaffLogin(request.UserId, request.UserName);
+        // 创建LoginModel用于传递RememberMe参数
+        var loginModel = new LoginModel
+        {
+            UserId = request.UserId,
+            Password = request.Password ?? request.UserId, // 如果没有提供密码，则使用UserId作为默认密码
+            RememberMe = request.RememberMe
+        };
 
-        // 如果员工登录失败，尝试普通用户登录
+        // 首先尝试普通用户登录
+        var token = await loginService.Login(loginModel);
+
+        // 如果普通用户登录失败，尝试员工登录
         if (string.IsNullOrEmpty(token))
         {
-            // 这里使用一个默认密码，实际应用中应该从安全的地方获取
-            token = await loginService.Login(request.UserId, "defaultPassword");
+            token = await loginService.StaffLogin(loginModel);
         }
 
         // 如果登录仍然失败，返回错误
@@ -102,9 +104,12 @@ public class OAuthController(ILoginService loginService, IConfiguration configur
     }
 }
 
+[Serializable]
 public class OAuthExchangeRequest
 {
     public string? AccessToken { get; set; }
     public string? UserId { get; set; }
     public string? UserName { get; set; }
+    public bool RememberMe { get; set; }
+    public string? Password { get; set; }
 }

@@ -22,11 +22,37 @@ public class EmailService(IConfiguration configuration) : IEmailService
 {
     public async Task<bool> SendEmailAsync(string to, string subject, string body, bool isHtml = false)
     {
-        var smtpServer = configuration["Email:SmtpServer"];
-        var port = int.Parse(configuration["Email:Port"] ?? "587");
-        var username = configuration["Email:Username"];
-        var password = configuration["Email:Password"];
-        var fromAddress = configuration["Email:FromAddress"];
+        var smtpServer = Environment.GetEnvironmentVariable("SMTP", EnvironmentVariableTarget.Process);
+        var port = int.Parse(Environment.GetEnvironmentVariable("EMAIL_POST", EnvironmentVariableTarget.Process) ??
+                             "0");
+        var username = Environment.GetEnvironmentVariable("EMAIL_NAME", EnvironmentVariableTarget.Process);
+        var password = Environment.GetEnvironmentVariable("EMAIL_PASSWORD", EnvironmentVariableTarget.Process);
+        var fromAddress = Environment.GetEnvironmentVariable("EMAIL_FROM", EnvironmentVariableTarget.Process);
+
+        if (string.IsNullOrEmpty(smtpServer))
+        {
+            smtpServer = configuration["Email:SmtpServer"] ?? "smtp.gmail.com";
+        }
+
+        if (port == 0)
+        {
+            port = int.Parse(configuration["Email:Port"] ?? "587");
+        }
+
+        if (string.IsNullOrEmpty(username))
+        {
+            username = configuration["Email:Username"] ?? "iOS Club";
+        }
+
+        if (string.IsNullOrEmpty(password))
+        {
+            password = configuration["Email:Password"] ?? "iOS Club";
+        }
+
+        if (string.IsNullOrEmpty(fromAddress))
+        {
+            fromAddress = configuration["Email:FromAddress"] ?? "iOS Club";
+        }
 
         // 检查必要配置是否存在
         if (string.IsNullOrEmpty(smtpServer) ||
