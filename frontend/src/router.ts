@@ -92,10 +92,6 @@ const routes = [
                 component: () => import('./layouts/WordLayout.vue'),
                 children: [
                     {
-                        path: 'article/:id',
-                        component: () => import('./pages/Article.vue'),
-                    },
-                    {
                         path: 'About',
                         name: 'About',
                         meta: {title: "关于我们 - 西建大 iOS Club"},
@@ -114,7 +110,13 @@ const routes = [
                         name: 'Structure',
                         meta: {title: "社团结构 - 西建大 iOS Club"},
                         component: () => import('./pages/Articles/Structure.vue'),
-                    }
+                    },
+                    {
+                        path: 'Article/:id',
+                        name: 'Article',
+                        meta: {title: "文章详情 - 西建大 iOS Club"},
+                        component: () => import('./pages/Articles/Article.vue'),
+                    },
                 ]
             },
         ]
@@ -180,7 +182,7 @@ const routes = [
             },
             {
                 path: 'Article',
-                name: 'Article',
+                name: 'AdminArticle',
                 meta: {title: "社团文章 - 西建大 iOS Club"},
                 component: () => import('./adminPages/ArticleManager.vue'),
             },

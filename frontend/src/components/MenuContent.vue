@@ -10,7 +10,7 @@
 </template>
 
 <script setup>
-import {computed} from 'vue'
+import {computed, ref} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
 import {NMenu} from 'naive-ui'
 
@@ -19,6 +19,9 @@ const route = useRoute()
 const router = useRouter()
 
 const activeKey = computed(() => route.path)
+
+// 用于跟踪是否正在刷新当前页面
+const isReloading = ref(false)
 
 const menuOptions = [
   {
@@ -113,7 +116,15 @@ const menuOptions = [
 
 const handleSelect = (key) => {
   emit('menu-item-click', key)
-  router.push(key)
+  // 如果当前路由与点击的路由相同，则刷新页面
+  if (route.path === key) {
+    // 设置刷新状态并强制刷新当前页面
+    isReloading.value = true
+    window.location.reload()
+  } else {
+    // 跳转到新页面
+    router.push(key)
+  }
 }
 </script>
 
