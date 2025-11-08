@@ -102,7 +102,10 @@ public class ClientApplicationRepository(IDbContextFactory<ClubContext> contextF
         var clientApplication = await context.ClientApplications.FirstOrDefaultAsync(c => c.ClientId == clientId);
 
         if (clientApplication is not { IsActive: true })
+        {
+            Console.WriteLine("客户端应用已禁用");
             return null;
+        }
 
         // 使用安全的密码比较方法
         return !BCrypt.Net.BCrypt.Verify(clientSecret, clientApplication.ClientSecret) ? null : clientApplication;
