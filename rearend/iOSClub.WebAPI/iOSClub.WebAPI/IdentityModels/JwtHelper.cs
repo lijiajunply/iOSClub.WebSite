@@ -20,6 +20,7 @@ public class JwtHelper(IConfiguration configuration) : IJwtHelper
             new Claim(JwtRegisteredClaimNames.UniqueName, model.UserName),
             new Claim(ClaimTypes.Role, model.Identity),
             new Claim(ClaimTypes.NameIdentifier, model.UserId),
+            new Claim(ClaimTypes.Email, model.EMail ?? ""),
             new Claim(JwtRegisteredClaimNames.Jti, jwtId), // JWT ID 防止重放攻击
             new Claim(JwtRegisteredClaimNames.Iat, new DateTimeOffset(now).ToUnixTimeSeconds().ToString(),
                 ClaimValueTypes.Integer64)
