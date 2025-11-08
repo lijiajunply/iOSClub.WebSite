@@ -19,8 +19,9 @@ public class SSOController(
     IStudentRepository studentRepository,
     IClientApplicationRepository clientAppRepository,
     IConnectionMultiplexer redis,
-    IConfiguration config
-) : ControllerBase
+    IConfiguration config,
+    ILogger<SSOController> logger)
+    : ControllerBase
 {
     private readonly IDatabase _redisDb = redis.GetDatabase();
 
@@ -274,69 +275,111 @@ public class SSOController(
     {
         // 添加参数验证
         if (string.IsNullOrEmpty(grantType))
+        {
+            logger.LogWarning("Token exchange failed: missing grant_type parameter");
             return BadRequest("缺少必需参数: grant_type");
+        }
 
         if (grantType != "authorization_code")
+        {
+            logger.LogWarning("Token exchange failed: unsupported grant type {GrantType}", grantType);
             return BadRequest("不支持的授权类型: " + grantType);
+        }
 
         if (string.IsNullOrEmpty(code))
+        {
+            logger.LogWarning("Token exchange failed: missing code parameter");
             return BadRequest("缺少必需参数: code");
+        }
 
         if (string.IsNullOrEmpty(clientId))
+        {
+            logger.LogWarning("Token exchange failed: missing client_id parameter");
             return BadRequest("缺少必需参数: client_id");
+        }
 
         if (string.IsNullOrEmpty(clientSecret))
+        {
+            logger.LogWarning("Token exchange failed: missing client_secret parameter");
             return BadRequest("缺少必需参数: client_secret");
+        }
 
         if (string.IsNullOrEmpty(redirectUri))
+        {
+            logger.LogWarning("Token exchange failed: missing redirect_uri parameter");
             return BadRequest("缺少必需参数: redirect_uri");
+        }
 
         // 验证客户端凭据
         var clientApp = await clientAppRepository.ValidateCredentialsAsync(clientId, clientSecret);
         if (clientApp == null)
+        {
+            logger.LogWarning("Token exchange failed: invalid client credentials for client {ClientId}", clientId);
             return Unauthorized("无效的客户端凭据");
+        }
 
         // 验证回调URL是否匹配
         if (!clientApp.IsRedirectUriValid(redirectUri))
+        {
+            logger.LogWarning("Token exchange failed: invalid redirect URI {RedirectUri} for client {ClientId}",
+                redirectUri, clientId);
             return BadRequest("无效的回调地址");
+        }
 
         // 从Redis中获取授权码信息
         var codeKey = $"oauth:code:{code}";
         var authCodeInfoJson = await _redisDb.StringGetAsync(codeKey);
 
         if (authCodeInfoJson.IsNullOrEmpty)
+        {
+            logger.LogWarning("Token exchange failed: invalid authorization code {Code}", code);
             return BadRequest("无效的授权码");
+        }
 
         try
         {
             var authCodeInfo = System.Text.Json.JsonSerializer.Deserialize<AuthCodeInfo>(authCodeInfoJson.ToString());
 
             if (authCodeInfo == null)
+            {
+                logger.LogWarning(
+                    "Token exchange failed: unable to deserialize authorization code info for code {Code}", code);
                 return BadRequest("无效的授权码");
+            }
 
             // 验证授权码是否过期（5分钟有效期）
             if (authCodeInfo.CreatedAt.AddMinutes(5) < DateTime.UtcNow)
             {
                 // 删除过期的授权码
                 await _redisDb.KeyDeleteAsync(codeKey);
+                logger.LogWarning("Token exchange failed: expired authorization code {Code}", code);
                 return BadRequest("授权码已过期");
             }
 
             // 验证授权码与请求参数是否匹配
             if (authCodeInfo.ClientId != clientId || authCodeInfo.RedirectUri != redirectUri)
+            {
+                logger.LogWarning("Token exchange failed: authorization code {Code} does not match request parameters",
+                    code);
                 return BadRequest("授权码与请求参数不匹配");
+            }
 
             // 如果授权码有PKCE要求，验证code_verifier
             if (!string.IsNullOrEmpty(authCodeInfo.CodeChallenge))
             {
                 if (string.IsNullOrEmpty(codeVerifier))
                 {
+                    logger.LogWarning(
+                        "Token exchange failed: missing code_verifier for PKCE-enabled authorization code {Code}",
+                        code);
                     return BadRequest("缺少必需参数: code_verifier");
                 }
 
                 // 验证code_verifier长度
                 if (codeVerifier.Length is < 43 or > 128)
                 {
+                    logger.LogWarning(
+                        "Token exchange failed: invalid code_verifier length for authorization code {Code}", code);
                     return BadRequest("code_verifier长度无效");
                 }
 
@@ -351,6 +394,8 @@ public class SSOController(
 
                     if (!string.Equals(challenge, authCodeInfo.CodeChallenge, StringComparison.Ordinal))
                     {
+                        logger.LogWarning("Token exchange failed: invalid code_verifier for authorization code {Code}",
+                            code);
                         return BadRequest("无效的code_verifier");
                     }
                 }
@@ -358,11 +403,16 @@ public class SSOController(
                 {
                     if (!string.Equals(codeVerifier, authCodeInfo.CodeChallenge, StringComparison.Ordinal))
                     {
+                        logger.LogWarning("Token exchange failed: invalid code_verifier for authorization code {Code}",
+                            code);
                         return BadRequest("无效的code_verifier");
                     }
                 }
                 else
                 {
+                    logger.LogWarning(
+                        "Token exchange failed: unsupported code_challenge_method {Method} for authorization code {Code}",
+                        authCodeInfo.CodeChallengeMethod, code);
                     return BadRequest("不支持的code_challenge_method");
                 }
             }
@@ -370,12 +420,24 @@ public class SSOController(
             // 为用户生成新的访问令牌
             var member = await studentRepository.GetByIdAsync(authCodeInfo.UserId);
             if (member == null)
+            {
+                logger.LogWarning("Token exchange failed: user {UserId} not found", authCodeInfo.UserId);
                 return BadRequest("用户不存在");
+            }
 
             var token = await loginService.GetToken(member.UserId);
+            if (string.IsNullOrEmpty(token))
+            {
+                logger.LogError("Token exchange failed: unable to generate token for user {UserId}",
+                    authCodeInfo.UserId);
+                return BadRequest("令牌生成失败");
+            }
 
             // 删除已使用的授权码（一次性使用）
             await _redisDb.KeyDeleteAsync(codeKey);
+
+            logger.LogInformation("Token exchange successful for user {UserId} with client {ClientId}",
+                authCodeInfo.UserId, clientId);
 
             return Ok(new
             {
@@ -384,8 +446,9 @@ public class SSOController(
                 expires_in = 7200 // 2小时
             });
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            logger.LogError(ex, "Token exchange failed with exception for code {Code}", code);
             return BadRequest("无效的授权码");
         }
     }
