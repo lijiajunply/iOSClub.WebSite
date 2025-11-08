@@ -20,7 +20,7 @@
 
       <!-- Main content area -->
       <n-layout-content class="relative">
-        <div class="p-6 min-h-screen">
+        <div class="min-h-screen">
           <!-- Mobile menu button -->
           <Transition name="fade">
             <button

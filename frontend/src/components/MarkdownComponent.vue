@@ -21,7 +21,8 @@ interface Content {
   title: string
   date: string
   watch: number
-  content: string
+  content: string,
+  identity?: string
 }
 
 const props = withDefaults(defineProps<{
@@ -220,6 +221,37 @@ const renderAnchorLinks = (items: Array<{
 const anchorLinks = computed(() => renderAnchorLinks(headings.value))
 const date = computed(() => props.content?.date ? new Date(props.content.date).toLocaleDateString('zh-CN') : '')
 
+// 根据权限值获取显示标签
+const getIdentityLabel = computed(() => {
+  const options = [
+    {label: '所有人', value: 'Member'},
+    {label: '部员', value: 'Department'},
+    {label: '部长', value: 'Minister'},
+    {label: '社长', value: 'President'},
+    {label: '创始人', value: 'Founder'}
+  ];
+  const option = options.find(item => item.value === props.content?.identity);
+  return option ? option.label : '未知';
+});
+
+// 根据权限值获取标签样式
+const getIdentityClass = (identity: string) => {
+  switch (identity) {
+    case 'Member':
+      return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100';
+    case 'Department':
+      return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100';
+    case 'Minister':
+      return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100';
+    case 'President':
+      return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100';
+    case 'Founder':
+      return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-100';
+    default:
+      return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-100';
+  }
+};
+
 onMounted(() => {
   // 添加滚动监听器以高亮当前活动的锚点
   const handleScroll = () => {
@@ -271,6 +303,9 @@ onMounted(() => {
             <span class="flex items-center gap-1">
               <Icon icon="mdi:eye" width="16" height="16"/>
               {{ content.watch }} 次阅读
+            </span>
+            <span v-if="content.identity" class="flex items-center gap-1" :class="getIdentityClass(content.identity)">
+              {{ getIdentityLabel }}
             </span>
           </div>
         </header>

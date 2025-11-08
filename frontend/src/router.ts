@@ -112,7 +112,7 @@ const routes = [
                         component: () => import('./pages/Articles/Structure.vue'),
                     },
                     {
-                        path: 'Article/:id',
+                        path: 'article/:id',
                         name: 'Article',
                         meta: {title: "文章详情 - 西建大 iOS Club"},
                         component: () => import('./pages/Articles/Article.vue'),
