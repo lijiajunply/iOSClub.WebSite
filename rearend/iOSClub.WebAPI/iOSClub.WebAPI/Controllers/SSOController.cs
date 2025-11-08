@@ -8,8 +8,6 @@ using Microsoft.AspNetCore.Authorization;
 using Newtonsoft.Json;
 using StackExchange.Redis;
 using System.Security.Cryptography;
-using iOSClub.Data.DataModels;
-using iOSClub.Data.ShowModels;
 
 namespace iOSClub.WebAPI.Controllers;
 
@@ -21,8 +19,7 @@ public class SSOController(
     IStudentRepository studentRepository,
     IClientApplicationRepository clientAppRepository,
     IConnectionMultiplexer redis,
-    IConfiguration config,
-    IJwtHelper jwtHelper
+    IConfiguration config
 ) : ControllerBase
 {
     private readonly IDatabase _redisDb = redis.GetDatabase();
@@ -71,7 +68,7 @@ public class SSOController(
             }
 
             // 验证code_challenge长度
-            if (codeChallenge.Length < 43 || codeChallenge.Length > 128)
+            if (codeChallenge.Length is < 43 or > 128)
             {
                 return BadRequest("code_challenge长度无效");
             }
@@ -375,19 +372,14 @@ public class SSOController(
             if (member == null)
                 return BadRequest("用户不存在");
 
-            var newToken = jwtHelper.GetMemberToken(MemberModel.AutoCopy<StudentModel, MemberModel>(member));
-
-            // 验证新生成的令牌是否有效
-            var isValid = await ValidateToken(newToken);
-            if (!isValid)
-                return BadRequest("令牌生成失败");
+            var token = await loginService.GetToken(member.UserId);
 
             // 删除已使用的授权码（一次性使用）
             await _redisDb.KeyDeleteAsync(codeKey);
 
             return Ok(new
             {
-                access_token = newToken,
+                access_token = token,
                 token_type = "Bearer",
                 expires_in = 7200 // 2小时
             });

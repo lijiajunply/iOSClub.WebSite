@@ -66,6 +66,8 @@ public interface ILoginService
     /// <param name="newPassword">新密码</param>
     /// <returns>是否成功重置密码</returns>
     public Task<bool> ResetPasswordWithCode(string userId, string code, string newPassword);
+
+    public Task<string> GetToken(string userId);
 }
 
 public class LoginService(
@@ -142,6 +144,12 @@ public class LoginService(
         {
             return false;
         }
+    }
+
+    public async Task<string> GetToken(string userId)
+    {
+        var storedToken = await _db.StringGetAsync($"{TokenPrefix}{userId}");
+        return storedToken.HasValue && !string.IsNullOrEmpty(storedToken) ? storedToken.ToString() : "";
     }
 
     public async Task<bool> ValidateToken(string userId, string token)
