@@ -45,14 +45,23 @@ public class SSOController(
         [FromQuery(Name = "code_challenge_method")]
         string? codeChallengeMethod = null)
     {
+        logger.LogInformation("OAuth authorization request received for client {ClientId}", clientId);
+
         // 验证clientId是否有效
         var clientApp = await clientAppRepository.GetByClientIdAsync(clientId);
         if (clientApp is not { IsActive: true })
+        {
+            logger.LogWarning("Authorization failed: invalid client ID {ClientId}", clientId);
             return BadRequest("无效的客户端ID");
+        }
 
         // 验证redirectUri是否在白名单中
         if (!clientApp.IsRedirectUriValid(redirectUri))
+        {
+            logger.LogWarning("Authorization failed: invalid redirect URI {RedirectUri} for client {ClientId}",
+                redirectUri, clientId);
             return BadRequest("无效的回调地址");
+        }
 
         // 如果提供了code_challenge，验证其格式
         if (!string.IsNullOrEmpty(codeChallenge))
@@ -65,12 +74,17 @@ public class SSOController(
 
             if (codeChallengeMethod != "S256" && codeChallengeMethod != "plain")
             {
+                logger.LogWarning(
+                    "Authorization failed: unsupported code_challenge_method {Method} for client {ClientId}",
+                    codeChallengeMethod, clientId);
                 return BadRequest("不支持的code_challenge_method");
             }
 
             // 验证code_challenge长度
-            if (codeChallenge.Length is < 43 or > 128)
+            if (codeChallenge.Length < 43 || codeChallenge.Length > 128)
             {
+                logger.LogWarning("Authorization failed: invalid code_challenge length for client {ClientId}",
+                    clientId);
                 return BadRequest("code_challenge长度无效");
             }
         }
@@ -103,6 +117,8 @@ public class SSOController(
             clientAppUrl = config["ClientAppUrl"] ?? "http://localhost:5173";
         }
 
+        logger.LogInformation("Redirecting to OAuth login page for client {ClientId}", clientId);
+
         // 重定向到我们自己的OAuth登录页面
         return Redirect(
             $"{clientAppUrl}/oauth-login?state={encryptedState}&client_id={clientId}&redirect_uri={Uri.EscapeDataString(redirectUri)}&response_type={responseType}");
@@ -116,6 +132,8 @@ public class SSOController(
     [HttpGet("callback")]
     public async Task<IActionResult> Callback([FromQuery] string state)
     {
+        logger.LogInformation("OAuth callback received with state parameter");
+
         // 从Redis中获取用户信息（这应该在OAuthLogin页面成功登录后设置）
         var userId = HttpContext.Session.GetString("OAuthAuthenticatedUserId");
         var token = HttpContext.Session.GetString("OAuthAuthenticatedToken");
@@ -147,15 +165,19 @@ public class SSOController(
                     }
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                logger.LogError(ex, "Failed to decrypt or deserialize state parameter");
                 // 解密或反序列化失败，保持userId和token为null或empty
             }
         }
 
         // 检查是否成功获取到用户信息
         if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(token))
+        {
+            logger.LogWarning("Callback failed: user authentication failed or session expired");
             return BadRequest("用户认证失败或会话已过期");
+        }
 
         // 清除会话中的用户信息
         HttpContext.Session.Remove("OAuthAuthenticatedUserId");
@@ -190,8 +212,9 @@ public class SSOController(
                 authState.CodeChallenge = stateInfo.CodeChallenge;
                 authState.CodeChallengeMethod = stateInfo.CodeChallengeMethod;
             }
-            catch
+            catch (Exception ex)
             {
+                logger.LogError(ex, "Failed to decrypt or deserialize state parameter in session");
                 return BadRequest("无效的状态参数");
             }
         }
@@ -204,8 +227,9 @@ public class SSOController(
                 authState = System.Text.Json.JsonSerializer.Deserialize<AuthState>(decryptedState) ??
                             throw new InvalidOperationException();
             }
-            catch
+            catch (Exception ex)
             {
+                logger.LogError(ex, "Failed to decrypt or deserialize state parameter");
                 return BadRequest("无效的状态参数");
             }
         }
@@ -213,7 +237,10 @@ public class SSOController(
         // 验证token是否有效
         var isValid = await ValidateToken(token);
         if (!isValid)
+        {
+            logger.LogWarning("Callback failed: invalid authentication token");
             return BadRequest("无效的认证令牌");
+        }
 
         // 根据responseType决定返回方式
         if (authState.ResponseType == "code")
@@ -239,6 +266,9 @@ public class SSOController(
                 System.Text.Json.JsonSerializer.Serialize(authCodeInfo),
                 TimeSpan.FromMinutes(5));
 
+            logger.LogInformation("Authorization code {AuthCode} generated for user {UserId} and client {ClientId}",
+                authCode, userId, authState.ClientId);
+
             // 重定向到第三方应用的回调地址
             var redirectUrl = $"{authState.RedirectUri}?code={authCode}&state={authState.State}";
             return Redirect(redirectUrl);
@@ -246,11 +276,15 @@ public class SSOController(
 
         if (authState.ResponseType == "token")
         {
+            logger.LogInformation("Direct token response for user {UserId} and client {ClientId}", userId,
+                authState.ClientId);
+
             // 直接返回访问令牌
             var redirectUrl = $"{authState.RedirectUri}#access_token={token}&state={authState.State}";
             return Redirect(redirectUrl);
         }
 
+        logger.LogWarning("Callback failed: unsupported response type {ResponseType}", authState.ResponseType);
         return BadRequest("不支持的响应类型");
     }
 
@@ -273,6 +307,8 @@ public class SSOController(
         [FromForm] string redirectUri,
         [FromForm] string? codeVerifier = null)
     {
+        logger.LogInformation("Token exchange request received for client {ClientId}", clientId);
+
         // 添加参数验证
         if (string.IsNullOrEmpty(grantType))
         {
@@ -460,9 +496,14 @@ public class SSOController(
     /// <returns>令牌是否有效</returns>
     private async Task<bool> ValidateToken(string token)
     {
+        logger.LogDebug("Validating token");
+
         // 检查令牌是否为空
         if (string.IsNullOrEmpty(token))
+        {
+            logger.LogDebug("Token validation failed: token is null or empty");
             return false;
+        }
 
         try
         {
@@ -472,18 +513,27 @@ public class SSOController(
 
             // 检查令牌是否过期
             if (jsonToken.ValidTo < DateTime.UtcNow)
+            {
+                logger.LogDebug("Token validation failed: token expired at {ExpiryTime}", jsonToken.ValidTo);
                 return false;
+            }
 
             // 从令牌中提取用户ID
             var userId = jsonToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userId))
+            {
+                logger.LogDebug("Token validation failed: missing user ID in token claims");
                 return false;
+            }
 
             // 使用loginService来验证令牌
-            return await loginService.ValidateToken(userId, token);
+            var isValid = await loginService.ValidateToken(userId, token);
+            logger.LogDebug("Token validation result for user {UserId}: {IsValid}", userId, isValid);
+            return isValid;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            logger.LogError(ex, "Token validation failed with exception");
             // 如果解析令牌时出现任何异常，认为令牌无效
             return false;
         }
@@ -497,14 +547,24 @@ public class SSOController(
     [Authorize]
     public async Task<IActionResult> UserInfo()
     {
+        logger.LogInformation("User info request received");
+
         var user = HttpContext.User.GetUser();
         if (user == null)
+        {
+            logger.LogWarning("User info request failed: user not authenticated");
             return Unauthorized();
+        }
 
         var member = await studentRepository.GetByIdAsync(user.UserId);
 
         if (member == null)
+        {
+            logger.LogWarning("User info request failed: user {UserId} not found", user.UserId);
             return Unauthorized();
+        }
+
+        logger.LogInformation("User info request successful for user {UserId}", user.UserId);
 
         return Ok(new
         {
@@ -524,12 +584,15 @@ public class SSOController(
     [Authorize]
     public async Task<IActionResult> StoreSession([FromBody] StoreSessionRequest request)
     {
+        logger.LogInformation("Store session request received");
+
         try
         {
             // 获取当前认证的用户信息
             var user = HttpContext.User.GetUser();
             if (user == null)
             {
+                logger.LogWarning("Store session failed: user not authenticated");
                 return Unauthorized("用户未认证");
             }
 
@@ -543,7 +606,13 @@ public class SSOController(
             HttpContext.Session.SetString("OAuthAuthenticatedToken", token);
 
             // 同时存储到Redis中，使用state作为key
-            if (string.IsNullOrEmpty(request.State)) return Ok(new { success = true, message = "会话存储成功" });
+            if (string.IsNullOrEmpty(request.State))
+            {
+                logger.LogInformation("Session stored successfully for user {UserId} without Redis storage",
+                    user.UserId);
+                return Ok(new { success = true, message = "会话存储成功" });
+            }
+
             try
             {
                 // 解密state参数以获取原始state值作为Redis键
@@ -564,9 +633,13 @@ public class SSOController(
                     redisKey,
                     System.Text.Json.JsonSerializer.Serialize(userInfo),
                     TimeSpan.FromMinutes(5));
+
+                logger.LogInformation("Session stored successfully for user {UserId} with Redis key {RedisKey}",
+                    user.UserId, redisKey);
             }
-            catch
+            catch (Exception ex)
             {
+                logger.LogError(ex, "Failed to store session in Redis for user {UserId}", user.UserId);
                 // 如果Redis存储失败，仅记录日志（但在此代码中我们不记录日志）
                 // 继续执行，因为会话存储已经成功
             }
@@ -575,6 +648,7 @@ public class SSOController(
         }
         catch (Exception ex)
         {
+            logger.LogError(ex, "Store session failed with exception");
             return BadRequest(new { success = false, message = ex.Message });
         }
     }
@@ -596,12 +670,22 @@ public class SSOController(
     [HttpGet("client-info")]
     public async Task<IActionResult> GetClientInfo(string clientId)
     {
+        logger.LogInformation("Client info request received for client {ClientId}", clientId);
+
         if (string.IsNullOrEmpty(clientId))
+        {
+            logger.LogWarning("Client info request failed: invalid client ID");
             return BadRequest("无效的客户端ID");
+        }
 
         var clientApp = await clientAppRepository.GetByClientIdAsync(clientId);
         if (clientApp is not { IsActive: true })
+        {
+            logger.LogWarning("Client info request failed: client {ClientId} not found or inactive", clientId);
             return NotFound("客户端应用不存在或已禁用");
+        }
+
+        logger.LogInformation("Client info request successful for client {ClientId}", clientId);
 
         return Ok(new
         {
@@ -609,6 +693,22 @@ public class SSOController(
             description = clientApp.Description,
             client_id = clientApp.ClientId
         });
+    }
+
+    /// <summary>
+    /// 生成安全的授权码
+    /// </summary>
+    /// <returns>安全的授权码</returns>
+    private string GenerateSecureAuthCode()
+    {
+        using var rng = RandomNumberGenerator.Create();
+        var bytes = new byte[32];
+        rng.GetBytes(bytes);
+        // 使用URL安全的Base64编码
+        return Convert.ToBase64String(bytes)
+            .TrimEnd('=')
+            .Replace('+', '-')
+            .Replace('/', '_');
     }
 
     /// <summary>
@@ -627,7 +727,6 @@ public class SSOController(
     /// <summary>
     /// OAuth用户信息
     /// </summary>
-    [Serializable]
     public class OAuthUserInfo
     {
         public string UserId { get; set; } = "";
@@ -636,31 +735,13 @@ public class SSOController(
     }
 
     /// <summary>
-    /// 生成安全的授权码
-    /// </summary>
-    /// <returns>安全的授权码</returns>
-    private static string GenerateSecureAuthCode()
-    {
-        using var rng = RandomNumberGenerator.Create();
-        var bytes = new byte[32];
-        rng.GetBytes(bytes);
-        // 使用URL安全的Base64编码
-        return Convert.ToBase64String(bytes)
-            .TrimEnd('=')
-            .Replace('+', '-')
-            .Replace('/', '_');
-    }
-
-    /// <summary>
     /// 授权码信息
     /// </summary>
-    [Serializable]
     public class AuthCodeInfo
     {
         public string ClientId { get; set; } = "";
         public string RedirectUri { get; set; } = "";
         public string UserId { get; set; } = "";
-        public string Token { get; set; } = "";
         public DateTime CreatedAt { get; set; }
         public string CodeChallenge { get; set; } = "";
         public string CodeChallengeMethod { get; set; } = "";
