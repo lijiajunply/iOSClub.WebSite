@@ -79,7 +79,7 @@ public class LoginService(
     private readonly IDatabase _db = redis.GetDatabase();
 
     private const string TokenPrefix = "token:";
-    private const int TokenExpiryHours = 2; // 与JwtHelper中的过期时间保持一致
+    private const int TokenExpiryHours = 1; // 与JwtHelper中的过期时间保持一致
 
     public async Task<string> Login(LoginModel model)
     {
@@ -110,12 +110,12 @@ public class LoginService(
         var token = jwtHelper.GetMemberToken(memberModel, model.RememberMe);
 
         // 将token存储到Redis中，设置过期时间
-        await _db.StringSetAsync(redisKey, token, TimeSpan.FromHours(TokenExpiryHours * (model.RememberMe ? 12 : 2)));
+        await _db.StringSetAsync(redisKey, token, TimeSpan.FromHours(TokenExpiryHours * (model.RememberMe ? 24 : 2)));
 
         // 存储用户信息，便于后续验证
         var userInfoKey = $"user:{model.UserId}";
         await _db.StringSetAsync(userInfoKey, JsonSerializer.Serialize(memberModel),
-            TimeSpan.FromHours(TokenExpiryHours * (model.RememberMe ? 12 : 2)));
+            TimeSpan.FromHours(TokenExpiryHours * (model.RememberMe ? 24 : 2)));
 
         return token;
     }

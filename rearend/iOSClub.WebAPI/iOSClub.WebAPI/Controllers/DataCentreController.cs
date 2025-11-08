@@ -175,8 +175,29 @@ public class DataCentreController(
     [HttpGet("clean")]
     public async Task<IActionResult> CleanData()
     {
-        // 清除所有缓存
-        var deletedKeys = await _db.KeyDeleteAsync("*");
-        return deletedKeys? BadRequest("出现问题") : Ok("缓存已清除");
+        try
+        {
+            // 获取Redis服务器实例
+            var server = redis.GetServer(redis.GetEndPoints().First());
+            
+            // 查找所有键
+            var keys = server.Keys(pattern: "*", pageSize: 1000);
+            
+            // 转换为数组
+            var keyArray = keys.ToArray();
+            
+            // 删除所有键并获取删除的数量
+            long deletedCount = 0;
+            if (keyArray.Length > 0)
+            {
+                deletedCount = await _db.KeyDeleteAsync(keyArray);
+            }
+            
+            return Ok($"缓存已清除，共清理了 {deletedCount} 个缓存项");
+        }
+        catch (Exception ex)
+        {
+            return BadRequest($"清除缓存时出现问题: {ex.Message}");
+        }
     }
 }
