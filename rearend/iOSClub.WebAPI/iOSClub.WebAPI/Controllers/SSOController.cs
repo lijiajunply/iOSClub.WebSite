@@ -417,7 +417,7 @@ public class SSOController(
     /// <param name="clientId">客户端ID</param>
     /// <returns>客户端应用信息</returns>
     [HttpGet("client-info")]
-    public async Task<IActionResult> GetClientInfo([FromQuery(Name = "client_id")] string clientId)
+    public async Task<IActionResult> GetClientInfo(string clientId)
     {
         if (string.IsNullOrEmpty(clientId))
             return BadRequest("无效的客户端ID");
