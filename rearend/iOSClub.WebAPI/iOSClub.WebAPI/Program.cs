@@ -33,10 +33,6 @@ builder.Services.AddAuthentication(options =>
     })
     .AddJwtBearer(options =>
     {
-        options.Events = new JwtBearerEvents
-        {
-            // 让TokenActionFilter负责处理token验证
-        };
         options.TokenValidationParameters = new TokenValidationParameters()
         {
             ValidateIssuer = true,
@@ -108,7 +104,7 @@ builder.Services.AddCors(options =>
 
 var sql = Environment.GetEnvironmentVariable("SQL", EnvironmentVariableTarget.Process);
 
-if (string.IsNullOrEmpty(sql) && builder.Environment.IsDevelopment())
+if (string.IsNullOrEmpty(sql))
 {
     sql = builder.Configuration["SQL"];
 }

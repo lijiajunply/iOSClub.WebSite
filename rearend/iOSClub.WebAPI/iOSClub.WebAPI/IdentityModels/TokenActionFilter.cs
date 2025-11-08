@@ -30,8 +30,8 @@ public class TokenActionFilter : ActionFilterAttribute
             if (tokenObj.ValidTo < DateTime.UtcNow)
                 return;
 
-            // 创建带有认证类型的ClaimsIdentity
-            var claimsIdentity = new ClaimsIdentity(tokenObj.Claims, "JwtToken");
+            // 创建带有认证类型的ClaimsIdentity，使用JWT默认认证方案
+            var claimsIdentity = new ClaimsIdentity(tokenObj.Claims, Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme);
             var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
             context.HttpContext.User = claimsPrincipal;
         }
