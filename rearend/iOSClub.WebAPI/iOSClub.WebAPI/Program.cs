@@ -29,22 +29,25 @@ builder.Services.AddAuthorizationCore();
 builder.Services.AddAuthentication(options =>
     {
         options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme; // 对API请求使用JWT认证
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
     })
     .AddJwtBearer(options =>
     {
+        options.Events = new JwtBearerEvents
+        {
+            // 让TokenActionFilter负责处理token验证
+        };
         options.TokenValidationParameters = new TokenValidationParameters()
         {
-            ValidateIssuer = true, //是否验证Issuer
+            ValidateIssuer = true,
             ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "iOSClub",
-            ValidateAudience = true, //是否验证Audience
+            ValidateAudience = true,
             ValidAudience = builder.Configuration["Jwt:Audience"] ?? "iOSClub",
-            ValidateIssuerSigningKey = true, //是否验证SecurityKey
-
+            ValidateIssuerSigningKey = true,
             IssuerSigningKey =
-                new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:SecretKey"]!)), //SecurityKey
-            ValidateLifetime = true, //是否验证失效时间
-            ClockSkew = TimeSpan.FromSeconds(30), //过期时间容错值，解决服务器端时间不同步问题（秒）
+                new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:SecretKey"]!)),
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromSeconds(30),
             RequireExpirationTime = true,
         };
     })

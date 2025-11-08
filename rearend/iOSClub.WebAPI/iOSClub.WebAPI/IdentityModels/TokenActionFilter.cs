@@ -9,21 +9,36 @@ public class TokenActionFilter : ActionFilterAttribute
 {
     public override void OnActionExecuting(ActionExecutingContext context)
     {
+        // 如果用户已经通过其他方式认证，则不处理
+        if (context.HttpContext.User.Identity?.IsAuthenticated == true)
+            return;
+
         var bearer = context.HttpContext.Request.Headers.Authorization.FirstOrDefault();
-        if (string.IsNullOrEmpty(bearer) || !bearer.Contains("Bearer")) return;
+        if (string.IsNullOrEmpty(bearer) || !bearer.StartsWith("Bearer ")) 
+            return;
 
         try
         {
-            var jwt = bearer.Split(' ');
-            var tokenObj = new JwtSecurityToken(jwt[1]);
+            var jwtParts = bearer.Split(' ', 2);
+            if (jwtParts.Length != 2) 
+                return;
 
-            var claimsIdentity = new ClaimsIdentity(tokenObj.Claims);
+            var token = jwtParts[1];
+            var tokenObj = new JwtSecurityToken(token);
+
+            // 确保token没有过期
+            if (tokenObj.ValidTo < DateTime.UtcNow)
+                return;
+
+            // 创建带有认证类型的ClaimsIdentity
+            var claimsIdentity = new ClaimsIdentity(tokenObj.Claims, "JwtToken");
             var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
             context.HttpContext.User = claimsPrincipal;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // 如果JWT令牌无效，我们不设置用户主体，让默认认证处理
+            // 记录异常但不中断流程
+            Console.WriteLine($"Token validation error: {ex.Message}");
         }
     }
 }
