@@ -313,37 +313,37 @@ public class SSOController(
         if (string.IsNullOrEmpty(grantType))
         {
             logger.LogWarning("Token exchange failed: missing grant_type parameter");
-            return BadRequest("缺少必需参数: grant_type");
+            return BadRequest(new { error = "invalid_request", error_description = "缺少必需参数: grant_type" });
         }
 
         if (grantType != "authorization_code")
         {
             logger.LogWarning("Token exchange failed: unsupported grant type {GrantType}", grantType);
-            return BadRequest("不支持的授权类型: " + grantType);
+            return BadRequest(new { error = "unsupported_grant_type", error_description = "不支持的授权类型: " + grantType });
         }
 
         if (string.IsNullOrEmpty(code))
         {
             logger.LogWarning("Token exchange failed: missing code parameter");
-            return BadRequest("缺少必需参数: code");
+            return BadRequest(new { error = "invalid_request", error_description = "缺少必需参数: code" });
         }
 
         if (string.IsNullOrEmpty(clientId))
         {
             logger.LogWarning("Token exchange failed: missing client_id parameter");
-            return BadRequest("缺少必需参数: client_id");
+            return BadRequest(new { error = "invalid_request", error_description = "缺少必需参数: client_id" });
         }
 
         if (string.IsNullOrEmpty(clientSecret))
         {
             logger.LogWarning("Token exchange failed: missing client_secret parameter");
-            return BadRequest("缺少必需参数: client_secret");
+            return BadRequest(new { error = "invalid_request", error_description = "缺少必需参数: client_secret" });
         }
 
         if (string.IsNullOrEmpty(redirectUri))
         {
             logger.LogWarning("Token exchange failed: missing redirect_uri parameter");
-            return BadRequest("缺少必需参数: redirect_uri");
+            return BadRequest(new { error = "invalid_request", error_description = "缺少必需参数: redirect_uri" });
         }
 
         // 验证客户端凭据
@@ -351,7 +351,7 @@ public class SSOController(
         if (clientApp == null)
         {
             logger.LogWarning("Token exchange failed: invalid client credentials for client {ClientId}", clientId);
-            return Unauthorized("无效的客户端凭据");
+            return Unauthorized(new { error = "invalid_client", error_description = "无效的客户端凭据" });
         }
 
         // 验证回调URL是否匹配
@@ -359,7 +359,7 @@ public class SSOController(
         {
             logger.LogWarning("Token exchange failed: invalid redirect URI {RedirectUri} for client {ClientId}",
                 redirectUri, clientId);
-            return BadRequest("无效的回调地址");
+            return BadRequest(new { error = "invalid_request", error_description = "无效的回调地址" });
         }
 
         // 从Redis中获取授权码信息
@@ -369,7 +369,7 @@ public class SSOController(
         if (authCodeInfoJson.IsNullOrEmpty)
         {
             logger.LogWarning("Token exchange failed: invalid authorization code {Code}", code);
-            return BadRequest("无效的授权码");
+            return BadRequest(new { error = "invalid_grant", error_description = "无效的授权码" });
         }
 
         try
@@ -380,7 +380,7 @@ public class SSOController(
             {
                 logger.LogWarning(
                     "Token exchange failed: unable to deserialize authorization code info for code {Code}", code);
-                return BadRequest("无效的授权码");
+                return BadRequest(new { error = "invalid_grant", error_description = "无效的授权码" });
             }
 
             // 验证授权码是否过期（5分钟有效期）
@@ -389,7 +389,7 @@ public class SSOController(
                 // 删除过期的授权码
                 await _redisDb.KeyDeleteAsync(codeKey);
                 logger.LogWarning("Token exchange failed: expired authorization code {Code}", code);
-                return BadRequest("授权码已过期");
+                return BadRequest(new { error = "invalid_grant", error_description = "授权码已过期" });
             }
 
             // 验证授权码与请求参数是否匹配
@@ -397,7 +397,7 @@ public class SSOController(
             {
                 logger.LogWarning("Token exchange failed: authorization code {Code} does not match request parameters",
                     code);
-                return BadRequest("授权码与请求参数不匹配");
+                return BadRequest(new { error = "invalid_grant", error_description = "授权码与请求参数不匹配" });
             }
 
             // 如果授权码有PKCE要求，验证code_verifier
@@ -408,7 +408,7 @@ public class SSOController(
                     logger.LogWarning(
                         "Token exchange failed: missing code_verifier for PKCE-enabled authorization code {Code}",
                         code);
-                    return BadRequest("缺少必需参数: code_verifier");
+                    return BadRequest(new { error = "invalid_request", error_description = "缺少必需参数: code_verifier" });
                 }
 
                 // 验证code_verifier长度
@@ -416,7 +416,7 @@ public class SSOController(
                 {
                     logger.LogWarning(
                         "Token exchange failed: invalid code_verifier length for authorization code {Code}", code);
-                    return BadRequest("code_verifier长度无效");
+                    return BadRequest(new { error = "invalid_request", error_description = "code_verifier长度无效" });
                 }
 
                 // 根据challenge method验证code_verifier
@@ -432,7 +432,7 @@ public class SSOController(
                     {
                         logger.LogWarning("Token exchange failed: invalid code_verifier for authorization code {Code}",
                             code);
-                        return BadRequest("无效的code_verifier");
+                        return BadRequest(new { error = "invalid_grant", error_description = "无效的code_verifier" });
                     }
                 }
                 else if (authCodeInfo.CodeChallengeMethod == "plain")
@@ -441,7 +441,7 @@ public class SSOController(
                     {
                         logger.LogWarning("Token exchange failed: invalid code_verifier for authorization code {Code}",
                             code);
-                        return BadRequest("无效的code_verifier");
+                        return BadRequest(new { error = "invalid_grant", error_description = "无效的code_verifier" });
                     }
                 }
                 else
@@ -449,7 +449,7 @@ public class SSOController(
                     logger.LogWarning(
                         "Token exchange failed: unsupported code_challenge_method {Method} for authorization code {Code}",
                         authCodeInfo.CodeChallengeMethod, code);
-                    return BadRequest("不支持的code_challenge_method");
+                    return BadRequest(new { error = "invalid_request", error_description = "不支持的code_challenge_method" });
                 }
             }
 
@@ -458,7 +458,7 @@ public class SSOController(
             if (member == null)
             {
                 logger.LogWarning("Token exchange failed: user {UserId} not found", authCodeInfo.UserId);
-                return BadRequest("用户不存在");
+                return BadRequest(new { error = "invalid_grant", error_description = "用户不存在" });
             }
 
             var token = await loginService.GetToken(member.UserId);
@@ -466,7 +466,7 @@ public class SSOController(
             {
                 logger.LogError("Token exchange failed: unable to generate token for user {UserId}",
                     authCodeInfo.UserId);
-                return BadRequest("令牌生成失败");
+                return BadRequest(new { error = "server_error", error_description = "令牌生成失败" });
             }
 
             // 删除已使用的授权码（一次性使用）
@@ -485,7 +485,7 @@ public class SSOController(
         catch (Exception ex)
         {
             logger.LogError(ex, "Token exchange failed with exception for code {Code}", code);
-            return BadRequest("无效的授权码");
+            return BadRequest(new { error = "invalid_grant", error_description = "无效的授权码" });
         }
     }
 
