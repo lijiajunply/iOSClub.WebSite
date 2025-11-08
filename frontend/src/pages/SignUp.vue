@@ -49,46 +49,50 @@
             <n-form-item 
               path="name" 
               label="姓名" 
-              :rules="{ required: true, message: '请输入姓名', trigger: 'blur' }"
+              :rules="[{ required: true, message: '请输入姓名', trigger: 'blur' }]"
             >
               <n-input 
                 v-model:value="form.name" 
                 placeholder="请输入姓名" 
-                :attrs="{ class: 'rounded-lg' }"
+                  required
+                  :attrs="{ class: 'rounded-lg' }"
               />
             </n-form-item>
             <n-form-item 
               path="studentId" 
               label="学号" 
-              :rules="{ required: true, message: '请输入学号', trigger: 'blur' }"
+              :rules="[{ required: true, message: '请输入学号', trigger: 'blur' }]"
             >
               <n-input 
                 v-model:value="form.studentId" 
                 placeholder="请输入学号" 
+                required
                 :attrs="{ class: 'rounded-lg' }"
               />
             </n-form-item>
             <n-form-item 
               path="gender" 
               label="性别" 
-              :rules="{ required: true, message: '请选择性别', trigger: 'change' }"
+              :rules="[{ required: true, message: '请选择性别', trigger: 'change' }]"
             >
               <n-select 
                 v-model:value="form.gender" 
                 :options="genderOptions" 
                 placeholder="请选择性别" 
+                required
                 :attrs="{ class: 'rounded-lg' }"
               />
             </n-form-item>
             <n-form-item 
               path="political" 
               label="政治面貌" 
-              :rules="{ required: true, message: '请选择政治面貌', trigger: 'change' }"
+              :rules="[{ required: true, message: '请选择政治面貌', trigger: 'change' }]"
             >
               <n-select 
                 v-model:value="form.political" 
                 :options="politicalOptions" 
                 placeholder="请选择政治面貌" 
+                required
                 :attrs="{ class: 'rounded-lg' }"
               />
             </n-form-item>
@@ -99,34 +103,37 @@
             <n-form-item 
               path="major" 
               label="学院" 
-              :rules="{ required: true, message: '请选择学院', trigger: 'change' }"
+              :rules="[{ required: true, message: '请选择学院', trigger: 'change' }]"
             >
               <n-select 
                 v-model:value="form.major" 
                 :options="academyOptions" 
                 placeholder="请选择学院" 
+                required
                 :attrs="{ class: 'rounded-lg' }"
               />
             </n-form-item>
             <n-form-item 
               path="className" 
               label="班级" 
-              :rules="{ required: true, message: '请输入班级', trigger: 'blur' }"
+              :rules="[{ required: true, message: '请输入班级', trigger: 'blur' }]"
             >
               <n-input 
                 v-model:value="form.className" 
                 placeholder="请输入班级 如机电2401" 
+                required
                 :attrs="{ class: 'rounded-lg' }"
               />
             </n-form-item>
             <n-form-item 
               path="phone" 
               label="电话号码" 
-              :rules="{ required: true, message: '请输入电话号码', trigger: 'blur' }"
+              :rules="[{ required: true, message: '请输入电话号码', trigger: 'blur' }]"
             >
               <n-input 
                 v-model:value="form.phone" 
                 placeholder="请输入电话号码" 
+                required
                 :attrs="{ class: 'rounded-lg' }"
               />
             </n-form-item>
@@ -135,18 +142,13 @@
               label="邮箱" 
               :rules="[
                 { required: true, message: '请输入邮箱', trigger: 'blur' },
-                {
-                  validator: (_: any, value: any) => {
-                    const emailReg = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-                    return emailReg.test(value) || '请输入有效的邮箱地址'
-                  },
-                  trigger: 'blur'
-                }
+                { validator: emailValidator, trigger: 'blur' }
               ]"
             >
               <n-input 
                 v-model:value="form.email" 
                 placeholder="请输入邮箱" 
+                required
                 :attrs="{ class: 'rounded-lg' }"
               />
             </n-form-item>
@@ -157,12 +159,13 @@
             <n-form-item 
               path="password" 
               label="密码" 
-              :rules="{ required: true, message: '请输入密码', trigger: 'blur' }"
+              :rules="[{ required: true, message: '请输入密码', trigger: 'blur' }]"
             >
               <n-input 
                 v-model:value="form.password" 
                 type="password" 
                 placeholder="请输入密码" 
+                required
                 :attrs="{ class: 'rounded-lg' }"
               />
             </n-form-item>
@@ -183,6 +186,7 @@
                 v-model:value="form.confirmPassword" 
                 type="password" 
                 placeholder="请再次输入密码" 
+                required
                 :attrs="{ class: 'rounded-lg' }"
               />
             </n-form-item>
@@ -260,7 +264,7 @@
 </template>
 
 <script setup lang="ts">
-import {ref} from 'vue'
+import {ref, reactive} from 'vue'
 import {useRouter} from 'vue-router'
 import {NInput, NForm, NFormItem, NSelect} from 'naive-ui'
 import {useAuthorizationStore} from '../stores/Authorization'
@@ -279,8 +283,8 @@ const currentStep = ref(1)
 // 步骤标题
 const steps = ['基本信息', '学校信息', '账号设置']
 
-// 表单数据
-const form = ref({
+// 表单数据（使用 reactive 以便 Naive UI 正确高亮验证状态）
+const form = reactive({
   name: '',
   studentId: '',
   gender: '',
@@ -334,12 +338,44 @@ const academyOptions = [
   {label: '国际教育学院', value: '国际教育学院'},
 ]
 
+// 邮箱校验器（复用）
+const emailValidator = (_rule: any, value: string) => {
+  if (!value) return true // 让 required 规则处理空值
+  const emailReg = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  return emailReg.test(value) || '请输入有效的邮箱地址'
+}
+
 // 下一步
 const nextStep = async () => {
   errorMsg.value = ''
   
   // 验证当前步骤的表单
   if (!formRef.value) return
+
+  // 先做一个轻量的必填检查作为回退（防止 Naive UI validate 在某些版本下未能触发）
+  const requiredMissing = (() => {
+    if (currentStep.value === 1) {
+      return !form.name || !form.studentId || !form.gender || !form.political
+    }
+    if (currentStep.value === 2) {
+      return !form.major || !form.className || !form.phone || !form.email
+    }
+    if (currentStep.value === 3) {
+      return !form.password || !form.confirmPassword
+    }
+    return false
+  })()
+
+  if (requiredMissing) {
+    // 触发 Naive UI 的 validate 来显示红色提示（如果可用），并阻止前进
+    try {
+      await formRef.value.validate()
+    } catch (e) {
+      // ignore, validate should show field errors
+    }
+    errorMsg.value = '请填写本步骤的所有必填项'
+    return
+  }
   
   try {
     // 使用 validate 方法验证特定字段
@@ -406,23 +442,23 @@ const submitRegistration = async () => {
   try {
     // 密码哈希处理
     const encoder = new TextEncoder()
-    const data = encoder.encode(form.value.password)
+  const data = encoder.encode(form.password)
     const hashBuffer = await crypto.subtle.digest('SHA-256', data)
     const hashArray = Array.from(new Uint8Array(hashBuffer))
     const passwordHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
 
     // 提交注册请求
     const res = await authorizationStore.signup({
-      userName: form.value.name,
-      userId: form.value.studentId,
-      academy: form.value.major,
-      politicalLandscape: form.value.political,
-      gender: form.value.gender,
-      className: form.value.className,
-      phoneNum: form.value.phone,
+      userName: form.name,
+      userId: form.studentId,
+      academy: form.major,
+      politicalLandscape: form.political,
+      gender: form.gender,
+      className: form.className,
+      phoneNum: form.phone,
       joinTime: new Date().toISOString(),
       passwordHash: passwordHash,
-      eMail: form.value.email
+      eMail: form.email
     })
 
     if (!res) {
