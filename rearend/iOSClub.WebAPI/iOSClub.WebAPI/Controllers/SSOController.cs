@@ -15,6 +15,7 @@ namespace iOSClub.WebAPI.Controllers;
 // ReSharper disable once InconsistentNaming
 public class SSOController(
     ILoginService loginService,
+    IStudentRepository studentRepository,
     IClientApplicationRepository clientAppRepository,
     IConnectionMultiplexer redis,
     IConfiguration config
@@ -317,17 +318,22 @@ public class SSOController(
     /// <returns>用户信息</returns>
     [HttpGet("userinfo")]
     [Authorize]
-    public IActionResult UserInfo()
+    public async Task<IActionResult> UserInfo()
     {
         var user = HttpContext.User.GetUser();
         if (user == null)
             return Unauthorized();
 
+        var member = await studentRepository.GetByIdAsync(user.UserId);
+
+        if (member == null)
+            return Unauthorized();
+
         return Ok(new
         {
             sub = user.UserId,
-            name = user.UserName,
-            email = user.EMail,
+            name = member.EMail,
+            email = member.EMail,
             role = user.Identity
         });
     }

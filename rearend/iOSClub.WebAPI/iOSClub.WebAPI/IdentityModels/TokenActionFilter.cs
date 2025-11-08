@@ -49,9 +49,7 @@ public static class TokenHelper
     {
         var claimId = claimsPrincipal?.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
         var claimRole = claimsPrincipal?.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role);
-        var name = claimsPrincipal?.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.UniqueName);
-        var email = claimsPrincipal?.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email);
-        if (claimId.IsNull() || claimRole.IsNull() || name.IsNull() || email.IsNull())
+        if (claimId.IsNull() || claimRole.IsNull())
         {
             return null;
         }
@@ -60,8 +58,6 @@ public static class TokenHelper
         {
             UserId = claimId!.Value,
             Identity = claimRole!.Value,
-            UserName = name!.Value,
-            EMail = email!.Value
         };
     }
 
