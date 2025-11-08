@@ -300,12 +300,12 @@ public class SSOController(
     /// <returns>访问令牌</returns>
     [HttpPost("token")]
     public async Task<IActionResult> Token(
-        [FromForm] string grantType,
+        [FromForm(Name = "grant_type")] string grantType,
         [FromForm] string code,
-        [FromForm] string clientId,
-        [FromForm] string clientSecret,
-        [FromForm] string redirectUri,
-        [FromForm] string? codeVerifier = null)
+        [FromForm(Name = "client_id")] string clientId,
+        [FromForm(Name = "client_secret")] string clientSecret,
+        [FromForm(Name = "redirect_uri")] string redirectUri,
+        [FromForm(Name = "code_verifier")] string? codeVerifier = null)
     {
         logger.LogInformation("Token exchange request received for client {ClientId}", clientId);
 
@@ -449,7 +449,8 @@ public class SSOController(
                     logger.LogWarning(
                         "Token exchange failed: unsupported code_challenge_method {Method} for authorization code {Code}",
                         authCodeInfo.CodeChallengeMethod, code);
-                    return BadRequest(new { error = "invalid_request", error_description = "不支持的code_challenge_method" });
+                    return BadRequest(
+                        new { error = "invalid_request", error_description = "不支持的code_challenge_method" });
                 }
             }
 
@@ -699,7 +700,7 @@ public class SSOController(
     /// 生成安全的授权码
     /// </summary>
     /// <returns>安全的授权码</returns>
-    private string GenerateSecureAuthCode()
+    private static string GenerateSecureAuthCode()
     {
         using var rng = RandomNumberGenerator.Create();
         var bytes = new byte[32];
@@ -714,6 +715,7 @@ public class SSOController(
     /// <summary>
     /// 授权状态信息
     /// </summary>
+    [Serializable]
     public class AuthState
     {
         public string ClientId { get; set; } = "";
@@ -727,6 +729,7 @@ public class SSOController(
     /// <summary>
     /// OAuth用户信息
     /// </summary>
+    [Serializable]
     public class OAuthUserInfo
     {
         public string UserId { get; set; } = "";
@@ -737,6 +740,7 @@ public class SSOController(
     /// <summary>
     /// 授权码信息
     /// </summary>
+    [Serializable]
     public class AuthCodeInfo
     {
         public string ClientId { get; set; } = "";
