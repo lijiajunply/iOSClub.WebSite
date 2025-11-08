@@ -4,7 +4,6 @@ using iOSClub.Data.DataModels;
 using iOSClub.DataApi.Repositories;
 using iOSClub.DataApi.Services;
 using iOSClub.WebAPI.IdentityModels;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
@@ -30,7 +29,7 @@ builder.Services.AddAuthorizationCore();
 builder.Services.AddAuthentication(options =>
     {
         options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = "OAuth2"; // 总是使用OAuth2作为默认方案
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme; // 对API请求使用JWT认证
     })
     .AddJwtBearer(options =>
     {
