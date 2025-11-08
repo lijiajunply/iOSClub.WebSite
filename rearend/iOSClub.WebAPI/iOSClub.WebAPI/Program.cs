@@ -25,14 +25,11 @@ builder.Services.AddOpenApi(opt => { opt.AddDocumentTransformer<BearerSecuritySc
 #region 身份验证
 
 builder.Services.AddAuthorizationCore();
-// 只有在配置了 OAuth2 的情况下才添加 OAuth2 认证
-// var oAuthConfig = builder.Configuration.GetSection("OAuth2");
-// var clientId = oAuthConfig["ClientId"];
 
-var authenticationBuilder = builder.Services.AddAuthentication(options =>
+builder.Services.AddAuthentication(options =>
     {
         options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = "OAuth2"; // 总是使用OAuth2作为默认挑战方案
+        options.DefaultChallengeScheme = "OAuth2"; // 总是使用OAuth2作为默认方案
     })
     .AddJwtBearer(options =>
     {
@@ -50,19 +47,14 @@ var authenticationBuilder = builder.Services.AddAuthentication(options =>
             ClockSkew = TimeSpan.FromSeconds(30), //过期时间容错值，解决服务器端时间不同步问题（秒）
             RequireExpirationTime = true,
         };
+    }).AddCookie("OAuth2", options =>
+    {
+        options.LoginPath = "/oauth-login"; // 指向我们的OAuth登录页面
+        options.LogoutPath = "/logout";
+        options.AccessDeniedPath = "/access-denied";
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
+        options.SlidingExpiration = true;
     });
-
-// 配置我们自己的OAuth2认证系统
-// 由于我们是OAuth提供商，我们需要提供登录页面和回调处理
-// 这里我们使用Cookie认证作为基础，因为我们自己处理登录流程
-authenticationBuilder.AddCookie("OAuth2", options =>
-{
-    options.LoginPath = "/oauth-login"; // 指向我们的OAuth登录页面
-    options.LogoutPath = "/logout";
-    options.AccessDeniedPath = "/access-denied";
-    options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
-    options.SlidingExpiration = true;
-});
 
 #endregion
 
@@ -88,7 +80,8 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.WithOrigins("https://ios.zeabur.app", "http://localhost:5173", "https://*.xauat.site/", "http://localhost:3000") // 允许指定来源
+        policy.WithOrigins("https://ios.zeabur.app", "http://localhost:5173", "https://*.xauat.site/",
+                "http://localhost:3000") // 允许指定来源
             .AllowAnyMethod()
             .AllowAnyHeader()
             .AllowCredentials(); // 如果需要发送凭据（如cookies、认证头等）

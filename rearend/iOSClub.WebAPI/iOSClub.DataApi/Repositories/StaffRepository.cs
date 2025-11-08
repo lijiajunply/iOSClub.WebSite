@@ -1,6 +1,6 @@
 using iOSClub.Data;
 using iOSClub.Data.DataModels;
-using iOSClub.DataApi.ShowModels;
+using iOSClub.Data.ShowModels;
 using Microsoft.EntityFrameworkCore;
 
 namespace iOSClub.DataApi.Repositories;

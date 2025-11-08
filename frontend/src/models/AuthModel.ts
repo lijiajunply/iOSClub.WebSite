@@ -1,7 +1,8 @@
 // 登录模型接口
 export interface LoginModel {
-  id: string;
-  name: string;
+  userId: string;
+  password: string;
+  rememberMe: boolean;
 }
 
 export interface MemberModel {
@@ -30,13 +31,4 @@ export interface StudentModel {
   joinTime: string;
   passwordHash: string;
   eMail: string | null;
-}
-
-// 组织注册记录类
-export class OrgSignRecord {
-  constructor(
-    public readonly url1: string,
-    public readonly url2: string
-  ) {
-  }
 }

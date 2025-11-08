@@ -1,6 +1,5 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using iOSClub.Data.DataModels;
 using iOSClub.Data.ShowModels;
 using Microsoft.AspNetCore.Mvc.Filters;
 
@@ -12,12 +11,20 @@ public class TokenActionFilter : ActionFilterAttribute
     {
         var bearer = context.HttpContext.Request.Headers.Authorization.FirstOrDefault();
         if (string.IsNullOrEmpty(bearer) || !bearer.Contains("Bearer")) return;
-        var jwt = bearer.Split(' ');
-        var tokenObj = new JwtSecurityToken(jwt[1]);
 
-        var claimsIdentity = new ClaimsIdentity(tokenObj.Claims);
-        var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
-        context.HttpContext.User = claimsPrincipal;
+        try
+        {
+            var jwt = bearer.Split(' ');
+            var tokenObj = new JwtSecurityToken(jwt[1]);
+
+            var claimsIdentity = new ClaimsIdentity(tokenObj.Claims);
+            var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
+            context.HttpContext.User = claimsPrincipal;
+        }
+        catch (Exception)
+        {
+            // 如果JWT令牌无效，我们不设置用户主体，让默认认证处理
+        }
     }
 }
 

@@ -59,7 +59,7 @@ export const useAuthorizationStore = defineStore('AuthorizationId', {
                 }
                 this.Authorization = a;
                 localStorage.setItem('Authorization', a);
-                localStorage.setItem('UserId', user.id);
+                localStorage.setItem('UserId', user.userId);
                 return true;
             } catch (e) {
                 return false;

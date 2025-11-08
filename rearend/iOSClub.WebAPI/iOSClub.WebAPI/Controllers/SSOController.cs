@@ -16,7 +16,9 @@ namespace iOSClub.WebAPI.Controllers;
 public class SSOController(
     ILoginService loginService,
     IClientApplicationRepository clientAppRepository,
-    IConnectionMultiplexer redis) : ControllerBase
+    IConnectionMultiplexer redis,
+    IConfiguration config
+) : ControllerBase
 {
     private readonly IDatabase _redisDb = redis.GetDatabase();
 
@@ -63,9 +65,16 @@ public class SSOController(
         HttpContext.Session.SetString("OAuthRedirectUri", redirectUri);
         HttpContext.Session.SetString("OAuthResponseType", responseType);
 
+        var clientAppUrl = Environment.GetEnvironmentVariable("CLIENTAPPURL", EnvironmentVariableTarget.Process);
+
+        if (string.IsNullOrEmpty(clientAppUrl))
+        {
+            clientAppUrl = config["ClientAppUrl"] ?? "http://localhost:5173";
+        }
+
         // 重定向到我们自己的OAuth登录页面
         return Redirect(
-            $"http://localhost:5173/oauth-login?state={encryptedState}&client_id={clientId}&redirect_uri={Uri.EscapeDataString(redirectUri)}&response_type={responseType}");
+            $"{clientAppUrl}/oauth-login?state={encryptedState}&client_id={clientId}&redirect_uri={Uri.EscapeDataString(redirectUri)}&response_type={responseType}");
     }
 
     /// <summary>
@@ -214,7 +223,7 @@ public class SSOController(
         // 添加参数验证
         if (string.IsNullOrEmpty(grantType))
             return BadRequest("缺少必需参数: grant_type");
-            
+
         if (grantType != "authorization_code")
             return BadRequest("不支持的授权类型: " + grantType);
 

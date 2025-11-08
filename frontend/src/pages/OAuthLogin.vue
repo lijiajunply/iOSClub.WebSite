@@ -130,8 +130,9 @@ const handleLogin = async () => {
       try {
         // 执行登录
         const res = await authorizationStore.login({
-          id: form.value.studentId,
-          name: form.value.password
+          userId: form.value.studentId,
+          password: form.value.password,
+          rememberMe: form.value.rememberMe
         })
 
         if (!res) {

@@ -4,8 +4,7 @@ using iOSClub.DataApi.Services;
 using iOSClub.WebAPI.IdentityModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using LoginModel = iOSClub.Data.ShowModels.LoginModel;
-using MemberModel = iOSClub.Data.ShowModels.MemberModel;
+using iOSClub.Data.ShowModels;
 
 namespace iOSClub.WebAPI.Controllers;
 
@@ -44,14 +43,14 @@ public class AuthController(
     public async Task<ActionResult<string>> Login(LoginModel loginModel)
     {
         // 首先尝试使用LoginService进行学生登录
-        var studentToken = await loginService.Login(loginModel.Id, loginModel.Name);
+        var studentToken = await loginService.Login(loginModel);
         if (!string.IsNullOrEmpty(studentToken))
         {
             return studentToken;
         }
 
         // 如果学生登录失败，尝试员工登录
-        var staffToken = await loginService.StaffLogin(loginModel.Id, loginModel.Name);
+        var staffToken = await loginService.StaffLogin(loginModel);
         if (!string.IsNullOrEmpty(staffToken))
         {
             return staffToken;

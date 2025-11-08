@@ -9,7 +9,7 @@ namespace iOSClub.WebAPI.IdentityModels;
 
 public class JwtHelper(IConfiguration configuration) : IJwtHelper
 {
-    public string GetMemberToken(MemberModel model)
+    public string GetMemberToken(MemberModel model, bool rememberMe = false)
     {
         var now = DateTime.UtcNow;
         var jwtId = Guid.NewGuid().ToString(); // 用于防止重放攻击
@@ -34,7 +34,7 @@ public class JwtHelper(IConfiguration configuration) : IJwtHelper
             claims: claims,
             notBefore: now, // 生效时间
             expires: now.AddHours(int.Parse(configuration["Jwt:AccessTokenExpirationInMinutes"] ??
-                                            "2")),
+                                            "1") * (rememberMe ? 24 : 2)),
             signingCredentials: signingCredentials
         );
         return new JwtSecurityTokenHandler().WriteToken(securityToken);
