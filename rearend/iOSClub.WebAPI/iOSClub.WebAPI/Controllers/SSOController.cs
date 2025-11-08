@@ -7,6 +7,9 @@ using iOSClub.WebAPI.IdentityModels;
 using Microsoft.AspNetCore.Authorization;
 using Newtonsoft.Json;
 using StackExchange.Redis;
+using System.Security.Cryptography;
+using iOSClub.Data.DataModels;
+using iOSClub.Data.ShowModels;
 
 namespace iOSClub.WebAPI.Controllers;
 
@@ -18,7 +21,8 @@ public class SSOController(
     IStudentRepository studentRepository,
     IClientApplicationRepository clientAppRepository,
     IConnectionMultiplexer redis,
-    IConfiguration config
+    IConfiguration config,
+    IJwtHelper jwtHelper
 ) : ControllerBase
 {
     private readonly IDatabase _redisDb = redis.GetDatabase();
@@ -30,13 +34,18 @@ public class SSOController(
     /// <param name="redirectUri">第三方应用的回调地址</param>
     /// <param name="state">用于防止CSRF攻击的随机字符串</param>
     /// <param name="responseType">响应类型，支持code或token</param>
+    /// <param name="codeChallenge">PKCE代码挑战</param>
+    /// <param name="codeChallengeMethod">PKCE代码挑战方法</param>
     /// <returns>重定向到OAuth提供商</returns>
     [HttpGet("authorize")]
     public async Task<IActionResult> Authorize(
         [FromQuery(Name = "client_id")] string clientId,
         [FromQuery(Name = "redirect_uri")] string redirectUri,
         [FromQuery(Name = "state")] string state,
-        [FromQuery(Name = "response_type")] string responseType = "code")
+        [FromQuery(Name = "response_type")] string responseType = "code",
+        [FromQuery(Name = "code_challenge")] string? codeChallenge = null,
+        [FromQuery(Name = "code_challenge_method")]
+        string? codeChallengeMethod = null)
     {
         // 验证clientId是否有效
         var clientApp = await clientAppRepository.GetByClientIdAsync(clientId);
@@ -47,13 +56,36 @@ public class SSOController(
         if (!clientApp.IsRedirectUriValid(redirectUri))
             return BadRequest("无效的回调地址");
 
+        // 如果提供了code_challenge，验证其格式
+        if (!string.IsNullOrEmpty(codeChallenge))
+        {
+            // 验证code_challenge_method
+            if (string.IsNullOrEmpty(codeChallengeMethod))
+            {
+                codeChallengeMethod = "S256"; // 默认为S256
+            }
+
+            if (codeChallengeMethod != "S256" && codeChallengeMethod != "plain")
+            {
+                return BadRequest("不支持的code_challenge_method");
+            }
+
+            // 验证code_challenge长度
+            if (codeChallenge.Length < 43 || codeChallenge.Length > 128)
+            {
+                return BadRequest("code_challenge长度无效");
+            }
+        }
+
         // 将第三方应用的信息存储在state中，以便在回调时使用
         var authState = new AuthState
         {
             ClientId = clientId,
             RedirectUri = redirectUri,
             State = state,
-            ResponseType = responseType
+            ResponseType = responseType,
+            CodeChallenge = codeChallenge ?? "",
+            CodeChallengeMethod = codeChallengeMethod ?? ""
         };
 
         // 将authState序列化并加密，然后作为state参数传递
@@ -157,6 +189,8 @@ public class SSOController(
                 var stateInfo = System.Text.Json.JsonSerializer.Deserialize<AuthState>(decryptedState) ??
                                 throw new InvalidOperationException();
                 authState.State = stateInfo.State;
+                authState.CodeChallenge = stateInfo.CodeChallenge;
+                authState.CodeChallengeMethod = stateInfo.CodeChallengeMethod;
             }
             catch
             {
@@ -186,8 +220,26 @@ public class SSOController(
         // 根据responseType决定返回方式
         if (authState.ResponseType == "code")
         {
-            // 生成授权码（简化实现，实际应该有更复杂的逻辑）
-            var authCode = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(token));
+            // 生成安全的授权码并存储在Redis中
+            var authCode = GenerateSecureAuthCode();
+            var codeKey = $"oauth:code:{authCode}";
+
+            // 创建授权码信息对象（不包含实际的访问令牌）
+            var authCodeInfo = new AuthCodeInfo
+            {
+                ClientId = authState.ClientId,
+                RedirectUri = authState.RedirectUri,
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow,
+                CodeChallenge = authState.CodeChallenge,
+                CodeChallengeMethod = authState.CodeChallengeMethod
+            };
+
+            // 存储到Redis，设置5分钟过期时间
+            await _redisDb.StringSetAsync(
+                codeKey,
+                System.Text.Json.JsonSerializer.Serialize(authCodeInfo),
+                TimeSpan.FromMinutes(5));
 
             // 重定向到第三方应用的回调地址
             var redirectUrl = $"{authState.RedirectUri}?code={authCode}&state={authState.State}";
@@ -212,6 +264,7 @@ public class SSOController(
     /// <param name="clientId">客户端ID</param>
     /// <param name="clientSecret">客户端密钥</param>
     /// <param name="redirectUri">重定向URI</param>
+    /// <param name="codeVerifier">PKCE代码验证器</param>
     /// <returns>访问令牌</returns>
     [HttpPost("token")]
     public async Task<IActionResult> Token(
@@ -219,7 +272,8 @@ public class SSOController(
         [FromForm] string code,
         [FromForm] string clientId,
         [FromForm] string clientSecret,
-        [FromForm] string redirectUri)
+        [FromForm] string redirectUri,
+        [FromForm] string? codeVerifier = null)
     {
         // 添加参数验证
         if (string.IsNullOrEmpty(grantType))
@@ -249,30 +303,98 @@ public class SSOController(
         if (!clientApp.IsRedirectUriValid(redirectUri))
             return BadRequest("无效的回调地址");
 
+        // 从Redis中获取授权码信息
+        var codeKey = $"oauth:code:{code}";
+        var authCodeInfoJson = await _redisDb.StringGetAsync(codeKey);
+
+        if (authCodeInfoJson.IsNullOrEmpty)
+            return BadRequest("无效的授权码");
+
         try
         {
-            // 解码授权码获取令牌（简化实现）
-            var token = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(code));
+            var authCodeInfo = System.Text.Json.JsonSerializer.Deserialize<AuthCodeInfo>(authCodeInfoJson.ToString());
 
-            // 验证令牌是否有效
-            var isValid = await ValidateToken(token);
-            if (!isValid)
+            if (authCodeInfo == null)
                 return BadRequest("无效的授权码");
+
+            // 验证授权码是否过期（5分钟有效期）
+            if (authCodeInfo.CreatedAt.AddMinutes(5) < DateTime.UtcNow)
+            {
+                // 删除过期的授权码
+                await _redisDb.KeyDeleteAsync(codeKey);
+                return BadRequest("授权码已过期");
+            }
+
+            // 验证授权码与请求参数是否匹配
+            if (authCodeInfo.ClientId != clientId || authCodeInfo.RedirectUri != redirectUri)
+                return BadRequest("授权码与请求参数不匹配");
+
+            // 如果授权码有PKCE要求，验证code_verifier
+            if (!string.IsNullOrEmpty(authCodeInfo.CodeChallenge))
+            {
+                if (string.IsNullOrEmpty(codeVerifier))
+                {
+                    return BadRequest("缺少必需参数: code_verifier");
+                }
+
+                // 验证code_verifier长度
+                if (codeVerifier.Length is < 43 or > 128)
+                {
+                    return BadRequest("code_verifier长度无效");
+                }
+
+                // 根据challenge method验证code_verifier
+                if (authCodeInfo.CodeChallengeMethod == "S256")
+                {
+                    var challengeBytes = SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(codeVerifier));
+                    var challenge = Convert.ToBase64String(challengeBytes)
+                        .TrimEnd('=')
+                        .Replace('+', '-')
+                        .Replace('/', '_');
+
+                    if (!string.Equals(challenge, authCodeInfo.CodeChallenge, StringComparison.Ordinal))
+                    {
+                        return BadRequest("无效的code_verifier");
+                    }
+                }
+                else if (authCodeInfo.CodeChallengeMethod == "plain")
+                {
+                    if (!string.Equals(codeVerifier, authCodeInfo.CodeChallenge, StringComparison.Ordinal))
+                    {
+                        return BadRequest("无效的code_verifier");
+                    }
+                }
+                else
+                {
+                    return BadRequest("不支持的code_challenge_method");
+                }
+            }
+
+            // 为用户生成新的访问令牌
+            var member = await studentRepository.GetByIdAsync(authCodeInfo.UserId);
+            if (member == null)
+                return BadRequest("用户不存在");
+
+            var newToken = jwtHelper.GetMemberToken(MemberModel.AutoCopy<StudentModel, MemberModel>(member));
+
+            // 验证新生成的令牌是否有效
+            var isValid = await ValidateToken(newToken);
+            if (!isValid)
+                return BadRequest("令牌生成失败");
+
+            // 删除已使用的授权码（一次性使用）
+            await _redisDb.KeyDeleteAsync(codeKey);
 
             return Ok(new
             {
-                access_token = token,
+                access_token = newToken,
                 token_type = "Bearer",
                 expires_in = 7200 // 2小时
             });
         }
-        catch (FormatException)
+        catch (Exception)
         {
-            return BadRequest("无效的授权码格式");
-        }
-        catch (Exception ex)
-        {
-            return BadRequest($"处理请求时发生错误: {ex.Message}");
+            return BadRequest("无效的授权码");
         }
     }
 
@@ -443,15 +565,49 @@ public class SSOController(
         public string RedirectUri { get; set; } = "";
         public string State { get; set; } = "";
         public string ResponseType { get; set; } = "";
+        public string CodeChallenge { get; set; } = "";
+        public string CodeChallengeMethod { get; set; } = "";
     }
 
     /// <summary>
     /// OAuth用户信息
     /// </summary>
+    [Serializable]
     public class OAuthUserInfo
     {
         public string UserId { get; set; } = "";
         public string UserName { get; set; } = "";
         public string Token { get; set; } = "";
+    }
+
+    /// <summary>
+    /// 生成安全的授权码
+    /// </summary>
+    /// <returns>安全的授权码</returns>
+    private static string GenerateSecureAuthCode()
+    {
+        using var rng = RandomNumberGenerator.Create();
+        var bytes = new byte[32];
+        rng.GetBytes(bytes);
+        // 使用URL安全的Base64编码
+        return Convert.ToBase64String(bytes)
+            .TrimEnd('=')
+            .Replace('+', '-')
+            .Replace('/', '_');
+    }
+
+    /// <summary>
+    /// 授权码信息
+    /// </summary>
+    [Serializable]
+    public class AuthCodeInfo
+    {
+        public string ClientId { get; set; } = "";
+        public string RedirectUri { get; set; } = "";
+        public string UserId { get; set; } = "";
+        public string Token { get; set; } = "";
+        public DateTime CreatedAt { get; set; }
+        public string CodeChallenge { get; set; } = "";
+        public string CodeChallengeMethod { get; set; } = "";
     }
 }

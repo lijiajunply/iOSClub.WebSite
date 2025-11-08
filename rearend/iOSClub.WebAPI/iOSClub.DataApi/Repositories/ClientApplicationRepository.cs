@@ -95,10 +95,7 @@ public class ClientApplicationRepository(IDbContextFactory<ClubContext> contextF
         if (clientApplication is not { IsActive: true })
             return null;
 
-        // 在实际应用中，应该使用安全的密码比较方法
-        if (clientApplication.ClientSecret != clientSecret)
-            return null;
-
-        return clientApplication;
+        // 使用安全的密码比较方法
+        return !BCrypt.Net.BCrypt.Verify(clientSecret, clientApplication.ClientSecret) ? null : clientApplication;
     }
 }
