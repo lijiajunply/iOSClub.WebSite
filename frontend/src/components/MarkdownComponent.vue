@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import {nextTick, ref, watch, computed, onMounted, withDefaults} from "vue";
 import {Icon} from "@iconify/vue";
-import * as echarts from 'echarts'
 
 import MarkdownIt from 'markdown-it'
 import markdownitFootnote from 'markdown-it-footnote'
@@ -16,6 +15,7 @@ import markdownItContainer from 'markdown-it-container'
 
 import markdownItMermaid from '@jsonlee_12138/markdown-it-mermaid';
 import Prism from "prismjs"
+import {useRoute} from "vue-router";
 
 interface Content {
   title: string
@@ -32,6 +32,8 @@ const props = withDefaults(defineProps<{
   showNav: true
 })
 
+const route = useRoute();
+
 // 存储标题结构
 const headings = ref<Array<{ id: string; text: string; level: number; href: string; children: any[] }>>([])
 
@@ -44,10 +46,12 @@ const md = new MarkdownIt({
 
 // 使用 anchor 插件
 md.use(markdownItAnchor, {
-  permalink: true,
-  permalinkBefore: true,
-  permalinkSymbol: '#',
-  permalinkClass: 'apple-link-no-icon',
+  permalink: markdownItAnchor.permalink.ariaHidden({
+    placement: 'before',
+    space: true,
+    class: 'apple-link-no-icon',
+    renderHref: (href: string) => `${route.path}#${href}`,
+  })
 })
 md.use(markdownitFootnote)
 md.use(markdownitTaskList, {label: false, labelAfter: false})
@@ -164,28 +168,6 @@ const render = async (markdown: string) => {
 
   // 初始化图表
   setTimeout(() => {
-    // 初始化 ECharts 图表
-    const chartElements = document.querySelectorAll('.echarts-chart')
-    chartElements.forEach(element => {
-          const chartConfig = element.getAttribute('data-config')
-          if (chartConfig) {
-            try {
-              const option = JSON.parse(chartConfig)
-              const chart = echarts.init(element as HTMLElement)
-              chart.setOption(option)
-
-              // 响应式调整
-              const resizeObserver = new ResizeObserver(() => {
-                chart.resize()
-              })
-              resizeObserver.observe(element)
-            } catch (e) {
-              console.error('ECharts配置解析失败:', e)
-            }
-          }
-        }
-    )
-
     // 代码高亮
     Prism.highlightAll()
   }, 50)
@@ -249,6 +231,25 @@ const getIdentityClass = (identity: string) => {
       return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-100';
     default:
       return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-100';
+  }
+};
+
+// 添加处理锚点点击的方法
+const handleAnchorClick = (event: Event, href: string) => {
+  event.preventDefault();
+  const targetId = href.substring(1).toLowerCase(); // 移除 # 前缀
+  
+  // 对 targetId 进行 URL 编码
+  const encodedTargetId = encodeURIComponent(targetId);
+
+  console.log(targetId)
+
+  // 如果仍然找不到，尝试通过属性选择器查找
+  const targetElement = document.querySelector(`[id="${encodedTargetId}"]`);
+
+  if (targetElement) {
+    // 平滑滚动到目标元素
+    targetElement.scrollIntoView({behavior: 'smooth'});
   }
 };
 
@@ -329,13 +330,12 @@ onMounted(() => {
               :key="link.href"
               class="toc-item"
           >
-            <a
-                :href="link.href"
-                class="toc-link block py-1 text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
-                :class="{ 'active font-medium text-blue-600 dark:text-blue-400': false }"
+            <div
+                @click="handleAnchorClick($event, link.href)"
+                class="toc-link block py-1 text-sm link"
             >
               {{ link.title }}
-            </a>
+            </div>
 
             <!-- 子目录 -->
             <ul v-if="link.children && link.children.length > 0" class="ml-3 mt-1 space-y-1">
@@ -343,13 +343,12 @@ onMounted(() => {
                   v-for="subLink in link.children"
                   :key="subLink.href"
               >
-                <a
-                    :href="subLink.href"
-                    class="toc-link block py-1 text-xs text-gray-500 hover:text-gray-900 dark:text-gray-500 dark:hover:text-white transition-colors"
-                    :class="{ 'active font-medium text-blue-600 dark:text-blue-400': false }"
+                <div
+                    @click="handleAnchorClick($event, subLink.href)"
+                    class="toc-link block py-1 text-xs text-blue-500"
                 >
                   {{ subLink.title }}
-                </a>
+                </div>
               </li>
             </ul>
           </li>
@@ -375,45 +374,52 @@ onMounted(() => {
 @import "prismjs/themes/prism-tomorrow.min.css";
 
 /* 自定义块样式 */
-.custom-block {
-  @apply rounded-lg p-4 my-4 border;
+:deep(.custom-block) {
+  @apply rounded-lg p-4 my-4;
 }
 
-.custom-block-title {
+:deep(.custom-block-title) {
   @apply font-bold text-base mb-2;
 }
 
-.custom-block .warning {
-  @apply bg-amber-50 border-amber-500;
+.markdown-content :deep(.warning) {
+  @apply bg-amber-100 ;
 }
 
-.dark .custom-block .warning {
+.dark .markdown-content :deep(.warning) {
   @apply bg-amber-900;
 }
 
-.custom-block .danger {
-  @apply bg-red-50 border-red-500;
+.markdown-content :deep(.danger) {
+  @apply bg-red-100 ;
 }
 
-.dark .custom-block .danger {
+.dark .markdown-content :deep( .danger) {
   @apply bg-red-900;
 }
 
-.custom-block .tip {
-  @apply bg-blue-50 border-blue-500;
+.markdown-content :deep(.tip) {
+  @apply bg-blue-50;
 }
 
-.dark .custom-block .tip {
+.dark .markdown-content :deep(.tip) {
   @apply bg-blue-900;
 }
 
-/* 目录链接活动状态 */
-.toc-link.active {
-  @apply font-medium text-blue-600;
+.toc-link {
+  @apply text-sky-700 cursor-pointer;
 }
 
-.dark .toc-link.active {
-  @apply text-blue-400;
+.toc-link:hover {
+  @apply text-cyan-800;
+}
+
+.dark .toc-link {
+  @apply text-sky-300;
+}
+
+.dark .toc-link:hover {
+  @apply text-cyan-400;
 }
 
 /* Markdown 内容样式 */
