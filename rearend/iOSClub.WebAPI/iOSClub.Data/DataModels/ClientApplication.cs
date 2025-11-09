@@ -41,6 +41,7 @@ public class ClientApplication
     /// <summary>
     /// 回调URL白名单（多个URL用分号分隔）
     /// </summary>
+    [MaxLength(1000)]
     public string RedirectUris { get; set; } = "";
 
     /// <summary>
@@ -53,6 +54,11 @@ public class ClientApplication
     /// 是否启用
     /// </summary>
     public bool IsActive { get; set; } = true;
+
+    /// <summary>
+    /// 是否支持PKCE
+    /// </summary>
+    public bool SupportsPkce { get; set; }
 
     /// <summary>
     /// 创建时间

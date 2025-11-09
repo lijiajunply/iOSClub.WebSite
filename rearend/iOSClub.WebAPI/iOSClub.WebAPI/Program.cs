@@ -36,9 +36,9 @@ builder.Services.AddAuthentication(options =>
         options.TokenValidationParameters = new TokenValidationParameters()
         {
             ValidateIssuer = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "iOSClub",
+            ValidIssuer = "iOS Club of XAUAT",
             ValidateAudience = true,
-            ValidAudience = builder.Configuration["Jwt:Audience"] ?? "iOSClub",
+            ValidAudience = "iOS Club of XAUAT",
             ValidateIssuerSigningKey = true,
             IssuerSigningKey =
                 new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:SecretKey"]!)),
@@ -80,7 +80,10 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.WithOrigins("https://*.zeabur.app", "http://localhost:*", "https://*.xauat.site/")
+        policy.SetIsOriginAllowed(origin =>
+                origin.EndsWith(".zeabur.app") || // 支持所有 zeabur.app 子域名
+                origin.EndsWith(".xauat.site") ||  // 支持所有 xauat.site 子域名
+                origin.StartsWith("http://localhost")) // 支持本地开发环境
             .AllowAnyMethod()
             .AllowAnyHeader()
             .AllowCredentials(); // 如果需要发送凭据（如cookies、认证头等）

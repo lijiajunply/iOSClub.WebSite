@@ -57,7 +57,7 @@ public static class TokenHelper
         return new MemberModel()
         {
             UserId = claimId!.Value,
-            Identity = claimRole!.Value
+            Identity = claimRole!.Value,
         };
     }
 

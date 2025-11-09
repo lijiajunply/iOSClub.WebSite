@@ -66,6 +66,8 @@ public interface ILoginService
     /// <param name="newPassword">新密码</param>
     /// <returns>是否成功重置密码</returns>
     public Task<bool> ResetPasswordWithCode(string userId, string code, string newPassword);
+
+    public Task<string> GetToken(string userId);
 }
 
 public class LoginService(
@@ -79,7 +81,7 @@ public class LoginService(
     private readonly IDatabase _db = redis.GetDatabase();
 
     private const string TokenPrefix = "token:";
-    private const int TokenExpiryHours = 2; // 与JwtHelper中的过期时间保持一致
+    private const int TokenExpiryHours = 1; // 与JwtHelper中的过期时间保持一致
 
     public async Task<string> Login(LoginModel model)
     {
@@ -87,14 +89,22 @@ public class LoginService(
 
         var staff = await staffRepository.GetStaffByIdAsync(model.UserId);
         var identity = "Member";
+        string name;
         if (staff != null)
         {
             identity = staff.Identity;
+            name = staff.Name;
+        }
+        else
+        {
+            var stu = await studentRepository.GetByIdAsync(model.UserId);
+            name = stu?.UserName ?? "";
         }
 
         // 关于查询身份信息的，需要完成 StaffRepository 之后，在这里进行查询，我先随便给个值
         var memberModel = new MemberModel()
         {
+            UserName = name,
             UserId = model.UserId,
             Identity = identity,
             PasswordHash = model.Password
@@ -110,12 +120,12 @@ public class LoginService(
         var token = jwtHelper.GetMemberToken(memberModel, model.RememberMe);
 
         // 将token存储到Redis中，设置过期时间
-        await _db.StringSetAsync(redisKey, token, TimeSpan.FromHours(TokenExpiryHours * (model.RememberMe ? 12 : 2)));
+        await _db.StringSetAsync(redisKey, token, TimeSpan.FromHours(TokenExpiryHours * (model.RememberMe ? 24 : 2)));
 
         // 存储用户信息，便于后续验证
         var userInfoKey = $"user:{model.UserId}";
         await _db.StringSetAsync(userInfoKey, JsonSerializer.Serialize(memberModel),
-            TimeSpan.FromHours(TokenExpiryHours * (model.RememberMe ? 12 : 2)));
+            TimeSpan.FromHours(TokenExpiryHours * (model.RememberMe ? 24 : 2)));
 
         return token;
     }
@@ -134,6 +144,12 @@ public class LoginService(
         {
             return false;
         }
+    }
+
+    public async Task<string> GetToken(string userId)
+    {
+        var storedToken = await _db.StringGetAsync($"{TokenPrefix}{userId}");
+        return storedToken.HasValue && !string.IsNullOrEmpty(storedToken) ? storedToken.ToString() : "";
     }
 
     public async Task<bool> ValidateToken(string userId, string token)

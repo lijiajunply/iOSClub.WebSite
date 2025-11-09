@@ -1,0 +1,47 @@
+﻿using Microsoft.EntityFrameworkCore.Migrations;
+
+#nullable disable
+
+namespace iOSClub.Data.Migrations
+{
+    /// <inheritdoc />
+    public partial class AddClientPror : Migration
+    {
+        /// <inheritdoc />
+        protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.AlterColumn<string>(
+                name: "RedirectUris",
+                table: "ClientApplications",
+                type: "character varying(1000)",
+                maxLength: 1000,
+                nullable: false,
+                oldClrType: typeof(string),
+                oldType: "text");
+
+            migrationBuilder.AddColumn<bool>(
+                name: "SupportsPkce",
+                table: "ClientApplications",
+                type: "boolean",
+                nullable: false,
+                defaultValue: false);
+        }
+
+        /// <inheritdoc />
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.DropColumn(
+                name: "SupportsPkce",
+                table: "ClientApplications");
+
+            migrationBuilder.AlterColumn<string>(
+                name: "RedirectUris",
+                table: "ClientApplications",
+                type: "text",
+                nullable: false,
+                oldClrType: typeof(string),
+                oldType: "character varying(1000)",
+                oldMaxLength: 1000);
+        }
+    }
+}

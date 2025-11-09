@@ -66,6 +66,8 @@ public class ClientApplicationRepository(IDbContextFactory<ClubContext> contextF
     public async Task<bool> CreateAsync(ClientApplication clientApplication)
     {
         await using var context = await contextFactory.CreateDbContextAsync();
+        // 对客户端密钥进行哈希处理后再存储
+        clientApplication.ClientSecret = BCrypt.Net.BCrypt.HashPassword(clientApplication.ClientSecret);
         context.ClientApplications.Add(clientApplication);
         return await context.SaveChangesAsync() > 0;
     }
@@ -73,6 +75,14 @@ public class ClientApplicationRepository(IDbContextFactory<ClubContext> contextF
     public async Task<bool> UpdateAsync(ClientApplication clientApplication)
     {
         await using var context = await contextFactory.CreateDbContextAsync();
+        // 检查客户端密钥是否需要重新哈希（如果提供了新密钥）
+        // 如果客户端密钥不是BCrypt哈希格式，则进行哈希处理
+        if (!string.IsNullOrEmpty(clientApplication.ClientSecret) &&
+            !clientApplication.ClientSecret.StartsWith("$2"))
+        {
+            clientApplication.ClientSecret = BCrypt.Net.BCrypt.HashPassword(clientApplication.ClientSecret);
+        }
+
         context.ClientApplications.Update(clientApplication);
         return await context.SaveChangesAsync() > 0;
     }
@@ -90,15 +100,12 @@ public class ClientApplicationRepository(IDbContextFactory<ClubContext> contextF
     public async Task<ClientApplication?> ValidateCredentialsAsync(string clientId, string clientSecret)
     {
         await using var context = await contextFactory.CreateDbContextAsync();
-        var clientApplication = await context.ClientApplications.FirstOrDefaultAsync(c => c.ClientId == clientId);
+        var clientApplication =
+            await context.ClientApplications.FirstOrDefaultAsync(c =>
+                c.ClientId == clientId && c.ClientSecret == clientSecret);
 
-        if (clientApplication is not { IsActive: true })
-            return null;
-
-        // 在实际应用中，应该使用安全的密码比较方法
-        if (clientApplication.ClientSecret != clientSecret)
-            return null;
-
-        return clientApplication;
+        if (clientApplication is { IsActive: true }) return clientApplication;
+        Console.WriteLine("客户端应用已禁用");
+        return null;
     }
 }

@@ -29,12 +29,11 @@ public class JwtHelper(IConfiguration configuration) : IJwtHelper
         var signingCredentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256);
 
         var securityToken = new JwtSecurityToken(
-            issuer: configuration["Jwt:Issuer"] ?? "iOSClub", // 签发者
-            audience: configuration["Jwt:Audience"] ?? "iOSClub", // 接收者
+            issuer: "iOS Club of XAUAT", // 签发者
+            audience: "iOS Club of XAUAT", // 接收者
             claims: claims,
             notBefore: now, // 生效时间
-            expires: now.AddHours(int.Parse(configuration["Jwt:AccessTokenExpiration"] ??
-                                            "1") * (rememberMe ? 24 : 2)),
+            expires: now.AddHours(rememberMe ? 24 : 2),
             signingCredentials: signingCredentials
         );
         return new JwtSecurityTokenHandler().WriteToken(securityToken);
