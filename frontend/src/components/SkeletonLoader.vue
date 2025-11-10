@@ -93,7 +93,7 @@ interface Props {
   width?: string
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   type: 'default',
   count: 3,
   columns: 4,

@@ -2,7 +2,7 @@
   <div class="min-h-screen transition-colors duration-500">
 
     <!-- Hero Section - Apple Style -->
-    <section class="relative flex items-center justify-center px-6 lg:px-8 overflow-hidden" style="height: calc(100vh - 64px);">
+    <section class="relative flex items-center justify-center px-6 lg:px-8 overflow-hidden" style="min-height: calc(100vh - 64px);">
       <!-- Background Gradient -->
       <div
           class="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-pink-500/5 dark:from-blue-500/10 dark:via-purple-500/10 dark:to-pink-500/10"></div>
@@ -11,7 +11,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
 
           <!-- Logo Section -->
-          <div class="flex justify-center lg:justify-start">
+          <div class="flex justify-center lg:justify-start mt-6 md:mt-0 ">
             <div
                 class="relative w-72 h-72 md:w-96 md:h-96 group"
                 @mouseenter="logoHovered = true"
@@ -46,18 +46,18 @@
           <!-- Hero Content -->
           <div class="text-center lg:text-left space-y-8">
             <div class="space-y-4">
-              <h1 class="text-6xl md:text-7xl font-bold tracking-tight gradient-text leading-tight">
+              <h1 class="text-4xl md:text-7xl font-bold tracking-tight gradient-text leading-tight">
                 iOS Club of XAUAT
               </h1>
             </div>
 
-            <p class="text-xl md:text-2xl text-gray-700 dark:text-gray-300 leading-relaxed max-w-xl mx-auto lg:mx-0">
+            <p class="text-base md:text-2xl text-gray-700 dark:text-gray-300 leading-relaxed max-w-xl mx-auto lg:mx-0">
               西安建筑科技大学iOS众创空间俱乐部
             </p>
 
             <div class="flex items-center justify-center lg:justify-start gap-3 text-gray-500 dark:text-gray-400">
-              <Icon icon="material-symbols:format-quote" class="text-2xl"/>
-              <p class="text-lg md:text-xl italic">
+              <Icon icon="material-symbols:format-quote" class="text-base md:text-xl"/>
+              <p class="text-base md:text-xl italic">
                 Stay hungry, stay foolish
               </p>
             </div>
@@ -82,6 +82,8 @@
                 登录/注册
               </button>
             </div>
+
+            <div class="h-4 md:h-0"></div>
           </div>
         </div>
       </div>

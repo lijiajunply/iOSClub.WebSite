@@ -51,6 +51,11 @@ export interface ClientApplication {
      * 最后更新时间
      */
     updatedAt: string;
+
+    /**
+     * 是否支持PKCE
+     */
+    supportsPkce: boolean;
 }
 
 /**
@@ -81,6 +86,11 @@ export interface CreateClientAppModel {
      * 应用图标URL
      */
     logoUrl: string;
+    
+    /**
+     * 是否支持PKCE
+     */
+    supportsPkce: boolean;
 }
 
 /**
@@ -116,6 +126,11 @@ export interface UpdateClientAppModel {
      * 是否启用
      */
     isActive: boolean;
+    
+    /**
+     * 是否支持PKCE
+     */
+    supportsPkce: boolean;
 }
 
 /**
@@ -161,6 +176,11 @@ export interface ClientAppResultModel {
      * 是否启用
      */
     isActive: boolean;
+    
+    /**
+     * 是否支持PKCE
+     */
+    supportsPkce: boolean;
 }
 
 /**

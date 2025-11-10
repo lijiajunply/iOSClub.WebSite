@@ -37,7 +37,7 @@ const taskForm = ref({
 onMounted(async () => {
   if (!projectId.value) {
     message.error('项目ID不能为空')
-    router.push('/Centre/Admin')
+    await router.push('/Centre/Admin')
     return
   }
   
@@ -230,7 +230,7 @@ const deleteTask = async (taskId: string) => {
               </div>
             </div>
             <button
-              @click="router.push(`/Centre/Admin/ProjectEditor/${project.id}`)"
+              @click="router.push(`/Centre/ProjectEditor/${project.id}`)"
               class="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white transition-colors flex items-center"
             >
               <Icon icon="ion:edit" class="mr-1.5" />

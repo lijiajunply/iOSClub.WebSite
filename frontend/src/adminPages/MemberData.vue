@@ -3,7 +3,6 @@ import {ref, computed, h, onMounted, nextTick} from 'vue'
 import {useDialog, useMessage} from 'naive-ui'
 // 导入所有需要的 NaiveUI 组件
 import {
-  NCard,
   NButton,
   NDropdown,
   NTabs,
@@ -16,7 +15,8 @@ import {
   NFormItem,
   NRadioGroup,
   NSpace,
-  NRadio
+  NRadio,
+  NNumberAnimation
 } from 'naive-ui'
 import {Icon} from '@iconify/vue'
 import SkeletonLoader from '../components/SkeletonLoader.vue'
@@ -776,28 +776,28 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen p-4 md:p-6">
-    <div class="rounded-xl mb-6 p-4">
+  <div class="p-4 md:p-6">
+    <div class="rounded-xl mb-6 p-4 duration-200">
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">成员数据管理</h1>
         <div class="flex flex-wrap gap-2">
-          <n-button type="primary" @click="showAddMemberModal">
+          <n-button type="primary" @click="showAddMemberModal" class="rounded-lg flex items-center">
             <template #icon>
-              <Icon icon="ion:person-add"/>
+              <Icon icon="ion:person-add" class="text-lg"/>
             </template>
             添加成员
           </n-button>
           <n-dropdown trigger="hover" :options="downloadOptions" @select="handleDownloadSelect">
-            <n-button>
+            <n-button class="rounded-lg flex items-center">
               <template #icon>
-                <Icon icon="ion:download"/>
+                <Icon icon="ion:download" class="text-lg"/>
               </template>
               导出数据
             </n-button>
           </n-dropdown>
-          <n-button @click="fetchMembers">
+          <n-button @click="fetchMembers" class="rounded-lg flex items-center">
             <template #icon>
-              <Icon icon="ion:refresh"/>
+              <Icon icon="ion:refresh" class="text-lg"/>
             </template>
             刷新
           </n-button>
@@ -806,85 +806,128 @@ onMounted(() => {
 
       <n-tabs type="line" animated v-model:value="activeTab" class="mt-4" @update:value="handleTabChange">
         <n-tab-pane name="memberData" tab="成员数据">
-          <div class="space-y-4">
-            <div class="flex flex-col sm:flex-row gap-2">
-              <n-select v-model:value="searchItem" :options="searchItems" style="width: 150px" class="flex-shrink-0"/>
-              <n-input v-model:value="searchTerm" placeholder="请输入搜索项" clearable @keyup.enter="searchMembers">
-                <template #suffix>
-                  <Icon icon="ion:search-outline"/>
-                </template>
-              </n-input>
-              <n-button type="primary" @click="searchMembers">
-                搜索
+          <div class="space-y-6">
+            <!-- 搜索区域 -->
+            <div class="flex flex-col md:flex-row md:items-center gap-3">
+              <!-- 搜索类型选择 -->
+              <div class="w-full md:w-40 flex-shrink-0">
+                <n-select
+                    v-model:value="searchItem"
+                    :options="searchItems"
+                    class="rounded-lg"
+                />
+              </div>
+
+              <!-- 搜索输入框 -->
+              <div class="flex-grow relative">
+                <n-input
+                    v-model:value="searchTerm"
+                    placeholder="请输入搜索项"
+                    clearable
+                    @keyup.enter="searchMembers"
+                    class="rounded-lg pl-10"
+                />
+                <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                  <Icon icon="ion:search-outline" class="text-xl" />
+                </div>
+              </div>
+
+              <!-- 搜索结果数量 -->
+              <div class="flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-lg px-4 py-2 min-w-[80px]">
+                <span class="text-gray-500 dark:text-gray-300 mr-1">总计:</span>
+                <n-number-animation
+                    ref="numberAnimationInstRef"
+                    :from="0"
+                    :to="totalCount"
+                    class="font-medium text-gray-900 dark:text-white"
+                />
+              </div>
+
+              <!-- 搜索按钮 -->
+              <n-button
+                  type="primary"
+                  @click="searchMembers"
+                  class="rounded-lg flex items-center"
+              >
+                <Icon icon="ion:search-outline" class="mr-1 text-lg" />
+                <span>搜索</span>
               </n-button>
             </div>
-
             <div v-if="loading">
               <SkeletonLoader type="table" :count="pageSize" :columns="8"/>
             </div>
-            <n-data-table v-else remote :columns="columns" :data="filteredMembers" @update:page-size="onUpdatePageSize"
-                          @update:page="onChange" :pagination="paginationConfig" :bordered="false"
-                          :loading="loading" class="rounded-lg overflow-hidden"/>
+            <n-data-table
+                v-else
+                remote
+                :columns="columns"
+                :data="filteredMembers"
+                @update:page-size="onUpdatePageSize"
+                @update:page="onChange"
+                :pagination="paginationConfig"
+                :bordered="false"
+                :loading="loading"
+                class="rounded-xl overflow-hidden bg-white dark:bg-gray-800 shadow-sm transition-colors duration-200"
+            />
           </div>
         </n-tab-pane>
 
         <n-tab-pane name="yearData" tab="历年人数">
           <div class="grid grid-cols-1 gap-6 mt-4">
-            <n-card class="rounded-xl bg-white dark:bg-gray-800 transition-colors duration-200">
+            <div class="rounded-xl bg-white dark:bg-gray-800 transition-colors duration-200 p-6 shadow-sm">
               <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">历年人数变化</h3>
               <div v-if="loading" class="h-80 flex items-center justify-center">
                 <SkeletonLoader type="chart"/>
               </div>
               <div v-else ref="yearChartRef" class="h-80 w-full"></div>
-            </n-card>
+            </div>
           </div>
         </n-tab-pane>
 
         <n-tab-pane name="collegeData" tab="学院分布">
           <div class="grid grid-cols-1 gap-6 mt-4">
-            <n-card class="rounded-xl bg-white dark:bg-gray-800 transition-colors duration-200">
+            <div class="rounded-xl bg-white dark:bg-gray-800 transition-colors duration-200 p-6 shadow-sm">
               <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">学院分布</h3>
               <div v-if="loading" class="h-80 flex items-center justify-center">
                 <SkeletonLoader type="chart"/>
               </div>
               <div v-else ref="collegeChartRef" class="h-80 w-full"></div>
-            </n-card>
+            </div>
           </div>
         </n-tab-pane>
 
         <n-tab-pane name="gradeData" tab="年级分布">
           <div class="grid grid-cols-1 gap-6 mt-4">
-            <n-card class="rounded-xl bg-white dark:bg-gray-800 transition-colors duration-200">
+            <div class="rounded-xl bg-white dark:bg-gray-800 transition-colors duration-200 p-6 shadow-sm">
               <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">年级分布</h3>
               <div v-if="loading" class="h-80 flex items-center justify-center">
                 <SkeletonLoader type="chart"/>
               </div>
               <div v-else ref="gradeChartRef" class="h-80 w-full"></div>
-            </n-card>
+            </div>
           </div>
         </n-tab-pane>
 
         <n-tab-pane name="genderData" tab="男女比例">
           <div class="grid grid-cols-1 gap-6 mt-4">
-            <n-card class="rounded-xl bg-white dark:bg-gray-800 transition-colors duration-200">
+            <div class="rounded-xl bg-white dark:bg-gray-800 transition-colors duration-200 p-6 shadow-sm">
               <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">性别分布</h3>
               <div v-if="loading" class="h-80 flex items-center justify-center">
                 <SkeletonLoader type="chart"/>
               </div>
               <div v-else ref="genderChartRef" class="h-80 w-full"></div>
-            </n-card>
+            </div>
           </div>
         </n-tab-pane>
 
         <n-tab-pane name="politicalData" tab="政治面貌">
           <div class="grid grid-cols-1 gap-6 mt-4">
-            <n-card class="rounded-xl bg-white dark:bg-gray-800 transition-colors duration-200">
+            <div class="rounded-xl bg-white dark:bg-gray-800 transition-colors duration-200 p-6 shadow-sm">
               <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">政治面貌分布</h3>
               <div v-if="loading" class="h-80 flex items-center justify-center">
                 <SkeletonLoader type="chart"/>
               </div>
               <div v-else ref="politicalChartRef" class="h-80 w-full"></div>
-            </n-card>
+            </div>
           </div>
         </n-tab-pane>
       </n-tabs>

@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen transition-colors duration-300 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+  <div class="min-h-screen transition-colors duration-300 text-gray-900 dark:text-gray-100">
     <div class="px-4 py-6 sm:px-6 lg:px-8">
       <!-- Header -->
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">

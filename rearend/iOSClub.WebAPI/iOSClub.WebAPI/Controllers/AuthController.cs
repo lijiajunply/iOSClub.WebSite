@@ -38,19 +38,20 @@ public class AuthController(
     /// 用户登录接口
     /// </summary>
     /// <param name="loginModel">登录信息模型，包含用户ID和用户名</param>
+    /// <param name="clientId">客户端 ID</param>
     /// <returns>成功返回JWT令牌，失败返回404未找到</returns>
-    [HttpPost("login")]
-    public async Task<ActionResult<string>> Login(LoginModel loginModel)
+    [HttpPost("login/{clientId?}")]
+    public async Task<ActionResult<string>> Login(LoginModel loginModel, string clientId = "")
     {
         // 首先尝试使用LoginService进行学生登录
-        var studentToken = await loginService.Login(loginModel);
+        var studentToken = await loginService.Login(loginModel, clientId);
         if (!string.IsNullOrEmpty(studentToken))
         {
             return studentToken;
         }
 
         // 如果学生登录失败，尝试员工登录
-        var staffToken = await loginService.StaffLogin(loginModel);
+        var staffToken = await loginService.StaffLogin(loginModel, clientId);
         if (!string.IsNullOrEmpty(staffToken))
         {
             return staffToken;
@@ -63,12 +64,13 @@ public class AuthController(
     /// 用户登出接口
     /// </summary>
     /// <param name="userId">用户ID</param>
+    /// <param name="clientId">客户端 ID</param>
     /// <returns>成功返回true，失败返回false</returns>
     [Authorize]
     [HttpPost("logout")]
-    public async Task<ActionResult<bool>> Logout(string userId)
+    public async Task<ActionResult<bool>> Logout(string userId, string clientId = "")
     {
-        var result = await loginService.Logout(userId);
+        var result = await loginService.Logout(userId, clientId);
         return result ? Ok(true) : BadRequest(false);
     }
 
