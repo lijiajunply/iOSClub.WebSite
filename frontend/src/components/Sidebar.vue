@@ -23,7 +23,7 @@
       }"
     >
       <!-- 侧边栏头部 -->
-      <div class="p-6 border-b border-gray-100 dark:border-gray-700 flex items-center">
+      <div class="p-6 dark:border-gray-700 flex items-center">
         <router-link to="/" class="flex items-center gap-3 group">
           <img
               src="/assets/iOS_Club_LOGO.png"
@@ -171,8 +171,8 @@ const filteredMenuItems = computed(() => {
   })
 })
 
-const logout = () => {
-  authorizationStore.logout()
+const logout = async () => {
+  await authorizationStore.logout()
   router.push('/')
 }
 

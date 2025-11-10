@@ -9,11 +9,13 @@ namespace iOSClub.WebAPI.IdentityModels;
 
 public class JwtHelper(IConfiguration configuration) : IJwtHelper
 {
-    public string GetMemberToken(MemberModel model, bool rememberMe = false)
+    public string GetMemberToken(MemberModel model, bool rememberMe = false, string score = "")
     {
         var now = DateTime.UtcNow;
         var jwtId = Guid.NewGuid().ToString(); // 用于防止重放攻击
 
+        score = string.IsNullOrEmpty(score) ? "full" : score;
+        
         var claims = new[]
         {
             new Claim(JwtRegisteredClaimNames.Sub, model.UserId),
@@ -22,7 +24,8 @@ public class JwtHelper(IConfiguration configuration) : IJwtHelper
             new Claim(ClaimTypes.NameIdentifier, model.UserId),
             new Claim(JwtRegisteredClaimNames.Jti, jwtId), // JWT ID 防止重放攻击
             new Claim(JwtRegisteredClaimNames.Iat, new DateTimeOffset(now).ToUnixTimeSeconds().ToString(),
-                ClaimValueTypes.Integer64)
+                ClaimValueTypes.Integer64),
+            new Claim("score", score)
         };
 
         var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:SecretKey"]!));

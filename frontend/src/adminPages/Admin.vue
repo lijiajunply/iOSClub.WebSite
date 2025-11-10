@@ -1,11 +1,11 @@
 <template>
-  <div class="min-h-screen bg-white/90 dark:bg-gray-800/90 transition-colors duration-300">
+  <div class=" transition-colors duration-300">
     <!-- 主内容区域 -->
     <div class="p-4 md:p-6">
       <!-- 页面标题 -->
       <div class="flex items-center justify-between mb-6">
         <div>
-          <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">管理中心</h1>
+          <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">其他数据</h1>
           <p class="text-sm text-gray-500 dark:text-gray-400">社团管理系统数据分析</p>
         </div>
 
@@ -43,12 +43,6 @@
               >
                 删除所有数据
               </button>
-              <button
-                  @click="handleDropdownSelect('upload')"
-                  class="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
-              >
-                上传Json数据
-              </button>
             </div>
           </div>
 
@@ -81,7 +75,7 @@
         <StatCard
             title="社员人数"
             :value="statistics.members"
-            icon="material-symbols:people"
+            icon="ion:people"
             color="blue"
         />
         <StatCard
@@ -117,7 +111,7 @@
         <StatCard
             title="待办数"
             :value="statistics.todos"
-            icon="material-symbols:check-box-outline-blank"
+            icon="ion:checkbox"
             color="red"
         />
       </div>
@@ -281,6 +275,7 @@ const removeAllData = () => {
 
 // Fetch data
 const fetchData = async () => {
+  loading.value = true
   try {
     // 并行获取所有数据
     statistics.value = await DataCentreService.getCentreData();
@@ -288,6 +283,8 @@ const fetchData = async () => {
   } catch (error) {
     console.error('获取数据时出错:', error)
     message.error('获取数据时出错')
+  } finally {
+    loading.value = false
   }
 }
 

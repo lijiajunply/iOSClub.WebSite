@@ -24,6 +24,7 @@ public class SSOController(
     : ControllerBase
 {
     private readonly IDatabase _redisDb = redis.GetDatabase();
+    private const string DefaultScore = "profile openid role";
 
     /// <summary>
     /// 为第三方应用提供OAuth登录入口
@@ -34,6 +35,7 @@ public class SSOController(
     /// <param name="responseType">响应类型，支持code或token</param>
     /// <param name="codeChallenge">PKCE代码挑战</param>
     /// <param name="codeChallengeMethod">PKCE代码挑战方法</param>
+    /// <param name="scope">请求的权限范围</param>
     /// <returns>重定向到OAuth提供商</returns>
     [HttpGet("authorize")]
     public async Task<IActionResult> Authorize(
@@ -43,7 +45,8 @@ public class SSOController(
         [FromQuery(Name = "response_type")] string responseType = "code",
         [FromQuery(Name = "code_challenge")] string? codeChallenge = null,
         [FromQuery(Name = "code_challenge_method")]
-        string? codeChallengeMethod = null)
+        string? codeChallengeMethod = null,
+        [FromQuery(Name = "scope")] string? scope = null)
     {
         logger.LogInformation("OAuth authorization request received for client {ClientId}", clientId);
 
@@ -61,6 +64,13 @@ public class SSOController(
             logger.LogWarning("Authorization failed: invalid redirect URI {RedirectUri} for client {ClientId}",
                 redirectUri, clientId);
             return BadRequest("无效的回调地址");
+        }
+
+        // 如果客户端支持PKCE，则要求提供code_challenge参数
+        if (clientApp.SupportsPkce && string.IsNullOrEmpty(codeChallenge))
+        {
+            logger.LogWarning("Authorization failed: PKCE is required for client {ClientId} but code_challenge is missing", clientId);
+            return BadRequest("客户端要求使用PKCE，必须提供code_challenge参数");
         }
 
         // 如果提供了code_challenge，验证其格式
@@ -81,13 +91,26 @@ public class SSOController(
             }
 
             // 验证code_challenge长度
-            if (codeChallenge.Length < 43 || codeChallenge.Length > 128)
+            if (codeChallenge.Length is < 43 or > 128)
             {
                 logger.LogWarning("Authorization failed: invalid code_challenge length for client {ClientId}",
                     clientId);
                 return BadRequest("code_challenge长度无效");
             }
         }
+
+        // 验证scope参数
+        var validScopes = new[] { "openid", "profile", "email", "read", "phone" };
+        var requestedScopes = (scope ?? DefaultScore).Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var validRequestedScopes = requestedScopes.Where(s => validScopes.Contains(s)).ToList();
+
+        // 确保始终包含openid scope
+        if (!validRequestedScopes.Contains("openid"))
+        {
+            validRequestedScopes.Add("openid");
+        }
+
+        var finalScope = string.Join(" ", validRequestedScopes);
 
         // 将第三方应用的信息存储在state中，以便在回调时使用
         var authState = new AuthState
@@ -97,7 +120,8 @@ public class SSOController(
             State = state,
             ResponseType = responseType,
             CodeChallenge = codeChallenge ?? "",
-            CodeChallengeMethod = codeChallengeMethod ?? ""
+            CodeChallengeMethod = codeChallengeMethod ?? "",
+            Scope = finalScope
         };
 
         // 将authState序列化并加密，然后作为state参数传递
@@ -109,6 +133,7 @@ public class SSOController(
         HttpContext.Session.SetString("OAuthClientId", clientId);
         HttpContext.Session.SetString("OAuthRedirectUri", redirectUri);
         HttpContext.Session.SetString("OAuthResponseType", responseType);
+        HttpContext.Session.SetString("OAuthScope", authState.Scope);
 
         var clientAppUrl = Environment.GetEnvironmentVariable("CLIENTAPPURL", EnvironmentVariableTarget.Process);
 
@@ -121,7 +146,7 @@ public class SSOController(
 
         // 重定向到我们自己的OAuth登录页面
         return Redirect(
-            $"{clientAppUrl}/oauth-login?state={encryptedState}&client_id={clientId}&redirect_uri={Uri.EscapeDataString(redirectUri)}&response_type={responseType}");
+            $"{clientAppUrl}/oauth-login?state={encryptedState}&client_id={clientId}&redirect_uri={Uri.EscapeDataString(redirectUri)}&response_type={responseType}&scope={Uri.EscapeDataString(authState.Scope)}");
     }
 
     /// <summary>
@@ -191,6 +216,7 @@ public class SSOController(
         var sessionClientId = HttpContext.Session.GetString("OAuthClientId");
         var sessionRedirectUri = HttpContext.Session.GetString("OAuthRedirectUri");
         var sessionResponseType = HttpContext.Session.GetString("OAuthResponseType");
+        var sessionScope = HttpContext.Session.GetString("OAuthScope");
 
         if (!string.IsNullOrEmpty(sessionOAuthState) &&
             !string.IsNullOrEmpty(sessionClientId) &&
@@ -201,6 +227,7 @@ public class SSOController(
             authState.ClientId = sessionClientId;
             authState.RedirectUri = sessionRedirectUri;
             authState.ResponseType = sessionResponseType;
+            authState.Scope = sessionScope ?? DefaultScore;
 
             // 从state参数中解析State值
             try
@@ -211,6 +238,10 @@ public class SSOController(
                 authState.State = stateInfo.State;
                 authState.CodeChallenge = stateInfo.CodeChallenge;
                 authState.CodeChallengeMethod = stateInfo.CodeChallengeMethod;
+                authState.Scope =
+                    string.IsNullOrEmpty(stateInfo.Scope)
+                        ? authState.Scope
+                        : stateInfo.Scope; // 如果state中有scope则使用state中的
             }
             catch (Exception ex)
             {
@@ -257,7 +288,8 @@ public class SSOController(
                 UserId = userId,
                 CreatedAt = DateTime.UtcNow,
                 CodeChallenge = authState.CodeChallenge,
-                CodeChallengeMethod = authState.CodeChallengeMethod
+                CodeChallengeMethod = authState.CodeChallengeMethod,
+                Scope = authState.Scope // 添加scope信息
             };
 
             // 存储到Redis，设置5分钟过期时间
@@ -280,7 +312,8 @@ public class SSOController(
                 authState.ClientId);
 
             // 直接返回访问令牌
-            var redirectUrl = $"{authState.RedirectUri}#access_token={token}&state={authState.State}";
+            var redirectUrl =
+                $"{authState.RedirectUri}#access_token={token}&state={authState.State}&scope={Uri.EscapeDataString(authState.Scope)}";
             return Redirect(redirectUrl);
         }
 
@@ -383,21 +416,21 @@ public class SSOController(
                 return BadRequest(new { error = "invalid_grant", error_description = "无效的授权码" });
             }
 
-            // 验证授权码是否过期（5分钟有效期）
-            if (authCodeInfo.CreatedAt.AddMinutes(5) < DateTime.UtcNow)
-            {
-                // 删除过期的授权码
-                await _redisDb.KeyDeleteAsync(codeKey);
-                logger.LogWarning("Token exchange failed: expired authorization code {Code}", code);
-                return BadRequest(new { error = "invalid_grant", error_description = "授权码已过期" });
-            }
-
             // 验证授权码与请求参数是否匹配
             if (authCodeInfo.ClientId != clientId || authCodeInfo.RedirectUri != redirectUri)
             {
                 logger.LogWarning("Token exchange failed: authorization code {Code} does not match request parameters",
                     code);
                 return BadRequest(new { error = "invalid_grant", error_description = "授权码与请求参数不匹配" });
+            }
+
+            // 如果客户端支持PKCE，则要求提供code_verifier参数
+            if (clientApp.SupportsPkce && string.IsNullOrEmpty(codeVerifier))
+            {
+                logger.LogWarning(
+                    "Token exchange failed: PKCE is required for client {ClientId} but code_verifier is missing",
+                    clientId);
+                return BadRequest(new { error = "invalid_request", error_description = "客户端要求使用PKCE，必须提供code_verifier参数" });
             }
 
             // 如果授权码有PKCE要求，验证code_verifier
@@ -454,7 +487,7 @@ public class SSOController(
                 }
             }
 
-            // 为用户生成新的访问令牌
+            // 为用户生成访问令牌
             var member = await studentRepository.GetByIdAsync(authCodeInfo.UserId);
             if (member == null)
             {
@@ -476,11 +509,13 @@ public class SSOController(
             logger.LogInformation("Token exchange successful for user {UserId} with client {ClientId}",
                 authCodeInfo.UserId, clientId);
 
+            // 返回令牌信息，包括scope
             return Ok(new
             {
                 access_token = token,
                 token_type = "Bearer",
-                expires_in = 7200 // 2小时
+                expires_in = 7200, // 2小时
+                scope = string.IsNullOrEmpty(authCodeInfo.Scope) ? DefaultScore : authCodeInfo.Scope
             });
         }
         catch (Exception ex)
@@ -567,13 +602,65 @@ public class SSOController(
 
         logger.LogInformation("User info request successful for user {UserId}", user.UserId);
 
-        return Ok(new
+        // 获取访问令牌中的scope信息
+        var token = HttpContext.GetJwt();
+
+        var scopes = DefaultScore.Split(" ").ToList(); // 默认包含openid
+        if (!string.IsNullOrEmpty(token))
         {
-            sub = user.UserId,
-            name = member.EMail,
-            email = member.EMail,
-            role = user.Identity
-        });
+            try
+            {
+                var handler = new JwtSecurityTokenHandler();
+                var jsonToken = handler.ReadJwtToken(token);
+                // 获取scope信息
+                var scopeClaim = jsonToken.Claims.FirstOrDefault(c => c.Type == "scope")?.Value;
+                if (!string.IsNullOrEmpty(scopeClaim))
+                {
+                    scopes = scopeClaim.Split(' ', StringSplitOptions.RemoveEmptyEntries).ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to parse token for scope information");
+            }
+        }
+
+        // 根据scope返回不同的用户信息
+        var userInfo = new Dictionary<string, object>
+        {
+            ["sub"] = user.UserId
+        };
+
+        // read profile email
+
+        // profile scope - 基本信息
+        if (scopes.Contains("profile") || scopes.Contains("full"))
+        {
+            userInfo.TryAdd("name", member.UserName);
+            userInfo.TryAdd("nickname", member.UserName);
+            userInfo.TryAdd("academy", member.Academy);
+            userInfo.TryAdd("class", member.ClassName);
+        }
+
+        // email scope - 邮箱信息
+        if (scopes.Contains("email") || scopes.Contains("full"))
+        {
+            userInfo.TryAdd("email", member.EMail ?? "");
+        }
+
+        // read scope - 角色信息
+        if (scopes.Contains("read") || scopes.Contains("full"))
+        {
+            userInfo.TryAdd("role", user.Identity);
+        }
+
+        // phone scope - 手机信息
+        if (scopes.Contains("phone") || scopes.Contains("full"))
+        {
+            userInfo.TryAdd("phone", member.PhoneNum);
+        }
+
+        return Ok(userInfo);
     }
 
     /// <summary>
@@ -641,8 +728,6 @@ public class SSOController(
             catch (Exception ex)
             {
                 logger.LogError(ex, "Failed to store session in Redis for user {UserId}", user.UserId);
-                // 如果Redis存储失败，仅记录日志（但在此代码中我们不记录日志）
-                // 继续执行，因为会话存储已经成功
             }
 
             return Ok(new { success = true, message = "会话存储成功" });
@@ -724,6 +809,7 @@ public class SSOController(
         public string ResponseType { get; set; } = "";
         public string CodeChallenge { get; set; } = "";
         public string CodeChallengeMethod { get; set; } = "";
+        public string Scope { get; set; } = ""; // 添加Scope支持
     }
 
     /// <summary>
@@ -749,5 +835,6 @@ public class SSOController(
         public DateTime CreatedAt { get; set; }
         public string CodeChallenge { get; set; } = "";
         public string CodeChallengeMethod { get; set; } = "";
+        public string Scope { get; set; } = ""; // 添加Scope支持
     }
 }

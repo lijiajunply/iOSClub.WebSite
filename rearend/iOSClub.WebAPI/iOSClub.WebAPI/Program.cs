@@ -17,7 +17,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 #region 控制器基本设置
 
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+    {
+        options.Filters.Add<GlobalAuthorizationFilter>();
+    });
 builder.Services.AddOpenApi(opt => { opt.AddDocumentTransformer<BearerSecuritySchemeTransformer>(); });
 
 #endregion
@@ -140,6 +143,7 @@ if (!string.IsNullOrEmpty(redis))
 
 builder.Services.AddHttpClient();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<GlobalAuthorizationFilter>();
 builder.Services.AddScoped<TokenActionFilter>();
 builder.Services.AddScoped<IJwtHelper, JwtHelper>();
 

@@ -21,10 +21,11 @@ export class AuthService {
     /**
      * 用户登录
      * @param loginModel 登录信息
+     * @param clientId
      * @returns Promise<string> JWT令牌
      */
-    static async login(loginModel: LoginModel): Promise<string> {
-        const response = await fetch(`${url}/Auth/login`, {
+    static async login(loginModel: LoginModel, clientId: string | null | undefined = ''): Promise<string> {
+        const response = await fetch(`${url}/Auth/login/${clientId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -66,9 +67,9 @@ export class AuthService {
         return await response.text();
     }
 
-    static async logout(userId: string) {
+    static async logout(userId: string, clientId: string | null | undefined = '') {
         const token = AuthService.getToken();
-        const response = await fetch(`${url}/Auth/logout?userId=${userId}`, {
+        const response = await fetch(`${url}/Auth/logout?userId=${userId}&clientId=${clientId}`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -79,9 +80,9 @@ export class AuthService {
         return response.ok;
     }
 
-    static async validate(userId: string, token: string): Promise<boolean> {
+    static async validate(userId: string, token: string, clientId: string | null | undefined = ''): Promise<boolean> {
         try {
-            const response = await fetch(`${url}/Auth/validate?userId=${userId}`, {
+            const response = await fetch(`${url}/Auth/validate?userId=${userId}&clientId=${clientId}`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,

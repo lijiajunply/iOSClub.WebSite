@@ -8,7 +8,7 @@ namespace iOSClub.DataApi.Services;
 
 public interface IJwtHelper
 {
-    public string GetMemberToken(MemberModel model, bool rememberMe = false);
+    public string GetMemberToken(MemberModel model, bool rememberMe = false, string score = "");
 }
 
 public interface ILoginService
@@ -17,30 +17,36 @@ public interface ILoginService
     /// 登录
     /// </summary>
     /// <param name="model">数据</param>
+    /// <param name="clientId">客户端 ID</param>
+    /// <param name="score">权限</param>
     /// <returns>凭证</returns>
-    public Task<string> Login(LoginModel model);
+    public Task<string> Login(LoginModel model, string clientId = "", string score = "");
 
     /// <summary>
     /// 登出
     /// </summary>
     /// <param name="userId">学号</param>
+    /// <param name="clientId">客户端 ID</param>
     /// <returns>是否成功登出</returns>
-    public Task<bool> Logout(string userId);
+    public Task<bool> Logout(string userId, string clientId = "");
 
     /// <summary>
     /// 验证token是否有效
     /// </summary>
     /// <param name="userId">学号</param>
     /// <param name="token">token值</param>
+    /// <param name="clientId">客户端 ID</param>
     /// <returns>是否有效</returns>
-    public Task<bool> ValidateToken(string userId, string token);
+    public Task<bool> ValidateToken(string userId, string token, string clientId = "");
 
     /// <summary>
     /// 员工登录
     /// </summary>
     /// <param name="model">数据</param>
+    /// <param name="clientId">客户端 ID</param>
+    /// <param name="score">权限</param>
     /// <returns>凭证</returns>
-    public Task<string> StaffLogin(LoginModel model);
+    public Task<string> StaffLogin(LoginModel model, string clientId = "", string score = "");
 
     /// <summary>
     /// 修改用户密码
@@ -67,7 +73,15 @@ public interface ILoginService
     /// <returns>是否成功重置密码</returns>
     public Task<bool> ResetPasswordWithCode(string userId, string code, string newPassword);
 
-    public Task<string> GetToken(string userId);
+    public Task<string> GetToken(string userId, string clientId = "");
+    
+    /// <summary>
+    /// 验证token是否有效（简化版）
+    /// </summary>
+    /// <param name="userId">学号</param>
+    /// <param name="token">token值</param>
+    /// <returns>是否有效</returns>
+    public Task<bool> ValidateToken(string userId, string token);
 }
 
 public class LoginService(
@@ -75,7 +89,8 @@ public class LoginService(
     IStaffRepository staffRepository,
     IJwtHelper jwtHelper,
     IConnectionMultiplexer redis,
-    IEmailService emailService)
+    IEmailService emailService,
+    IClientApplicationRepository clientApplicationRepository)
     : ILoginService
 {
     private readonly IDatabase _db = redis.GetDatabase();
@@ -83,7 +98,7 @@ public class LoginService(
     private const string TokenPrefix = "token:";
     private const int TokenExpiryHours = 1; // 与JwtHelper中的过期时间保持一致
 
-    public async Task<string> Login(LoginModel model)
+    public async Task<string> Login(LoginModel model, string clientId = "", string score = "")
     {
         if (!await studentRepository.Login(model.UserId, model.Password)) return "";
 
@@ -110,34 +125,54 @@ public class LoginService(
             PasswordHash = model.Password
         };
 
-        var redisKey = $"{TokenPrefix}{model.UserId}";
+        var s = "";
+
+        if (!string.IsNullOrEmpty(clientId))
+        {
+            var app = await clientApplicationRepository.GetByClientIdAsync(clientId);
+            if (app != null)
+            {
+                s = $"client_id:{app.ClientSecret}";
+            }
+        }
+
+        var redisKey = $"{TokenPrefix}{model.UserId}{s}";
         var storedToken = await _db.StringGetAsync(redisKey);
         if (storedToken.HasValue && !string.IsNullOrEmpty(storedToken))
         {
             return storedToken.ToString();
         }
 
-        var token = jwtHelper.GetMemberToken(memberModel, model.RememberMe);
+        var token = jwtHelper.GetMemberToken(memberModel, model.RememberMe, score);
 
         // 将token存储到Redis中，设置过期时间
         await _db.StringSetAsync(redisKey, token, TimeSpan.FromHours(TokenExpiryHours * (model.RememberMe ? 24 : 2)));
 
         // 存储用户信息，便于后续验证
-        var userInfoKey = $"user:{model.UserId}";
+        var userInfoKey = $"user:{model.UserId}{s}";
         await _db.StringSetAsync(userInfoKey, JsonSerializer.Serialize(memberModel),
             TimeSpan.FromHours(TokenExpiryHours * (model.RememberMe ? 24 : 2)));
 
         return token;
     }
 
-    public async Task<bool> Logout(string userId)
+    public async Task<bool> Logout(string userId, string clientId = "")
     {
         try
         {
-            var userInfoKey = $"user:{userId}";
+            var s = "";
+
+            if (!string.IsNullOrEmpty(clientId))
+            {
+                var app = await clientApplicationRepository.GetByClientIdAsync(clientId);
+                if (app != null)
+                {
+                    s = $"client_id:{app.ClientSecret}";
+                }
+            }
 
             // 同时删除用户信息
-            await _db.KeyDeleteAsync([userInfoKey]);
+            await _db.KeyDeleteAsync([$"user:{userId}{s}", $"{TokenPrefix}{userId}{s}"]);
             return true;
         }
         catch (Exception)
@@ -146,15 +181,45 @@ public class LoginService(
         }
     }
 
-    public async Task<string> GetToken(string userId)
+    public async Task<string> GetToken(string userId, string clientId = "")
     {
-        var storedToken = await _db.StringGetAsync($"{TokenPrefix}{userId}");
+        if (string.IsNullOrEmpty(userId)) return "";
+        var s = "";
+
+        if (!string.IsNullOrEmpty(clientId))
+        {
+            var app = await clientApplicationRepository.GetByClientIdAsync(clientId);
+            if (app != null)
+            {
+                s = $"client_id:{app.ClientSecret}";
+            }
+        }
+
+        var storedToken = await _db.StringGetAsync($"{TokenPrefix}{userId}{s}");
         return storedToken.HasValue && !string.IsNullOrEmpty(storedToken) ? storedToken.ToString() : "";
     }
 
-    public async Task<bool> ValidateToken(string userId, string token)
+    public Task<bool> ValidateToken(string userId, string token)
     {
-        var redisKey = $"{TokenPrefix}{userId}";
+        return ValidateToken(userId, token, "");
+    }
+
+    public async Task<bool> ValidateToken(string userId, string token, string clientId = "")
+    {
+        if (string.IsNullOrEmpty(userId)) return false;
+
+        var s = "";
+
+        if (!string.IsNullOrEmpty(clientId))
+        {
+            var app = await clientApplicationRepository.GetByClientIdAsync(clientId);
+            if (app != null)
+            {
+                s = $"client_id:{app.ClientSecret}";
+            }
+        }
+
+        var redisKey = $"{TokenPrefix}{userId}{s}";
         var storedToken = await _db.StringGetAsync(redisKey);
 
         if (!storedToken.HasValue || string.IsNullOrEmpty(storedToken))
@@ -163,7 +228,7 @@ public class LoginService(
         return storedToken == token;
     }
 
-    public async Task<string> StaffLogin(LoginModel model)
+    public async Task<string> StaffLogin(LoginModel model, string clientId = "", string score = "")
     {
         var staff = await staffRepository.GetStaffByIdAsync(model.Password);
 
@@ -177,14 +242,31 @@ public class LoginService(
             Identity = staff.Identity
         };
 
-        var token = jwtHelper.GetMemberToken(memberModel, model.RememberMe);
+        var token = jwtHelper.GetMemberToken(memberModel, model.RememberMe, score);
+
+        var s = "";
+
+        if (!string.IsNullOrEmpty(clientId))
+        {
+            var app = await clientApplicationRepository.GetByClientIdAsync(clientId);
+            if (app != null)
+            {
+                s = $"client_id:{app.ClientSecret}";
+            }
+        }
+
+        var redisKey = $"{TokenPrefix}{model.Password}{s}";
+        var storedToken = await _db.StringGetAsync(redisKey);
+        if (storedToken.HasValue && !string.IsNullOrEmpty(storedToken))
+        {
+            return storedToken.ToString();
+        }
 
         // 将token存储到Redis中，设置过期时间
-        var redisKey = $"{TokenPrefix}{model.Password}";
         await _db.StringSetAsync(redisKey, token, TimeSpan.FromHours(TokenExpiryHours * (model.RememberMe ? 12 : 2)));
 
         // 存储用户信息，便于后续验证
-        var userInfoKey = $"user:{model.Password}";
+        var userInfoKey = $"user:{model.Password}{s}";
         await _db.StringSetAsync(userInfoKey, JsonSerializer.Serialize(memberModel),
             TimeSpan.FromHours(TokenExpiryHours * (model.RememberMe ? 12 : 2)));
 
@@ -278,7 +360,7 @@ public class LoginService(
     /// <param name="userName">用户名</param>
     /// <param name="code">验证码</param>
     /// <returns>格式化后的邮件内容</returns>
-    private string GeneratePasswordResetEmailBody(string userName, string code)
+    private static string GeneratePasswordResetEmailBody(string userName, string code)
     {
         return $@"<html>
 <head>

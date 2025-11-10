@@ -200,9 +200,9 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { useAuthorizationStore } from '../stores/Authorization'
-import { NLayout, NLayoutHeader, NLayoutContent, NLayoutFooter, NDropdown } from 'naive-ui'
+import { NLayout, NLayoutHeader, NLayoutContent, NDropdown } from 'naive-ui'
 import { Icon } from '@iconify/vue'
 import { useThemeStore } from '../stores/theme'
 import { storeToRefs } from 'pinia'
@@ -210,17 +210,11 @@ import { storeToRefs } from 'pinia'
 const themeStore = useThemeStore()
 const { isDark } = storeToRefs(themeStore)
 // 解构方法
-const { toggleTheme, setThemePreference } = themeStore
+const { toggleTheme } = themeStore
 
 // 切换主题
 const mainToggleTheme = () => {
   toggleTheme()
-}
-
-// 或者根据当前状态设置
-const smartToggle = () => {
-  // 注意：这里 isDark 是 ref，需要 .value
-  setThemePreference(isDark.value ? 'light' : 'dark')
 }
 
 const router = useRouter()

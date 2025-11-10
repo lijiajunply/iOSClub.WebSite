@@ -65,14 +65,14 @@
                     开始时间 <span class="text-red-500">*</span>
                   </label>
                   <n-date-picker
-                    id="startTime"
-                    v-model:value="formData.startTime"
-                    type="datetime"
-                    required
-                    class="w-full"
-                    :format="'yyyy-MM-dd HH:mm:ss'"
-                    :value-format="'x'"
-                  />
+                  id="startTime"
+                  v-model:value="formData.startTime as any"
+                  type="datetime"
+                  required
+                  class="w-full"
+                  :format="'yyyy-MM-dd HH:mm:ss'"
+                  :value-format="'x'"
+                />
                 </div>
                 
                 <!-- 结束时间 -->
@@ -81,14 +81,14 @@
                     结束时间 <span class="text-red-500">*</span>
                   </label>
                   <n-date-picker
-                    id="endTime"
-                    v-model:value="formData.endTime"
-                    type="datetime"
-                    required
-                    class="w-full"
-                    :format="'yyyy-MM-dd HH:mm:ss'"
-                    :value-format="'x'"
-                  />
+                  id="endTime"
+                  v-model:value="formData.endTime as any"
+                  type="datetime"
+                  required
+                  class="w-full"
+                  :format="'yyyy-MM-dd HH:mm:ss'"
+                  :value-format="'x'"
+                />
                 </div>
               </div>
               

@@ -1,6 +1,6 @@
-import {defineStore} from 'pinia';
-import {AuthService} from '../services/AuthService';
-import type {LoginModel, StudentModel} from '../models';
+import { defineStore } from 'pinia';
+import { AuthService } from '../services/AuthService';
+import type { LoginModel, StudentModel } from '../models';
 
 export const useAuthorizationStore = defineStore('AuthorizationId', {
     state: () => ({
@@ -46,14 +46,17 @@ export const useAuthorizationStore = defineStore('AuthorizationId', {
             localStorage.setItem('UserId', stu.userId);
             return true
         },
-        logout() {
+        async logout(clientId: string | null | undefined = '') {
             this.Authorization = '';
             localStorage.removeItem('Authorization');
             localStorage.removeItem('UserId');
+            const id = localStorage.getItem('UserId');
+            if (id === null || id === '') return false;
+            await AuthService.logout(id, clientId);
         },
-        async login(user: LoginModel): Promise<boolean> {
+        async login(user: LoginModel, clientId: string | null | undefined = ''): Promise<boolean> {
             try {
-                const a = await AuthService.login(user)
+                const a = await AuthService.login(user, clientId)
                 if (!a) {
                     return false;
                 }
@@ -65,10 +68,10 @@ export const useAuthorizationStore = defineStore('AuthorizationId', {
                 return false;
             }
         },
-        async validate(): Promise<boolean> {
+        async validate(clientId: string | null | undefined = ''): Promise<boolean> {
             const id = localStorage.getItem('UserId');
             if (id === null || id === '') return false;
-            return await AuthService.validate(id, this.Authorization);
+            return await AuthService.validate(id, this.Authorization, clientId);
         },
         isAdmin() {
             return this.getRole === 'Founder' || this.getRole === 'President' || this.getRole === 'Minister'

@@ -5,7 +5,7 @@
         class="w-full max-w-md bg-white/80 dark:bg-neutral-900/80 backdrop-blur-lg rounded-2xl shadow-xl p-8 transition-all duration-300">
       <div class="text-center mb-8">
         <h1 class="text-xl md:text-3xl font-semibold bg-gradient-to-r from-blue-500 to-indigo-500 bg-clip-text text-transparent">
-          OAuth 登录授权
+          iMember 登录授权
         </h1>
         <p class="text-gray-500 dark:text-gray-400 mt-2">
           第三方应用请求访问您的账号
@@ -109,7 +109,8 @@ const getOAuthParams = () => {
     state: route.query.state as string || '',
     client_id: route.query.client_id as string || '',
     redirect_uri: route.query.redirect_uri as string || '',
-    response_type: route.query.response_type as string || 'code'
+    response_type: route.query.response_type as string || 'code',
+    scope: route.query.scope as string || 'profile openid role',
   }
 }
 
@@ -133,7 +134,7 @@ const handleLogin = async () => {
           userId: form.value.studentId,
           password: form.value.password,
           rememberMe: form.value.rememberMe
-        })
+        }, Array.isArray(route.query.client_id) ? route.query.client_id[0] : route.query.client_id ?? '')
 
         if (!res) {
           errorMsg.value = '登录失败，请检查账号密码'

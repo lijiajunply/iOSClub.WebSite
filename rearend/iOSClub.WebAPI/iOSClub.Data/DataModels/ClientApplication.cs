@@ -12,7 +12,7 @@ public class ClientApplication
     /// </summary>
     [Key]
     [MaxLength(50)]
-    public string ClientId { get; set; } = "";
+    public string ClientId { get; init; } = "";
 
     /// <summary>
     /// 客户端密钥
@@ -63,7 +63,7 @@ public class ClientApplication
     /// <summary>
     /// 创建时间
     /// </summary>
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; init; } = DateTime.UtcNow;
 
     /// <summary>
     /// 最后更新时间

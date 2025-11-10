@@ -4,16 +4,17 @@ using iOSClub.WebAPI.IdentityModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
+using iOSClub.DataApi.Services;
 
 namespace iOSClub.WebAPI.Controllers;
 
 [ApiController]
-[Route("[controller]")]  // 使用C#推荐的API路径格式
+[Route("[controller]")] // 使用C#推荐的API路径格式
 public class ArticleController(
     IArticleRepository articleRepository,
     IStaffRepository staffRepository,
     ILogger<ArticleController> logger,
-    IHttpContextAccessor httpContextAccessor)
+    ILoginService loginService)
     : ControllerBase
 {
     /// <summary>
@@ -157,12 +158,7 @@ public class ArticleController(
             existingArticle.LastWriteTime = DateTime.UtcNow;
 
             var success = await articleRepository.CreateOrUpdate(existingArticle);
-            if (!success)
-            {
-                return StatusCode(500, "更新文章失败");
-            }
-
-            return Ok(new { message = "文章更新成功", path });
+            return !success ? StatusCode(500, "更新文章失败") : Ok(new { message = "文章更新成功", path });
         }
         catch (Exception ex)
         {
@@ -229,7 +225,7 @@ public class ArticleController(
             var articles = await articleRepository.GetAll();
             var filteredArticles = articles
                 .Where(a => a.Title.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
-                           a.Content.Contains(keyword, StringComparison.OrdinalIgnoreCase))
+                            a.Content.Contains(keyword, StringComparison.OrdinalIgnoreCase))
                 .OrderByDescending(a => a.LastWriteTime)
                 .ToList();
 
@@ -247,8 +243,12 @@ public class ArticleController(
     /// </summary>
     private async Task<(bool isValid, ActionResult? errorResult)> ValidateUserAccess(string[] allowedIdentities)
     {
-        var userJwt = httpContextAccessor.HttpContext?.User.GetUser();
+        var userJwt = HttpContext.User.GetUser();
         if (userJwt == null)
+            return (false, Unauthorized("用户未认证"));
+
+        var jwt = HttpContext.GetJwt();
+        if (jwt == null || !await loginService.ValidateToken(userJwt.UserId, jwt))
             return (false, Unauthorized("用户未认证"));
 
         var user = await staffRepository.GetStaffByIdAsync(userJwt.UserId);
@@ -256,14 +256,12 @@ public class ArticleController(
         if (user == null)
             return (false, Unauthorized("用户不存在"));
 
-        if (!allowedIdentities.Contains(user.Identity))
-            return (false, Forbid("权限不足"));
-
-        return (true, null);
+        return !allowedIdentities.Contains(user.Identity) ? (false, Forbid("权限不足")) : (true, null);
     }
 }
 
 // 创建文章的DTO
+[Serializable]
 public class ArticleCreateDto(string? identity)
 {
     [Required(ErrorMessage = "文章路径是必需的")]
@@ -284,6 +282,7 @@ public class ArticleCreateDto(string? identity)
 }
 
 // 更新文章的DTO
+[Serializable]
 public class ArticleUpdateDto
 {
     [Required(ErrorMessage = "文章标题是必需的")]

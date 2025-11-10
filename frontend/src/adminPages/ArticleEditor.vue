@@ -8,7 +8,7 @@
             <n-button text @click="goBack" class="mr-4">
               <Icon icon="material-symbols:arrow-back" class="w-6 h-6 text-gray-600 dark:text-gray-300"/>
             </n-button>
-            <h1 class="text-lg font-semibold text-gray-900 dark:text-white">
+            <h1 class="ml-2 text-lg font-semibold text-gray-900 dark:text-white">
               {{ editingArticle ? '编辑文章' : '新建文章' }}
             </h1>
           </div>
@@ -51,7 +51,7 @@
                       v-model:value="editForm.title"
                       placeholder="请输入文章标题"
                       class="rounded-lg"
-                      :bordered="false"
+                      :bordered="true"
                   />
                 </n-form-item>
 
@@ -61,7 +61,7 @@
                       :options="identityOptions"
                       placeholder="请选择可查看权限"
                       class="rounded-lg"
-                      :bordered="false"
+                      :bordered="true"
                   />
                 </n-form-item>
 
@@ -72,7 +72,7 @@
                       :autosize="{ minRows: 20 }"
                       placeholder="请输入文章内容（支持Markdown语法）"
                       class="rounded-lg font-mono text-sm"
-                      :bordered="false"
+                      :bordered="true"
                   />
                 </n-form-item>
               </div>
@@ -164,7 +164,7 @@ const rules = {
 
 // 返回文章管理页面
 const goBack = () => {
-  router.push({name: 'Article'})
+  router.push('/Centre/Article')
 }
 
 // 获取文章详情

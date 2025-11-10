@@ -2,19 +2,23 @@
   <div class="rounded-2xl bg-white dark:bg-neutral-800 transition-all duration-300 hover:shadow-lg p-5">
     <div class="flex items-center">
       <div class="p-3 rounded-xl" :class="bgColorClass">
-        <Icon :icon="iconName" :width="iconSize" :height="iconSize" :color="iconColor" />
+        <Icon :icon="iconName" :width="iconSize" :height="iconSize" :color="iconColor"/>
       </div>
       <div class="ml-4">
         <p class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ title }}</p>
-        <p class="text-2xl font-semibold text-gray-900 dark:text-white mt-1">{{ value }}</p>
+        <p v-if="typeof value === 'string'" class="text-2xl font-semibold text-gray-900 dark:text-white">{{ value }}</p>
+        <div v-else class="!text-2xl font-semibold text-gray-900 dark:text-white mt-1">
+          <n-number-animation :from="0" :to="value"/>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { Icon } from '@iconify/vue'
+import {computed} from 'vue'
+import {Icon} from '@iconify/vue'
+import {NNumberAnimation} from 'naive-ui'
 
 interface Props {
   title: string
@@ -47,7 +51,7 @@ const iconName = computed(() => {
     case 'todo':
       return 'ion:checkbox'
     default:
-      return 'ion:people'
+      return props.icon
   }
 })
 
