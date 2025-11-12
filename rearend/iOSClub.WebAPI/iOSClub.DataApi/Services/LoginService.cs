@@ -8,7 +8,7 @@ namespace iOSClub.DataApi.Services;
 
 public interface IJwtHelper
 {
-    public string GetMemberToken(MemberModel model, bool rememberMe = false, string score = "");
+    public string GetMemberToken(MemberModel model, bool rememberMe = false, string scope = "");
 }
 
 public interface ILoginService
@@ -18,9 +18,9 @@ public interface ILoginService
     /// </summary>
     /// <param name="model">数据</param>
     /// <param name="clientId">客户端 ID</param>
-    /// <param name="score">权限</param>
+    /// <param name="scope">权限</param>
     /// <returns>凭证</returns>
-    public Task<string> Login(LoginModel model, string clientId = "", string score = "");
+    public Task<string> Login(LoginModel model, string clientId = "", string scope = "");
 
     /// <summary>
     /// 登出
@@ -37,16 +37,16 @@ public interface ILoginService
     /// <param name="token">token值</param>
     /// <param name="clientId">客户端 ID</param>
     /// <returns>是否有效</returns>
-    public Task<bool> ValidateToken(string userId, string token, string clientId = "");
+    public Task<bool> ValidateToken(string userId, string token, string clientId);
 
     /// <summary>
     /// 员工登录
     /// </summary>
     /// <param name="model">数据</param>
     /// <param name="clientId">客户端 ID</param>
-    /// <param name="score">权限</param>
+    /// <param name="scope">权限</param>
     /// <returns>凭证</returns>
-    public Task<string> StaffLogin(LoginModel model, string clientId = "", string score = "");
+    public Task<string> StaffLogin(LoginModel model, string clientId = "", string scope = "");
 
     /// <summary>
     /// 修改用户密码
@@ -98,7 +98,7 @@ public class LoginService(
     private const string TokenPrefix = "token:";
     private const int TokenExpiryHours = 1; // 与JwtHelper中的过期时间保持一致
 
-    public async Task<string> Login(LoginModel model, string clientId = "", string score = "")
+    public async Task<string> Login(LoginModel model, string clientId = "", string scope = "")
     {
         if (!await studentRepository.Login(model.UserId, model.Password)) return "";
 
@@ -143,7 +143,7 @@ public class LoginService(
             return storedToken.ToString();
         }
 
-        var token = jwtHelper.GetMemberToken(memberModel, model.RememberMe, score);
+        var token = jwtHelper.GetMemberToken(memberModel, model.RememberMe, scope);
 
         // 将token存储到Redis中，设置过期时间
         await _db.StringSetAsync(redisKey, token, TimeSpan.FromHours(TokenExpiryHours * (model.RememberMe ? 24 : 2)));
@@ -204,7 +204,7 @@ public class LoginService(
         return ValidateToken(userId, token, "");
     }
 
-    public async Task<bool> ValidateToken(string userId, string token, string clientId = "")
+    public async Task<bool> ValidateToken(string userId, string token, string clientId)
     {
         if (string.IsNullOrEmpty(userId)) return false;
 
@@ -228,7 +228,7 @@ public class LoginService(
         return storedToken == token;
     }
 
-    public async Task<string> StaffLogin(LoginModel model, string clientId = "", string score = "")
+    public async Task<string> StaffLogin(LoginModel model, string clientId = "", string scope = "")
     {
         var staff = await staffRepository.GetStaffByIdAsync(model.Password);
 
@@ -242,7 +242,7 @@ public class LoginService(
             Identity = staff.Identity
         };
 
-        var token = jwtHelper.GetMemberToken(memberModel, model.RememberMe, score);
+        var token = jwtHelper.GetMemberToken(memberModel, model.RememberMe, scope);
 
         var s = "";
 

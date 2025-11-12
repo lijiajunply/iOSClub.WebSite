@@ -54,9 +54,9 @@ export const useAuthorizationStore = defineStore('AuthorizationId', {
             if (id === null || id === '') return false;
             await AuthService.logout(id, clientId);
         },
-        async login(user: LoginModel, clientId: string | null | undefined = ''): Promise<boolean> {
+        async login(user: LoginModel, clientId: string | null | undefined = '', scope: string | null | undefined = ''): Promise<boolean> {
             try {
-                const a = await AuthService.login(user, clientId)
+                const a = await AuthService.login(user, clientId, scope)
                 if (!a) {
                     return false;
                 }

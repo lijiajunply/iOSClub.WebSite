@@ -131,10 +131,11 @@ const handleLogin = async () => {
       try {
         // 执行登录
         const res = await authorizationStore.login({
-          userId: form.value.studentId,
-          password: form.value.password,
-          rememberMe: form.value.rememberMe
-        }, Array.isArray(route.query.client_id) ? route.query.client_id[0] : route.query.client_id ?? '')
+              userId: form.value.studentId,
+              password: form.value.password,
+              rememberMe: form.value.rememberMe
+            }, Array.isArray(route.query.client_id) ? route.query.client_id[0] : route.query.client_id ?? '',
+            Array.isArray(route.query.scope) ? route.query.scope[0] : route.query.scope ?? '')
 
         if (!res) {
           errorMsg.value = '登录失败，请检查账号密码'

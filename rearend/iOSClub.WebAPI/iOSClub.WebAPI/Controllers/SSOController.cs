@@ -69,7 +69,8 @@ public class SSOController(
         // 如果客户端支持PKCE，则要求提供code_challenge参数
         if (clientApp.SupportsPkce && string.IsNullOrEmpty(codeChallenge))
         {
-            logger.LogWarning("Authorization failed: PKCE is required for client {ClientId} but code_challenge is missing", clientId);
+            logger.LogWarning(
+                "Authorization failed: PKCE is required for client {ClientId} but code_challenge is missing", clientId);
             return BadRequest("客户端要求使用PKCE，必须提供code_challenge参数");
         }
 
@@ -128,12 +129,10 @@ public class SSOController(
         var encryptedState = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(
             System.Text.Json.JsonSerializer.Serialize(authState)));
 
-        // 存储OAuth2参数到会话中
-        HttpContext.Session.SetString("OAuthState", encryptedState);
-        HttpContext.Session.SetString("OAuthClientId", clientId);
-        HttpContext.Session.SetString("OAuthRedirectUri", redirectUri);
-        HttpContext.Session.SetString("OAuthResponseType", responseType);
-        HttpContext.Session.SetString("OAuthScope", authState.Scope);
+        // 存储OAuth2参数到Redis中
+        var oauthParamsKey = $"oauth:params:{authState.State}";
+        await _redisDb.StringSetAsync(oauthParamsKey, System.Text.Json.JsonSerializer.Serialize(authState),
+            TimeSpan.FromMinutes(10));
 
         var clientAppUrl = Environment.GetEnvironmentVariable("CLIENTAPPURL", EnvironmentVariableTarget.Process);
 
@@ -160,41 +159,37 @@ public class SSOController(
         logger.LogInformation("OAuth callback received with state parameter");
 
         // 从Redis中获取用户信息（这应该在OAuthLogin页面成功登录后设置）
-        var userId = HttpContext.Session.GetString("OAuthAuthenticatedUserId");
-        var token = HttpContext.Session.GetString("OAuthAuthenticatedToken");
+        var userId = "";
+        var token = "";
 
-        // 如果会话中没有找到用户信息，尝试从Redis中获取
-        if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(token))
+        // 解密state参数以获取原始state值作为Redis键
+        try
         {
-            // 解密state参数以获取原始state值作为Redis键
-            try
+            var decryptedState = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(state));
+            var stateInfo = System.Text.Json.JsonSerializer.Deserialize<AuthState>(decryptedState) ??
+                            throw new InvalidOperationException();
+
+            // 使用state作为key从Redis中获取用户信息
+            var redisKey = $"oauth:auth:{stateInfo.State}";
+            var userInfoJson = await _redisDb.StringGetAsync(redisKey);
+
+            if (!userInfoJson.IsNullOrEmpty)
             {
-                var decryptedState = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(state));
-                var stateInfo = System.Text.Json.JsonSerializer.Deserialize<AuthState>(decryptedState) ??
-                                throw new InvalidOperationException();
-
-                // 使用state作为key从Redis中获取用户信息
-                var redisKey = $"oauth:auth:{stateInfo.State}";
-                var userInfoJson = await _redisDb.StringGetAsync(redisKey);
-
-                if (!userInfoJson.IsNullOrEmpty)
+                var userInfo = System.Text.Json.JsonSerializer.Deserialize<OAuthUserInfo>(userInfoJson.ToString());
+                if (userInfo != null)
                 {
-                    var userInfo = System.Text.Json.JsonSerializer.Deserialize<OAuthUserInfo>(userInfoJson.ToString());
-                    if (userInfo != null)
-                    {
-                        userId = userInfo.UserId;
-                        token = userInfo.Token;
+                    userId = userInfo.UserId;
+                    token = userInfo.Token;
 
-                        // 删除Redis中的临时数据
-                        await _redisDb.KeyDeleteAsync(redisKey);
-                    }
+                    // 删除Redis中的临时数据
+                    await _redisDb.KeyDeleteAsync(redisKey);
                 }
             }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Failed to decrypt or deserialize state parameter");
-                // 解密或反序列化失败，保持userId和token为null或empty
-            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to decrypt or deserialize state parameter");
+            // 解密或反序列化失败，保持userId和token为null或empty
         }
 
         // 检查是否成功获取到用户信息
@@ -204,69 +199,45 @@ public class SSOController(
             return BadRequest("用户认证失败或会话已过期");
         }
 
-        // 清除会话中的用户信息
-        HttpContext.Session.Remove("OAuthAuthenticatedUserId");
-        HttpContext.Session.Remove("OAuthAuthenticatedUserName");
-        HttpContext.Session.Remove("OAuthAuthenticatedToken");
-        HttpContext.Session.Remove("TempOAuthToken");
-
-        // 首先尝试从Session中获取OAuth参数
-        var authState = new AuthState();
-        var sessionOAuthState = HttpContext.Session.GetString("OAuthState");
-        var sessionClientId = HttpContext.Session.GetString("OAuthClientId");
-        var sessionRedirectUri = HttpContext.Session.GetString("OAuthRedirectUri");
-        var sessionResponseType = HttpContext.Session.GetString("OAuthResponseType");
-        var sessionScope = HttpContext.Session.GetString("OAuthScope");
-
-        if (!string.IsNullOrEmpty(sessionOAuthState) &&
-            !string.IsNullOrEmpty(sessionClientId) &&
-            !string.IsNullOrEmpty(sessionRedirectUri) &&
-            !string.IsNullOrEmpty(sessionResponseType))
+        // 从state参数中解析所有信息
+        AuthState authState;
+        try
         {
-            // 从Session中获取OAuth参数
-            authState.ClientId = sessionClientId;
-            authState.RedirectUri = sessionRedirectUri;
-            authState.ResponseType = sessionResponseType;
-            authState.Scope = sessionScope ?? DefaultScore;
-
-            // 从state参数中解析State值
-            try
-            {
-                var decryptedState = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(state));
-                var stateInfo = System.Text.Json.JsonSerializer.Deserialize<AuthState>(decryptedState) ??
-                                throw new InvalidOperationException();
-                authState.State = stateInfo.State;
-                authState.CodeChallenge = stateInfo.CodeChallenge;
-                authState.CodeChallengeMethod = stateInfo.CodeChallengeMethod;
-                authState.Scope =
-                    string.IsNullOrEmpty(stateInfo.Scope)
-                        ? authState.Scope
-                        : stateInfo.Scope; // 如果state中有scope则使用state中的
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Failed to decrypt or deserialize state parameter in session");
-                return BadRequest("无效的状态参数");
-            }
+            var decryptedState = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(state));
+            authState = System.Text.Json.JsonSerializer.Deserialize<AuthState>(decryptedState) ??
+                        throw new InvalidOperationException();
         }
-        else
+        catch (Exception ex)
         {
-            // Session中没有OAuth参数，从state参数中解析所有信息
+            logger.LogError(ex, "Failed to decrypt or deserialize state parameter");
+            return BadRequest("无效的状态参数");
+        }
+
+        // 从Redis中获取OAuth参数
+        var oauthParamsKey = $"oauth:params:{authState.State}";
+        var oauthParamsJson = await _redisDb.StringGetAsync(oauthParamsKey);
+        if (!oauthParamsJson.IsNullOrEmpty)
+        {
             try
             {
-                var decryptedState = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(state));
-                authState = System.Text.Json.JsonSerializer.Deserialize<AuthState>(decryptedState) ??
-                            throw new InvalidOperationException();
+                var storedAuthState =
+                    System.Text.Json.JsonSerializer.Deserialize<AuthState>(oauthParamsJson.ToString());
+                if (storedAuthState != null)
+                {
+                    authState = storedAuthState;
+                }
+
+                // 删除已使用的参数
+                await _redisDb.KeyDeleteAsync(oauthParamsKey);
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Failed to decrypt or deserialize state parameter");
-                return BadRequest("无效的状态参数");
+                logger.LogError(ex, "Failed to deserialize OAuth parameters from Redis");
             }
         }
 
         // 验证token是否有效
-        var isValid = await ValidateToken(token);
+        var isValid = await ValidateToken(token, authState.ClientId);
         if (!isValid)
         {
             logger.LogWarning("Callback failed: invalid authentication token");
@@ -430,7 +401,8 @@ public class SSOController(
                 logger.LogWarning(
                     "Token exchange failed: PKCE is required for client {ClientId} but code_verifier is missing",
                     clientId);
-                return BadRequest(new { error = "invalid_request", error_description = "客户端要求使用PKCE，必须提供code_verifier参数" });
+                return BadRequest(new
+                    { error = "invalid_request", error_description = "客户端要求使用PKCE，必须提供code_verifier参数" });
             }
 
             // 如果授权码有PKCE要求，验证code_verifier
@@ -495,7 +467,7 @@ public class SSOController(
                 return BadRequest(new { error = "invalid_grant", error_description = "用户不存在" });
             }
 
-            var token = await loginService.GetToken(member.UserId);
+            var token = await loginService.GetToken(member.UserId, clientId);
             if (string.IsNullOrEmpty(token))
             {
                 logger.LogError("Token exchange failed: unable to generate token for user {UserId}",
@@ -529,15 +501,16 @@ public class SSOController(
     /// 验证访问令牌
     /// </summary>
     /// <param name="token">要验证的令牌</param>
+    /// <param name="clientId">客户端 ID</param>
     /// <returns>令牌是否有效</returns>
-    private async Task<bool> ValidateToken(string token)
+    private async Task<bool> ValidateToken(string token, string clientId)
     {
         logger.LogDebug("Validating token");
 
         // 检查令牌是否为空
         if (string.IsNullOrEmpty(token))
         {
-            logger.LogDebug("Token validation failed: token is null or empty");
+            logger.LogWarning("Token validation failed: token is null or empty");
             return false;
         }
 
@@ -550,7 +523,7 @@ public class SSOController(
             // 检查令牌是否过期
             if (jsonToken.ValidTo < DateTime.UtcNow)
             {
-                logger.LogDebug("Token validation failed: token expired at {ExpiryTime}", jsonToken.ValidTo);
+                logger.LogWarning("Token validation failed: token expired at {ExpiryTime}", jsonToken.ValidTo);
                 return false;
             }
 
@@ -558,13 +531,13 @@ public class SSOController(
             var userId = jsonToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userId))
             {
-                logger.LogDebug("Token validation failed: missing user ID in token claims");
+                logger.LogWarning("Token validation failed: missing user ID in token claims");
                 return false;
             }
 
             // 使用loginService来验证令牌
-            var isValid = await loginService.ValidateToken(userId, token);
-            logger.LogDebug("Token validation result for user {UserId}: {IsValid}", userId, isValid);
+            var isValid = await loginService.ValidateToken(userId, token, clientId);
+            logger.LogInformation("Token validation result for user {UserId}: {IsValid}", userId, isValid);
             return isValid;
         }
         catch (Exception ex)
@@ -688,12 +661,6 @@ public class SSOController(
             var authHeader = HttpContext.Request.Headers.Authorization.ToString();
             var token = authHeader.StartsWith("Bearer ") ? authHeader["Bearer ".Length..].Trim() : authHeader;
 
-            // 存储用户信息到会话中，供callback方法使用
-            HttpContext.Session.SetString("OAuthAuthenticatedUserId", user.UserId);
-            HttpContext.Session.SetString("OAuthAuthenticatedUserName", user.UserName);
-            HttpContext.Session.SetString("OAuthAuthenticatedToken", token);
-
-            // 同时存储到Redis中，使用state作为key
             if (string.IsNullOrEmpty(request.State))
             {
                 logger.LogInformation("Session stored successfully for user {UserId} without Redis storage",
