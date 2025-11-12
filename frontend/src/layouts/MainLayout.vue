@@ -115,17 +115,17 @@
             v-if="drawerVisible"
             class="fixed inset-0 z-40 bg-white dark:bg-black pt-16"
           >
-            <div class="px-4 py-6 space-y-1">
+            <div class="px-4 py-1 space-y-0.5">
               <router-link
                 to="/"
-                class="block px-4 py-3 text-base font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+                class="block px-4 py-2.5 text-base font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
                 @click="drawerVisible = false"
               >
                 首页
               </router-link>
 
               <!-- About Section -->
-              <div class="pt-4 pb-2">
+              <div class="pt-1.5 pb-0.5">
                 <div class="px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   关于我们
                 </div>
@@ -133,7 +133,7 @@
                   v-for="item in aboutUsOptions"
                   :key="item.key"
                   :to="item.key"
-                  class="block px-4 py-3 text-base font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+                  class="block px-4 py-2.5 text-base font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
                   @click="drawerVisible = false"
                 >
                   {{ item.label }}
@@ -141,7 +141,7 @@
               </div>
 
               <!-- Community Section -->
-              <div class="pt-2 pb-4">
+              <div class="pt-1.5 pb-1.5">
                 <div class="px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   社团动态
                 </div>
@@ -149,24 +149,24 @@
                   v-for="item in communityOptions"
                   :key="item.key"
                   :to="item.key"
-                  class="block px-4 py-3 text-base font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+                  class="block px-4 py-2.5 text-base font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
                   @click="drawerVisible = false"
                 >
                   {{ item.label }}
                 </router-link>
               </div>
 
-              <div class="pt-4 border-t border-gray-200 dark:border-gray-800">
+              <div class="pt-1.5 border-t border-gray-200 dark:border-gray-800">
                 <button
                   v-if="!isCentreRoute"
-                  class="w-full px-4 py-3 bg-blue-500 text-white text-base font-medium rounded-lg hover:bg-blue-600 transition-colors"
+                  class="w-full px-4 py-2.5 bg-blue-500 text-white text-base font-medium rounded-lg hover:bg-blue-600 transition-colors"
                   @click="() => { router.push('/login'); drawerVisible = false }"
                 >
                   登录/注册
                 </button>
                 <button
                   v-else
-                  class="w-full px-4 py-3 bg-blue-500 text-white text-base font-medium rounded-lg hover:bg-blue-600 transition-colors"
+                  class="w-full px-4 py-2.5 bg-blue-500 text-white text-base font-medium rounded-lg hover:bg-blue-600 transition-colors"
                   @click="logout"
                 >
                   退出登录
@@ -174,7 +174,7 @@
 
                 <button
                   @click="mainToggleTheme"
-                  class="mt-3 w-full px-4 py-3 flex items-center justify-center gap-2 text-base font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  class="mt-1.5 w-full px-4 py-2.5 flex items-center justify-center gap-2 text-base font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                 >
                   <Icon
                     v-if="!isDark"
