@@ -145,7 +145,7 @@ public class SSOController(
 
         // 重定向到我们自己的OAuth登录页面
         return Redirect(
-            $"{clientAppUrl}/oauth-login?state={encryptedState}&client_id={clientId}&redirect_uri={Uri.EscapeDataString(redirectUri)}&response_type={responseType}&scope={Uri.EscapeDataString(authState.Scope)}");
+            $"{clientAppUrl}/oauth-login?state={encryptedState}&client_id={clientId}&redirect_uri={Uri.EscapeDataString(redirectUri)}&response_type={responseType}");
     }
 
     /// <summary>
@@ -467,7 +467,7 @@ public class SSOController(
                 return BadRequest(new { error = "invalid_grant", error_description = "用户不存在" });
             }
 
-            var token = await loginService.GetToken(member.UserId);
+            var token = await loginService.GetToken(member.UserId, clientId);
             if (string.IsNullOrEmpty(token))
             {
                 logger.LogError("Token exchange failed: unable to generate token for user {UserId}",
