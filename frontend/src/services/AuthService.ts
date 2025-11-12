@@ -21,11 +21,12 @@ export class AuthService {
     /**
      * 用户登录
      * @param loginModel 登录信息
-     * @param clientId
+     * @param clientId 客户端ID
+     * @param scope 授权范围
      * @returns Promise<string> JWT令牌
      */
-    static async login(loginModel: LoginModel, clientId: string | null | undefined = ''): Promise<string> {
-        const response = await fetch(`${url}/Auth/login/${clientId}`, {
+    static async login(loginModel: LoginModel, clientId: string | null | undefined = '', scope: string | null | undefined = ''): Promise<string> {
+        const response = await fetch(`${url}/Auth/login?clientId=${clientId}&scope=${scope}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

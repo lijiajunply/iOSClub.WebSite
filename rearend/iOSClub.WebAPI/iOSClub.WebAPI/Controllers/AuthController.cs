@@ -39,19 +39,20 @@ public class AuthController(
     /// </summary>
     /// <param name="loginModel">登录信息模型，包含用户ID和用户名</param>
     /// <param name="clientId">客户端 ID</param>
+    /// <param name="scope">权限</param>
     /// <returns>成功返回JWT令牌，失败返回404未找到</returns>
-    [HttpPost("login/{clientId?}")]
-    public async Task<ActionResult<string>> Login(LoginModel loginModel, string clientId = "")
+    [HttpPost("login")]
+    public async Task<ActionResult<string>> Login(LoginModel loginModel, string clientId = "", string scope = "")
     {
         // 首先尝试使用LoginService进行学生登录
-        var studentToken = await loginService.Login(loginModel, clientId);
+        var studentToken = await loginService.Login(loginModel, clientId, scope);
         if (!string.IsNullOrEmpty(studentToken))
         {
             return studentToken;
         }
 
         // 如果学生登录失败，尝试员工登录
-        var staffToken = await loginService.StaffLogin(loginModel, clientId);
+        var staffToken = await loginService.StaffLogin(loginModel, clientId, scope);
         if (!string.IsNullOrEmpty(staffToken))
         {
             return staffToken;
