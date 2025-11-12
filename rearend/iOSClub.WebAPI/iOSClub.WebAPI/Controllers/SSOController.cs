@@ -237,7 +237,7 @@ public class SSOController(
         }
 
         // 验证token是否有效
-        var isValid = await ValidateToken(token);
+        var isValid = await ValidateToken(token, authState.ClientId);
         if (!isValid)
         {
             logger.LogWarning("Callback failed: invalid authentication token");
@@ -501,8 +501,9 @@ public class SSOController(
     /// 验证访问令牌
     /// </summary>
     /// <param name="token">要验证的令牌</param>
+    /// <param name="clientId">客户端 ID</param>
     /// <returns>令牌是否有效</returns>
-    private async Task<bool> ValidateToken(string token)
+    private async Task<bool> ValidateToken(string token, string clientId)
     {
         logger.LogDebug("Validating token");
 
@@ -535,7 +536,7 @@ public class SSOController(
             }
 
             // 使用loginService来验证令牌
-            var isValid = await loginService.ValidateToken(userId, token);
+            var isValid = await loginService.ValidateToken(userId, token, clientId);
             logger.LogInformation("Token validation result for user {UserId}: {IsValid}", userId, isValid);
             return isValid;
         }
