@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using iOSClub.Data.ShowModels;
 using iOSClub.DataApi.Services;
+using iOSClub.WebAPI.IdentityModels;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using StackExchange.Redis;
 
 namespace iOSClub.WebAPI.Controllers;
@@ -106,10 +108,22 @@ public class OAuthController(ILoginService loginService, IConnectionMultiplexer 
 
     [HttpPost("logout")]
     [HttpGet("logout")]
+    [Authorize]
     public async Task<IActionResult> Logout(string? returnUrl = "/")
     {
         // 清除认证Cookie
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+
+        var user = HttpContext.User.GetUser();
+
+        if (user != null)
+        {
+            await loginService.Logout(user.UserId);
+        }
+        else
+        {
+            return BadRequest("JWT解析失败");
+        }
 
         var clientAppUrl = GetClientAppUrl();
         var logoutUrl = $"{clientAppUrl}/logout";

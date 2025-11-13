@@ -129,6 +129,8 @@ const handleSelect = (key) => {
 </script>
 
 <style>
+@reference 'tailwindcss';
+
 /* 苹果风格的菜单样式 */
 .apple-menu {
   background: transparent !important;
@@ -140,9 +142,9 @@ const handleSelect = (key) => {
   color: #86868b;
   text-transform: uppercase;
   letter-spacing: 0.01em;
-  padding: 12px 24px 8px;
-  margin-bottom: 4px;
-  border-bottom: 1px solid #f0f0f0;
+  margin: 12px 24px 4px;
+  padding-left: 0 !important;
+  @apply border-b-1  border-b-gray-200 dark:border-b-gray-600 ;
 }
 
 .apple-menu .n-menu-item {
@@ -152,25 +154,6 @@ const handleSelect = (key) => {
   border-radius: 8px;
   margin: 2px 12px;
   transition: all 0.2s ease;
-}
-
-.apple-menu .n-menu-item:hover {
-  background-color: #f5f5f7;
-  color: #0071e3;
-}
-
-.apple-menu .n-menu-item.n-menu-item--selected {
-  background-color: #0071e3;
-  color: white;
-  font-weight: 500;
-}
-
-.dark .apple-menu .n-menu-item {
-  background: transparent !important;
-}
-
-.apple-menu .n-menu-item.n-menu-item--selected::before {
-  display: none;
 }
 
 .apple-menu .n-menu-item-content {

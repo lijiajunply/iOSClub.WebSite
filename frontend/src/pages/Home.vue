@@ -2,7 +2,8 @@
   <div class="min-h-screen transition-colors duration-500">
 
     <!-- Hero Section - Apple Style -->
-    <section class="relative flex items-center justify-center px-6 lg:px-8 overflow-hidden" style="min-height: calc(100vh - 64px);">
+    <section class="relative flex items-center justify-center px-6 lg:px-8 overflow-hidden"
+             style="min-height: calc(100vh - 64px);">
       <!-- Background Gradient -->
       <div
           class="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-pink-500/5 dark:from-blue-500/10 dark:via-purple-500/10 dark:to-pink-500/10"></div>
@@ -97,18 +98,19 @@
       <div class="max-w-7xl mx-auto">
         <!-- Section Header -->
         <div class="text-center mb-20 space-y-4">
-          <h2 class="text-5xl md:text-6xl font-semibold text-gray-900 dark:text-white tracking-tight">
+          <h2 class="text-4xl md:text-5xl font-semibold text-gray-900 dark:text-white tracking-tight">
             关于我们
           </h2>
-          <p class="text-xl text-gray-500 dark:text-gray-400">
+          <p class="text-base md:text-lg lg:text-xl text-gray-500 dark:text-gray-400">
             探索 iOS Club 的更多可能
           </p>
         </div>
 
         <!-- Feature Cards Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
-          <div
+          <a
               v-for="(card, index) in cards"
+              :href="card.url"
               :key="index"
               class="group relative p-8 rounded-3xl bg-gradient-to-br from-gray-50 to-gray-100/50 dark:from-white/5 dark:to-white/[0.02] border border-gray-200/50 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20 transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl cursor-pointer overflow-hidden"
           >
@@ -149,14 +151,14 @@
                 class="absolute bottom-0 left-0 right-0 h-1 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 rounded-full"
                 :style="{ backgroundColor: card.color }"
             ></div>
-          </div>
+          </a>
         </div>
 
         <!-- More Details Button -->
         <div class="text-center">
           <button
               @click="router.push('/About')"
-              class="group inline-flex items-center gap-3 px-10 py-5 bg-gray-900 dark:bg-white text-white dark:text-black rounded-full font-medium text-lg transition-all duration-300 hover:scale-105 active:scale-95 hover:shadow-2xl"
+              class="group inline-flex items-center gap-3 px-10 py-5 bg-gray-900 dark:bg-white text-white dark:text-black rounded-full font-medium text-base lg:text-lg transition-all duration-300 hover:scale-105 active:scale-95 hover:shadow-2xl"
           >
             查看更多详情
             <Icon
@@ -227,7 +229,8 @@ interface Card {
   iconName: string
   title: string
   content: string
-  color: string
+  color: string,
+  url?: string
 }
 
 const router = useRouter()
@@ -238,37 +241,39 @@ const cards: Card[] = [
     iconName: 'heroicons:academic-cap-20-solid',
     title: '我们是谁?',
     content: '我们是由Apple公司资金支持，受学管和西安建筑科技大学大学生创新创业实践中心指导的创新创业类社团。',
-    color: '#0071E3' // Apple Blue
+    color: '#0071E3', // Apple Blue
+    url: '/About'
   },
   {
     iconName: 'heroicons:bolt-solid',
-    title: '和iOS Club一起结伴同行',
+    title: '和 iOS Club 一起结伴同行',
     content: '不管是零基础的小白还是大神，只要你有兴趣，这里就是你的天堂',
-    color: '#FF9500' // Apple Orange
+    color: '#FF9500', // Apple Orange
   },
   {
     iconName: 'heroicons:user-group-solid',
-    title: 'iOS Club,不止iOS',
-    content: '我们不止只有iOS，西建大iOS Club是一个跨专业与课堂的数码编程爱好者社团',
-    color: '#34C759' // Apple Green
+    title: 'iOS Club，不止 iOS',
+    content: '我们不止只有 iOS ，西建大 iOS Club 是一个跨专业与课堂的数码编程爱好者社团',
+    color: '#34C759', // Apple Green
   },
   {
     iconName: 'heroicons:chat-bubble-left-ellipsis-solid',
     title: '和 iOS Club 一起玩',
     content: '活动覆盖编程和数码，不仅有最新数码设备体验活动，还有大咖沙龙和Apple官方活动',
-    color: '#FF375F' // Apple Pink
+    color: '#FF375F', // Apple Pink
   },
   {
     iconName: 'heroicons:code-bracket-solid',
     title: '合作软件开发',
-    content: '加入我们，和志同道合的iMember一起合作开发，一起创造世界',
-    color: '#AF52DE' // Apple Purple
+    content: '和志同道合的iMember一起合作开发，一起创造世界',
+    color: '#AF52DE', // Apple Purple
   },
   {
     iconName: 'heroicons:arrow-trending-up-solid',
     title: '全校数码编程爱好者,联合起来！',
     content: '我们意图打造全校最大的科技社区，快来加入我们成为一名iMember吧',
-    color: '#5E5CE6' // Apple Indigo
+    color: '#5E5CE6', // Apple Indigo
+    url: '/JoinUs'
   }
 ]
 
@@ -298,7 +303,7 @@ const scrollToAbout = (): void => {
 
 @keyframes gradientFlow {
   0%, 100% {
-    background-position: 0% 50%;
+    background-position: 0 50%;
   }
   50% {
     background-position: 100% 50%;

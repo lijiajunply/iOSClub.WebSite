@@ -3,10 +3,10 @@
     <n-layout has-sider position="absolute" class="macos-layout">
       <!-- Desktop sidebar (macOS style) -->
       <n-layout-sider
-          :collapsed-width="4"
+          :collapsed-width="0"
           :width="280"
           :native-scrollbar="false"
-          show-trigger="bar"
+          :show-trigger="showTrigger"
           :on-update-collapsed="(b: boolean) => (collapsed = b)"
           :collapsed="collapsed"
           class="bg-gray-50 dark:bg-neutral-800 border-r border-gray-200 dark:border-neutral-700 macos-sidebar"
@@ -70,6 +70,8 @@ const router = useRouter()
 const drawerVisible = ref(false)
 const collapsed = ref(false)
 
+const showTrigger = ref<boolean | "bar" | "arrow-circle" | undefined>('bar')
+
 const handleMenuClick = (key: string) => {
   drawerVisible.value = false
   router.push(key)
@@ -79,6 +81,11 @@ const handleMenuClick = (key: string) => {
 const handleResize = () => {
   const width = window.innerWidth
   collapsed.value = width <= 768
+  if (width <= 768) {
+    showTrigger.value = false
+  } else {
+    showTrigger.value = 'bar'
+  }
 }
 
 // Add event listener when component is mounted

@@ -44,6 +44,7 @@ public class AuthController(
     [HttpPost("login")]
     public async Task<ActionResult<string>> Login(LoginModel loginModel, string clientId = "", string scope = "")
     {
+        if (!string.IsNullOrEmpty(clientId) && string.IsNullOrEmpty(scope)) scope = "profile openid role";
         // 首先尝试使用LoginService进行学生登录
         var studentToken = await loginService.Login(loginModel, clientId, scope);
         if (!string.IsNullOrEmpty(studentToken))
