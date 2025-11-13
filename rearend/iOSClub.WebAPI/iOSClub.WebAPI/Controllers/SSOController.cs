@@ -554,7 +554,7 @@ public class SSOController(
     /// <returns>用户信息</returns>
     [HttpGet("userinfo")]
     [Authorize]
-    public async Task<IActionResult> UserInfo()
+    public async Task<IActionResult> UserInfo([FromQuery(Name = "access_token")] string? accessToken = "")
     {
         logger.LogInformation("User info request received");
 
@@ -578,6 +578,11 @@ public class SSOController(
         // 获取访问令牌中的scope信息
         var token = HttpContext.GetJwt();
 
+        if (!string.IsNullOrEmpty(accessToken))
+        {
+            token = accessToken;
+        }
+
         var scopes = DefaultScore.Split(" ").ToList(); // 默认包含openid
         if (!string.IsNullOrEmpty(token))
         {
@@ -596,6 +601,11 @@ public class SSOController(
             {
                 logger.LogError(ex, "Failed to parse token for scope information");
             }
+        }
+        else
+        {
+            logger.LogWarning("Failed to get scope information from token");
+            return BadRequest("token is not found");
         }
 
         // 根据scope返回不同的用户信息
