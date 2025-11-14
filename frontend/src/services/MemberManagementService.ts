@@ -45,7 +45,7 @@ export class MemberManagementService {
      * @param list 学生列表
      * @returns Promise<StudentModel[]> 更新后的学生列表
      */
-    static async updateManyMembers(list: StudentModel[]): Promise<StudentModel[]> {
+    static async updateManyMembers(list: StudentModel[]): Promise<boolean> {
         const token = AuthService.getToken();
         if (!token) {
             throw new Error('未登录');
@@ -71,7 +71,7 @@ export class MemberManagementService {
             throw new Error('批量更新成员失败');
         }
 
-        return await response.json();
+        return response.ok;
     }
 
     /**

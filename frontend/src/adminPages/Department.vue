@@ -547,7 +547,7 @@
             :data="searchResults"
             class="mt-2"
             :bordered="false"
-            :pagination="false"
+            :pagination="{pageSize: 5}"
             :single-line="false"
         />
 
@@ -621,6 +621,50 @@
         </div>
       </template>
     </n-modal>
+
+    <!-- 更改部门模态框 -->
+    <n-modal
+        v-model:show="showChangeDepartmentModalRef"
+        preset="card"
+        style="width: 90%; max-width: 500px;"
+        title="更改员工部门"
+        :bordered="false"
+        class="rounded-2xl overflow-hidden bg-white dark:bg-gray-800"
+    >
+      <div v-if="selectedStaff" class="space-y-4">
+        <div class="bg-gray-100 dark:bg-gray-700 rounded-lg p-4">
+          <div class="text-sm text-gray-600 dark:text-gray-300">员工信息</div>
+          <div class="font-medium">{{ selectedStaff.name }} ({{ selectedStaff.userId }})</div>
+        </div>
+
+        <div class="space-y-2 pb-20">
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">选择新部门</label>
+          <n-select
+              v-model:value="targetDepartment"
+              :options="departmentOptions"
+              placeholder="请选择部门"
+              class="z-50"
+          />
+        </div>
+      </div>
+
+      <template #footer>
+        <div class="flex justify-end gap-2">
+          <button
+              @click="showChangeDepartmentModalRef = false"
+              class="px-4 py-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+            取消
+          </button>
+          <button
+              @click="handleChangeDepartment"
+              class="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white transition-colors"
+              :disabled="!targetDepartment || targetDepartment === selectedStaff?.department"
+          >
+            确认更改
+          </button>
+        </div>
+      </template>
+    </n-modal>
   </div>
 </template>
 
@@ -638,6 +682,7 @@ import {
   NDataTable,
   NModal,
   NEmpty,
+  NSelect,
   type DataTableColumns
 } from 'naive-ui'
 import {Icon} from '@iconify/vue'
@@ -645,8 +690,9 @@ import SkeletonLoader from '../components/SkeletonLoader.vue'
 import {DepartmentService} from '../services/DepartmentService'
 import {StaffService} from '../services/StaffService'
 import {ProjectService} from '../services/ProjectService'
-import type {Department, DepartmentModel, MemberModel, Project, StudentModel} from '../models'
+import type {Department, DepartmentModel, MemberModel, Project, StudentModel, StaffModel} from '../models'
 import * as echarts from 'echarts'
+import {MemberQueryService} from "../services/MemberQueryService";
 
 const router = useRouter()
 const message = useMessage()
@@ -659,11 +705,16 @@ const departments = ref<Department[]>([])
 const staffs = ref<MemberModel[]>([])
 const loading = ref(false)
 
+// 新增的响应式变量
+const showChangeDepartmentModalRef = ref(false)
+const selectedStaff = ref<StaffModel | null>(null)
+const targetDepartment = ref('')
+
 // 模态框状态
 const showAddMemberModal = ref(false)
 const showDepartmentModal = ref(false)
 const searchKeyword = ref('')
-const searchResults = ref([])
+const searchResults = ref<StudentModel[]>([])
 const addMemberType = ref('member')
 const departmentFormRef = ref<InstanceType<typeof NForm> | null>(null)
 
@@ -706,19 +757,27 @@ const memberColumns: DataTableColumns<MemberModel> = [
   }
 ]
 
-const staffColumns: DataTableColumns<MemberModel> = [
+const staffColumns: DataTableColumns<StaffModel> = [
   {title: '姓名', key: 'name', width: 100},
   {title: '学号', key: 'userId', width: 120},
   {
     title: '操作',
     key: 'actions',
-    width: 80,
-    render: (row) => h(NButton, {
-      type: 'error',
-      secondary: true,
-      size: 'small',
-      onClick: () => deleteStaff(row)
-    }, {default: () => '删除'})
+    width: 120,
+    render: (row) => h('div', {class: 'flex gap-2'}, [
+      h(NButton, {
+        type: 'primary',
+        secondary: true,
+        size: 'small',
+        onClick: () => showChangeDepartmentModal(row)
+      }, {default: () => '换部门'}),
+      h(NButton, {
+        type: 'error',
+        secondary: true,
+        size: 'small',
+        onClick: () => deleteStaff(row)
+      }, {default: () => '删除'})
+    ])
   }
 ]
 
@@ -753,6 +812,14 @@ const departmentRules = {
   }
 }
 
+// 新增的计算属性
+const departmentOptions = computed(() => {
+  return departments.value.map(dept => ({
+    label: dept.name,
+    value: dept.name
+  }))
+})
+
 const openDepartment = (department: Department | null = null) => {
   if (department) {
     editingDepartment.value = department
@@ -767,6 +834,13 @@ const openDepartment = (department: Department | null = null) => {
   showDepartmentModal.value = true
 }
 
+// 新增的函数
+const showChangeDepartmentModal = (staff: StaffModel) => {
+  selectedStaff.value = staff
+  targetDepartment.value = staff.department || ''
+  showChangeDepartmentModalRef.value = true
+}
+
 const openAddMember = (department: Department | null = null, type = 'member') => {
   currentDepartment.value = department
   showAddMemberModal.value = true
@@ -775,33 +849,58 @@ const openAddMember = (department: Department | null = null, type = 'member') =>
   addMemberType.value = type
 }
 
-const deleteAllMinisters = () => {
-  // 实际应用中应该添加确认对话框
-  ministers.value = []
-  message.success('所有部长已删除')
-}
-
-const deleteAll = (list: any[] | undefined) => {
-  // 实际应用中应该添加确认对话框
-  if (list && Array.isArray(list)) {
-    list.length = 0
-    message.success('所有成员已删除')
+const deleteAllMinisters = async () => {
+  try {
+    // 实际应用中应该添加确认对话框
+    const ministerList = ministers.value.slice() // Create a copy of the array
+    for (const minister of ministerList) {
+      await StaffService.deleteStaff(minister.userId)
+    }
+    await fetchData()
+    message.success('所有部长已删除')
+  } catch (error: any) {
+    console.error('删除部长时发生错误:', error)
+    message.error('删除部长时发生错误: ' + (error.message || '未知错误'))
   }
 }
 
-const deleteMember = (member: any, list?: any[]) => {
-  if (list && Array.isArray(list)) {
-    const index = list.findIndex(m => m.userId === member.userId)
-    if (index > -1) {
-      list.splice(index, 1)
-      message.success('成员已删除')
+const deleteAll = async (list: any[] | undefined) => {
+  try {
+    // 实际应用中应该添加确认对话框
+    if (list && Array.isArray(list)) {
+      const listCopy = [...list] // Create a copy of the array
+      for (const member of listCopy) {
+        await StaffService.deleteStaff(member.userId)
+      }
+      await fetchData()
+      message.success('所有成员已删除')
     }
-  } else {
-    const index = members.value.findIndex(m => m.userId === member.userId)
-    if (index > -1) {
-      members.value.splice(index, 1)
-      message.success('成员已删除')
+  } catch (error: any) {
+    console.error('删除成员时发生错误:', error)
+    message.error('删除成员时发生错误: ' + (error.message || '未知错误'))
+  }
+}
+
+const deleteMember = async (member: any, list?: any[]) => {
+  try {
+    await StaffService.deleteStaff(member.userId)
+    if (list && Array.isArray(list)) {
+      const index = list.findIndex(m => m.userId === member.userId)
+      if (index > -1) {
+        list.splice(index, 1)
+        message.success('成员已删除')
+      }
+    } else {
+      const index = members.value.findIndex(m => m.userId === member.userId)
+      if (index > -1) {
+        members.value.splice(index, 1)
+        message.success('成员已删除')
+      }
     }
+    await fetchData()
+  } catch (error: any) {
+    console.error('删除成员时发生错误:', error)
+    message.error('删除成员时发生错误: ' + (error.message || '未知错误'))
   }
 }
 
@@ -811,13 +910,14 @@ const deleteStaff = async (staff: any) => {
     return message.error('部员删除失败')
   }
   message.success('部员已删除')
+  await fetchData()
 }
 
 const downloadMemberInfo = async () => {
   try {
     await DepartmentService.exportJson()
     message.success('导出成功')
-  }catch (error) {
+  } catch (error) {
     console.error('导出失败:', error)
     message.error('导出失败')
   }
@@ -835,19 +935,26 @@ const openProject = (project: Project) => {
   router.push(`/Centre/ProjectData/${project.id}`)
 }
 
-const deleteProject = (project: Project, list?: Project[]) => {
-  if (list && Array.isArray(list)) {
-    const index = list.findIndex(p => p.id === project.id)
-    if (index > -1) {
-      list.splice(index, 1)
-      message.success('项目已删除')
+const deleteProject = async (project: Project, list?: Project[]) => {
+  try {
+    await ProjectService.deleteProject(project.id)
+    if (list && Array.isArray(list)) {
+      const index = list.findIndex(p => p.id === project.id)
+      if (index > -1) {
+        list.splice(index, 1)
+        message.success('项目已删除')
+      }
+    } else {
+      const index = projects.value.findIndex(p => p.id === project.id)
+      if (index > -1) {
+        projects.value.splice(index, 1)
+        message.success('项目已删除')
+      }
     }
-  } else {
-    const index = projects.value.findIndex(p => p.id === project.id)
-    if (index > -1) {
-      projects.value.splice(index, 1)
-      message.success('项目已删除')
-    }
+    await fetchData()
+  } catch (error: any) {
+    console.error('删除项目时发生错误:', error)
+    message.error('删除项目时发生错误: ' + (error.message || '未知错误'))
   }
 }
 
@@ -860,6 +967,7 @@ const deleteDepartment = async (department: Department) => {
       departments.value.splice(index, 1)
       message.success('部门已删除')
     }
+    await fetchData()
   } catch (error: any) {
     console.error('删除部门时发生错误:', error)
     message.error('删除部门时发生错误: ' + (error.message || '未知错误'))
@@ -873,66 +981,55 @@ const searchMembers = async () => {
   }
 
   try {
-    // 这里应该使用成员查询服务，暂时保留原逻辑
-    const token = localStorage.getItem('Authorization')
-    const response = await fetch(`https://www.xauat.site/api/Member/Search?keyword=${encodeURIComponent(searchKeyword.value)}`, {
-      method: 'GET',
-      headers: {
-        'Authorization': 'Bearer ' + token,
-        'Content-Type': 'application/json'
-      }
-    })
-
-    if (response.ok) {
-      const data = await response.json()
-      searchResults.value = data.map((item: any) => ({
-        id: item.id,
-        userName: item.userName,
-        userId: item.userId,
-        academy: item.academy
-      }))
-    } else {
-      message.error('搜索成员失败')
-    }
+    searchResults.value = await MemberQueryService.search(searchKeyword.value, 'username')
   } catch (error) {
     console.error('搜索成员时发生错误:', error)
     message.error('搜索成员时发生错误')
   }
 }
 
-const addMember = (member: StudentModel) => {
-  if (currentDepartment.value) {
-    // 添加到特定部门
-    if (!currentDepartment.value.ministers) {
-      currentDepartment.value.ministers = []
-    }
-
-    if (addMemberType.value === 'minister') {
-      currentDepartment.value.ministers?.push({
+const addMember = async (member: StudentModel) => {
+  try {
+    if (currentDepartment.value) {
+      // 添加到特定部门
+      const staffData = {
         userId: member.userId,
         name: member.userName,
-        identity: 'Minister',
+        academy: member.academy,
+        className: member.className,
+        gender: member.gender,
+        phoneNum: member.phoneNum,
+        politicalLandscape: member.politicalLandscape,
+        identity: addMemberType.value === 'minister' ? 'Minister' : 'Department',
         department: currentDepartment.value.name
-      })
+      } as StaffModel;
+
+      await StaffService.createStaff(staffData);
+
+      message.success(`已添加${member.userName}到${currentDepartment.value.name}`)
     } else {
-      currentDepartment.value.members?.push({
+      // 添加到领导层
+      const staffData = {
         userId: member.userId,
         name: member.userName,
-        identity: 'Member',
-        department: currentDepartment.value.name
-      })
-    }
+        academy: member.academy,
+        className: member.className,
+        gender: member.gender,
+        phoneNum: member.phoneNum,
+        politicalLandscape: member.politicalLandscape,
+        identity: 'President',
+        department: ''
+      } as StaffModel;
 
-    message.success(`已添加${member.userName}到${currentDepartment.value.name}`)
-  } else {
-    // 添加到领导层
-    ministers.value.push({
-      ...member,
-      identity: 'President'
-    })
-    message.success(`已添加${member.userName}到领导层`)
+      await StaffService.createStaff(staffData);
+      message.success(`已添加${member.userName}到领导层`)
+    }
+    await fetchData()
+    showAddMemberModal.value = false
+  } catch (error: any) {
+    console.error('添加成员时发生错误:', error)
+    message.error('添加成员时发生错误: ' + (error.message || '未知错误'))
   }
-  showAddMemberModal.value = false
 }
 
 const saveDepartment = async () => {
@@ -966,6 +1063,17 @@ const saveDepartment = async () => {
   } catch (error: any) {
     console.error('保存部门时发生错误:', error)
     message.error('保存部门时发生错误: ' + (error.message || '未知错误'))
+  }
+}
+
+const changeStaffDepartment = async (userId: string, departmentName: string) => {
+  try {
+    await StaffService.changeDepartment(userId, departmentName);
+    message.success('员工部门变更成功');
+    await fetchData();
+  } catch (error: any) {
+    console.error('变更员工部门时发生错误:', error);
+    message.error('变更员工部门时发生错误: ' + (error.message || '未知错误'));
   }
 }
 
@@ -1255,6 +1363,19 @@ const handleTabChange = (name: string) => {
   }
 }
 
+// 在方法部分添加更改部门的处理函数
+const handleChangeDepartment = async () => {
+  if (!selectedStaff.value || !targetDepartment.value) return
+
+  try {
+    await changeStaffDepartment(selectedStaff.value.userId, targetDepartment.value)
+    showChangeDepartmentModalRef.value = false
+    message.success('员工部门变更成功')
+  } catch (error: any) {
+    console.error('变更员工部门时发生错误:', error)
+    message.error('变更员工部门时发生错误: ' + (error.message || '未知错误'))
+  }
+}
 </script>
 
 <style scoped>

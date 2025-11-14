@@ -37,10 +37,10 @@ public class MemberManagementController(IStudentRepository studentRepository) : 
     /// <param name="list">学生列表</param>
     /// <returns>更新后的学生列表</returns>
     [HttpPost("update-many")]
-    public async Task<ActionResult<List<StudentModel>>> UpdateMany(List<StudentModel> list)
+    public async Task<ActionResult<bool>> UpdateMany(List<StudentModel> list)
     {
         var result = await studentRepository.UpdateManyAsync(list);
-        return Ok(result);
+        return result ? Ok() : NotFound();
     }
 
     /// <summary>

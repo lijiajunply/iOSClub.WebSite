@@ -1,7 +1,7 @@
 <template>
-  <div class=" transition-colors duration-300">
+  <div class="transition-colors duration-300">
     <!-- 主内容区域 -->
-    <div class="p-4 md:p-6">
+    <div class="max-w-7xl mx-auto p-4 md:p-6">
       <!-- 页面标题 -->
       <div class="flex items-center justify-between mb-6">
         <div>
@@ -168,9 +168,6 @@ const handleDropdownSelect = (key: string) => {
       break
     case 'remove':
       removeAllData()
-      break
-    case 'upload':
-      triggerFileInput()
       break
   }
 }

@@ -81,7 +81,7 @@
         </div>
 
         <!-- 预览区域 -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm hidden md:block">
           <div class="p-4 border-b border-gray-200 dark:border-gray-700">
             <h2 class="text-base font-medium text-gray-900 dark:text-white">预览</h2>
           </div>

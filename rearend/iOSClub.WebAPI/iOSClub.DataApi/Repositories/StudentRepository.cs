@@ -13,17 +13,20 @@ public interface IStudentRepository
     public Task<bool> Update(StudentModel model);
     public Task<bool> Delete(string id);
     public Task<bool> Login(string userId, string password);
-    
+
     // 新增方法
     public Task<StudentModel?> GetByIdAsync(string id);
     public Task<bool> UpdateAsync(StudentModel model);
     public Task<bool> DeleteAsync(string id);
-    public Task<List<StudentModel>> UpdateManyAsync(List<StudentModel> list);
+    public Task<bool> UpdateManyAsync(List<StudentModel> list);
     public Task<List<MemberModel>> GetAllMembersAsync();
     public Task<(List<MemberModel>, int)> GetMembersPagedAsync(int pageNum, int pageSize);
-    
+
     // 带搜索功能的分页方法
-    public Task<(List<MemberModel>, int)> GetMembersPagedAsync(int pageNum, int pageSize, string? searchTerm, string? searchCondition);
+    public Task<(List<MemberModel>, int)> GetMembersPagedAsync(int pageNum, int pageSize, string? searchTerm,
+        string? searchCondition);
+
+    public Task<List<StudentModel>> Search(string searchTerm, string searchCondition);
 }
 
 public class StudentRepository(ClubContext context) : IStudentRepository
@@ -74,7 +77,7 @@ public class StudentRepository(ClubContext context) : IStudentRepository
                 ? password == x.PhoneNum
                 : hash == x.PasswordHash));
     }
-    
+
     // 新增方法实现
     public async Task<StudentModel?> GetByIdAsync(string id)
     {
@@ -97,7 +100,7 @@ public class StudentRepository(ClubContext context) : IStudentRepository
         return await context.SaveChangesAsync() > 0;
     }
 
-    public async Task<List<StudentModel>> UpdateManyAsync(List<StudentModel> list)
+    public async Task<bool> UpdateManyAsync(List<StudentModel> list)
     {
         // 获取所有现有的学生ID
         var existingStudentIds = await context.Students
@@ -114,20 +117,20 @@ public class StudentRepository(ClubContext context) : IStudentRepository
         if (newStudents.Count > 0)
         {
             await context.Students.AddRangeAsync(newStudents);
-            await context.SaveChangesAsync();
+            return await context.SaveChangesAsync() > 0;
         }
 
-        return await context.Students.ToListAsync();
+        return true;
     }
 
     public async Task<List<MemberModel>> GetAllMembersAsync()
     {
         var query = from student in context.Students
-                   join staff in context.Staffs
-                       on student.UserId equals staff.UserId into staffGroup
-                   from staff in staffGroup.DefaultIfEmpty() // LEFT JOIN
-                   select MemberModel.CopyFrom(student, staff != null ? staff.Identity : "Member");
-        
+            join staff in context.Staffs
+                on student.UserId equals staff.UserId into staffGroup
+            from staff in staffGroup.DefaultIfEmpty() // LEFT JOIN
+            select MemberModel.CopyFrom(student, staff != null ? staff.Identity : "Member");
+
         return await query.ToListAsync();
     }
 
@@ -136,13 +139,14 @@ public class StudentRepository(ClubContext context) : IStudentRepository
         // 调用带搜索参数的版本，传递null值表示无搜索条件
         return await GetMembersPagedAsync(pageNum, pageSize, null, null);
     }
-    
+
     // 带搜索功能的分页方法实现
-    public async Task<(List<MemberModel>, int)> GetMembersPagedAsync(int pageNum, int pageSize, string? searchTerm, string? searchCondition)
+    public async Task<(List<MemberModel>, int)> GetMembersPagedAsync(int pageNum, int pageSize, string? searchTerm,
+        string? searchCondition)
     {
         // 构建基础查询
         var query = context.Students.AsQueryable();
-        
+
         // 如果提供了搜索词，则应用搜索条件
         if (!string.IsNullOrEmpty(searchTerm))
         {
@@ -159,7 +163,7 @@ public class StudentRepository(ClubContext context) : IStudentRepository
                     s.PhoneNum.Contains(searchTerm))
             };
         }
-        
+
         var skipCount = (pageNum - 1) * pageSize;
         var studentIdsQuery = query
             .OrderBy(s => s.UserId) // 确保结果一致性的排序
@@ -189,5 +193,41 @@ public class StudentRepository(ClubContext context) : IStudentRepository
         }).ToList();
 
         return (results, totalCount);
+    }
+
+    public async Task<List<StudentModel>> Search(string searchTerm, string searchCondition)
+    {
+        var query = context.Students.AsQueryable();
+
+        // 如果提供了搜索词，则应用搜索条件
+        if (!string.IsNullOrEmpty(searchTerm))
+        {
+            query = searchCondition.ToLower() switch
+            {
+                "userid" => query.Where(s => s.UserId.StartsWith(searchTerm)),
+                "username" => query.Where(s => s.UserName.Contains(searchTerm)),
+                "classname" => query.Where(s => s.ClassName.Contains(searchTerm)),
+                "academy" => query.Where(s => s.Academy.Contains(searchTerm)),
+                "phone_num" => query.Where(s => s.PhoneNum.Contains(searchTerm)),
+                _ => query.Where(s =>
+                    s.UserId.Contains(searchTerm) || s.UserName.Contains(searchTerm) ||
+                    s.ClassName.Contains(searchTerm) || s.Academy.Contains(searchTerm) ||
+                    s.PhoneNum.Contains(searchTerm))
+            };
+        }
+
+
+        var studentIdsQuery = query
+            .OrderBy(s => s.UserId) // 确保结
+            .Select(s => s.UserId);
+
+        var studentIds = await studentIdsQuery.ToListAsync();
+        var studentsQuery = context.Students
+            .Where(s => studentIds.Contains(s.UserId))
+            .AsNoTracking();
+
+        var students = await studentsQuery.ToListAsync();
+
+        return students;
     }
 }

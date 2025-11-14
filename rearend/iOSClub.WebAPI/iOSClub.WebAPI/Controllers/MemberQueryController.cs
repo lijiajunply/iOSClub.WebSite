@@ -40,7 +40,7 @@ public class MemberQueryController(IStudentRepository studentRepository) : Contr
     /// <param name="searchCondition">搜索条件</param>
     /// <returns>分页后的成员数据</returns>
     [HttpGet("all-data/page")]
-    public async Task<ActionResult<string>> GetAllDataByPage(int pageNum = 1, int pageSize = 10, 
+    public async Task<ActionResult<string>> GetAllDataByPage(int pageNum = 1, int pageSize = 10,
         string? searchTerm = null, string? searchCondition = null)
     {
         if (pageNum < 1 || pageSize < 1 || pageSize > 100) // 限制最大页大小
@@ -48,8 +48,9 @@ public class MemberQueryController(IStudentRepository studentRepository) : Contr
             return BadRequest("Invalid pagination parameters");
         }
 
-        var (members, totalCount) = await studentRepository.GetMembersPagedAsync(pageNum, pageSize, searchTerm, searchCondition);
-        
+        var (members, totalCount) =
+            await studentRepository.GetMembersPagedAsync(pageNum, pageSize, searchTerm, searchCondition);
+
         var response = new
         {
             TotalCount = totalCount,
@@ -64,5 +65,18 @@ public class MemberQueryController(IStudentRepository studentRepository) : Contr
             ContractResolver = new CamelCasePropertyNamesContractResolver()
         };
         return GZipServer.CompressString(JsonConvert.SerializeObject(response, settingsWithCamelCase));
+    }
+
+    /// <summary>
+    /// 搜索
+    /// </summary>
+    /// <param name="searchTerm">搜索词</param>
+    /// <param name="searchCondition">搜索条件</param>
+    /// <returns>分页后的成员数据</returns>
+    [HttpGet("all-data/search")]
+    public async Task<ActionResult> Search(string searchTerm, string searchCondition)
+    {
+        var data = await studentRepository.Search(searchTerm, searchCondition);
+        return Ok(data);
     }
 }

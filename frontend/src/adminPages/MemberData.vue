@@ -44,6 +44,8 @@ const passwordFormRef = ref<any>(null)
 const loading = ref(false)
 const activeTab = ref('memberData')
 
+const fileInput = ref<HTMLInputElement>()
+
 // 分页相关状态
 const currentPage = ref(1)
 const pageSize = ref(10)
@@ -660,6 +662,31 @@ const searchMembers = () => {
   fetchMembers()
 }
 
+const triggerFileInput = () => {
+  fileInput.value?.click()
+}
+
+const updateMemberUseJson = async (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const files = target.files
+  if (!files || !files.length) return
+  const file = files[0]
+  try {
+    const data = await file?.text().then(x => JSON.parse(x))
+    if (!data) {
+      message.error('无效的JSON文件')
+      return
+    }
+    const result = await MemberManagementService.updateManyMembers(data)
+    if (result){
+      message.success('数据更新成功')
+      await fetchMembers()
+    }
+  } catch (e: any) {
+    console.log(e)
+  }
+}
+
 // 导出数据
 const handleDownloadSelect = async (key: string) => {
   if (key === 'csv') {
@@ -777,7 +804,7 @@ onMounted(() => {
 
 <template>
   <div class="p-4 md:p-6">
-    <div class="rounded-xl mb-6 p-4 duration-200">
+    <div class="max-w-7xl mx-auto rounded-xl mb-6 p-4 duration-200">
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">成员数据管理</h1>
         <div class="flex flex-wrap gap-2">
@@ -795,6 +822,12 @@ onMounted(() => {
               导出数据
             </n-button>
           </n-dropdown>
+          <n-button class="rounded-lg flex items-center" @click="triggerFileInput">
+            <template #icon>
+              <Icon icon="lucide:arrow-big-up-dash" class="text-lg"/>
+            </template>
+            上传数据
+          </n-button>
           <n-button @click="fetchMembers" class="rounded-lg flex items-center">
             <template #icon>
               <Icon icon="ion:refresh" class="text-lg"/>
@@ -803,6 +836,15 @@ onMounted(() => {
           </n-button>
         </div>
       </div>
+
+      <input
+          ref="fileInput"
+          type="file"
+          accept=".json"
+          multiple
+          @change="updateMemberUseJson"
+          style="display: none"
+      />
 
       <n-tabs type="line" animated v-model:value="activeTab" class="mt-4" @update:value="handleTabChange">
         <n-tab-pane name="memberData" tab="成员数据">
@@ -828,12 +870,13 @@ onMounted(() => {
                     class="rounded-lg pl-10"
                 />
                 <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                  <Icon icon="ion:search-outline" class="text-xl" />
+                  <Icon icon="ion:search-outline" class="text-xl"/>
                 </div>
               </div>
 
               <!-- 搜索结果数量 -->
-              <div class="flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-lg px-4 py-2 min-w-[80px]">
+              <div
+                  class="flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-lg px-4 py-2 min-w-[80px]">
                 <span class="text-gray-500 dark:text-gray-300 mr-1">总计:</span>
                 <n-number-animation
                     ref="numberAnimationInstRef"
@@ -849,7 +892,7 @@ onMounted(() => {
                   @click="searchMembers"
                   class="rounded-lg flex items-center"
               >
-                <Icon icon="ion:search-outline" class="mr-1 text-lg" />
+                <Icon icon="ion:search-outline" class="mr-1 text-lg"/>
                 <span>搜索</span>
               </n-button>
             </div>
