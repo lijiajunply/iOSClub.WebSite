@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text;
-using System.Text.Json.Serialization;
 
 namespace iOSClub.Data.DataModels;
 
@@ -24,16 +23,10 @@ public class StudentModel
         return $"{UserName},{UserId},{Gender},{Academy},{PoliticalLandscape},{ClassName},{PhoneNum}";
     }
 
-    public StudentModel Standardization(string? time = null)
+    public StudentModel Standardization()
     {
         UserId = UserId.Replace(" ", "");
-        if (JoinTime.Year == 0)
-        {
-            JoinTime = string.IsNullOrEmpty(time)
-                ? DateTime.UtcNow
-                : DateTime.SpecifyKind(DateTime.Parse(time), DateTimeKind.Utc);
-        }
-
+        JoinTime = DateTime.SpecifyKind(JoinTime.Year == 0 ? DateTime.UtcNow : JoinTime, DateTimeKind.Utc);
         return this;
     }
 

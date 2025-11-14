@@ -109,7 +109,7 @@ export class DepartmentService {
     }
 
     const response = await fetch(`${url}/Department/Update`, {
-      method: 'PUT',
+      method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
@@ -136,7 +136,7 @@ export class DepartmentService {
     }
 
     const response = await fetch(`${url}/Department/Delete/${name}`, {
-      method: 'DELETE',
+      method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',

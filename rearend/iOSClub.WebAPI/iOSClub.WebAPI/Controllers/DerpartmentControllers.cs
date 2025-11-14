@@ -177,28 +177,6 @@ public class DepartmentController(
     }
 
     /// <summary>
-    /// 添加成员到部门
-    /// </summary>
-    [HttpPost("AddStaff")]
-    [Authorize(Roles = "Founder,President,Minister")]
-    public IActionResult AddStaffToDepartment()
-    {
-        // 这个操作需要在StaffRepository中实现，因为涉及Staff实体的更新
-        return StatusCode(501, "此功能需要在StaffController中实现");
-    }
-
-    /// <summary>
-    /// 从部门移除成员
-    /// </summary>
-    [HttpGet("RemoveStaff")]
-    [Authorize(Roles = "Founder,President,Minister")]
-    public IActionResult RemoveStaffFromDepartment()
-    {
-        // 这个操作需要在StaffRepository中实现，因为涉及Staff实体的更新
-        return StatusCode(501, "此功能需要在StaffController中实现");
-    }
-
-    /// <summary>
     /// 导出所有部员数据为JSON文件
     /// </summary>
     [Authorize(Roles = "Founder,President,Minister")]
