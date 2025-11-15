@@ -20,7 +20,6 @@ import {useRoute} from "vue-router";
 interface Content {
   title: string
   date: string
-  watch: number
   content: string,
   identity?: string
 }
@@ -219,8 +218,6 @@ const getIdentityLabel = computed(() => {
 // 根据权限值获取标签样式
 const getIdentityClass = (identity: string) => {
   switch (identity) {
-    case 'Member':
-      return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100';
     case 'Department':
       return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100';
     case 'Minister':
@@ -230,7 +227,7 @@ const getIdentityClass = (identity: string) => {
     case 'Founder':
       return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-100';
     default:
-      return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-100';
+      return 'hidden';
   }
 };
 
@@ -301,13 +298,9 @@ onMounted(() => {
               <Icon icon="mdi:calendar" width="16" height="16"/>
               {{ date }}
             </time>
-            <span class="flex items-center gap-1">
-              <Icon icon="mdi:eye" width="16" height="16"/>
-              {{ content.watch }} 次阅读
-            </span>
-            <span v-if="content.identity" class="flex items-center gap-1" :class="getIdentityClass(content.identity)">
+            <div v-if="content.identity" class="gap-1 p-1 rounded-lg" :class="getIdentityClass(content.identity)">
               {{ getIdentityLabel }}
-            </span>
+            </div>
           </div>
         </header>
 

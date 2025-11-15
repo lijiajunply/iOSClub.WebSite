@@ -48,7 +48,6 @@ const articleContent = computed(() => {
   if (!article.value) return {
     title: '',
     date: '',
-    watch: 0,
     content: ''
   };
 
@@ -56,7 +55,6 @@ const articleContent = computed(() => {
     title: article.value.title,
     date: article.value.lastWriteTime,
     content: article.value.content,
-    watch: article.value.watch ?? 0,
   };
 });
 

@@ -5,7 +5,6 @@ export interface ArticleModel {
   content: string;
   lastWriteTime: string;
   identity?: string;
-  watch?: number;
 }
 
 // 文章创建DTO接口
