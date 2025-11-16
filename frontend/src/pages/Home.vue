@@ -273,7 +273,6 @@ const cards: Card[] = [
     title: '全校数码编程爱好者,联合起来！',
     content: '我们意图打造全校最大的科技社区，快来加入我们成为一名iMember吧',
     color: '#5E5CE6', // Apple Indigo
-    url: '/JoinUs'
   }
 ]
 

@@ -36,6 +36,8 @@ builder.Services.AddAuthentication(options =>
     })
     .AddJwtBearer(options =>
     {
+        var secretKey = Environment.GetEnvironmentVariable("SECRETKEY", EnvironmentVariableTarget.Process) ??
+                        builder.Configuration["Jwt:SecretKey"] ?? "";
         options.TokenValidationParameters = new TokenValidationParameters()
         {
             ValidateIssuer = true,
@@ -44,7 +46,7 @@ builder.Services.AddAuthentication(options =>
             ValidAudience = "iOS Club of XAUAT",
             ValidateIssuerSigningKey = true,
             IssuerSigningKey =
-                new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:SecretKey"]!)),
+                new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
             ValidateLifetime = true,
             ClockSkew = TimeSpan.FromSeconds(30),
             RequireExpirationTime = true,

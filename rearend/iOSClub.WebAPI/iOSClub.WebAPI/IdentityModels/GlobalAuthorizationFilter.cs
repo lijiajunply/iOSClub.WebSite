@@ -29,7 +29,9 @@ public class GlobalAuthorizationFilter(ILoginService loginService, IConfiguratio
 
             // 验证token格式和签名
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.UTF8.GetBytes(configuration["Jwt:SecretKey"]!);
+            var secretKey = Environment.GetEnvironmentVariable("SECRETKEY", EnvironmentVariableTarget.Process) ??
+                            configuration["Jwt:SecretKey"] ?? "";
+            var key = Encoding.UTF8.GetBytes(secretKey);
 
             var validationParameters = new TokenValidationParameters
             {

@@ -15,7 +15,7 @@ public class JwtHelper(IConfiguration configuration) : IJwtHelper
         var jwtId = Guid.NewGuid().ToString(); // 用于防止重放攻击
 
         scope = string.IsNullOrEmpty(scope) ? "full" : scope;
-        
+
         var claims = new[]
         {
             new Claim(JwtRegisteredClaimNames.Sub, model.UserId),
@@ -28,7 +28,10 @@ public class JwtHelper(IConfiguration configuration) : IJwtHelper
             new Claim("scope", scope)
         };
 
-        var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:SecretKey"]!));
+        var a = Environment.GetEnvironmentVariable("SECRETKEY", EnvironmentVariableTarget.Process) ??
+                configuration["Jwt:SecretKey"] ?? "";
+
+        var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(a));
         var signingCredentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256);
 
         var securityToken = new JwtSecurityToken(
