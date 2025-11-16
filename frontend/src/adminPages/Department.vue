@@ -915,8 +915,21 @@ const deleteStaff = async (staff: any) => {
 
 const downloadMemberInfo = async () => {
   try {
-    await DepartmentService.exportJson()
-    message.success('导出成功')
+    const blob = await DepartmentService.exportJson()
+    const url = URL.createObjectURL(blob)
+
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'member.json'
+    document.body.appendChild(a)
+    a.click()
+
+    setTimeout(() => {
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    }, 100)
+
+    message.success('数据下载成功')
   } catch (error) {
     console.error('导出失败:', error)
     message.error('导出失败')
