@@ -82,6 +82,8 @@ public interface ILoginService
     /// <param name="token">token值</param>
     /// <returns>是否有效</returns>
     public Task<bool> ValidateToken(string userId, string token);
+
+    // public Task<bool> ExtendTime(string userId, string token, string? clientId);
 }
 
 public class LoginService(
