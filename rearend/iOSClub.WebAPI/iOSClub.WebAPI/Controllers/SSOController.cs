@@ -10,7 +10,6 @@ using StackExchange.Redis;
 using System.Security.Cryptography;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using iOSClub.Data.ShowModels;
 
 namespace iOSClub.WebAPI.Controllers;
 
@@ -817,30 +816,8 @@ public class SSOController(
         var user = HttpContext.User.GetUser();
         if (user == null)
         {
-            if (string.IsNullOrEmpty(accessToken))
-            {
-                logger.LogWarning("User info request failed: user not authenticated");
-                return Unauthorized();
-            }
-
-            HttpContext.Response.Headers.Authorization = $"Bearer {accessToken}";
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var claimsPrincipal = tokenHandler.ReadJwtToken(accessToken);
-            var userId = claimsPrincipal.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier)?.Value;
-            var clientId = claimsPrincipal.Claims.FirstOrDefault(x => x.Type == "client_id")?.Value;
-            var identity = claimsPrincipal.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Role)?.Value;
-
-            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(identity) ||
-                !await loginService.ValidateToken(userId, accessToken, clientId))
-            {
-                return Unauthorized();
-            }
-
-            user = new MemberModel()
-            {
-                UserId = userId,
-                Identity = identity
-            };
+            logger.LogWarning("User info request failed: user not authenticated");
+            return Unauthorized();
         }
 
         var member = await studentRepository.GetByIdAsync(user.UserId);

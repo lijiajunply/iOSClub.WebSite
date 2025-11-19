@@ -16,17 +16,24 @@ public class GlobalAuthorizationFilter(ILoginService loginService, IConfiguratio
             return;
 
         var bearer = context.HttpContext.Request.Headers.Authorization.FirstOrDefault();
-        if (string.IsNullOrEmpty(bearer) || !bearer.StartsWith("Bearer "))
+
+        // 如果是SSO userinfo端点，也检查access_token查询参数
+        var accessToken = context.HttpContext.Request.Query["access_token"].FirstOrDefault();
+
+        // 如果既没有Authorization头也没有access_token查询参数，则返回
+        if (string.IsNullOrEmpty(bearer) && string.IsNullOrEmpty(accessToken))
+            return;
+
+        // 优先使用Authorization头中的Bearer token，如果没有则使用查询参数中的access_token
+        var token = !string.IsNullOrEmpty(bearer) && bearer.StartsWith("Bearer ")
+            ? bearer["Bearer ".Length..]
+            : accessToken;
+
+        if (string.IsNullOrEmpty(token))
             return;
 
         try
         {
-            var jwtParts = bearer.Split(' ', 2);
-            if (jwtParts.Length != 2)
-                return;
-
-            var token = jwtParts[1];
-
             // 验证token格式和签名
             var tokenHandler = new JwtSecurityTokenHandler();
             var secretKey = Environment.GetEnvironmentVariable("SECRETKEY", EnvironmentVariableTarget.Process) ??
@@ -57,6 +64,7 @@ public class GlobalAuthorizationFilter(ILoginService loginService, IConfiguratio
             var clientId = claimsPrincipal.FindFirst("client_id")?.Value ?? "";
             if (!string.IsNullOrEmpty(userId))
             {
+                Console.WriteLine($"{userId}正在验证token");
                 var isValid = loginService.ValidateToken(userId, token, clientId).Result;
                 if (!isValid) return;
             }
