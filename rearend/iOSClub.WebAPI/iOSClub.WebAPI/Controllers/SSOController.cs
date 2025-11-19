@@ -849,7 +849,8 @@ public class SSOController(
                 var scopeClaim = jsonToken.Claims.FirstOrDefault(c => c.Type == "scope")?.Value;
                 if (!string.IsNullOrEmpty(scopeClaim))
                 {
-                    scopes = scopeClaim.Split(' ', StringSplitOptions.RemoveEmptyEntries).ToList();
+                    scopes = scopeClaim
+                        .Split(scopeClaim.Contains(',') ? ',' : ' ', StringSplitOptions.RemoveEmptyEntries).ToList();
                 }
             }
             catch (Exception ex)
