@@ -808,29 +808,10 @@ public class SSOController(
     /// </summary>
     /// <returns>用户信息</returns>
     [HttpGet("userinfo")]
-    [Authorize]
     public async Task<IActionResult> UserInfo([FromQuery(Name = "access_token")] string? accessToken = "")
     {
         logger.LogInformation("User info request received");
 
-        var user = HttpContext.User.GetUser();
-        if (user == null)
-        {
-            logger.LogWarning("User info request failed: user not authenticated");
-            return Unauthorized();
-        }
-
-        var member = await studentRepository.GetByIdAsync(user.UserId);
-
-        if (member == null)
-        {
-            logger.LogWarning("User info request failed: user {UserId} not found", user.UserId);
-            return Unauthorized();
-        }
-
-        logger.LogInformation("User info request successful for user {UserId}", user.UserId);
-
-        // 获取访问令牌中的scope信息
         var token = HttpContext.GetJwt();
 
         if (!string.IsNullOrEmpty(accessToken))
@@ -838,6 +819,68 @@ public class SSOController(
             token = accessToken;
         }
 
+        if (string.IsNullOrEmpty(token))
+        {
+            logger.LogWarning("No access token provided");
+            return Unauthorized();
+        }
+
+        // 验证token格式和签名
+        var tokenHandler = new JwtSecurityTokenHandler();
+        var secretKey = Environment.GetEnvironmentVariable("SECRETKEY", EnvironmentVariableTarget.Process) ??
+                        config["Jwt:SecretKey"] ?? "";
+        var key = Encoding.UTF8.GetBytes(secretKey);
+
+        var validationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(key),
+            ValidateIssuer = true,
+            ValidIssuer = "iOS Club of XAUAT",
+            ValidateAudience = true,
+            ValidAudience = "iOS Club of XAUAT",
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromSeconds(30)
+        };
+
+        // 尝试验证token
+        var claimsPrincipal = tokenHandler.ValidateToken(token, validationParameters, out var validatedToken);
+
+        // 额外验证：确保token没有过期
+        var jwtToken = (JwtSecurityToken)validatedToken;
+        if (jwtToken.ValidTo < DateTime.UtcNow) return Unauthorized();
+
+        // 验证token是否在Redis中存在（防止已注销的token继续使用）
+        var userId = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var clientId = claimsPrincipal.FindFirst("client_id")?.Value ?? "";
+        if (!string.IsNullOrEmpty(userId))
+        {
+            var isValid = loginService.ValidateToken(userId, token, clientId).Result;
+            if (!isValid) return Unauthorized();
+        }
+        else
+        {
+            return Unauthorized();
+        }
+
+        var member = await studentRepository.GetByIdAsync(userId);
+
+        if (member == null)
+        {
+            logger.LogWarning("User info request failed: user {UserId} not found", userId);
+            return Unauthorized();
+        }
+
+        logger.LogInformation("User info request successful for user {UserId}", userId);
+
+        var identity = "Member";
+        var staff = await staffRepository.GetStaffByIdAsync(userId);
+        if (staff != null)
+        {
+            identity = staff.Identity;
+        }
+
+        // 获取访问令牌中的scope信息
         var scopes = DefaultScore.Split(" ").ToList(); // 默认包含openid
         if (!string.IsNullOrEmpty(token))
         {
@@ -867,7 +910,7 @@ public class SSOController(
         // 根据scope返回不同的用户信息
         var userInfo = new Dictionary<string, object>
         {
-            ["sub"] = user.UserId
+            ["sub"] = userId
         };
 
         // read profile email
@@ -892,7 +935,7 @@ public class SSOController(
         // read scope - 角色信息
         if (scopes.Contains("read") || scopes.Contains("full"))
         {
-            userInfo.TryAdd("role", user.Identity);
+            userInfo.TryAdd("role", identity);
         }
 
         // phone scope - 手机信息

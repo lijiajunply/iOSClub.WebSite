@@ -16,36 +16,20 @@ public class GlobalAuthorizationFilter(
     {
         // 如果用户已经通过其他方式认证，则不处理
         if (context.HttpContext.User.Identity?.IsAuthenticated == true)
-        {
-            logger.LogInformation("已认证成功");
             return;
-        }
 
         var bearer = context.HttpContext.Request.Headers.Authorization.FirstOrDefault();
-
-        // 如果是SSO userinfo端点，也检查access_token查询参数
-        var accessToken = context.HttpContext.Request.Query["access_token"].FirstOrDefault();
-
-        // 如果既没有Authorization头也没有access_token查询参数，则返回
-        if (string.IsNullOrEmpty(bearer) && string.IsNullOrEmpty(accessToken))
-        {
-            logger.LogInformation("无 Token");
+        if (string.IsNullOrEmpty(bearer) || !bearer.StartsWith("Bearer "))
             return;
-        }
-
-        // 优先使用Authorization头中的Bearer token，如果没有则使用查询参数中的access_token
-        var token = !string.IsNullOrEmpty(bearer) && bearer.StartsWith("Bearer ")
-            ? bearer["Bearer ".Length..]
-            : accessToken;
-
-        if (string.IsNullOrEmpty(token))
-        {
-            logger.LogInformation("无 JWT");
-            return;
-        }
 
         try
         {
+            var jwtParts = bearer.Split(' ', 2);
+            if (jwtParts.Length != 2)
+                return;
+
+            var token = jwtParts[1];
+
             // 验证token格式和签名
             var tokenHandler = new JwtSecurityTokenHandler();
             var secretKey = Environment.GetEnvironmentVariable("SECRETKEY", EnvironmentVariableTarget.Process) ??
@@ -74,9 +58,9 @@ public class GlobalAuthorizationFilter(
             // 验证token是否在Redis中存在（防止已注销的token继续使用）
             var userId = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var clientId = claimsPrincipal.FindFirst("client_id")?.Value ?? "";
+            logger.LogInformation("Validating token for user {userId} and client {clientId}", userId, clientId);
             if (!string.IsNullOrEmpty(userId))
             {
-                logger.LogInformation("Validating token for user {UserId} and client {ClientId}", userId, clientId);
                 var isValid = loginService.ValidateToken(userId, token, clientId).Result;
                 if (!isValid) return;
             }
@@ -87,7 +71,7 @@ public class GlobalAuthorizationFilter(
         catch (Exception ex)
         {
             // 记录异常但不中断流程
-            logger.LogError("Token validation error: {Message}", ex.Message);
+            Console.WriteLine($"Token validation error: {ex.Message}");
         }
     }
 }
