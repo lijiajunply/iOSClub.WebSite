@@ -67,7 +67,6 @@ public class SSOController(
     /// </summary>
     /// <returns>Discovery document</returns>
     [HttpGet("/.well-known/openid-configuration")]
-    [AllowAnonymous]
     public IActionResult GetDiscoveryDocument()
     {
         const string issuer = "https://api.xauat.site";
@@ -1076,7 +1075,12 @@ public class SSOController(
     [Authorize]
     public async Task<IActionResult> FromMainJwt([FromBody] StoreSessionRequest request, [FromQuery] string scope)
     {
-        var jwt = HttpContext.Request.Headers.Authorization.ToString().Replace("Bearer ", "");
+        var jwt = HttpContext.GetJwt();
+        if (string.IsNullOrEmpty(jwt))
+        {
+            return Unauthorized("无效的JWT令牌");
+        }
+
         var user = HttpContext.User.GetUser();
         if (user == null)
         {
