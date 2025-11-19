@@ -8,7 +8,7 @@ namespace iOSClub.DataApi.Services;
 
 public interface IJwtHelper
 {
-    public string GetMemberToken(MemberModel model, bool rememberMe = false, string scope = "");
+    public string GetMemberToken(MemberModel model, bool rememberMe = false, string scope = "", string clientId = "");
 }
 
 public interface ILoginService
@@ -147,7 +147,7 @@ public class LoginService(
             return storedToken.ToString();
         }
 
-        var token = jwtHelper.GetMemberToken(memberModel, model.RememberMe, scope);
+        var token = jwtHelper.GetMemberToken(memberModel, model.RememberMe, scope, clientId);
 
         // 将token存储到Redis中，设置过期时间
         await _db.StringSetAsync(redisKey, token, TimeSpan.FromHours(TokenExpiryHours * (model.RememberMe ? 24 : 2)));
@@ -205,7 +205,7 @@ public class LoginService(
             };
         }
 
-        var token = jwtHelper.GetMemberToken(memberModel, scope: scope);
+        var token = jwtHelper.GetMemberToken(memberModel, scope: scope, clientId: clientId);
 
         // 将token存储到Redis中，设置过期时间
         await _db.StringSetAsync(redisKey, token, TimeSpan.FromHours(TokenExpiryHours * 2));
@@ -304,7 +304,7 @@ public class LoginService(
             Identity = staff.Identity
         };
 
-        var token = jwtHelper.GetMemberToken(memberModel, model.RememberMe, scope);
+        var token = jwtHelper.GetMemberToken(memberModel, model.RememberMe, scope, clientId: clientId);
 
         var s = "";
 

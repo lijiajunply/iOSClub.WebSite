@@ -54,9 +54,10 @@ public class GlobalAuthorizationFilter(ILoginService loginService, IConfiguratio
 
             // 验证token是否在Redis中存在（防止已注销的token继续使用）
             var userId = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var clientId = claimsPrincipal.FindFirst("client_id")?.Value ?? "";
             if (!string.IsNullOrEmpty(userId))
             {
-                var isValid = loginService.ValidateToken(userId, token).Result;
+                var isValid = loginService.ValidateToken(userId, token, clientId).Result;
                 if (!isValid) return;
             }
 
