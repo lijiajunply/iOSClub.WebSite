@@ -130,7 +130,7 @@ public class SSOController(
                 {
                     kty = "RSA", // RSA key type
                     alg = "RS256", // RSA with SHA-256
-                    kid = "1", // Key ID
+                    kid = rsaKey.KeyId ?? "main-key-1", // Use the key ID from the RsaSecurityKey
                     use = "sig", // Signature key
                     n = modulus, // Modulus
                     e = exponent // Exponent
