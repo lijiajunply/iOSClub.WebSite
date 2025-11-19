@@ -7,7 +7,10 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace iOSClub.WebAPI.IdentityModels;
 
-public class GlobalAuthorizationFilter(ILoginService loginService, IConfiguration configuration) : IAuthorizationFilter
+public class GlobalAuthorizationFilter(
+    ILoginService loginService,
+    IConfiguration configuration,
+    ILogger<GlobalAuthorizationFilter> logger) : IAuthorizationFilter
 {
     public void OnAuthorization(AuthorizationFilterContext context)
     {
@@ -64,7 +67,7 @@ public class GlobalAuthorizationFilter(ILoginService loginService, IConfiguratio
             var clientId = claimsPrincipal.FindFirst("client_id")?.Value ?? "";
             if (!string.IsNullOrEmpty(userId))
             {
-                Console.WriteLine($"{userId}正在验证token");
+                logger.LogInformation("Validating token for user {UserId} and client {ClientId}", userId, clientId);
                 var isValid = loginService.ValidateToken(userId, token, clientId).Result;
                 if (!isValid) return;
             }
