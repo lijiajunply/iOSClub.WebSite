@@ -16,7 +16,10 @@ public class GlobalAuthorizationFilter(
     {
         // 如果用户已经通过其他方式认证，则不处理
         if (context.HttpContext.User.Identity?.IsAuthenticated == true)
+        {
+            logger.LogInformation("已认证成功");
             return;
+        }
 
         var bearer = context.HttpContext.Request.Headers.Authorization.FirstOrDefault();
 
@@ -25,7 +28,10 @@ public class GlobalAuthorizationFilter(
 
         // 如果既没有Authorization头也没有access_token查询参数，则返回
         if (string.IsNullOrEmpty(bearer) && string.IsNullOrEmpty(accessToken))
+        {
+            logger.LogInformation("无 Token");
             return;
+        }
 
         // 优先使用Authorization头中的Bearer token，如果没有则使用查询参数中的access_token
         var token = !string.IsNullOrEmpty(bearer) && bearer.StartsWith("Bearer ")
@@ -33,7 +39,10 @@ public class GlobalAuthorizationFilter(
             : accessToken;
 
         if (string.IsNullOrEmpty(token))
+        {
+            logger.LogInformation("无 JWT");
             return;
+        }
 
         try
         {
@@ -78,7 +87,7 @@ public class GlobalAuthorizationFilter(
         catch (Exception ex)
         {
             // 记录异常但不中断流程
-            Console.WriteLine($"Token validation error: {ex.Message}");
+            logger.LogError("Token validation error: {Message}", ex.Message);
         }
     }
 }
