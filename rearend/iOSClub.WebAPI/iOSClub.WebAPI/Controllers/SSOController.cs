@@ -28,6 +28,7 @@ public class SSOController(
 {
     private readonly IDatabase _redisDb = redis.GetDatabase();
     private const string DefaultScore = "profile openid role";
+    private static readonly RSA RsaKey = RSA.Create(2048);
 
     /// <summary>
     /// OpenID Connect discovery document endpoint
@@ -40,14 +41,14 @@ public class SSOController(
 
         var discoveryDoc = new
         {
-            issuer = "iOS Club of XAUAT",
+            issuer,
             authorization_endpoint = $"{issuer}/SSO/authorize",
             token_endpoint = $"{issuer}/SSO/token",
             userinfo_endpoint = $"{issuer}/SSO/userinfo",
             jwks_uri = $"{issuer}/SSO/jwks",
             response_types_supported = new[] { "code", "token", "id_token", "id_token token" },
             subject_types_supported = new[] { "public" },
-            id_token_signing_alg_values_supported = new[] { "HS256" },
+            id_token_signing_alg_values_supported = new[] { "RS256" }, // Changed from HS256 to RS256
             scopes_supported = new[] { "openid", "profile", "email", "read", "phone" },
             token_endpoint_auth_methods_supported = new[] { "client_secret_post" },
             claims_supported = new[]
@@ -64,12 +65,27 @@ public class SSOController(
     [HttpGet("jwks")]
     public IActionResult GetJwks()
     {
-        var secretKey = Environment.GetEnvironmentVariable("SECRETKEY", EnvironmentVariableTarget.Process) ??
-                        config["Jwt:SecretKey"] ?? "";
+        // Get the RSA public key parameters
+        var publicKey = RsaKey.ExportParameters(false);
 
-        // Create a symmetric key for HMAC SHA256
-        var keyBytes = Encoding.UTF8.GetBytes(secretKey);
-        var key = Convert.ToBase64String(keyBytes);
+        logger.LogInformation("JWKS request received");
+
+        if (publicKey.Modulus == null || publicKey.Exponent == null)
+        {
+            logger.LogError("Failed to retrieve RSA public key parameters");
+            return StatusCode(500, "Failed to retrieve RSA public key parameters");
+        }
+
+        // Convert RSA public key parameters to JWKS format
+        var modulus = Convert.ToBase64String(publicKey.Modulus, Base64FormattingOptions.None)
+            .TrimEnd('=')
+            .Replace('+', '-')
+            .Replace('/', '_');
+
+        var exponent = Convert.ToBase64String(publicKey.Exponent, Base64FormattingOptions.None)
+            .TrimEnd('=')
+            .Replace('+', '-')
+            .Replace('/', '_');
 
         var jwks = new
         {
@@ -77,10 +93,12 @@ public class SSOController(
             {
                 new
                 {
-                    kty = "oct", // Octet sequence (used for symmetric keys)
-                    alg = "HS256",
-                    k = key,
-                    use = "sig" // Signature key
+                    kty = "RSA", // RSA key type
+                    alg = "RS256", // RSA with SHA-256
+                    kid = "1", // Key ID
+                    use = "sig", // Signature key
+                    n = modulus, // Modulus
+                    e = exponent // Exponent
                 }
             }
         };
@@ -355,7 +373,7 @@ public class SSOController(
         }
 
         // 处理id_token响应类型 (Implicit Flow)
-        if (authState.ResponseType == "id_token" || authState.ResponseType == "id_token token")
+        if (authState.ResponseType is "id_token" or "id_token token")
         {
             // 检查scope是否包含openid
             if (!authState.Scope.Contains("openid"))
@@ -721,14 +739,14 @@ public class SSOController(
                 claims.Add(new Claim("nonce", nonce));
             }
 
-            var issuer = $"https://{HttpContext.Request.Host}";
+            const string issuer = "https://api.xauat.site/";
             var audience = clientId;
 
-            var secretKey = Environment.GetEnvironmentVariable("SECRETKEY", EnvironmentVariableTarget.Process) ??
-                            config["Jwt:SecretKey"] ?? "";
-
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
-            var signingCredentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            // Use RSA key for signing instead of HMAC
+            var signingCredentials = new SigningCredentials(new RsaSecurityKey(RsaKey), SecurityAlgorithms.RsaSha256)
+            {
+                CryptoProviderFactory = new CryptoProviderFactory { CacheSignatureProviders = false }
+            };
 
             var token = new JwtSecurityToken(
                 issuer: issuer,
