@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Authorization;
 using Newtonsoft.Json;
 using StackExchange.Redis;
 using System.Security.Cryptography;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace iOSClub.WebAPI.Controllers;
 
@@ -17,6 +19,7 @@ namespace iOSClub.WebAPI.Controllers;
 public class SSOController(
     ILoginService loginService,
     IStudentRepository studentRepository,
+    IStaffRepository staffRepository,
     IClientApplicationRepository clientAppRepository,
     IConnectionMultiplexer redis,
     IConfiguration config,
@@ -27,15 +30,75 @@ public class SSOController(
     private const string DefaultScore = "profile openid role";
 
     /// <summary>
+    /// OpenID Connect discovery document endpoint
+    /// </summary>
+    /// <returns>Discovery document</returns>
+    [HttpGet(".well-known/openid-configuration")]
+    public IActionResult GetDiscoveryDocument()
+    {
+        var issuer = $"https://{HttpContext.Request.Host}";
+
+        var discoveryDoc = new
+        {
+            issuer,
+            authorization_endpoint = $"{issuer}/SSO/authorize",
+            token_endpoint = $"{issuer}/SSO/token",
+            userinfo_endpoint = $"{issuer}/SSO/userinfo",
+            jwks_uri = $"{issuer}/SSO/jwks",
+            response_types_supported = new[] { "code", "token", "id_token", "id_token token" },
+            subject_types_supported = new[] { "public" },
+            id_token_signing_alg_values_supported = new[] { "HS256" },
+            scopes_supported = new[] { "openid", "profile", "email", "read", "phone" },
+            token_endpoint_auth_methods_supported = new[] { "client_secret_post" },
+            claims_supported = new[]
+                { "sub", "name", "nickname", "email", "role", "phone", "academy", "class", "joinTime", "avatar" }
+        };
+
+        return Ok(discoveryDoc);
+    }
+
+    /// <summary>
+    /// JWKS endpoint for validating ID tokens
+    /// </summary>
+    /// <returns>JWKS</returns>
+    [HttpGet("jwks")]
+    public IActionResult GetJwks()
+    {
+        var secretKey = Environment.GetEnvironmentVariable("SECRETKEY", EnvironmentVariableTarget.Process) ??
+                        config["Jwt:SecretKey"] ?? "";
+
+        // Create a symmetric key for HMAC SHA256
+        var keyBytes = Encoding.UTF8.GetBytes(secretKey);
+        var key = Convert.ToBase64String(keyBytes);
+
+        var jwks = new
+        {
+            keys = new[]
+            {
+                new
+                {
+                    kty = "oct", // Octet sequence (used for symmetric keys)
+                    alg = "HS256",
+                    k = key,
+                    use = "sig" // Signature key
+                }
+            }
+        };
+
+        return Ok(jwks);
+    }
+
+    /// <summary>
     /// 为第三方应用提供OAuth登录入口
     /// </summary>
     /// <param name="clientId">第三方应用的客户端ID</param>
     /// <param name="redirectUri">第三方应用的回调地址</param>
     /// <param name="state">用于防止CSRF攻击的随机字符串</param>
-    /// <param name="responseType">响应类型，支持code或token</param>
+    /// <param name="responseType">响应类型，支持code、token、id_token</param>
     /// <param name="codeChallenge">PKCE代码挑战</param>
     /// <param name="codeChallengeMethod">PKCE代码挑战方法</param>
     /// <param name="scope">请求的权限范围</param>
+    /// <param name="nonce">用于防止重放攻击的随机字符串</param>
     /// <returns>重定向到OAuth提供商</returns>
     [HttpGet("authorize")]
     public async Task<IActionResult> Authorize(
@@ -46,7 +109,8 @@ public class SSOController(
         [FromQuery(Name = "code_challenge")] string? codeChallenge = null,
         [FromQuery(Name = "code_challenge_method")]
         string? codeChallengeMethod = null,
-        [FromQuery(Name = "scope")] string? scope = null)
+        [FromQuery(Name = "scope")] string? scope = null,
+        [FromQuery(Name = "nonce")] string? nonce = null)
     {
         logger.LogInformation("OAuth authorization request received for client {ClientId}", clientId);
 
@@ -106,7 +170,7 @@ public class SSOController(
         var validRequestedScopes = requestedScopes.Where(s => validScopes.Contains(s)).ToList();
 
         // 确保始终包含openid scope
-        if (!validRequestedScopes.Contains("openid"))
+        if (!validRequestedScopes.Contains("openid") && (responseType.Contains("id_token") || responseType == "token"))
         {
             validRequestedScopes.Add("openid");
         }
@@ -122,11 +186,12 @@ public class SSOController(
             ResponseType = responseType,
             CodeChallenge = codeChallenge ?? "",
             CodeChallengeMethod = codeChallengeMethod ?? "",
-            Scope = finalScope
+            Scope = finalScope,
+            Nonce = nonce ?? ""
         };
 
         // 将authState序列化并加密，然后作为state参数传递
-        var encryptedState = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(
+        var encryptedState = Convert.ToBase64String(Encoding.UTF8.GetBytes(
             System.Text.Json.JsonSerializer.Serialize(authState)));
 
         // 存储OAuth2参数到Redis中
@@ -165,7 +230,7 @@ public class SSOController(
         // 解密state参数以获取原始state值作为Redis键
         try
         {
-            var decryptedState = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(state));
+            var decryptedState = Encoding.UTF8.GetString(Convert.FromBase64String(state));
             var stateInfo = System.Text.Json.JsonSerializer.Deserialize<AuthState>(decryptedState) ??
                             throw new InvalidOperationException();
 
@@ -203,7 +268,7 @@ public class SSOController(
         AuthState authState;
         try
         {
-            var decryptedState = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(state));
+            var decryptedState = Encoding.UTF8.GetString(Convert.FromBase64String(state));
             authState = System.Text.Json.JsonSerializer.Deserialize<AuthState>(decryptedState) ??
                         throw new InvalidOperationException();
         }
@@ -260,7 +325,8 @@ public class SSOController(
                 CreatedAt = DateTime.UtcNow,
                 CodeChallenge = authState.CodeChallenge,
                 CodeChallengeMethod = authState.CodeChallengeMethod,
-                Scope = authState.Scope // 添加scope信息
+                Scope = authState.Scope, // 添加scope信息
+                Nonce = authState.Nonce // 添加nonce信息
             };
 
             // 存储到Redis，设置5分钟过期时间
@@ -286,6 +352,45 @@ public class SSOController(
             var redirectUrl =
                 $"{authState.RedirectUri}#access_token={token}&state={authState.State}&scope={Uri.EscapeDataString(authState.Scope)}";
             return Redirect(redirectUrl);
+        }
+
+        // 处理id_token响应类型 (Implicit Flow)
+        if (authState.ResponseType == "id_token" || authState.ResponseType == "id_token token")
+        {
+            // 检查scope是否包含openid
+            if (!authState.Scope.Contains("openid"))
+            {
+                logger.LogWarning("Callback failed: openid scope is required for id_token response type");
+                return BadRequest("需要openid scope才能返回id_token");
+            }
+
+            // 生成ID token
+            var idToken = await GenerateIdToken(userId, authState.ClientId, authState.Nonce);
+
+            if (string.IsNullOrEmpty(idToken))
+            {
+                logger.LogError("Failed to generate ID token for user {UserId} and client {ClientId}", userId,
+                    authState.ClientId);
+                return BadRequest("ID token生成失败");
+            }
+
+            logger.LogInformation("ID token generated for user {UserId} and client {ClientId}", userId,
+                authState.ClientId);
+
+            // 根据responseType决定返回方式
+            if (authState.ResponseType == "id_token")
+            {
+                // 只返回ID token
+                var redirectUrl = $"{authState.RedirectUri}#id_token={idToken}&state={authState.State}";
+                return Redirect(redirectUrl);
+            }
+            else // id_token token
+            {
+                // 返回访问令牌和ID token
+                var redirectUrl =
+                    $"{authState.RedirectUri}#access_token={token}&id_token={idToken}&state={authState.State}&token_type=Bearer&expires_in=7200";
+                return Redirect(redirectUrl);
+            }
         }
 
         logger.LogWarning("Callback failed: unsupported response type {ResponseType}", authState.ResponseType);
@@ -427,7 +532,7 @@ public class SSOController(
                 // 根据challenge method验证code_verifier
                 if (authCodeInfo.CodeChallengeMethod == "S256")
                 {
-                    var challengeBytes = SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(codeVerifier));
+                    var challengeBytes = SHA256.HashData(Encoding.UTF8.GetBytes(codeVerifier));
                     var challenge = Convert.ToBase64String(challengeBytes)
                         .TrimEnd('=')
                         .Replace('+', '-')
@@ -475,6 +580,19 @@ public class SSOController(
                 return BadRequest(new { error = "server_error", error_description = "令牌生成失败" });
             }
 
+            // 生成ID token（如果scope包含openid）
+            string? idToken = null;
+            if (authCodeInfo.Scope.Contains("openid"))
+            {
+                idToken = await GenerateIdToken(member.UserId, clientId, authCodeInfo.Nonce);
+                if (string.IsNullOrEmpty(idToken))
+                {
+                    logger.LogError("Token exchange failed: unable to generate ID token for user {UserId}",
+                        authCodeInfo.UserId);
+                    return BadRequest(new { error = "server_error", error_description = "ID令牌生成失败" });
+                }
+            }
+
             // 删除已使用的授权码（一次性使用）
             await _redisDb.KeyDeleteAsync(codeKey);
 
@@ -482,13 +600,21 @@ public class SSOController(
                 authCodeInfo.UserId, clientId);
 
             // 返回令牌信息，包括scope
-            return Ok(new
+            var response = new Dictionary<string, object>
             {
-                access_token = token,
-                token_type = "Bearer",
-                expires_in = 7200, // 2小时
-                scope = string.IsNullOrEmpty(authCodeInfo.Scope) ? DefaultScore : authCodeInfo.Scope
-            });
+                ["access_token"] = token,
+                ["token_type"] = "Bearer",
+                ["expires_in"] = 7200, // 2小时
+                ["scope"] = string.IsNullOrEmpty(authCodeInfo.Scope) ? DefaultScore : authCodeInfo.Scope
+            };
+
+            // 如果生成了ID token，则添加到响应中
+            if (!string.IsNullOrEmpty(idToken))
+            {
+                response["id_token"] = idToken;
+            }
+
+            return Ok(response);
         }
         catch (Exception ex)
         {
@@ -545,6 +671,81 @@ public class SSOController(
             logger.LogError(ex, "Token validation failed with exception");
             // 如果解析令牌时出现任何异常，认为令牌无效
             return false;
+        }
+    }
+
+    /// <summary>
+    /// 生成ID token
+    /// </summary>
+    /// <param name="userId">用户ID</param>
+    /// <param name="clientId">客户端ID</param>
+    /// <param name="nonce">Nonce值</param>
+    /// <returns>ID token</returns>
+    private async Task<string?> GenerateIdToken(string userId, string clientId, string nonce)
+    {
+        try
+        {
+            var member = await studentRepository.GetByIdAsync(userId);
+            if (member == null)
+            {
+                logger.LogWarning("Failed to generate ID token: user {UserId} not found", userId);
+                return null;
+            }
+
+            var identity = "Member";
+
+            var staff = await staffRepository.GetStaffByIdAsync(userId);
+            if (staff != null)
+            {
+                identity = staff.Identity;
+            }
+
+            var now = DateTime.UtcNow;
+            var jwtId = Guid.NewGuid().ToString(); // 用于防止重放攻击
+
+            var claims = new List<Claim>
+            {
+                new(JwtRegisteredClaimNames.Sub, userId),
+                new(JwtRegisteredClaimNames.UniqueName, member.UserName),
+                new(ClaimTypes.Role, identity),
+                new(ClaimTypes.NameIdentifier, userId),
+                new(JwtRegisteredClaimNames.Jti, jwtId), // JWT ID 防止重放攻击
+                new(JwtRegisteredClaimNames.Iat, new DateTimeOffset(now).ToUnixTimeSeconds().ToString(),
+                    ClaimValueTypes.Integer64),
+                new("at_hash", Guid.NewGuid().ToString().Substring(0, 8)) // 访问令牌的哈希值（简化版）
+            };
+
+            // 如果提供了nonce，则添加到claims中
+            if (!string.IsNullOrEmpty(nonce))
+            {
+                claims.Add(new Claim("nonce", nonce));
+            }
+
+            var issuer = $"https://{HttpContext.Request.Host}";
+            var audience = clientId;
+
+            var secretKey = Environment.GetEnvironmentVariable("SECRETKEY", EnvironmentVariableTarget.Process) ??
+                            config["Jwt:SecretKey"] ?? "";
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
+            var signingCredentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var token = new JwtSecurityToken(
+                issuer: issuer,
+                audience: audience,
+                claims: claims,
+                notBefore: now,
+                expires: now.AddHours(2), // ID token有效期2小时
+                signingCredentials: signingCredentials
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to generate ID token for user {UserId} and client {ClientId}", userId,
+                clientId);
+            return null;
         }
     }
 
@@ -683,7 +884,7 @@ public class SSOController(
             try
             {
                 // 解密state参数以获取原始state值作为Redis键
-                var decryptedState = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(request.State));
+                var decryptedState = Encoding.UTF8.GetString(Convert.FromBase64String(request.State));
                 var authState = System.Text.Json.JsonSerializer.Deserialize<AuthState>(decryptedState) ??
                                 throw new InvalidOperationException();
 
@@ -789,6 +990,7 @@ public class SSOController(
         public string CodeChallenge { get; set; } = "";
         public string CodeChallengeMethod { get; set; } = "";
         public string Scope { get; set; } = ""; // 添加Scope支持
+        public string Nonce { get; set; } = ""; // 添加Nonce支持
     }
 
     /// <summary>
@@ -815,5 +1017,6 @@ public class SSOController(
         public string CodeChallenge { get; set; } = "";
         public string CodeChallengeMethod { get; set; } = "";
         public string Scope { get; set; } = ""; // 添加Scope支持
+        public string Nonce { get; set; } = ""; // 添加Nonce支持
     }
 }
