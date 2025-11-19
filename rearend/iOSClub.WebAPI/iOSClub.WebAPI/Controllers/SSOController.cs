@@ -667,6 +667,11 @@ public class SSOController(
                 response["id_token"] = idToken;
             }
 
+            logger.LogInformation("Token exchange successful for user {UserId} with client {ClientId}",
+                authCodeInfo.UserId, clientId);
+
+            logger.LogInformation("access token is {token} , id token is {idToken}", token, idToken);
+
             return Ok(response);
         }
         catch (Exception ex)
