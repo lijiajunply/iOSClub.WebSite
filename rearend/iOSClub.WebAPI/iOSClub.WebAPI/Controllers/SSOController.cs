@@ -29,7 +29,7 @@ public class SSOController(
     private readonly IDatabase _redisDb = redis.GetDatabase();
     private const string DefaultScore = "profile openid role";
 
-    private const string KeyFilePath = "./keys/rsa-key.xml";
+    private const string KeyFilePath = "rsa-key.xml";
     private static RsaSecurityKey? _rsaKey;
 
     /// <summary>
