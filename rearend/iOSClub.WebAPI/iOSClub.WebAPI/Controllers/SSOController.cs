@@ -67,6 +67,7 @@ public class SSOController(
     /// </summary>
     /// <returns>Discovery document</returns>
     [HttpGet("/.well-known/openid-configuration")]
+    [AllowAnonymous]
     public IActionResult GetDiscoveryDocument()
     {
         const string issuer = "https://api.xauat.site";
@@ -95,6 +96,7 @@ public class SSOController(
     /// </summary>
     /// <returns>JWKS</returns>
     [HttpGet("jwks")]
+    [AllowAnonymous]
     public IActionResult GetJwks()
     {
         // Get the RSA public key parameters
