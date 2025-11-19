@@ -774,7 +774,7 @@ public class SSOController(
                 claims.Add(new Claim("nonce", nonce));
             }
 
-            const string issuer = "https://api.xauat.site/";
+            const string issuer = "https://api.xauat.site";
             var audience = clientId;
 
             var rsaKey = GetRsaKey();
