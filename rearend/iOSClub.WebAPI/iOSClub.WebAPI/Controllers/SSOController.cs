@@ -1078,12 +1078,14 @@ public class SSOController(
         var jwt = HttpContext.GetJwt();
         if (string.IsNullOrEmpty(jwt))
         {
+            logger.LogWarning("From main JWT failed: invalid JWT token");
             return Unauthorized("无效的JWT令牌");
         }
 
         var user = HttpContext.User.GetUser();
         if (user == null)
         {
+            logger.LogWarning("From main JWT failed: user not authenticated");
             return Unauthorized("用户未认证");
         }
 
@@ -1091,7 +1093,8 @@ public class SSOController(
 
         if (string.IsNullOrEmpty(token))
         {
-            return BadRequest();
+            logger.LogWarning("From main JWT failed: failed to login third party from main JWT");
+            return BadRequest("未获取到Token");
         }
 
         HttpContext.Request.Headers.Authorization = $"Bearer {token}";

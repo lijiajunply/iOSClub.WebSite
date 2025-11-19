@@ -8,7 +8,11 @@
           iMember 登录授权
         </h1>
         <!-- 添加检测到Jwt时的显示内容 -->
-        <p class="text-gray-500 dark:text-gray-400 mt-2">第三方应用请求访问您的账号</p>
+        <p class="text-gray-500 dark:text-gray-400 mt-2">
+          {{
+            hasMainSiteJwt && currentUserInfo ? `用户ID: ${currentUserInfo.userId || currentUserInfo.sub || '未知'}` : '第三方应用请求访问您的账号'
+          }}
+        </p>
         <!-- 添加"使用当前用户进行登录"按钮 -->
         <button
             v-if="hasMainSiteJwt && currentUserInfo"
@@ -17,14 +21,7 @@
             class="mt-4 btn-secondary"
         >
           <span v-if="loading">登录中...</span>
-          <template v-else>
-            <p>
-              使用当前用户进行登录
-            </p>
-            <p class="text-gray-500 dark:text-gray-400 mt-2">
-              {{ `用户ID: ${currentUserInfo.userId || currentUserInfo.sub || '未知'}` }}
-            </p>
-          </template>
+          <span v-else>使用当前用户进行登录</span>
         </button>
         <div v-if="clientAppInfo" class="mt-4 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
           <p class="text-sm text-gray-600 dark:text-gray-300">

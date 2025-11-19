@@ -3,6 +3,7 @@ using iOSClub.DataApi.Repositories;
 using StackExchange.Redis;
 using System.Text.Json;
 using iOSClub.Data;
+using Microsoft.Extensions.Logging;
 
 namespace iOSClub.DataApi.Services;
 
@@ -94,7 +95,8 @@ public class LoginService(
     IJwtHelper jwtHelper,
     IConnectionMultiplexer redis,
     IEmailService emailService,
-    IClientApplicationRepository clientApplicationRepository)
+    IClientApplicationRepository clientApplicationRepository,
+    ILogger<LoginService> logger)
     : ILoginService
 {
     private readonly IDatabase _db = redis.GetDatabase();
@@ -164,12 +166,14 @@ public class LoginService(
     {
         if (!await ValidateToken(userId, jwt))
         {
+            logger.LogError("Invalid JWT token");
             return "";
         }
 
         var app = await clientApplicationRepository.GetByClientIdAsync(clientId);
         if (app == null)
         {
+            logger.LogError("Invalid client ID");
             return "";
         }
 
@@ -179,6 +183,7 @@ public class LoginService(
         var storedToken = await _db.StringGetAsync(redisKey);
         if (storedToken.HasValue && !string.IsNullOrEmpty(storedToken))
         {
+            logger.LogInformation("Token already exists, get the token");
             return storedToken.ToString();
         }
 
