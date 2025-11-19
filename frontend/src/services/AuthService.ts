@@ -128,6 +128,43 @@ export class AuthService {
     static isLoggedIn(): boolean {
         return this.getToken() !== null;
     }
+    
+    /**
+     * 解析JWT令牌并提取用户信息
+     * @param token JWT令牌
+     * @returns any 解析出的用户信息或null
+     */
+    static parseJwtToken(token: string | null): any {
+        if (!token) return null;
+        
+        try {
+            // JWT格式: header.payload.signature
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(
+                window.atob(base64)
+                    .split('')
+                    .map(function(c) {
+                        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                    })
+                    .join('')
+            );
+            
+            return JSON.parse(jsonPayload);
+        } catch (e) {
+            console.error('解析JWT令牌失败:', e);
+            return null;
+        }
+    }
+    
+    /**
+     * 获取当前登录用户信息
+     * @returns any 用户信息或null
+     */
+    static getCurrentUserInfo(): any {
+        const token = this.getToken();
+        return this.parseJwtToken(token);
+    }
 
     /**
      * 修改用户密码
@@ -193,6 +230,35 @@ export class AuthService {
 
         if (!response.ok) {
             throw new Error('验证码无效或密码重置失败');
+        }
+
+        return true;
+    }
+
+    /**
+     * 从主站JWT获取SSO会话
+     * @param state 状态参数
+     * @param clientId 客户端ID
+     * @param scope 权限范围
+     * @returns Promise<boolean> 是否成功
+     */
+    static async loginFromMainJwt(state: string, clientId: string, scope: string = 'profile openid role'): Promise<boolean> {
+        const token = this.getToken();
+        if (!token) {
+            throw new Error('未登录或令牌已过期');
+        }
+
+        const response = await fetch(`${url}/SSO/from_main_jwt?scope=${encodeURIComponent(scope)}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify({ state, client_id: clientId }),
+        });
+
+        if (!response.ok) {
+            throw new Error('从主站JWT获取SSO会话失败');
         }
 
         return true;

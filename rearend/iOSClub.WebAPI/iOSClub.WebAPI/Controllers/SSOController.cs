@@ -1018,6 +1018,34 @@ public class SSOController(
     }
 
     /// <summary>
+    /// 从主站JWT获取会话
+    /// </summary>
+    /// <param name="request">会话需要的数据</param>
+    /// <param name="scope">权限类别</param>
+    /// <returns>重定向</returns>
+    [HttpPost("from_main_jwt")]
+    [Authorize]
+    public async Task<IActionResult> FromMainJwt([FromBody] StoreSessionRequest request, [FromQuery] string scope)
+    {
+        var jwt = HttpContext.Request.Headers.Authorization.ToString().Replace("Bearer ", "");
+        var user = HttpContext.User.GetUser();
+        if (user == null)
+        {
+            return Unauthorized("用户未认证");
+        }
+
+        var token = await loginService.LoginThirdPartyFromMainJwt(user.UserId, request.ClientId, jwt, scope);
+
+        if (string.IsNullOrEmpty(token))
+        {
+            return BadRequest();
+        }
+
+        HttpContext.Request.Headers.Authorization = $"Bearer {token}";
+        return Redirect($"/SSO/store-session?state={request.State}");
+    }
+
+    /// <summary>
     /// 生成安全的授权码
     /// </summary>
     /// <returns>安全的授权码</returns>
