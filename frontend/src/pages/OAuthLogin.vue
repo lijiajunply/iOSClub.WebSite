@@ -177,7 +177,7 @@ const performRegularLogin = async (params: any) => {
     if (!errors) {
       try {
         // 执行登录
-        const res = await authorizationStore.login({
+        const res = await authorizationStore.oauthLogin({
               userId: form.value.studentId,
               password: form.value.password,
               rememberMe: form.value.rememberMe

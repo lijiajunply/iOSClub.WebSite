@@ -71,6 +71,9 @@ export const useAuthorizationStore = defineStore('AuthorizationId', {
                 return false;
             }
         },
+        async oauthLogin(user: LoginModel, clientId: string | null | undefined = '', scope: string | null | undefined = ''): Promise<string> {
+            return  await AuthService.login(user, clientId, scope)
+        },
         async validate(clientId: string | null | undefined = ''): Promise<boolean> {
             const id = localStorage.getItem('UserId');
             if (id === null || id === '') return false;
