@@ -28,7 +28,39 @@ public class SSOController(
 {
     private readonly IDatabase _redisDb = redis.GetDatabase();
     private const string DefaultScore = "profile openid role";
-    private static readonly RSA RsaKey = RSA.Create(2048);
+
+    private const string KeyFilePath = "./keys/rsa-key.xml";
+    private static RsaSecurityKey? _rsaKey;
+
+    /// <summary>
+    /// 获取或创建 RSA 密钥
+    /// </summary>
+    private static RsaSecurityKey GetRsaKey()
+    {
+        if (_rsaKey != null) return _rsaKey;
+
+        var rsa = RSA.Create(2048);
+
+        if (System.IO.File.Exists(KeyFilePath))
+        {
+            // 如果文件存在，读取旧密钥（保持重启后 Token 有效）
+            var xmlString = System.IO.File.ReadAllText(KeyFilePath);
+            rsa.FromXmlString(xmlString);
+        }
+        else
+        {
+            // 如果文件不存在，生成新密钥并保存
+            var xmlString = rsa.ToXmlString(true); // true 表示包含私钥
+            System.IO.File.WriteAllText(KeyFilePath, xmlString);
+        }
+
+        _rsaKey = new RsaSecurityKey(rsa)
+        {
+            KeyId = "main-key-1" // 给密钥一个 ID，便于轮换
+        };
+
+        return _rsaKey;
+    }
 
     /// <summary>
     /// OpenID Connect discovery document endpoint
@@ -66,23 +98,26 @@ public class SSOController(
     public IActionResult GetJwks()
     {
         // Get the RSA public key parameters
-        var publicKey = RsaKey.ExportParameters(false);
+        var rsaKey = GetRsaKey();
+        var rsaParameters =
+            (rsaKey.Rsa ?? throw new InvalidOperationException("RSA key not found"))
+            .ExportParameters(false); // false = 只导出公钥
 
         logger.LogInformation("JWKS request received");
 
-        if (publicKey.Modulus == null || publicKey.Exponent == null)
+        if (rsaParameters.Modulus == null || rsaParameters.Exponent == null)
         {
             logger.LogError("Failed to retrieve RSA public key parameters");
             return StatusCode(500, "Failed to retrieve RSA public key parameters");
         }
 
         // Convert RSA public key parameters to JWKS format
-        var modulus = Convert.ToBase64String(publicKey.Modulus, Base64FormattingOptions.None)
+        var modulus = Convert.ToBase64String(rsaParameters.Modulus, Base64FormattingOptions.None)
             .TrimEnd('=')
             .Replace('+', '-')
             .Replace('/', '_');
 
-        var exponent = Convert.ToBase64String(publicKey.Exponent, Base64FormattingOptions.None)
+        var exponent = Convert.ToBase64String(rsaParameters.Exponent, Base64FormattingOptions.None)
             .TrimEnd('=')
             .Replace('+', '-')
             .Replace('/', '_');
@@ -730,7 +765,7 @@ public class SSOController(
                 new(JwtRegisteredClaimNames.Jti, jwtId), // JWT ID 防止重放攻击
                 new(JwtRegisteredClaimNames.Iat, new DateTimeOffset(now).ToUnixTimeSeconds().ToString(),
                     ClaimValueTypes.Integer64),
-                new("at_hash", Guid.NewGuid().ToString().Substring(0, 8)) // 访问令牌的哈希值（简化版）
+                new("at_hash", Guid.NewGuid().ToString()[..8]) // 访问令牌的哈希值（简化版）
             };
 
             // 如果提供了nonce，则添加到claims中
@@ -742,8 +777,9 @@ public class SSOController(
             const string issuer = "https://api.xauat.site/";
             var audience = clientId;
 
+            var rsaKey = GetRsaKey();
             // Use RSA key for signing instead of HMAC
-            var signingCredentials = new SigningCredentials(new RsaSecurityKey(RsaKey), SecurityAlgorithms.RsaSha256)
+            var signingCredentials = new SigningCredentials(rsaKey, SecurityAlgorithms.RsaSha256)
             {
                 CryptoProviderFactory = new CryptoProviderFactory { CacheSignatureProviders = false }
             };
@@ -756,6 +792,8 @@ public class SSOController(
                 expires: now.AddHours(2), // ID token有效期2小时
                 signingCredentials: signingCredentials
             );
+
+            token.Header.Add("kid", rsaKey.KeyId);
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
