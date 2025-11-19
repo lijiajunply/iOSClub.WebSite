@@ -8,18 +8,23 @@
           iMember 登录授权
         </h1>
         <!-- 添加检测到Jwt时的显示内容 -->
-        <p class="text-gray-500 dark:text-gray-400 mt-2">
-          {{ hasMainSiteJwt && currentUserInfo ? `用户ID: ${currentUserInfo.userId || currentUserInfo.sub || '未知'}` : '第三方应用请求访问您的账号' }}
-        </p>
+        <p class="text-gray-500 dark:text-gray-400 mt-2">第三方应用请求访问您的账号</p>
         <!-- 添加"使用当前用户进行登录"按钮 -->
         <button
-          v-if="hasMainSiteJwt && currentUserInfo"
-          @click="handleMainJwtLogin"
-          :disabled="loading"
-          class="mt-4 btn-secondary"
+            v-if="hasMainSiteJwt && currentUserInfo"
+            @click="handleMainJwtLogin"
+            :disabled="loading"
+            class="mt-4 btn-secondary"
         >
           <span v-if="loading">登录中...</span>
-          <span v-else>使用当前用户进行登录</span>
+          <template v-else>
+            <p>
+              使用当前用户进行登录
+            </p>
+            <p class="text-gray-500 dark:text-gray-400 mt-2">
+              {{ `用户ID: ${currentUserInfo.userId || currentUserInfo.sub || '未知'}` }}
+            </p>
+          </template>
         </button>
         <div v-if="clientAppInfo" class="mt-4 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
           <p class="text-sm text-gray-600 dark:text-gray-300">
@@ -138,32 +143,15 @@ const loadClientAppInfo = async () => {
 
 const handleLogin = async () => {
   if (loading.value) return
-  
+
   loading.value = true
   errorMsg.value = ''
-  
+
   try {
     // 获取OAuth参数
     const params = getOAuthParams()
-    
-    // 检查是否已经有登录令牌
-    const existingToken = AuthService.getToken()
-    
-    if (existingToken) {
-      // 如果已有令牌，使用从主站JWT获取SSO会话的方式
-      try {
-        // 使用主站JWT创建SSO会话
-        await AuthService.loginFromMainJwt(params.state, params.client_id, params.scope)
-        // 后端会自动重定向，这里不需要额外处理
-      } catch (err) {
-        // 如果从主站JWT获取失败，回退到常规登录流程
-        console.log('从主站JWT获取SSO会话失败，回退到常规登录', err)
-        await performRegularLogin(params)
-      }
-    } else {
-      // 没有现有令牌，执行常规登录流程
-      await performRegularLogin(params)
-    }
+
+    await performRegularLogin(params)
   } catch (err: any) {
     errorMsg.value = err.message || '登录失败'
   } finally {
@@ -228,16 +216,23 @@ const checkMainSiteJwt = () => {
 // 处理主站Jwt登录
 const handleMainJwtLogin = async () => {
   if (loading.value) return
-  
+
   loading.value = true
   errorMsg.value = ''
-  
+
   try {
     // 获取OAuth参数
     const params = getOAuthParams()
-    
+
     // 使用主站JWT创建SSO会话
-    await AuthService.loginFromMainJwt(params.state, params.client_id, params.scope)
+    const sessionStored = await AuthService.loginFromMainJwt(params.state, params.client_id, params.scope)
+
+    if (sessionStored) {
+      // 会话存储成功，重定向到SSO/callback端点
+      window.location.href = `${url}/SSO/callback?state=${encodeURIComponent(params.state)}`
+    } else {
+      errorMsg.value = '会话创建失败，请稍后重试'
+    }
     // 后端会自动重定向，这里不需要额外处理
   } catch (err: any) {
     errorMsg.value = err.message || '使用当前用户登录失败'

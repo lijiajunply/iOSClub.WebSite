@@ -60,9 +60,6 @@ export const useAuthorizationStore = defineStore('AuthorizationId', {
                 if (!a) {
                     return false;
                 }
-                if (clientId) {
-                    return true;
-                }
                 this.Authorization = a;
                 localStorage.setItem('Authorization', a);
                 localStorage.setItem('UserId', user.userId);
