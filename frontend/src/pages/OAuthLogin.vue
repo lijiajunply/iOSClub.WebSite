@@ -193,7 +193,7 @@ const performRegularLogin = async (params: any) => {
         const sessionStored = await OAuthService.storeSession(
             params.state,
             params.client_id,
-            authorizationStore.getAuthorization
+            res
         );
 
         if (sessionStored) {
