@@ -623,6 +623,8 @@ public class SSOController(
             userInfo.TryAdd("nickname", member.UserName);
             userInfo.TryAdd("academy", member.Academy);
             userInfo.TryAdd("class", member.ClassName);
+            userInfo.TryAdd("joinTime", member.JoinTime.ToString("yyyy-MM-dd"));
+            userInfo.TryAdd("avatar", $"https://www.xauat.site/assets/Centre/{member.Gender}生.png");
         }
 
         // email scope - 邮箱信息
