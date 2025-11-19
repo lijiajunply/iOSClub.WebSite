@@ -17,7 +17,7 @@ public class GlobalAuthorizationFilter(
         var bearer = context.HttpContext.Request.Headers.Authorization.FirstOrDefault();
         if (string.IsNullOrEmpty(bearer) || !bearer.StartsWith("Bearer "))
         {
-            logger.LogInformation("No bearer token found.");
+            logger.LogInformation("Requested API: {api}: No bearer token found.", context.HttpContext.Request.Path);
             return;
         }
 
