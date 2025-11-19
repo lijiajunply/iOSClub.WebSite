@@ -33,14 +33,14 @@ public class SSOController(
     /// OpenID Connect discovery document endpoint
     /// </summary>
     /// <returns>Discovery document</returns>
-    [HttpGet(".well-known/openid-configuration")]
+    [HttpGet("/.well-known/openid-configuration")]
     public IActionResult GetDiscoveryDocument()
     {
-        var issuer = $"https://{HttpContext.Request.Host}";
+        const string issuer = "https://api.xauat.site";
 
         var discoveryDoc = new
         {
-            issuer,
+            issuer = "iOS Club of XAUAT",
             authorization_endpoint = $"{issuer}/SSO/authorize",
             token_endpoint = $"{issuer}/SSO/token",
             userinfo_endpoint = $"{issuer}/SSO/userinfo",
