@@ -793,8 +793,6 @@ public class SSOController(
                 signingCredentials: signingCredentials
             );
 
-            token.Header.Add("kid", rsaKey.KeyId);
-
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
         catch (Exception ex)
