@@ -747,7 +747,7 @@ public class SSOController(
 
             var identity = "Member";
 
-            var staff = await staffRepository.GetStaffByIdAsync(userId);
+            var staff = await staffRepository.GetStaffByIdWithoutOtherData(userId);
             if (staff != null)
             {
                 identity = staff.Identity;
@@ -874,7 +874,7 @@ public class SSOController(
         logger.LogInformation("User info request successful for user {UserId}", userId);
 
         var identity = "Member";
-        var staff = await staffRepository.GetStaffByIdAsync(userId);
+        var staff = await staffRepository.GetStaffByIdWithoutOtherData(userId);
         if (staff != null)
         {
             identity = staff.Identity;

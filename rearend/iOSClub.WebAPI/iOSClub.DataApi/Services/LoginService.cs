@@ -106,7 +106,7 @@ public class LoginService(
     {
         if (!await studentRepository.Login(model.UserId, model.Password)) return "";
 
-        var staff = await staffRepository.GetStaffByIdAsync(model.UserId);
+        var staff = await staffRepository.GetStaffByIdWithoutOtherData(model.UserId);
         var identity = "Member";
         string name;
         if (staff != null)
@@ -195,7 +195,7 @@ public class LoginService(
             memberModel.Identity = "Member";
         }
 
-        var staff = await staffRepository.GetStaffByIdAsync(userId);
+        var staff = await staffRepository.GetStaffByIdWithoutOtherData(userId);
         if (staff != null)
         {
             memberModel = new MemberModel()
@@ -292,7 +292,7 @@ public class LoginService(
 
     public async Task<string> StaffLogin(LoginModel model, string clientId = "", string scope = "")
     {
-        var staff = await staffRepository.GetStaffByIdAsync(model.Password);
+        var staff = await staffRepository.GetStaffByIdWithoutOtherData(model.Password);
 
         if (staff == null || staff.Name != model.UserId)
             return "";

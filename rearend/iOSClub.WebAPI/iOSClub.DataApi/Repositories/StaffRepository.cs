@@ -10,6 +10,7 @@ public interface IStaffRepository
     Task<IEnumerable<StaffModel>> GetAllStaffAsync();
     Task<IEnumerable<MemberModel>> GetAllStaffToMembers();
     Task<StaffModel?> GetStaffByIdAsync(string userId);
+    Task<StaffModel?> GetStaffByIdWithoutOtherData(string userId);
     Task<bool> CreateStaffAsync(StaffModel staff);
     Task<bool> UpdateStaffAsync(StaffModel staff);
     Task<bool> DeleteStaffAsync(string userId);
@@ -51,8 +52,15 @@ public class StaffRepository(IDbContextFactory<ClubContext> factory) : IStaffRep
                 EMail = student != null ? student.EMail : null,
                 Identity = staff.Identity
             };
-        
+
         return await query.ToListAsync();
+    }
+
+    public async Task<StaffModel?> GetStaffByIdWithoutOtherData(string userId)
+    {
+        await using var context = await factory.CreateDbContextAsync();
+        return await context.Staffs
+            .FirstOrDefaultAsync(s => s.UserId == userId);
     }
 
     public async Task<StaffModel?> GetStaffByIdAsync(string userId)
