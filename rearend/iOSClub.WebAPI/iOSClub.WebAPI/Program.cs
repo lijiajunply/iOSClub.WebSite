@@ -11,16 +11,14 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.IdentityModel.Tokens;
 using NpgsqlDataProtection;
 using Scalar.AspNetCore;
+using Serilog;
 using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
 #region 控制器基本设置
 
-builder.Services.AddControllers(options =>
-    {
-        options.Filters.Add<GlobalAuthorizationFilter>();
-    });
+builder.Services.AddControllers(options => { options.Filters.Add<GlobalAuthorizationFilter>(); });
 builder.Services.AddOpenApi(opt => { opt.AddDocumentTransformer<BearerSecuritySchemeTransformer>(); });
 
 #endregion
@@ -87,7 +85,7 @@ builder.Services.AddCors(options =>
     {
         policy.SetIsOriginAllowed(origin =>
                 origin.EndsWith(".zeabur.app") || // 支持所有 zeabur.app 子域名
-                origin.EndsWith(".xauat.site") ||  // 支持所有 xauat.site 子域名
+                origin.EndsWith(".xauat.site") || // 支持所有 xauat.site 子域名
                 origin.StartsWith("http://localhost")) // 支持本地开发环境
             .AllowAnyMethod()
             .AllowAnyHeader()
@@ -137,6 +135,32 @@ if (string.IsNullOrEmpty(redis) && builder.Environment.IsDevelopment())
 if (!string.IsNullOrEmpty(redis))
 {
     builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redis));
+}
+
+#endregion
+
+#region 日志设置
+
+if (builder.Environment.IsProduction())
+{
+    var sqlPath = Environment.CurrentDirectory + "/logs/log.db";
+
+    // 日志 注册
+    var logger = new LoggerConfiguration()
+        .MinimumLevel.Information()
+        .Enrich.FromLogContext()
+        .WriteTo.Console()
+        .WriteTo.SQLite(
+            sqliteDbPath: sqlPath,
+            tableName: "Logs")
+        .CreateLogger();
+
+    builder.Logging
+        .ClearProviders()
+        .AddConsole()
+        .AddDebug()
+        .SetMinimumLevel(LogLevel.Information)
+        .AddSerilog(logger);
 }
 
 #endregion

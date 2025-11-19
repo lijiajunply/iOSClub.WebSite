@@ -7,23 +7,28 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace iOSClub.WebAPI.IdentityModels;
 
-public class GlobalAuthorizationFilter(ILoginService loginService, IConfiguration configuration) : IAuthorizationFilter
+public class GlobalAuthorizationFilter(
+    ILoginService loginService,
+    IConfiguration configuration,
+    ILogger<GlobalAuthorizationFilter> logger) : IAuthorizationFilter
 {
     public void OnAuthorization(AuthorizationFilterContext context)
     {
-        // 如果用户已经通过其他方式认证，则不处理
-        if (context.HttpContext.User.Identity?.IsAuthenticated == true)
-            return;
-
         var bearer = context.HttpContext.Request.Headers.Authorization.FirstOrDefault();
         if (string.IsNullOrEmpty(bearer) || !bearer.StartsWith("Bearer "))
+        {
+            logger.LogInformation("Requested API: {api}: No bearer token found.", context.HttpContext.Request.Path);
             return;
+        }
 
         try
         {
             var jwtParts = bearer.Split(' ', 2);
             if (jwtParts.Length != 2)
+            {
+                logger.LogInformation("Invalid bearer token format.");
                 return;
+            }
 
             var token = jwtParts[1];
 
@@ -50,14 +55,24 @@ public class GlobalAuthorizationFilter(ILoginService loginService, IConfiguratio
 
             // 额外验证：确保token没有过期
             var jwtToken = (JwtSecurityToken)validatedToken;
-            if (jwtToken.ValidTo < DateTime.UtcNow) return;
+            if (jwtToken.ValidTo < DateTime.UtcNow)
+            {
+                logger.LogInformation("Token has expired.");
+                return;
+            }
 
             // 验证token是否在Redis中存在（防止已注销的token继续使用）
             var userId = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var clientId = claimsPrincipal.FindFirst("client_id")?.Value ?? "";
+            logger.LogInformation("Validating token for user {userId} and client {clientId}", userId, clientId);
             if (!string.IsNullOrEmpty(userId))
             {
-                var isValid = loginService.ValidateToken(userId, token).Result;
-                if (!isValid) return;
+                var isValid = loginService.ValidateToken(userId, token, clientId).Result;
+                if (!isValid)
+                {
+                    logger.LogInformation("Token is not valid.");
+                    return;
+                }
             }
 
             // 设置用户上下文

@@ -11,3 +11,4 @@ keys/
 logs/
 
 appsettings.Development.json
+rsa-key.xml

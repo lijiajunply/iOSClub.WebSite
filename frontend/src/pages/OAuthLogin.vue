@@ -7,9 +7,20 @@
         <h1 class="text-xl md:text-3xl font-semibold bg-gradient-to-r from-blue-500 to-indigo-500 bg-clip-text text-transparent">
           iMember 登录授权
         </h1>
+        <!-- 添加检测到Jwt时的显示内容 -->
         <p class="text-gray-500 dark:text-gray-400 mt-2">
-          第三方应用请求访问您的账号
+          {{ hasMainSiteJwt && currentUserInfo ? `用户ID: ${currentUserInfo.userId || currentUserInfo.sub || '未知'}` : '第三方应用请求访问您的账号' }}
         </p>
+        <!-- 添加"使用当前用户进行登录"按钮 -->
+        <button
+          v-if="hasMainSiteJwt && currentUserInfo"
+          @click="handleMainJwtLogin"
+          :disabled="loading"
+          class="mt-4 btn-secondary"
+        >
+          <span v-if="loading">登录中...</span>
+          <span v-else>使用当前用户进行登录</span>
+        </button>
         <div v-if="clientAppInfo" class="mt-4 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
           <p class="text-sm text-gray-600 dark:text-gray-300">
             应用名称: <span class="font-medium">{{ clientAppInfo.name || '未知应用' }}</span>
@@ -75,6 +86,7 @@ import {useRoute} from 'vue-router'
 import {NCheckbox, NForm, NFormItem, NInput} from 'naive-ui'
 import {useAuthorizationStore} from "../stores/Authorization.js";
 import {OAuthService} from '../services/OAuthService';
+import {AuthService} from '../services/AuthService';
 import {url} from '../services/Url';
 
 const authorizationStore = useAuthorizationStore()
@@ -89,6 +101,8 @@ const form = ref({
 const loading = ref(false)
 const errorMsg = ref('')
 const clientAppInfo = ref<any>(null)
+const currentUserInfo = ref<any>(null) // 添加当前用户信息变量
+const hasMainSiteJwt = ref(false) // 标记是否有主站Jwt
 
 const rules = {
   studentId: {
@@ -124,26 +138,56 @@ const loadClientAppInfo = async () => {
 
 const handleLogin = async () => {
   if (loading.value) return
-  formRef.value.validate(async (errors: any) => {
+  
+  loading.value = true
+  errorMsg.value = ''
+  
+  try {
+    // 获取OAuth参数
+    const params = getOAuthParams()
+    
+    // 检查是否已经有登录令牌
+    const existingToken = AuthService.getToken()
+    
+    if (existingToken) {
+      // 如果已有令牌，使用从主站JWT获取SSO会话的方式
+      try {
+        // 使用主站JWT创建SSO会话
+        await AuthService.loginFromMainJwt(params.state, params.client_id, params.scope)
+        // 后端会自动重定向，这里不需要额外处理
+      } catch (err) {
+        // 如果从主站JWT获取失败，回退到常规登录流程
+        console.log('从主站JWT获取SSO会话失败，回退到常规登录', err)
+        await performRegularLogin(params)
+      }
+    } else {
+      // 没有现有令牌，执行常规登录流程
+      await performRegularLogin(params)
+    }
+  } catch (err: any) {
+    errorMsg.value = err.message || '登录失败'
+  } finally {
+    loading.value = false
+  }
+}
+
+// 执行常规登录流程的辅助函数
+const performRegularLogin = async (params: any) => {
+  return formRef.value.validate(async (errors: any) => {
     if (!errors) {
-      loading.value = true
-      errorMsg.value = ''
       try {
         // 执行登录
         const res = await authorizationStore.login({
               userId: form.value.studentId,
               password: form.value.password,
               rememberMe: form.value.rememberMe
-            }, Array.isArray(route.query.client_id) ? route.query.client_id[0] : route.query.client_id ?? '',
-            Array.isArray(route.query.scope) ? route.query.scope[0] : route.query.scope ?? '')
+            }, params.client_id,
+            params.scope)
 
         if (!res) {
           errorMsg.value = '登录失败，请检查账号密码'
           return
         }
-
-        // 获取OAuth参数
-        const params = getOAuthParams()
 
         // 登录成功，先调用API将用户信息存储到服务器会话中
         const sessionStored = await OAuthService.storeSession(
@@ -160,17 +204,47 @@ const handleLogin = async () => {
         }
       } catch (err: any) {
         errorMsg.value = err.message || '登录失败'
-      } finally {
-        loading.value = false
       }
     }
   })
 }
 
-// 组件挂载时加载客户端应用信息
+// 组件挂载时加载客户端应用信息和检查JWT
 onMounted(() => {
   loadClientAppInfo()
+  checkMainSiteJwt()
 })
+
+// 检查主站JWT并获取用户信息
+const checkMainSiteJwt = () => {
+  const token = AuthService.getToken()
+  if (token) {
+    hasMainSiteJwt.value = true
+    // 获取并解析用户信息
+    currentUserInfo.value = AuthService.getCurrentUserInfo()
+  }
+}
+
+// 处理主站Jwt登录
+const handleMainJwtLogin = async () => {
+  if (loading.value) return
+  
+  loading.value = true
+  errorMsg.value = ''
+  
+  try {
+    // 获取OAuth参数
+    const params = getOAuthParams()
+    
+    // 使用主站JWT创建SSO会话
+    await AuthService.loginFromMainJwt(params.state, params.client_id, params.scope)
+    // 后端会自动重定向，这里不需要额外处理
+  } catch (err: any) {
+    errorMsg.value = err.message || '使用当前用户登录失败'
+  } finally {
+    loading.value = false
+  }
+}
 </script>
 
 <style scoped>
@@ -198,6 +272,36 @@ onMounted(() => {
 }
 
 .btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-secondary {
+  width: 100%;
+  padding: 8px 0;
+  background: linear-gradient(90deg, #4CAF50 0%, #2E7D32 100%);
+  border: none;
+  border-radius: 12px;
+  color: #FFFFFF;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  transform: scale(1.03);
+  box-shadow: 0 6px 20px rgba(76, 175, 80, 0.3);
+}
+
+.btn-secondary:active:not(:disabled) {
+  transform: scale(0.98);
+  box-shadow: 0 4px 16px rgba(76, 175, 80, 0.2);
+}
+
+.btn-secondary:disabled {
   opacity: 0.7;
   cursor: not-allowed;
   transform: none;

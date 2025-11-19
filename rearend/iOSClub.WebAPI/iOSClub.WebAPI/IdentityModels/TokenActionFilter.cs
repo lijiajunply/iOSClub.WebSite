@@ -10,7 +10,6 @@ public class TokenActionFilter : ActionFilterAttribute
     {
         // Token验证逻辑已移至GlobalAuthorizationFilter
         // 这里保留TokenActionFilter是为了向后兼容
-        return;
     }
 }
 

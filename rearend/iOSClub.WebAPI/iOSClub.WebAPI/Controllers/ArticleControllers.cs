@@ -251,7 +251,7 @@ public class ArticleController(
         if (jwt == null || !await loginService.ValidateToken(userJwt.UserId, jwt))
             return (false, Unauthorized("用户未认证"));
 
-        var user = await staffRepository.GetStaffByIdAsync(userJwt.UserId);
+        var user = await staffRepository.GetStaffByIdWithoutOtherData(userJwt.UserId);
 
         if (user == null)
             return (false, Unauthorized("用户不存在"));

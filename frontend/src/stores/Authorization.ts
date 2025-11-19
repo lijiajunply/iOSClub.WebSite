@@ -1,6 +1,6 @@
-import { defineStore } from 'pinia';
-import { AuthService } from '../services/AuthService';
-import type { LoginModel, StudentModel } from '../models';
+import {defineStore} from 'pinia';
+import {AuthService} from '../services/AuthService';
+import type {LoginModel, StudentModel} from '../models';
 
 export const useAuthorizationStore = defineStore('AuthorizationId', {
     state: () => ({
@@ -59,6 +59,9 @@ export const useAuthorizationStore = defineStore('AuthorizationId', {
                 const a = await AuthService.login(user, clientId, scope)
                 if (!a) {
                     return false;
+                }
+                if (clientId) {
+                    return true;
                 }
                 this.Authorization = a;
                 localStorage.setItem('Authorization', a);

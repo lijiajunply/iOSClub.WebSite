@@ -8,7 +8,7 @@ namespace iOSClub.DataApi.Services;
 
 public interface IJwtHelper
 {
-    public string GetMemberToken(MemberModel model, bool rememberMe = false, string scope = "");
+    public string GetMemberToken(MemberModel model, bool rememberMe = false, string scope = "", string clientId = "");
 }
 
 public interface ILoginService
@@ -21,6 +21,8 @@ public interface ILoginService
     /// <param name="scope">权限</param>
     /// <returns>凭证</returns>
     public Task<string> Login(LoginModel model, string clientId = "", string scope = "");
+
+    public Task<string> LoginThirdPartyFromMainJwt(string userId, string clientId, string jwt, string scope = "");
 
     /// <summary>
     /// 登出
@@ -74,7 +76,7 @@ public interface ILoginService
     public Task<bool> ResetPasswordWithCode(string userId, string code, string newPassword);
 
     public Task<string> GetToken(string userId, string clientId = "");
-    
+
     /// <summary>
     /// 验证token是否有效（简化版）
     /// </summary>
@@ -104,7 +106,7 @@ public class LoginService(
     {
         if (!await studentRepository.Login(model.UserId, model.Password)) return "";
 
-        var staff = await staffRepository.GetStaffByIdAsync(model.UserId);
+        var staff = await staffRepository.GetStaffByIdWithoutOtherData(model.UserId);
         var identity = "Member";
         string name;
         if (staff != null)
@@ -145,7 +147,7 @@ public class LoginService(
             return storedToken.ToString();
         }
 
-        var token = jwtHelper.GetMemberToken(memberModel, model.RememberMe, scope);
+        var token = jwtHelper.GetMemberToken(memberModel, model.RememberMe, scope, clientId);
 
         // 将token存储到Redis中，设置过期时间
         await _db.StringSetAsync(redisKey, token, TimeSpan.FromHours(TokenExpiryHours * (model.RememberMe ? 24 : 2)));
@@ -154,6 +156,64 @@ public class LoginService(
         var userInfoKey = $"user:{model.UserId}{s}";
         await _db.StringSetAsync(userInfoKey, JsonSerializer.Serialize(memberModel),
             TimeSpan.FromHours(TokenExpiryHours * (model.RememberMe ? 24 : 2)));
+
+        return token;
+    }
+
+    public async Task<string> LoginThirdPartyFromMainJwt(string userId, string clientId, string jwt, string scope = "")
+    {
+        if (!await ValidateToken(userId, jwt))
+        {
+            return "";
+        }
+
+        var app = await clientApplicationRepository.GetByClientIdAsync(clientId);
+        if (app == null)
+        {
+            return "";
+        }
+
+        var s = $"client_id:{app.ClientSecret}";
+
+        var redisKey = $"{TokenPrefix}{userId}{s}";
+        var storedToken = await _db.StringGetAsync(redisKey);
+        if (storedToken.HasValue && !string.IsNullOrEmpty(storedToken))
+        {
+            return storedToken.ToString();
+        }
+
+        var member = await studentRepository.GetByIdAsync(userId);
+        var memberModel = new MemberModel()
+        {
+            UserId = userId
+        };
+
+        if (member != null)
+        {
+            memberModel.UserName = member.UserName;
+            memberModel.PasswordHash = member.PasswordHash;
+            memberModel.Identity = "Member";
+        }
+
+        var staff = await staffRepository.GetStaffByIdWithoutOtherData(userId);
+        if (staff != null)
+        {
+            memberModel = new MemberModel()
+            {
+                UserName = staff.Name,
+                Identity = staff.Identity
+            };
+        }
+
+        var token = jwtHelper.GetMemberToken(memberModel, scope: scope, clientId: clientId);
+
+        // 将token存储到Redis中，设置过期时间
+        await _db.StringSetAsync(redisKey, token, TimeSpan.FromHours(TokenExpiryHours * 2));
+
+        // 存储用户信息，便于后续验证
+        var userInfoKey = $"user:{userId}{s}";
+        await _db.StringSetAsync(userInfoKey, JsonSerializer.Serialize(memberModel),
+            TimeSpan.FromHours(TokenExpiryHours * 2));
 
         return token;
     }
@@ -232,7 +292,7 @@ public class LoginService(
 
     public async Task<string> StaffLogin(LoginModel model, string clientId = "", string scope = "")
     {
-        var staff = await staffRepository.GetStaffByIdAsync(model.Password);
+        var staff = await staffRepository.GetStaffByIdWithoutOtherData(model.Password);
 
         if (staff == null || staff.Name != model.UserId)
             return "";
@@ -244,7 +304,7 @@ public class LoginService(
             Identity = staff.Identity
         };
 
-        var token = jwtHelper.GetMemberToken(memberModel, model.RememberMe, scope);
+        var token = jwtHelper.GetMemberToken(memberModel, model.RememberMe, scope, clientId: clientId);
 
         var s = "";
 
