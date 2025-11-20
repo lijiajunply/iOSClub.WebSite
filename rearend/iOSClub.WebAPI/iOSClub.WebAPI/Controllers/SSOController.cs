@@ -393,7 +393,8 @@ public class SSOController(
                 authCode, userId, authState.ClientId);
 
             // 重定向到第三方应用的回调地址
-            var redirectUrl = $"{authState.RedirectUri}?code={Uri.EscapeDataString(authCode)}&state={Uri.EscapeDataString(authState.State)}";
+            var redirectUrl =
+                $"{authState.RedirectUri}?code={Uri.EscapeDataString(authCode)}&state={Uri.EscapeDataString(authState.State)}";
             return Redirect(redirectUrl);
         }
 
@@ -435,7 +436,8 @@ public class SSOController(
             if (authState.ResponseType == "id_token")
             {
                 // 只返回ID token
-                var redirectUrl = $"{authState.RedirectUri}#id_token={Uri.EscapeDataString(idToken)}&state={Uri.EscapeDataString(authState.State)}";
+                var redirectUrl =
+                    $"{authState.RedirectUri}#id_token={Uri.EscapeDataString(idToken)}&state={Uri.EscapeDataString(authState.State)}";
                 return Redirect(redirectUrl);
             }
             else // id_token token
@@ -663,15 +665,9 @@ public class SSOController(
             };
 
             // 如果生成了ID token，则添加到响应中
-            if (!string.IsNullOrEmpty(idToken))
-            {
-                response["id_token"] = idToken;
-            }
-
-            logger.LogInformation("Token exchange successful for user {UserId} with client {ClientId}",
-                authCodeInfo.UserId, clientId);
-
-            logger.LogInformation("access token is {token} , id token is {idToken}", token, idToken);
+            if (string.IsNullOrEmpty(idToken)) return Ok(response);
+            response["id_token"] = idToken;
+            logger.LogInformation("id token is {idToken}", idToken);
 
             return Ok(response);
         }
