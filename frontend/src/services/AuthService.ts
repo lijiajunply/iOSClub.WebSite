@@ -242,7 +242,7 @@ export class AuthService {
      * @param scope 权限范围
      * @returns Promise<boolean> 是否成功
      */
-    static async loginFromMainJwt(state: string, clientId: string, scope: string = 'profile openid role'): Promise<boolean> {
+    static async loginFromMainJwt(state: string, clientId: string, scope: string = 'profile openid role'): Promise<string> {
         const token = this.getToken();
         if (!token) {
             throw new Error('未登录或令牌已过期');
@@ -261,7 +261,7 @@ export class AuthService {
             throw new Error('从主站JWT获取SSO会话失败');
         }
 
-        return true;
+        return await response.text();
     }
 }
 

@@ -93,6 +93,13 @@ import {url} from '../services/Url';
 
 const authorizationStore = useAuthorizationStore()
 const route = useRoute()
+let paramsData = {
+  state: '',
+  client_id: '',
+  redirect_uri: '',
+  response_type: 'code',
+  scope: 'profile openid role',
+};
 
 const formRef = ref()
 const form = ref({
@@ -132,9 +139,9 @@ const getOAuthParams = () => {
 
 // 加载客户端应用信息
 const loadClientAppInfo = async () => {
-  const params = getOAuthParams()
-  if (params.client_id) {
-    clientAppInfo.value = await OAuthService.loadClientAppInfo(params.client_id);
+  paramsData = getOAuthParams()
+  if (paramsData.client_id) {
+    clientAppInfo.value = await OAuthService.loadClientAppInfo(paramsData.client_id);
   }
 }
 
@@ -145,10 +152,7 @@ const handleLogin = async () => {
   errorMsg.value = ''
 
   try {
-    // 获取OAuth参数
-    const params = getOAuthParams()
-
-    await performRegularLogin(params)
+    await performRegularLogin(paramsData)
   } catch (err: any) {
     errorMsg.value = err.message || '登录失败'
   } finally {
@@ -218,15 +222,23 @@ const handleMainJwtLogin = async () => {
   errorMsg.value = ''
 
   try {
-    // 获取OAuth参数
-    const params = getOAuthParams()
-
     // 使用主站JWT创建SSO会话
-    const sessionStored = await AuthService.loginFromMainJwt(params.state, params.client_id, params.scope)
+    let res = await AuthService.loginFromMainJwt(paramsData.state, paramsData.client_id, paramsData.scope)
+
+    if (!res) {
+      errorMsg.value = '登录失败，出现未知错误'
+      return
+    }
+
+    const sessionStored = await OAuthService.storeSession(
+        paramsData.state,
+        paramsData.client_id,
+        res
+    );
 
     if (sessionStored) {
       // 会话存储成功，重定向到SSO/callback端点
-      window.location.href = `${url}/SSO/callback?state=${encodeURIComponent(params.state)}`
+      window.location.href = `${url}/SSO/callback?state=${encodeURIComponent(paramsData.state)}`
     } else {
       errorMsg.value = '会话创建失败，请稍后重试'
     }

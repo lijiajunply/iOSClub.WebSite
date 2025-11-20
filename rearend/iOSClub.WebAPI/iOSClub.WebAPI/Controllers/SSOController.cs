@@ -1089,16 +1089,18 @@ public class SSOController(
             return Unauthorized("用户未认证");
         }
 
+        logger.LogInformation("From main JWT request received for user {UserId} and client {ClientId}", user.UserId,
+            request.ClientId);
+
         var token = await loginService.LoginThirdPartyFromMainJwt(user.UserId, request.ClientId, jwt, scope);
 
-        if (string.IsNullOrEmpty(token))
+        if (!string.IsNullOrEmpty(token))
         {
-            logger.LogWarning("From main JWT failed: failed to login third party from main JWT");
-            return BadRequest("未获取到Token");
+            return Ok(token);
         }
 
-        HttpContext.Request.Headers.Authorization = $"Bearer {token}";
-        return Redirect($"/SSO/store-session?state={request.State}");
+        logger.LogWarning("From main JWT failed: failed to login third party from main JWT");
+        return BadRequest("未获取到Token");
     }
 
     /// <summary>
