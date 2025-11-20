@@ -767,6 +767,10 @@ public class SSOController(
                 new(JwtRegisteredClaimNames.Jti, jwtId), // JWT ID 防止重放攻击
                 new(JwtRegisteredClaimNames.Iat, new DateTimeOffset(now).ToUnixTimeSeconds().ToString(),
                     ClaimValueTypes.Integer64),
+                new("scope", DefaultScore),
+                new("client_id", clientId),
+                new("email", member.EMail ?? ""),
+                new("phone_numb", member.PhoneNum),
                 new("at_hash", Guid.NewGuid().ToString()[..8]) // 访问令牌的哈希值（简化版）
             };
 
