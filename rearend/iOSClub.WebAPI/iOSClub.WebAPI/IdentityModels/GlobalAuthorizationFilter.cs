@@ -47,7 +47,7 @@ public class GlobalAuthorizationFilter(
                 ValidateAudience = true,
                 ValidAudience = "iOS Club of XAUAT",
                 ValidateLifetime = true,
-                ClockSkew = TimeSpan.FromSeconds(30)
+                ClockSkew = TimeSpan.FromMinutes(10)
             };
 
             // 尝试验证token
@@ -62,7 +62,7 @@ public class GlobalAuthorizationFilter(
             }
 
             // 验证token是否在Redis中存在（防止已注销的token继续使用）
-            var userId = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userId = claimsPrincipal.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
             var clientId = claimsPrincipal.FindFirst("client_id")?.Value ?? "";
             logger.LogInformation("Validating token for user {userId} and client {clientId}", userId, clientId);
             if (!string.IsNullOrEmpty(userId))
