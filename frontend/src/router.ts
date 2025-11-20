@@ -203,7 +203,13 @@ const routes = [
                 name: 'Project',
                 meta: {title: "项目编辑 - 西建大 iOS Club"},
                 component: () => import('./adminPages/ProjectEditor.vue'),
-            }
+            },
+            {
+                path: 'Logs',
+                name: 'Logs',
+                meta: {title: "日志查看 - 西建大 iOS Club"},
+                component: () => import('./adminPages/LogsViewer.vue'),
+            },
         ]
     }
 ];
