@@ -264,7 +264,7 @@ public class SSOController(
 
         // 重定向到我们自己的OAuth登录页面
         return Redirect(
-            $"{clientAppUrl}/oauth-login?state={encryptedState}&client_id={clientId}&redirect_uri={Uri.EscapeDataString(redirectUri)}&response_type={responseType}&scope={Uri.EscapeDataString(authState.Scope)}");
+            $"{clientAppUrl}/oauth-login?state={Uri.EscapeDataString(encryptedState)}&client_id={Uri.EscapeDataString(clientId)}&redirect_uri={Uri.EscapeDataString(redirectUri)}&response_type={Uri.EscapeDataString(responseType)}&scope={Uri.EscapeDataString(authState.Scope)}");
     }
 
     /// <summary>
@@ -393,7 +393,7 @@ public class SSOController(
                 authCode, userId, authState.ClientId);
 
             // 重定向到第三方应用的回调地址
-            var redirectUrl = $"{authState.RedirectUri}?code={authCode}&state={authState.State}";
+            var redirectUrl = $"{authState.RedirectUri}?code={Uri.EscapeDataString(authCode)}&state={Uri.EscapeDataString(authState.State)}";
             return Redirect(redirectUrl);
         }
 
@@ -404,7 +404,7 @@ public class SSOController(
 
             // 直接返回访问令牌
             var redirectUrl =
-                $"{authState.RedirectUri}#access_token={token}&state={authState.State}&scope={Uri.EscapeDataString(authState.Scope)}";
+                $"{authState.RedirectUri}#access_token={Uri.EscapeDataString(token)}&state={Uri.EscapeDataString(authState.State)}&scope={Uri.EscapeDataString(authState.Scope)}";
             return Redirect(redirectUrl);
         }
 
@@ -435,14 +435,14 @@ public class SSOController(
             if (authState.ResponseType == "id_token")
             {
                 // 只返回ID token
-                var redirectUrl = $"{authState.RedirectUri}#id_token={idToken}&state={authState.State}";
+                var redirectUrl = $"{authState.RedirectUri}#id_token={Uri.EscapeDataString(idToken)}&state={Uri.EscapeDataString(authState.State)}";
                 return Redirect(redirectUrl);
             }
             else // id_token token
             {
                 // 返回访问令牌和ID token
                 var redirectUrl =
-                    $"{authState.RedirectUri}#access_token={token}&id_token={idToken}&state={authState.State}&token_type=Bearer&expires_in=7200";
+                    $"{authState.RedirectUri}#access_token={Uri.EscapeDataString(token)}&id_token={Uri.EscapeDataString(idToken)}&state={Uri.EscapeDataString(authState.State)}&token_type=Bearer&expires_in=7200";
                 return Redirect(redirectUrl);
             }
         }

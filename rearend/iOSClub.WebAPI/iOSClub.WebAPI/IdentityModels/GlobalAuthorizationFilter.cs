@@ -62,7 +62,8 @@ public class GlobalAuthorizationFilter(
             }
 
             // 验证token是否在Redis中存在（防止已注销的token继续使用）
-            var userId = claimsPrincipal.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+            var userId = claimsPrincipal.FindFirst(JwtRegisteredClaimNames.Sub)?.Value ??
+                         claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var clientId = claimsPrincipal.FindFirst("client_id")?.Value ?? "";
             logger.LogInformation("Validating token for user {userId} and client {clientId}", userId, clientId);
             if (!string.IsNullOrEmpty(userId))
