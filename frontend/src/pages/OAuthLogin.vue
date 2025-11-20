@@ -223,7 +223,7 @@ const handleMainJwtLogin = async () => {
 
   try {
     // 使用主站JWT创建SSO会话
-    let res = await AuthService.loginFromMainJwt(paramsData.state, paramsData.client_id, paramsData.scope)
+    let res = await AuthService.loginFromMainJwt(paramsData.client_id, paramsData.scope)
 
     if (!res) {
       errorMsg.value = '登录失败，出现未知错误'

@@ -1068,12 +1068,13 @@ public class SSOController(
     /// <summary>
     /// 从主站JWT获取会话
     /// </summary>
-    /// <param name="request">会话需要的数据</param>
+    /// <param name="clientId">客户端 ID</param>
     /// <param name="scope">权限类别</param>
     /// <returns>重定向</returns>
-    [HttpPost("from_main_jwt")]
+    [HttpGet("from_main_jwt")]
     [Authorize]
-    public async Task<IActionResult> FromMainJwt([FromBody] StoreSessionRequest request, [FromQuery] string scope)
+    public async Task<IActionResult> FromMainJwt([FromQuery(Name = "client_id")] string clientId,
+        [FromQuery] string scope)
     {
         var jwt = HttpContext.GetJwt();
         if (string.IsNullOrEmpty(jwt))
