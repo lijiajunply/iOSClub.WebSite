@@ -1091,9 +1091,9 @@ public class SSOController(
         }
 
         logger.LogInformation("From main JWT request received for user {UserId} and client {ClientId}", user.UserId,
-            request.ClientId);
+            clientId);
 
-        var token = await loginService.LoginThirdPartyFromMainJwt(user.UserId, request.ClientId, jwt, scope);
+        var token = await loginService.LoginThirdPartyFromMainJwt(user.UserId, clientId, jwt, scope);
 
         if (!string.IsNullOrEmpty(token))
         {

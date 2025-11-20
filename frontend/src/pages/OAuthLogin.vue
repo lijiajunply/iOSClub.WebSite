@@ -199,18 +199,20 @@ const performRegularLogin = async (params: any) => {
 }
 
 // 组件挂载时加载客户端应用信息和检查JWT
-onMounted(() => {
+onMounted(async () => {
   loadClientAppInfo()
-  checkMainSiteJwt()
+  await checkMainSiteJwt()
 })
 
 // 检查主站JWT并获取用户信息
-const checkMainSiteJwt = () => {
-  const token = AuthService.getToken()
-  if (token) {
-    hasMainSiteJwt.value = true
-    // 获取并解析用户信息
-    currentUserInfo.value = AuthService.getCurrentUserInfo()
+const checkMainSiteJwt = async () => {
+  if (await authorizationStore.validate()) {
+    const token = AuthService.getToken()
+    if (token) {
+      hasMainSiteJwt.value = true
+      // 获取并解析用户信息
+      currentUserInfo.value = AuthService.getCurrentUserInfo()
+    }
   }
 }
 
