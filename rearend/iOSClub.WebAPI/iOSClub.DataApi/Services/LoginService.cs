@@ -143,7 +143,7 @@ public class LoginService(
             {
                 if (app.IsNeedEMail && !isHasEMail)
                 {
-                    throw new Exception("该应用需要你的邮箱信息");
+                    return "";
                 }
 
                 s = $"client_id:{app.ClientSecret}";
