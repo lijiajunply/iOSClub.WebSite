@@ -16,78 +16,117 @@
 
     <!-- 主要内容区域 -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+      <!-- 日志统计图表区域 -->
+      <div
+        class="bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl border border-gray-200 dark:border-gray-700 rounded-2xl p-4 mb-6 transition-all duration-300 shadow-sm">
+        <h2 class="text-lg font-medium text-gray-900 dark:text-white mb-4">日志统计</h2>
+
+        <!-- 统计卡片 -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <!-- 总日志数 -->
+          <div
+            class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border-l-4 border-blue-500 transition-transform hover:scale-[1.02]">
+            <p class="text-sm text-gray-500 dark:text-gray-400">总日志数</p>
+            <p class="text-2xl font-bold mt-1">{{ statisticsLoading ? '-' : totalLogsCount }}</p>
+            <div class="flex items-center text-xs text-gray-500 dark:text-gray-400 mt-2">
+              <span class="w-1 h-1 bg-gray-400 rounded-full mr-1"></span>
+              {{ statisticsLoading ? '加载中...' : `今日新增: ${Math.floor(totalLogsCount / 2)}` }}
+            </div>
+            <div v-if="statisticsError && !statisticsLoading" class="text-xs text-red-500 mt-1">
+              {{ statisticsError }}
+            </div>
+          </div>
+
+          <!-- 错误日志数 -->
+          <div
+            class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border-l-4 border-red-500 transition-transform hover:scale-[1.02]">
+            <p class="text-sm text-gray-500 dark:text-gray-400">错误日志</p>
+            <p class="text-2xl font-bold mt-1 text-red-500">{{ errorLogsCount }}</p>
+            <div class="flex items-center text-xs text-gray-500 dark:text-gray-400 mt-2">
+              <span class="w-1 h-1 bg-red-400 rounded-full mr-1"></span>
+              需紧急处理
+            </div>
+          </div>
+
+          <!-- 警告日志数 -->
+          <div
+            class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border-l-4 border-yellow-500 transition-transform hover:scale-[1.02]">
+            <p class="text-sm text-gray-500 dark:text-gray-400">警告日志</p>
+            <p class="text-2xl font-bold mt-1 text-yellow-500">{{ warningLogsCount }}</p>
+            <div class="flex items-center text-xs text-gray-500 dark:text-gray-400 mt-2">
+              <span class="w-1 h-1 bg-yellow-400 rounded-full mr-1"></span>
+              需要关注
+            </div>
+          </div>
+
+          <!-- 信息日志数 -->
+          <div
+            class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border-l-4 border-green-500 transition-transform hover:scale-[1.02]">
+            <p class="text-sm text-gray-500 dark:text-gray-400">信息日志</p>
+            <p class="text-2xl font-bold mt-1 text-green-500">{{ infoLogsCount }}</p>
+            <div class="flex items-center text-xs text-gray-500 dark:text-gray-400 mt-2">
+              <span class="w-1 h-1 bg-green-400 rounded-full mr-1"></span>
+              正常运行信息
+            </div>
+          </div>
+        </div>
+
+        <!-- 图表区域 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <!-- 日志级别分布图表 -->
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 h-80">
+            <div ref="levelChartRef" class="w-full h-full"></div>
+          </div>
+
+          <!-- 日志时间分布图表 -->
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 h-80">
+            <div ref="timeChartRef" class="w-full h-full"></div>
+          </div>
+        </div>
+      </div>
+
       <!-- 过滤和操作栏 -->
-      <div class="bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl border border-gray-200 dark:border-gray-700 rounded-2xl p-4 mb-6 transition-all duration-300 shadow-sm">
+      <div
+        class="bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl border border-gray-200 dark:border-gray-700 rounded-2xl p-4 mb-6 transition-all duration-300 shadow-sm">
         <!-- 快速搜索 -->
         <div class="mb-4">
           <div class="relative">
-            <Icon icon="material-symbols:search" class="z-50 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4.5 h-4.5" />
-            <n-input
-              v-model:value="searchKeyword"
-              placeholder="搜索日志消息或来源..."
-              class="pl-10"
-              @keyup.enter="applyFilters"
-            />
-            <n-button
-              v-if="searchKeyword"
-              type="default"
-              text
-              circle
-              size="small"
-              class="absolute right-2 top-1/2 transform -translate-y-1/2"
-              @click="searchKeyword = ''; applyFilters()"
-            >
+            <Icon icon="material-symbols:search"
+              class="z-50 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4.5 h-4.5" />
+            <n-input v-model:value="searchKeyword" placeholder="搜索日志消息或来源..." class="pl-10"
+              @keyup.enter="applyFilters" />
+            <n-button v-if="searchKeyword" type="default" text circle size="small"
+              class="absolute right-2 top-1/2 transform -translate-y-1/2" @click="searchKeyword = ''; applyFilters()">
               <Icon icon="material-symbols:close" class="z-50 w-4 h-4" />
             </n-button>
           </div>
         </div>
-        
+
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <!-- 日志级别过滤 -->
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               日志级别
             </label>
-            <n-select
-              v-model:value="selectedLevel"
-              placeholder="选择日志级别"
-              :options="logLevelOptions"
-              clearable
-              class="w-full"
-              @update:value="applyFilters"
-            />
+            <n-select v-model:value="selectedLevel" placeholder="选择日志级别" :options="logLevelOptions" clearable
+              class="w-full" @update:value="applyFilters" />
           </div>
-          
+
           <!-- 时间范围 -->
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               时间范围
             </label>
-            <n-date-picker
-              v-model:value="dateRange"
-              type="daterange"
-              clearable
-              class="w-full"
-              format="yyyy-MM-dd HH:mm:ss"
-              @update:value="applyFilters"
-            />
+            <n-date-picker v-model:value="dateRange" type="daterange" clearable class="w-full"
+              format="yyyy-MM-dd HH:mm:ss" @update:value="applyFilters" />
           </div>
-          
+
           <!-- 操作按钮组 -->
           <div class="flex items-end gap-2">
-            <n-button
-              type="default"
-              @click="resetFilters"
-              class="flex-1"
-            >
+            <n-button type="default" @click="resetFilters" class="flex-1">
               重置过滤
             </n-button>
-            <n-button
-              type="primary"
-              @click="refreshLogs"
-              :loading="loading"
-              class="flex-1"
-            >
+            <n-button type="primary" @click="refreshLogs" :loading="loading" class="flex-1">
               <template #icon>
                 <Icon icon="material-symbols:refresh" class="w-4.5 h-4.5" />
               </template>
@@ -95,7 +134,7 @@
             </n-button>
           </div>
         </div>
-        
+
         <!-- 高级过滤 (默认折叠) -->
         <div class="mt-4">
           <n-collapse>
@@ -108,23 +147,17 @@
                   </label>
                   <n-switch v-model:value="hasException" @update:value="applyFilters" />
                 </div>
-                
+
                 <!-- 快速时间范围选择 -->
                 <div>
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     快速时间选择
                   </label>
                   <div class="flex gap-2 flex-wrap">
-                    <n-button 
-                      v-for="range in quickTimeRanges" 
-                      :key="range.value"
-                      type="default" 
-                      size="small"
+                    <n-button v-for="range in quickTimeRanges" :key="range.value" type="default" size="small"
                       :secondary="selectedQuickTimeRange !== range.value"
-                      :tertiary="selectedQuickTimeRange === range.value"
-                      @click="applyQuickTimeRange(range.value)"
-                      class="text-xs"
-                    >
+                      :tertiary="selectedQuickTimeRange === range.value" @click="applyQuickTimeRange(range.value)"
+                      class="text-xs">
                       {{ range.label }}
                     </n-button>
                   </div>
@@ -135,83 +168,23 @@
         </div>
       </div>
 
-      <!-- 日志统计图表区域 -->
-      <div class="bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl border border-gray-200 dark:border-gray-700 rounded-2xl p-4 mb-6 transition-all duration-300 shadow-sm">
-        <h2 class="text-lg font-medium text-gray-900 dark:text-white mb-4">日志统计</h2>
-        
-        <!-- 统计卡片 -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <!-- 总日志数 -->
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border-l-4 border-blue-500 transition-transform hover:scale-[1.02]">
-            <p class="text-sm text-gray-500 dark:text-gray-400">总日志数</p>
-            <p class="text-2xl font-bold mt-1">{{ statisticsLoading ? '-' : totalLogsCount }}</p>
-            <div class="flex items-center text-xs text-gray-500 dark:text-gray-400 mt-2">
-              <span class="w-1 h-1 bg-gray-400 rounded-full mr-1"></span>
-              {{ statisticsLoading ? '加载中...' : `今日新增: ${Math.floor(totalLogsCount / 2)}` }}
-            </div>
-            <div v-if="statisticsError && !statisticsLoading" class="text-xs text-red-500 mt-1">
-              {{ statisticsError }}
-            </div>
-          </div>
-          
-          <!-- 错误日志数 -->
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border-l-4 border-red-500 transition-transform hover:scale-[1.02]">
-            <p class="text-sm text-gray-500 dark:text-gray-400">错误日志</p>
-            <p class="text-2xl font-bold mt-1 text-red-500">{{ errorLogsCount }}</p>
-            <div class="flex items-center text-xs text-gray-500 dark:text-gray-400 mt-2">
-              <span class="w-1 h-1 bg-red-400 rounded-full mr-1"></span>
-              需紧急处理
-            </div>
-          </div>
-          
-          <!-- 警告日志数 -->
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border-l-4 border-yellow-500 transition-transform hover:scale-[1.02]">
-            <p class="text-sm text-gray-500 dark:text-gray-400">警告日志</p>
-            <p class="text-2xl font-bold mt-1 text-yellow-500">{{ warningLogsCount }}</p>
-            <div class="flex items-center text-xs text-gray-500 dark:text-gray-400 mt-2">
-              <span class="w-1 h-1 bg-yellow-400 rounded-full mr-1"></span>
-              需要关注
-            </div>
-          </div>
-          
-          <!-- 信息日志数 -->
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border-l-4 border-green-500 transition-transform hover:scale-[1.02]">
-            <p class="text-sm text-gray-500 dark:text-gray-400">信息日志</p>
-            <p class="text-2xl font-bold mt-1 text-green-500">{{ infoLogsCount }}</p>
-            <div class="flex items-center text-xs text-gray-500 dark:text-gray-400 mt-2">
-              <span class="w-1 h-1 bg-green-400 rounded-full mr-1"></span>
-              正常运行信息
-            </div>
-          </div>
-        </div>
-        
-        <!-- 图表区域 -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <!-- 日志级别分布图表 -->
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 h-80">
-            <div ref="levelChartRef" class="w-full h-full"></div>
-          </div>
-          
-          <!-- 日志时间分布图表 -->
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 h-80">
-            <div ref="timeChartRef" class="w-full h-full"></div>
-          </div>
-        </div>
-      </div>
-
       <!-- 日志列表 -->
-      <div class="bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden transition-all duration-300 shadow-sm hover:shadow-md">
+      <div
+        class="bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden transition-all duration-300 shadow-sm hover:shadow-md">
         <div class="overflow-x-auto">
           <table class="w-full">
             <thead class="bg-gray-50 dark:bg-gray-850">
               <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   时间
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   级别
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   消息
                 </th>
               </tr>
@@ -232,34 +205,34 @@
                   </td>
                 </tr>
               </template>
-              
+
               <!-- 日志列表 -->
               <template v-else>
-                <tr v-for="log in paginatedLogs" :key="`${log.timestamp}-${log.level}`" class="hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors duration-150">
+                <tr v-for="log in paginatedLogs" :key="`${log.timestamp}-${log.level}`"
+                  class="hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors duration-150">
                   <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                     {{ formatDateTime(log.timestamp) }}
                   </td>
                   <td class="px-4 sm:px-6 py-4 whitespace-nowrap">
-                    <n-tag
-                      :type="getLogLevelType(log.level)"
-                      :bordered="false"
-                      class="rounded-full"
-                    >
+                    <n-tag :type="getLogLevelType(log.level)" :bordered="false" class="rounded-full">
                       {{ log.level }}
                     </n-tag>
                   </td>
                   <td class="px-4 sm:px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
-                    <div class="line-clamp-2 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors" @click="showLogDetails(log)">
-                      {{ log.message || '无消息内容' }}   
+                    <div
+                      class="line-clamp-2 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                      @click="showLogDetails(log)">
+                      {{ log.message || '无消息内容' }}
                     </div>
                   </td>
                 </tr>
               </template>
-              
+
               <tr v-if="paginatedLogs.length === 0">
                 <td colspan="3" class="px-4 sm:px-6 py-12 text-center">
                   <div class="flex flex-col items-center">
-                    <div class="w-16 h-16 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-full mb-4">
+                    <div
+                      class="w-16 h-16 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-full mb-4">
                       <Icon icon="material-symbols:history-off" class="text-gray-400 dark:text-gray-500 w-7 h-7" />
                     </div>
                     <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-1">暂无日志记录</h3>
@@ -270,7 +243,7 @@
             </tbody>
           </table>
         </div>
-        
+
         <!-- 分页 -->
         <div class="px-4 sm:px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
           <div class="flex-1 flex justify-between sm:hidden">
@@ -290,21 +263,15 @@
           <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
             <div>
               <p class="text-sm text-gray-700 dark:text-gray-300">
-                显示第 <span class="font-medium">{{ Math.max(0, (currentPage - 1) * pageSize + 1) }}</span> 到 <span class="font-medium">{{ Math.min(totalLogs, currentPage * pageSize) }}</span> 条，共 <span class="font-medium">{{ totalLogs }}</span> 条日志
+                显示第 <span class="font-medium">{{ Math.max(0, (currentPage - 1) * pageSize + 1) }}</span> 到 <span
+                  class="font-medium">{{ Math.min(totalLogs, currentPage * pageSize) }}</span> 条，共 <span
+                  class="font-medium">{{ totalLogs }}</span> 条日志
               </p>
             </div>
             <div>
-              <n-pagination
-                v-model:page="currentPage"
-                v-model:page-size="pageSize"
-                :page-sizes="[10, 20, 50, 100]"
-                :item-count="totalLogs"
-                show-size-picker
-                show-quick-jumper
-                show-total
-                @update:page="handlePageChange"
-                @update:page-size="handlePageSizeChange"
-              />
+              <n-pagination v-model:page="currentPage" v-model:page-size="pageSize" :page-sizes="[10, 20, 50, 100]"
+                :item-count="totalLogs" show-size-picker show-quick-jumper show-total @update:page="handlePageChange"
+                @update:page-size="handlePageSizeChange" />
             </div>
           </div>
         </div>
@@ -312,15 +279,8 @@
     </div>
 
     <!-- 日志详情对话框 -->
-    <n-modal
-      v-model:show="showLogDetailsDialog"
-      preset="dialog"
-      title="日志详情"
-      :width="600"
-      :bordered="false"
-      :mask-closable="false"
-      class="backdrop-blur-md rounded-xl"
-    >
+    <n-modal v-model:show="showLogDetailsDialog" preset="dialog" title="日志详情" :width="600" :bordered="false"
+      :mask-closable="false" class="backdrop-blur-md rounded-xl">
       <div v-if="selectedLog" class="space-y-4">
         <div>
           <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">时间</h3>
@@ -338,11 +298,15 @@
         </div>
         <div v-if="selectedLog.properties && Object.keys(selectedLog.properties).length > 0">
           <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">属性</h3>
-          <pre class="bg-gray-100 dark:bg-gray-800 p-3 rounded-md text-sm text-gray-900 dark:text-gray-100 overflow-auto max-h-40 shadow-inner">{{ JSON.stringify(selectedLog.properties, null, 2) }}</pre>
+          <pre
+            class="bg-gray-100 dark:bg-gray-800 p-3 rounded-md text-sm text-gray-900 dark:text-gray-100 overflow-auto max-h-40 shadow-inner">
+        {{ JSON.stringify(selectedLog.properties, null, 2) }}</pre>
         </div>
         <div v-if="selectedLog.exception">
           <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">异常信息</h3>
-          <pre class="bg-gray-100 dark:bg-gray-800 p-3 rounded-md text-sm text-gray-900 dark:text-gray-100 overflow-auto max-h-40 shadow-inner">{{ selectedLog.exception }}</pre>
+          <pre
+            class="bg-gray-100 dark:bg-gray-800 p-3 rounded-md text-sm text-gray-900 dark:text-gray-100 overflow-auto max-h-40 shadow-inner">
+        {{ selectedLog.exception }}</pre>
         </div>
       </div>
     </n-modal>
@@ -354,7 +318,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { NTag, NSelect, NDatePicker, NButton, NModal, NPagination, NInput, NSwitch, NCollapse, NCollapseItem } from 'naive-ui'
 import { Icon } from '@iconify/vue'
 import * as echarts from 'echarts'
-import { LogsService, type LogEntry} from '../services/LogsService';
+import { LogsService, type LogEntry } from '../services/LogsService';
 
 // 响应式数据
 const logs = ref<LogEntry[]>([])
@@ -440,7 +404,7 @@ const applyQuickTimeRange = async (range: string): Promise<void> => {
   selectedQuickTimeRange.value = range
   const now = new Date()
   const start = new Date()
-  
+
   switch (range) {
     case 'today':
       start.setHours(0, 0, 0, 0)
@@ -470,12 +434,12 @@ const applyQuickTimeRange = async (range: string): Promise<void> => {
       start.setHours(0, 0, 0, 0)
       break
   }
-  
+
   dateRange.value = [
     start.getTime(),
     now.getTime()
   ]
-  
+
   await applyFilters()
 }
 
@@ -494,7 +458,7 @@ const paginatedLogs = computed((): LogEntry[] => {
 // 获取日志数据，支持多条件搜索
 const getLogs = async (): Promise<void> => {
   if (loading.value) return;
-  
+
   loading.value = true;
   try {
     // 确定时间范围参数
@@ -508,7 +472,7 @@ const getLogs = async (): Promise<void> => {
         timeRangeParam = daysMatch[1];
       }
     }
-    
+
     // 调用更新后的服务方法，传入所有搜索参数
     const response = await LogsService.getRecentLogs(
       currentPage.value,
@@ -517,7 +481,7 @@ const getLogs = async (): Promise<void> => {
       selectedLevel.value || undefined,
       timeRangeParam
     );
-    
+
     logs.value = response.data;
     totalLogs.value = response.totalCount;
     totalPages.value = response.totalPages;
@@ -614,13 +578,13 @@ const updateCharts = (): void => {
       'Debug': 0,
       'Trace': 0
     }
-    
+
     filteredLogs.value.forEach(log => {
       if (levelCounts.hasOwnProperty(log.level)) {
         levelCounts[log.level]++
       }
     })
-    
+
     const option = {
       title: {
         text: '日志级别分布',
@@ -656,28 +620,28 @@ const updateCharts = (): void => {
         }
       ]
     }
-    
+
     levelChart.value.setOption(option)
   }
-  
+
   // 时间分布图表
   if (timeChart.value) {
     // 按小时统计最近24小时的日志
     const hourCounts: Record<string, number> = {}
     const now = new Date()
-    
+
     // 初始化过去24小时的计数
     for (let i = 23; i >= 0; i--) {
       const hour = now.getHours() - i
       const hourStr = (hour < 0 ? hour + 24 : hour).toString().padStart(2, '0') + ':00'
       hourCounts[hourStr] = 0
     }
-    
+
     // 统计日志数量
     filteredLogs.value.forEach(log => {
       const logDate = new Date(log.timestamp)
       const timeDiff = now.getTime() - logDate.getTime()
-      
+
       // 只统计过去24小时的日志
       if (timeDiff <= 24 * 60 * 60 * 1000) {
         const hourStr = logDate.getHours().toString().padStart(2, '0') + ':00'
@@ -686,7 +650,7 @@ const updateCharts = (): void => {
         }
       }
     })
-    
+
     const option = {
       title: {
         text: '日志时间分布 (24小时)',
@@ -715,7 +679,7 @@ const updateCharts = (): void => {
         }
       ]
     }
-    
+
     timeChart.value.setOption(option)
   }
 }

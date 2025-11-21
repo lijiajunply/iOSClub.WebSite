@@ -478,11 +478,6 @@ const rules = {
       len: 10,
       message: '学号应为10位数字',
       trigger: 'blur'
-    },
-    {
-      pattern: /(19|20|21|22|23|24)([0-9]{8})/,
-      message: '学号格式不正确',
-      trigger: 'blur'
     }
   ],
   academy: {
@@ -499,11 +494,6 @@ const rules = {
     {
       required: true,
       message: '请输入专业班级',
-      trigger: 'blur'
-    },
-    {
-      pattern: /[\u4e00-\u9fa5|()（）]+[0-9]{4}(.*)/,
-      message: '班级名称格式不正确',
       trigger: 'blur'
     }
   ],
