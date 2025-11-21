@@ -122,7 +122,7 @@ public class LoginService(
             var stu = await studentRepository.GetByIdAsync(model.UserId);
             if (stu == null) return "";
             name = stu.UserName;
-            isHasEMail = string.IsNullOrEmpty(stu.EMail);
+            isHasEMail = !string.IsNullOrEmpty(stu.EMail);
         }
 
         // 关于查询身份信息的，需要完成 StaffRepository 之后，在这里进行查询，我先随便给个值
