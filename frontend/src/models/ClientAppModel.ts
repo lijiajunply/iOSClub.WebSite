@@ -56,6 +56,11 @@ export interface ClientApplication {
      * 是否支持PKCE
      */
     supportsPkce: boolean;
+
+    /**
+     * 是否需要邮箱验证
+     */
+    isNeedEMail: boolean;
 }
 
 /**
@@ -91,6 +96,11 @@ export interface CreateClientAppModel {
      * 是否支持PKCE
      */
     supportsPkce: boolean;
+
+    /**
+     * 是否需要邮箱验证
+     */
+    isNeedEMail: boolean;
 }
 
 /**
@@ -131,6 +141,11 @@ export interface UpdateClientAppModel {
      * 是否支持PKCE
      */
     supportsPkce: boolean;
+
+    /**
+     * 是否需要邮箱验证
+     */
+    isNeedEMail: boolean;
 }
 
 /**
@@ -181,6 +196,11 @@ export interface ClientAppResultModel {
      * 是否支持PKCE
      */
     supportsPkce: boolean;
+
+    /**
+     * 是否需要邮箱验证
+     */
+    isNeedEMail: boolean;
 }
 
 /**

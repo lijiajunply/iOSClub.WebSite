@@ -43,12 +43,10 @@
           </n-form-item>
           
           <n-form-item path="verificationCode" label="验证码">
-            <n-input
+            <n-input-otp
               v-model:value="formStep2.verificationCode"
-              placeholder="请输入邮箱中收到的验证码"
-              size="large"
+              :length="6"
               class="rounded-xl"
-              :input-props="{ class: 'dark:bg-neutral-800 dark:text-white dark:placeholder-gray-400' }"
             />
           </n-form-item>
           
@@ -56,6 +54,7 @@
             <n-input
               v-model:value="formStep2.newPassword"
               type="password"
+              show-password-on="click"
               placeholder="请输入新密码"
               size="large"
               class="rounded-xl"
@@ -67,6 +66,7 @@
             <n-input
               v-model:value="formStep2.confirmPassword"
               type="password"
+              show-password-on="click"
               placeholder="请再次输入新密码"
               size="large"
               class="rounded-xl"
@@ -125,7 +125,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { NForm, NFormItem, NInput, NButton } from 'naive-ui'
+import { NForm, NFormItem, NInput, NButton, NInputOtp } from 'naive-ui'
 import { Icon } from '@iconify/vue'
 import { AuthService } from '../services/AuthService';
 
@@ -135,7 +135,7 @@ interface FormStep1State {
 
 interface FormStep2State {
   studentId: string
-  verificationCode: string
+  verificationCode: string[]
   newPassword: string
   confirmPassword: string
 }
@@ -154,7 +154,7 @@ const formStep1 = ref<FormStep1State>({
 
 const formStep2 = ref<FormStep2State>({
   studentId: '',
-  verificationCode: '',
+  verificationCode: Array(6).fill(''), // 初始化为包含6个空字符串的数组
   newPassword: '',
   confirmPassword: ''
 })
@@ -176,7 +176,14 @@ const rulesStep2 = {
   verificationCode: {
     required: true,
     message: '请输入验证码',
-    trigger: 'blur'
+    trigger: 'blur',
+    validator: (_: any, value: string[]) => {
+      // 验证所有位置都有值
+      if (!value || value.some(v => !v)) {
+        return new Error('请输入完整的验证码');
+      }
+      return true;
+    }
   },
   newPassword: {
     required: true,
@@ -215,6 +222,8 @@ const handleSubmit = () => {
           
           // 初始化第二步表单
           formStep2.value.studentId = formStep1.value.studentId
+          // 重置验证码数组
+          formStep2.value.verificationCode = Array(6).fill('')
           
           // 延迟切换到第二步
           setTimeout(() => {
@@ -238,7 +247,7 @@ const handleSubmit = () => {
         try {
           await AuthService.resetPassword(
             formStep2.value.studentId,
-            formStep2.value.verificationCode,
+            formStep2.value.verificationCode.join(''), // 将数组连接成字符串
             formStep2.value.newPassword
           );
           
@@ -289,5 +298,22 @@ const handleSubmit = () => {
 :deep(.n-button:hover:not(:disabled)) {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+:deep(.n-input-otp) {
+  gap: 8px;
+}
+
+:deep(.n-input-otp .n-input-otp-slot) {
+  width: 48px;
+  height: 48px;
+  font-size: 18px;
+  border-radius: 0.75rem;
+  border-color: var(--color-border);
+}
+
+:deep(.n-input-otp .n-input-otp-slot:focus-within) {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 </style>

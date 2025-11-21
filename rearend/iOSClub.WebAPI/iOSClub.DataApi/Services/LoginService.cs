@@ -111,6 +111,7 @@ public class LoginService(
         var staff = await staffRepository.GetStaffByIdWithoutOtherData(model.UserId);
         var identity = "Member";
         string name;
+        var isHasEMail = false;
         if (staff != null)
         {
             identity = staff.Identity;
@@ -119,7 +120,9 @@ public class LoginService(
         else
         {
             var stu = await studentRepository.GetByIdAsync(model.UserId);
-            name = stu?.UserName ?? "";
+            if (stu == null) return "";
+            name = stu.UserName;
+            isHasEMail = string.IsNullOrEmpty(stu.EMail);
         }
 
         // 关于查询身份信息的，需要完成 StaffRepository 之后，在这里进行查询，我先随便给个值
@@ -138,6 +141,11 @@ public class LoginService(
             var app = await clientApplicationRepository.GetByClientIdAsync(clientId);
             if (app != null)
             {
+                if (app.IsNeedEMail && !isHasEMail)
+                {
+                    throw new Exception("该应用需要你的邮箱信息");
+                }
+
                 s = $"client_id:{app.ClientSecret}";
             }
         }

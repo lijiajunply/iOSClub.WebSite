@@ -104,7 +104,8 @@
                          class="h-8 w-8 rounded-md object-cover"/>
                     <div v-else
                          class="h-8 w-8 rounded-md bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
-                      <Icon icon="lucide:app-window-mac" width="20" height="20" class="text-gray-500 dark:text-gray-400"/>
+                      <Icon icon="lucide:app-window-mac" width="20" height="20"
+                            class="text-gray-500 dark:text-gray-400"/>
                     </div>
                     <div class="ml-4">
                       <div class="text-sm font-medium text-gray-900 dark:text-white">
@@ -335,7 +336,16 @@
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 高级设置
               </label>
+
               <div class="flex items-center">
+                <input v-model="editForm.isNeedEMail" type="checkbox" id="isNeedEMailEdit"
+                       class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"/>
+                <label for="isNeedEMailEdit" class="ml-2 block text-sm text-gray-900 dark:text-white">
+                  需要邮箱验证
+                </label>
+              </div>
+
+              <div class="flex items-center mt-2">
                 <input v-model="editForm.supportsPkce" type="checkbox" id="supportsPkceEdit"
                        class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"/>
                 <label for="supportsPkceEdit" class="ml-2 block text-sm text-gray-900 dark:text-white">
@@ -406,6 +416,20 @@
                         title="复制客户端ID">
                   <Icon icon="ion:copy-outline" width="20" height="20"/>
                 </button>
+              </div>
+
+              <div class="mt-4">
+                <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  邮箱验证
+                </h3>
+                <span :class="[
+                  'px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full',
+                  selectedApp?.isNeedEMail
+                    ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                    : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+                ]">
+                  {{ selectedApp?.isNeedEMail ? '是' : '否' }}
+                </span>
               </div>
 
               <div>
@@ -564,7 +588,8 @@
               <div>
                 <h3 class="text-lg font-medium mb-1">什么是Scopes</h3>
                 <p class="text-sm text-gray-600 dark:text-gray-300">
-                  Scopes是OAuth 2.0中的权限范围，定义了第三方应用可以访问的用户数据。系统会根据访问令牌中包含的scope返回相应的用户信息。</p>
+                  Scopes是OAuth
+                  2.0中的权限范围，定义了第三方应用可以访问的用户数据。系统会根据访问令牌中包含的scope返回相应的用户信息。</p>
               </div>
 
               <div>
@@ -572,38 +597,57 @@
                 <div class="overflow-x-auto">
                   <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead class="bg-gray-50 dark:bg-gray-700">
-                      <tr>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Scope</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">返回字段</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">说明</th>
-                      </tr>
+                    <tr>
+                      <th scope="col"
+                          class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        Scope
+                      </th>
+                      <th scope="col"
+                          class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        返回字段
+                      </th>
+                      <th scope="col"
+                          class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        说明
+                      </th>
+                    </tr>
                     </thead>
                     <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                      <tr>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white"><code>openid</code></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400"><code>sub</code></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">用户ID</td>
-                      </tr>
-                      <tr>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white"><code>profile</code></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400"><code>name</code>, <code>nickname</code>, <code>academy</code>, <code>class</code></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">用户基本信息</td>
-                      </tr>
-                      <tr>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white"><code>email</code></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400"><code>email</code></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">用户邮箱地址</td>
-                      </tr>
-                      <tr>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white"><code>read</code></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400"><code>role</code></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">用户角色</td>
-                      </tr>
-                      <tr>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white"><code>phone</code></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400"><code>phone</code></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">用户电话号码</td>
-                      </tr>
+                    <tr>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white"><code>openid</code>
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400"><code>sub</code>
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">用户ID</td>
+                    </tr>
+                    <tr>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white"><code>profile</code>
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400"><code>name</code>,
+                        <code>nickname</code>, <code>academy</code>, <code>class</code></td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">用户基本信息</td>
+                    </tr>
+                    <tr>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white"><code>email</code>
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        <code>email</code></td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">用户邮箱地址</td>
+                    </tr>
+                    <tr>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white"><code>read</code>
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400"><code>role</code>
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">用户角色</td>
+                    </tr>
+                    <tr>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white"><code>phone</code>
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        <code>phone</code></td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">用户电话号码</td>
+                    </tr>
                     </tbody>
                   </table>
                 </div>
@@ -612,7 +656,8 @@
               <div>
                 <h3 class="text-lg font-medium mb-1">权限配置建议</h3>
                 <p class="text-sm text-gray-600 dark:text-gray-300">
-                  应用应该仅请求必要的最小权限范围，遵循最小权限原则，提高安全性。例如，如果应用只需要识别用户身份，只需请求<code>openid</code> scope即可。</p>
+                  应用应该仅请求必要的最小权限范围，遵循最小权限原则，提高安全性。例如，如果应用只需要识别用户身份，只需请求<code>openid</code>
+                  scope即可。</p>
               </div>
             </div>
           </section>
@@ -666,7 +711,8 @@ const createForm = ref<CreateClientAppModel>({
   homepageUrl: '',
   redirectUris: [],
   logoUrl: '',
-  supportsPkce: false
+  supportsPkce: false,
+  isNeedEMail: false
 });
 const redirectUrisText = ref('');
 
@@ -678,7 +724,8 @@ const editForm = ref<UpdateClientAppModel>({
   redirectUris: [],
   logoUrl: '',
   isActive: true,
-  supportsPkce: false
+  supportsPkce: false,
+  isNeedEMail: false
 });
 const editRedirectUrisText = ref('');
 const currentEditClientId = ref('');
@@ -740,7 +787,8 @@ const openCreateModal = () => {
     homepageUrl: '',
     redirectUris: [],
     logoUrl: '',
-    supportsPkce: false
+    supportsPkce: false,
+    isNeedEMail: false
   };
   redirectUrisText.value = '';
   showCreateModal.value = true;
@@ -755,7 +803,8 @@ const handleCreateModalClose = () => {
     homepageUrl: '',
     redirectUris: [],
     logoUrl: '',
-    supportsPkce: false
+    supportsPkce: false,
+    isNeedEMail: false
   };
   redirectUrisText.value = '';
 };
@@ -798,7 +847,8 @@ const openEditModal = (app: ClientApplication) => {
     redirectUris: app.redirectUris.split(';'),
     logoUrl: app.logoUrl,
     isActive: app.isActive,
-    supportsPkce: app.supportsPkce || false
+    supportsPkce: app.supportsPkce || false,
+    isNeedEMail: app.isNeedEMail || false
   };
   editRedirectUrisText.value = app.redirectUris.split(';').join('\n');
   showEditModal.value = true;

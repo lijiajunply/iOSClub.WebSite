@@ -133,9 +133,7 @@
                         v-model="userInfo.gender"
                         class="peer h-4 w-4 text-blue-500 border-gray-300 focus:ring-blue-500 dark:border-gray-600"
                     />
-                    <span class="text-sm text-gray-700 dark:text-gray-300 peer-checked:text-blue-500 transition-colors">{{
-                        gender
-                      }}</span>
+                    <span class="text-sm text-gray-700 dark:text-gray-300 peer-checked:text-blue-500 transition-colors">{{ gender }}</span>
                   </label>
                 </div>
               </n-form-item>
@@ -280,6 +278,7 @@
             <n-input
                 v-model:value="passwordForm.oldPassword"
                 type="password"
+                show-password-on="click"
                 placeholder="请输入旧密码"
                 class="bg-gray-50 dark:bg-gray-750 border-gray-200 dark:border-gray-700 rounded-xl"
                 :bordered="false"
@@ -289,6 +288,7 @@
             <n-input
                 v-model:value="passwordForm.newPassword"
                 type="password"
+                show-password-on="click"
                 placeholder="请输入新密码（至少6位）"
                 class="bg-gray-50 dark:bg-gray-750 border-gray-200 dark:border-gray-700 rounded-xl"
                 :bordered="false"
@@ -298,6 +298,7 @@
             <n-input
                 v-model:value="passwordForm.confirmPassword"
                 type="password"
+                show-password-on="click"
                 placeholder="请再次输入新密码"
                 class="bg-gray-50 dark:bg-gray-750 border-gray-200 dark:border-gray-700 rounded-xl"
                 :bordered="false"

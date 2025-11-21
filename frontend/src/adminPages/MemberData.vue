@@ -1031,10 +1031,10 @@ onMounted(() => {
           <n-input v-model:value="currentMember.userName" disabled/>
         </n-form-item>
         <n-form-item label="新密码" path="newPassword">
-          <n-input v-model:value="passwordForm.newPassword" type="password" placeholder="请输入新密码"/>
+          <n-input v-model:value="passwordForm.newPassword" show-password-on="click" type="password" placeholder="请输入新密码"/>
         </n-form-item>
         <n-form-item label="确认密码" path="confirmPassword">
-          <n-input v-model:value="passwordForm.confirmPassword" type="password" placeholder="请再次输入新密码"/>
+          <n-input v-model:value="passwordForm.confirmPassword" show-password-on="click" type="password" placeholder="请再次输入新密码"/>
         </n-form-item>
       </n-form>
       <template #footer>

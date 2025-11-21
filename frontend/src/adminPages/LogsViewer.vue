@@ -70,19 +70,6 @@
             </div>
           </div>
         </div>
-
-        <!-- 图表区域 -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <!-- 日志级别分布图表 -->
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 h-80">
-            <div ref="levelChartRef" class="w-full h-full"></div>
-          </div>
-
-          <!-- 日志时间分布图表 -->
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 h-80">
-            <div ref="timeChartRef" class="w-full h-full"></div>
-          </div>
-        </div>
       </div>
 
       <!-- 过滤和操作栏 -->
@@ -314,10 +301,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { NTag, NSelect, NDatePicker, NButton, NModal, NPagination, NInput, NSwitch, NCollapse, NCollapseItem } from 'naive-ui'
 import { Icon } from '@iconify/vue'
-import * as echarts from 'echarts'
 import { LogsService, type LogEntry } from '../services/LogsService';
 
 // 响应式数据
@@ -342,12 +328,6 @@ const totalLogsCount = ref<number>(0)
 const errorLogsCount = ref<number>(0)
 const warningLogsCount = ref<number>(0)
 const infoLogsCount = ref<number>(0)
-
-// 图表实例
-const levelChartRef = ref<HTMLElement>()
-const timeChartRef = ref<HTMLElement>()
-const levelChart = ref<echarts.ECharts | null>(null)
-const timeChart = ref<echarts.ECharts | null>(null)
 
 // 日志级别选项
 const logLevelOptions = [
@@ -553,166 +533,12 @@ const loadStatistics = async (): Promise<void> => {
   }
 }
 
-
-
-// 初始化图表
-const initCharts = (): void => {
-  if (levelChartRef.value && !levelChart.value) {
-    levelChart.value = echarts.init(levelChartRef.value)
-  }
-  if (timeChartRef.value && !timeChart.value) {
-    timeChart.value = echarts.init(timeChartRef.value)
-  }
-  updateCharts()
-}
-
-// 更新图表
-const updateCharts = (): void => {
-  // 级别分布图表
-  if (levelChart.value) {
-    const levelCounts: Record<string, number> = {
-      'Information': 0,
-      'Warning': 0,
-      'Error': 0,
-      'Critical': 0,
-      'Debug': 0,
-      'Trace': 0
-    }
-
-    filteredLogs.value.forEach(log => {
-      if (levelCounts.hasOwnProperty(log.level)) {
-        levelCounts[log.level]++
-      }
-    })
-
-    const option = {
-      title: {
-        text: '日志级别分布',
-        left: 'center',
-        textStyle: {
-          fontSize: 14
-        }
-      },
-      tooltip: {
-        trigger: 'item',
-        formatter: '{a} <br/>{b}: {c} ({d}%)'
-      },
-      legend: {
-        orient: 'vertical',
-        left: 'left'
-      },
-      series: [
-        {
-          name: '日志级别',
-          type: 'pie',
-          radius: '50%',
-          data: Object.entries(levelCounts).map(([level, count]) => ({
-            value: count,
-            name: level
-          })).filter(item => item.value > 0),
-          emphasis: {
-            itemStyle: {
-              shadowBlur: 10,
-              shadowOffsetX: 0,
-              shadowColor: 'rgba(0, 0, 0, 0.5)'
-            }
-          }
-        }
-      ]
-    }
-
-    levelChart.value.setOption(option)
-  }
-
-  // 时间分布图表
-  if (timeChart.value) {
-    // 按小时统计最近24小时的日志
-    const hourCounts: Record<string, number> = {}
-    const now = new Date()
-
-    // 初始化过去24小时的计数
-    for (let i = 23; i >= 0; i--) {
-      const hour = now.getHours() - i
-      const hourStr = (hour < 0 ? hour + 24 : hour).toString().padStart(2, '0') + ':00'
-      hourCounts[hourStr] = 0
-    }
-
-    // 统计日志数量
-    filteredLogs.value.forEach(log => {
-      const logDate = new Date(log.timestamp)
-      const timeDiff = now.getTime() - logDate.getTime()
-
-      // 只统计过去24小时的日志
-      if (timeDiff <= 24 * 60 * 60 * 1000) {
-        const hourStr = logDate.getHours().toString().padStart(2, '0') + ':00'
-        if (hourCounts.hasOwnProperty(hourStr)) {
-          hourCounts[hourStr]++
-        }
-      }
-    })
-
-    const option = {
-      title: {
-        text: '日志时间分布 (24小时)',
-        left: 'center',
-        textStyle: {
-          fontSize: 14
-        }
-      },
-      tooltip: {
-        trigger: 'axis',
-        formatter: '{b}: {c}条'
-      },
-      xAxis: {
-        type: 'category',
-        data: Object.keys(hourCounts)
-      },
-      yAxis: {
-        type: 'value'
-      },
-      series: [
-        {
-          data: Object.values(hourCounts),
-          type: 'line',
-          smooth: true,
-          areaStyle: {}
-        }
-      ]
-    }
-
-    timeChart.value.setOption(option)
-  }
-}
-
-// 响应式处理
-const handleResize = (): void => {
-  if (levelChart.value) {
-    levelChart.value.resize()
-  }
-  if (timeChart.value) {
-    timeChart.value.resize()
-  }
-}
-
 // 生命周期钩子
 onMounted(async (): Promise<void> => {
   // 加载日志数据
   await getLogs();
   // 加载统计数据
   await loadStatistics();
-  // 初始化图表
-  initCharts();
-  window.addEventListener('resize', handleResize)
-})
-
-onUnmounted((): void => {
-  if (levelChart.value) {
-    levelChart.value.dispose()
-  }
-  if (timeChart.value) {
-    timeChart.value.dispose()
-  }
-  window.removeEventListener('resize', handleResize)
 })
 
 // 计算属性 - 是否有更多页
@@ -778,11 +604,5 @@ table thead th {
   .grid-cols-4 {
     grid-template-columns: repeat(2, 1fr);
   }
-}
-
-/* 图表容器样式 */
-:deep(.echarts-container) {
-  border-radius: 12px;
-  overflow: hidden;
 }
 </style>
