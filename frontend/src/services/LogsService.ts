@@ -14,6 +14,21 @@ export enum LogLevel {
 }
 
 /**
+ * 日志统计结果接口
+ */
+export interface LogStatistics {
+  /**
+   * 总日志数量
+   */
+  totalCount: number;
+  
+  /**
+   * 各日志级别的数量统计
+   */
+  levelCounts: Record<string, number>;
+}
+
+/**
  * 日志条目接口，用于表示单条日志记录
  */
 export interface LogEntry {
@@ -40,18 +55,55 @@ export interface LogEntry {
 }
 
 /**
+ * 分页响应接口，包含分页信息和数据
+ */
+export interface PaginatedResponse<T> {
+  /**
+   * 数据列表
+   */
+  data: T[];
+  
+  /**
+   * 总记录数
+   */
+  totalCount: number;
+  
+  /**
+   * 当前页码
+   */
+  pageIndex: number;
+  
+  /**
+   * 每页记录数
+   */
+  pageSize: number;
+  
+  /**
+   * 总页数
+   */
+  totalPages: number;
+}
+
+/**
  * 日志服务类 - 处理日志相关的API调用
  */
 export class LogsService {
   /**
-   * 获取最近的日志条目
-   * @param count 要返回的日志条目数量，默认为10条
-   * @returns Promise<LogEntry[]> 日志条目列表
+   * 获取最近的日志条目，支持分页和多条件搜索
+   * @param pageIndex 页码，从1开始，默认为1
+   * @param pageSize 每页记录数，默认为10
+   * @param searchTerm 搜索关键词，用于在日志消息和属性中搜索
+   * @param levelFilter 日志级别过滤
+   * @param timeRange 时间范围过滤："today"表示当天，或正整数表示最近几天
+   * @returns Promise<PaginatedResponse<LogEntry>> 包含分页信息和日志条目的响应
    */
-  static async getRecentLogs(count: number = 10): Promise<LogEntry[]> {
+  static async getRecentLogs(pageIndex: number = 1, pageSize: number = 10, searchTerm?: string, levelFilter?: string, timeRange?: string): Promise<PaginatedResponse<LogEntry>> {
     // 参数验证
-    if (count <= 0) {
-      throw new Error('日志数量必须大于0');
+    if (pageIndex < 1) {
+      throw new Error('页码必须大于等于1');
+    }
+    if (pageSize < 1 || pageSize > 100) {
+      throw new Error('每页记录数必须在1到100之间');
     }
 
     try {
@@ -65,7 +117,24 @@ export class LogsService {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch(`${url}/Logs?count=${count}`, {
+      // 构建查询参数
+      const params = new URLSearchParams();
+      params.append('pageIndex', pageIndex.toString());
+      params.append('pageSize', pageSize.toString());
+      
+      if (searchTerm && searchTerm.trim()) {
+        params.append('searchTerm', searchTerm.trim());
+      }
+      
+      if (levelFilter && levelFilter.trim()) {
+        params.append('levelFilter', levelFilter.trim());
+      }
+      
+      if (timeRange && timeRange.trim()) {
+        params.append('timeRange', timeRange.trim());
+      }
+
+      const response = await fetch(`${url}/Logs?${params.toString()}`, {
         method: 'GET',
         headers
       });
@@ -91,21 +160,13 @@ export class LogsService {
     }
   }
 
-  /**
-   * 按级别过滤日志
-   * @param level 日志级别 (Information, Warning, Error等)
-   * @param count 要返回的日志条目数量，默认为10条
-   * @returns Promise<LogEntry[]> 指定级别的日志条目列表
-   */
-  static async getLogsByLevel(level: string, count: number = 10): Promise<LogEntry[]> {
-    // 参数验证
-    if (!level || level.trim() === '') {
-      throw new Error('日志级别不能为空');
-    }
-    if (count <= 0) {
-      throw new Error('日志数量必须大于0');
-    }
 
+
+  /**
+   * 获取日志统计信息，包括总日志数量和各日志级别数量
+   * @returns Promise<LogStatistics> 日志统计结果
+   */
+  static async getLogStatistics(): Promise<LogStatistics> {
     try {
       // 获取token（假设查看日志需要认证）
       const token = AuthService.getToken();
@@ -117,7 +178,7 @@ export class LogsService {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch(`${url}/Logs/filter?level=${encodeURIComponent(level)}&count=${count}`, {
+      const response = await fetch(`${url}/Logs/statistics`, {
         method: 'GET',
         headers
       });
@@ -133,12 +194,12 @@ export class LogsService {
         
         // 尝试获取详细错误信息
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.Error || `按级别过滤日志失败: ${response.status}`);
+        throw new Error(errorData.Error || `获取日志统计信息失败: ${response.status}`);
       }
 
       return await response.json();
     } catch (error) {
-      console.error(`按级别 ${level} 过滤日志时发生错误:`, error);
+      console.error('获取日志统计信息时发生错误:', error);
       throw error;
     }
   }

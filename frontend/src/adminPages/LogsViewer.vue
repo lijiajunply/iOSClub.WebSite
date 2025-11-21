@@ -144,10 +144,13 @@
           <!-- 总日志数 -->
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border-l-4 border-blue-500 transition-transform hover:scale-[1.02]">
             <p class="text-sm text-gray-500 dark:text-gray-400">总日志数</p>
-            <p class="text-2xl font-bold mt-1">{{ totalLogsCount }}</p>
+            <p class="text-2xl font-bold mt-1">{{ statisticsLoading ? '-' : totalLogsCount }}</p>
             <div class="flex items-center text-xs text-gray-500 dark:text-gray-400 mt-2">
               <span class="w-1 h-1 bg-gray-400 rounded-full mr-1"></span>
-              今日新增: {{ Math.floor(totalLogsCount / 2) }}
+              {{ statisticsLoading ? '加载中...' : `今日新增: ${Math.floor(totalLogsCount / 2)}` }}
+            </div>
+            <div v-if="statisticsError && !statisticsLoading" class="text-xs text-red-500 mt-1">
+              {{ statisticsError }}
             </div>
           </div>
           
@@ -351,16 +354,19 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { NTag, NSelect, NDatePicker, NButton, NModal, NPagination, NInput, NSwitch, NCollapse, NCollapseItem } from 'naive-ui'
 import { Icon } from '@iconify/vue'
 import * as echarts from 'echarts'
-import { LogsService, LogEntry } from '../services/LogsService'
+import { LogsService, type LogEntry} from '../services/LogsService';
 
 // 响应式数据
 const logs = ref<LogEntry[]>([])
 const loading = ref<boolean>(false)
+const statisticsLoading = ref<boolean>(false)
+const statisticsError = ref<string | null>(null)
 const selectedLevel = ref<string | null>(null)
 const dateRange = ref<[number, number] | null>(null)
 const currentPage = ref<number>(1)
 const pageSize = ref<number>(20)
 const totalLogs = ref<number>(0)
+const totalPages = ref<number>(1)
 const searchKeyword = ref<string>('')
 const hasException = ref<boolean>(false)
 const selectedLog = ref<LogEntry | null>(null)
@@ -430,7 +436,7 @@ const formatDateTime = (dateString: string): string => {
 }
 
 // 快速时间范围选择
-const applyQuickTimeRange = (range: string): void => {
+const applyQuickTimeRange = async (range: string): Promise<void> => {
   selectedQuickTimeRange.value = range
   const now = new Date()
   const start = new Date()
@@ -470,67 +476,120 @@ const applyQuickTimeRange = (range: string): void => {
     now.getTime()
   ]
   
-  applyFilters()
+  await applyFilters()
 }
 
-// 过滤函数
+// 直接使用从API获取的已过滤日志数据，不再进行前端过滤
 const filteredLogs = computed((): LogEntry[] => {
-  return logs.value.filter(log => {
-    // 级别过滤
-    if (selectedLevel.value && log.level !== selectedLevel.value) {
-      return false
-    }
-    
-    // 搜索关键词过滤
-    if (searchKeyword.value) {
-      const keyword = searchKeyword.value.toLowerCase().trim()
-      return (
-        (log.message && log.message.toLowerCase().includes(keyword)) ||
-        (log.exception && log.exception.toLowerCase().includes(keyword))
-      )
-    }
-    
-    return true
-  })
+  return logs.value;
 })
 
-// 分页
+// 移除前端分页逻辑，使用API返回的数据
 const paginatedLogs = computed((): LogEntry[] => {
-  totalLogs.value = filteredLogs.value.length
-  const start = (currentPage.value - 1) * pageSize.value
-  const end = start + pageSize.value
-  return filteredLogs.value.slice(start, end)
+  return filteredLogs.value
 })
 
-// 获取日志数据
-const fetchLogs = async (): Promise<void> => {
-  loading.value = true
+
+
+// 获取日志数据，支持多条件搜索
+const getLogs = async (): Promise<void> => {
+  if (loading.value) return;
+  
+  loading.value = true;
   try {
-    // 根据selectedLevel决定调用哪个方法
-    if (selectedLevel.value) {
-      logs.value = await LogsService.getLogsByLevel(selectedLevel.value)
-    } else {
-      logs.value = await LogsService.getRecentLogs()
+    // 确定时间范围参数
+    let timeRangeParam: string | undefined;
+    if (selectedQuickTimeRange.value === 'today') {
+      timeRangeParam = 'today';
+    } else if (selectedQuickTimeRange.value && selectedQuickTimeRange.value.endsWith('days')) {
+      // 提取天数（如7days -> 7）
+      const daysMatch = selectedQuickTimeRange.value.match(/^(\d+)days$/);
+      if (daysMatch) {
+        timeRangeParam = daysMatch[1];
+      }
     }
     
-    // 更新统计数据
-    updateStatistics()
-    // 更新图表
-    updateCharts()
+    // 调用更新后的服务方法，传入所有搜索参数
+    const response = await LogsService.getRecentLogs(
+      currentPage.value,
+      pageSize.value,
+      searchKeyword.value,
+      selectedLevel.value || undefined,
+      timeRangeParam
+    );
+    
+    logs.value = response.data;
+    totalLogs.value = response.totalCount;
+    totalPages.value = response.totalPages;
   } catch (error) {
-    console.error('获取日志失败:', error)
+    console.error('获取日志时发生错误:', error);
+    // 可以添加错误提示逻辑
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 
-// 更新统计数据
-const updateStatistics = (): void => {
-  totalLogsCount.value = logs.value.length
-  errorLogsCount.value = logs.value.filter(log => log.level === 'Error' || log.level === 'Critical').length
-  warningLogsCount.value = logs.value.filter(log => log.level === 'Warning').length
-  infoLogsCount.value = logs.value.filter(log => log.level === 'Information').length
+// 刷新日志
+const refreshLogs = async (): Promise<void> => {
+  await getLogs();
 }
+
+// 应用过滤条件
+const applyFilters = async (): Promise<void> => {
+  // 重置到第一页
+  currentPage.value = 1;
+  await getLogs();
+}
+
+// 重置过滤条件
+const resetFilters = (): void => {
+  selectedLevel.value = null;
+  searchKeyword.value = '';
+  dateRange.value = null;
+  selectedQuickTimeRange.value = null;
+  hasException.value = false;
+  currentPage.value = 1;
+  applyFilters();
+}
+
+// 处理页码变化
+const handlePageChange = async (page: number): Promise<void> => {
+  currentPage.value = page;
+  await getLogs();
+}
+
+// 处理每页数量变化
+const handlePageSizeChange = async (size: number): Promise<void> => {
+  pageSize.value = size;
+  currentPage.value = 1;
+  await getLogs();
+}
+
+// 显示日志详情
+const showLogDetails = (log: LogEntry): void => {
+  selectedLog.value = log;
+  showLogDetailsDialog.value = true;
+}
+
+// 加载统计数据
+const loadStatistics = async (): Promise<void> => {
+  statisticsLoading.value = true;
+  statisticsError.value = null;
+  try {
+    const stats = await LogsService.getLogStatistics();
+    totalLogsCount.value = stats.totalCount;
+    errorLogsCount.value = stats.levelCounts['Error'] || 0;
+    warningLogsCount.value = stats.levelCounts['Warning'] || 0;
+    infoLogsCount.value = stats.levelCounts['Information'] || 0;
+  } catch (error) {
+    statisticsError.value = '加载统计数据失败';
+    console.error('加载统计数据失败:', error);
+  } finally {
+    statisticsLoading.value = false;
+  }
+}
+
+
 
 // 初始化图表
 const initCharts = (): void => {
@@ -661,45 +720,6 @@ const updateCharts = (): void => {
   }
 }
 
-// 应用过滤
-const applyFilters = (): void => {
-  currentPage.value = 1
-  updateCharts()
-}
-
-// 重置过滤
-const resetFilters = (): void => {
-  selectedLevel.value = null
-  dateRange.value = null
-  searchKeyword.value = ''
-  hasException.value = false
-  selectedQuickTimeRange.value = null
-  currentPage.value = 1
-  applyFilters()
-}
-
-// 刷新日志
-const refreshLogs = async (): Promise<void> => {
-  await fetchLogs()
-}
-
-// 显示日志详情
-const showLogDetails = (log: LogEntry): void => {
-  selectedLog.value = log
-  showLogDetailsDialog.value = true
-}
-
-// 处理分页变化
-const handlePageChange = (page: number): void => {
-  currentPage.value = page
-}
-
-// 处理页大小变化
-const handlePageSizeChange = (size: number): void => {
-  pageSize.value = size
-  currentPage.value = 1
-}
-
 // 响应式处理
 const handleResize = (): void => {
   if (levelChart.value) {
@@ -712,10 +732,12 @@ const handleResize = (): void => {
 
 // 生命周期钩子
 onMounted(async (): Promise<void> => {
-  await fetchLogs()
-  setTimeout(() => {
-    initCharts()
-  }, 100)
+  // 加载日志数据
+  await getLogs();
+  // 加载统计数据
+  await loadStatistics();
+  // 初始化图表
+  initCharts();
   window.addEventListener('resize', handleResize)
 })
 
@@ -731,7 +753,7 @@ onUnmounted((): void => {
 
 // 计算属性 - 是否有更多页
 const hasMore = computed((): boolean => {
-  return currentPage.value * pageSize.value < totalLogs.value
+  return currentPage.value < totalPages.value
 })
 </script>
 

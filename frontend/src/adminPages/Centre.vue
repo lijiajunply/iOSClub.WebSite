@@ -128,7 +128,7 @@
         </section>
 
         <!-- 社团资源 -->
-        <section class="max-h-100 h-full">
+        <section class="max-h-100 h-full" v-if="userInfo.isAdmin">
           <div
               class="bg-white dark:bg-neutral-800 rounded-2xl border border-gray-200 dark:border-neutral-700 overflow-hidden transition-all duration-300 cursor-pointer hover:shadow-lg h-full"
               @click="goToResources"
