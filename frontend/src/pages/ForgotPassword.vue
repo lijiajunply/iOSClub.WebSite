@@ -46,7 +46,6 @@
             <n-input-otp
               v-model:value="formStep2.verificationCode"
               :length="6"
-              class="rounded-xl"
             />
           </n-form-item>
           

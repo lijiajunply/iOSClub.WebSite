@@ -446,10 +446,7 @@ public class LoginService(
             background-color: #f8f8f8;
         }}
         .container {{
-            background-color: white;
             padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }}
         .header {{
             text-align: center;

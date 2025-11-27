@@ -557,6 +557,7 @@ public class SSOController(
 
             var app = await clientAppRepository.GetByRedirectUriAsync(request.RedirectUri);
             request.ClientId = app?.ClientId ?? "";
+            request.ClientSecret = app?.ClientSecret ?? "";
         }
 
         if (string.IsNullOrEmpty(request.ClientSecret))
