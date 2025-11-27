@@ -486,6 +486,7 @@ public class SSOController(
                 var body = await reader.ReadToEndAsync();
                 if (!string.IsNullOrEmpty(body))
                 {
+                    logger.LogDebug("Received JSON request body: {Body}", body);
                     request = System.Text.Json.JsonSerializer.Deserialize<TokenRequest>(body) ?? 
                               throw new InvalidOperationException("无法反序列化请求体");
                 }
