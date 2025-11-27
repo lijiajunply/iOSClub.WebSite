@@ -59,7 +59,8 @@ public class ClientAppController(IClientApplicationRepository clientAppRepositor
             RedirectUris = string.Join(";", clientAppModel.RedirectUris),
             LogoUrl = clientAppModel.LogoUrl,
             IsActive = true,
-            IsNeedEMail = clientAppModel.IsNeedEMail
+            IsNeedEMail = clientAppModel.IsNeedEMail,
+            SupportsPkce = clientAppModel.SupportsPkce
         };
 
         // 保存原始密钥用于返回给客户端
@@ -81,7 +82,8 @@ public class ClientAppController(IClientApplicationRepository clientAppRepositor
             RedirectUris = clientApp.RedirectUris.Split(';').ToList(),
             LogoUrl = clientApp.LogoUrl,
             IsActive = clientApp.IsActive,
-            IsNeedEMail = clientApp.IsNeedEMail
+            IsNeedEMail = clientApp.IsNeedEMail,
+            SupportsPkce = clientApp.SupportsPkce
         };
 
         return CreatedAtAction(nameof(GetClientApplication), new { clientId = clientApp.ClientId }, resultModel);
@@ -215,6 +217,11 @@ public class CreateClientAppModel
     /// 是否需要邮箱验证
     /// </summary>
     public bool IsNeedEMail { get; set; }
+
+    /// <summary>
+    /// 是否支持PKCE
+    /// </summary>
+    public bool SupportsPkce { get; set; }
 }
 
 /// <summary>
@@ -309,6 +316,11 @@ public class ClientAppResultModel
     /// 是否需要邮箱验证
     /// </summary>
     public bool IsNeedEMail { get; set; }
+
+    /// <summary>
+    /// 是否支持PKCE
+    /// </summary>
+    public bool SupportsPkce { get; set; }
 }
 
 /// <summary>

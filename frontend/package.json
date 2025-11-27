@@ -14,9 +14,7 @@
     "@tailwindcss/typography": "^0.5.19",
     "@tailwindcss/vite": "^4.1.17",
     "@types/pako": "^2.0.4",
-    "@vicons/antd": "^0.13.0",
-    "@vicons/ionicons5": "^0.13.0",
-    "@vicons/material": "^0.13.0",
+
     "echarts": "^6.0.0",
     "markdown-it": "^14.1.0",
     "markdown-it-anchor": "^9.2.0",

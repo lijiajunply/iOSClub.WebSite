@@ -74,9 +74,9 @@ public class ArticleController(
         try
         {
             // 身份验证和权限检查
-            var validationResult = await ValidateUserAccess(["Founder", "President", "Minister", "Department"]);
-            if (!validationResult.isValid)
-                return validationResult.errorResult!;
+            var (isValid, errorResult) = await ValidateUserAccess(["Founder", "President", "Minister", "Department"]);
+            if (!isValid)
+                return errorResult!;
 
             // 数据验证
             var validationResults = new List<ValidationResult>();

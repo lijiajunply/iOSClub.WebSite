@@ -52,7 +52,7 @@
               }"
                 @click="closeSidebar"
             >
-              <component :is="item.icon" class="w-5 h-5 mr-3"/>
+              <Icon :icon="item.icon" class="w-5 h-5 mr-3"/>
               <span class="text-sm font-medium">{{ item.name }}</span>
             </router-link>
           </li>
@@ -67,7 +67,7 @@
             @click="logout"
         >
           <n-icon class="mr-2">
-            <LogOut :size="18"/>
+            <Icon icon="ion:log-out" :size="18"/>
           </n-icon>
           <span class="font-medium text-sm">退出登录</span>
         </NButton>
@@ -90,7 +90,7 @@ import {useRouter} from 'vue-router'
 import {useAuthorizationStore} from '../stores/Authorization'
 import {useLayoutStore} from '../stores/LayoutStore'
 import {NButton, NIcon} from 'naive-ui'
-import {LogOut, HomeOutline, Person, Business, Book, DocumentText, People, Cog, Key,Albums} from '@vicons/ionicons5'
+import {Icon} from '@iconify/vue'
 
 const router = useRouter()
 const authorizationStore = useAuthorizationStore()
@@ -135,17 +135,17 @@ const getUserRole = () => {
   }
 }
 
-// 使用组件图标替换emoji
+// 使用iconify图标
 const menuItems = [
-  {name: '主页', path: '/Centre', icon: HomeOutline},
-  {name: '个人数据', path: '/Centre/PersonalData', icon: Person},
-  {name: '社团部门', path: '/Centre/Department', icon: Business, requiresRole: 'Minister'},
-  {name: '社团资源', path: '/Centre/Resources', icon: Book, requiresRole: 'Minister'},
-  {name: '社团文章', path: '/Centre/Article', icon: DocumentText, requiresRole: 'Minister'},
-  {name: '成员数据', path: '/Centre/MemberData', icon: People, requiresRole: 'Minister'},
-  {name: '其他数据', path: '/Centre/Admin', icon: Cog, requiresRole: 'Minister'},
-  {name: '客户端 OAuth2 管理', path: '/Centre/Client', icon: Key, requiresRole: 'Minister'},
-  {name: '日志查看', path: '/Centre/Logs', icon: Albums, requiresRole: 'Minister'},
+  {name: '主页', path: '/Centre', icon: 'ion:home-outline'},
+  {name: '个人数据', path: '/Centre/PersonalData', icon: 'ion:person'},
+  {name: '社团部门', path: '/Centre/Department', icon: 'ion:business', requiresRole: 'Minister'},
+  {name: '社团资源', path: '/Centre/Resources', icon: 'ion:book', requiresRole: 'Minister'},
+  {name: '社团文章', path: '/Centre/Article', icon: 'ion:document-text', requiresRole: 'Minister'},
+  {name: '成员数据', path: '/Centre/MemberData', icon: 'ion:people', requiresRole: 'Minister'},
+  {name: '其他数据', path: '/Centre/Admin', icon: 'ion:cog', requiresRole: 'Minister'},
+  {name: '客户端 OAuth2 管理', path: '/Centre/Client', icon: 'ion:key', requiresRole: 'Minister'},
+  {name: '日志查看', path: '/Centre/Logs', icon: 'ion:albums', requiresRole: 'Minister'},
 ]
 
 // 根据用户角色过滤菜单项
