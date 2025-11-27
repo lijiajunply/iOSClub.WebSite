@@ -4,7 +4,7 @@
       <!-- 个人信息卡片 -->
       <div class="mb-8">
         <div
-            class="bg-white dark:bg-neutral-800 rounded-2xl border border-gray-200 dark:border-neutral-700 overflow-hidden transition-all duration-300 hover:shadow-lg">
+            class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:dark:border-gray-700 overflow-hidden transition-all duration-300 hover:shadow-lg">
           <div class="p-6 flex flex-col sm:flex-row items-center sm:items-start space-y-6 sm:space-y-0 sm:space-x-8">
             <div class="relative">
               <img
@@ -43,7 +43,7 @@
       <!-- iTool 工具卡片 -->
       <section class="mb-8">
         <div
-            class="bg-white dark:bg-neutral-800 rounded-2xl border border-gray-200 dark:border-neutral-700 overflow-hidden transition-all duration-300">
+            class="bg-white  dark:bg-gray-800 rounded-2xl border border-gray-200 dark:dark:border-gray-700 overflow-hidden transition-all duration-300">
           <div class="px-6 py-4 border-b border-gray-200 dark:border-neutral-700">
             <h2 class="text-lg font-semibold tracking-tight">iTool</h2>
             <p class="text-sm text-gray-500 dark:text-gray-400">iOS Club 出品的小工具</p>
@@ -88,7 +88,7 @@
         <!-- 我的任务 -->
         <section class="max-h-100 h-full">
           <div
-              class="bg-white dark:bg-neutral-800 rounded-2xl border border-gray-200 dark:border-neutral-700 overflow-hidden transition-all duration-300 h-full">
+              class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-300 h-full">
             <div class="px-6 py-4 border-b border-gray-200 dark:border-neutral-700">
               <h2 class="text-lg font-semibold tracking-tight">我的任务</h2>
               <p class="text-sm text-gray-500 dark:text-gray-400">待完成的工作任务</p>
@@ -130,7 +130,7 @@
         <!-- 社团资源 -->
         <section class="max-h-100 h-full" v-if="userInfo.isAdmin">
           <div
-              class="bg-white dark:bg-neutral-800 rounded-2xl border border-gray-200 dark:border-neutral-700 overflow-hidden transition-all duration-300 cursor-pointer hover:shadow-lg h-full"
+              class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-300 cursor-pointer hover:shadow-lg h-full"
               @click="goToResources"
           >
             <div class="px-6 py-4 border-b border-gray-200 dark:border-neutral-700">
@@ -149,7 +149,7 @@
                 <div
                     v-for="resource in resources"
                     :key="resource.id"
-                    class="p-4 rounded-xl bg-gray-50 dark:bg-neutral-700 hover:bg-gray-100 dark:hover:bg-neutral-600 transition-colors duration-200"
+                    class="p-4 rounded-xl bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-200"
                 >
                   <h3 class="font-medium text-sm">{{ resource.name }}</h3>
                   <p v-if="resource.description" class="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
@@ -167,10 +167,10 @@
           <!-- 社团部门 -->
           <div class="lg:col-span-1 max-h-100 h-full">
             <div
-                class="bg-white dark:bg-neutral-800 rounded-2xl border border-gray-200 dark:border-neutral-700 overflow-hidden transition-all duration-300 cursor-pointer hover:shadow-lg h-full"
+                class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-300 cursor-pointer hover:shadow-lg h-full"
                 @click="goToDepartment"
             >
-              <div class="px-6 py-4 border-b border-gray-200 dark:border-neutral-700">
+              <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                 <h2 class="text-lg font-semibold tracking-tight">社团部门</h2>
                 <p class="text-sm text-gray-500 dark:text-gray-400">iOS 部门管理</p>
               </div>
@@ -186,7 +186,7 @@
                   <div
                       v-for="department in departments"
                       :key="department.name"
-                      class="p-3 rounded-lg bg-gray-50 dark:bg-neutral-700 hover:bg-gray-100 dark:hover:bg-neutral-600 transition-colors duration-200"
+                      class="p-3 rounded-lg bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-200"
                   >
                     <h3 class="font-medium text-sm">{{ department.name }}</h3>
                     <p v-if="department.description" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -200,8 +200,8 @@
           <!-- 数据中心 -->
           <div class="lg:col-span-2 max-h-100 h-full">
             <div
-                class="bg-white dark:bg-neutral-800 rounded-2xl border border-gray-200 dark:border-neutral-700 overflow-hidden transition-all duration-300 hover:shadow-lg h-full">
-              <div class="px-6 py-4 border-b border-gray-200 dark:border-neutral-700">
+                class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-300 hover:shadow-lg h-full">
+              <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                 <h2 class="text-lg font-semibold tracking-tight">数据中心</h2>
                 <p class="text-sm text-gray-500 dark:text-gray-400">展示社团数据</p>
               </div>

@@ -166,7 +166,7 @@
         class="bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden transition-all duration-300 shadow-sm hover:shadow-md">
         <div class="overflow-x-auto">
           <table class="w-full">
-            <thead class="bg-gray-50 dark:bg-gray-850">
+            <thead class="bg-gray-50 dark:bg-gray-800">
               <tr>
                 <th
                   class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -202,7 +202,7 @@
               <!-- 日志列表 -->
               <template v-else>
                 <tr v-for="log in paginatedLogs" :key="`${log.timestamp}-${log.level}`"
-                  class="hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors duration-150">
+                  class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150">
                   <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                     {{ formatDateTime(log.timestamp) }}
                   </td>
@@ -305,8 +305,8 @@
     </n-modal>
 
     <!-- 清理日志对话框 -->
-    <n-modal v-model:show="showCleanupDialog" preset="dialog" title="清理旧日志" :width="500" :bordered="false"
-      :mask-closable="false" class="backdrop-blur-md rounded-xl">
+    <n-modal v-model:show="showCleanupDialog" preset="card" title="清理旧日志" :bordered="false" style="max-width: 500px"
+       class="backdrop-blur-md rounded-xl">
       <div class="space-y-4">
         <div class="text-sm text-gray-600 dark:text-gray-400">
           此操作将删除指定天数前的所有日志，操作不可恢复。请谨慎执行。
