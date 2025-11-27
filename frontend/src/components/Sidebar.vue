@@ -43,11 +43,11 @@
                 :to="item.path"
                 class="
                 flex items-center px-4 py-2.5 rounded-lg transition-all duration-200
-                text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50 hover:!text-blue-600 dark:hover:!text-blue-400
+                text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50 hover:text-blue-600! dark:hover:text-blue-400!
               "
 
                 :class="{
-                'bg-blue-50 dark:bg-blue-900/30 !text-blue-600 dark:!text-blue-400':
+                'bg-blue-50 dark:bg-blue-900/30 text-blue-600! dark:text-blue-400!':
                    $route.path === item.path
               }"
                 @click="closeSidebar"

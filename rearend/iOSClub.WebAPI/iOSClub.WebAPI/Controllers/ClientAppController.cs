@@ -110,6 +110,7 @@ public class ClientAppController(IClientApplicationRepository clientAppRepositor
         existingClientApp.IsActive = clientAppModel.IsActive;
         existingClientApp.UpdatedAt = DateTime.UtcNow;
         existingClientApp.IsNeedEMail = clientAppModel.IsNeedEMail;
+        existingClientApp.SupportsPkce = clientAppModel.SupportsPkce;
 
         var result = await clientAppRepository.UpdateAsync(existingClientApp);
         if (!result)
@@ -264,6 +265,11 @@ public class UpdateClientAppModel
     /// 是否需要邮箱验证
     /// </summary>
     public bool IsNeedEMail { get; set; }
+    
+    /// <summary>
+    /// 是否支持PKCE
+    /// </summary>
+    public bool SupportsPkce { get; set; }
 }
 
 /// <summary>
