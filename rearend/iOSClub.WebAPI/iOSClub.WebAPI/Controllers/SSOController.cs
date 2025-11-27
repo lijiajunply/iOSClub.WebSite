@@ -507,14 +507,6 @@ public class SSOController(
             // 处理表单格式请求
             var form = await Request.ReadFormAsync();
 
-            var builder = new StringBuilder();
-            foreach (var a in form)
-            {
-                builder.Append($"{a.Key}={a.Value}&");
-            }
-
-            logger.LogInformation("Received form body: {Body}", builder.ToString());
-
             request = new TokenRequest
             {
                 GrantType = form["grant_type"].FirstOrDefault() ?? "",
@@ -534,8 +526,6 @@ public class SSOController(
                 error_description = "不支持的Content-Type，仅支持application/json和application/x-www-form-urlencoded"
             });
         }
-
-        logger.LogInformation("Token exchange request received for client {ClientId}", request.ClientId);
 
         // 添加参数验证
         if (string.IsNullOrEmpty(request.GrantType))
@@ -615,7 +605,7 @@ public class SSOController(
             }
 
             // 验证授权码与请求参数是否匹配
-            if (authCodeInfo.ClientId != request.ClientId || authCodeInfo.RedirectUri != request.RedirectUri)
+            if (authCodeInfo.RedirectUri != request.RedirectUri)
             {
                 logger.LogWarning("Token exchange failed: authorization code {Code} does not match request parameters",
                     request.Code);
