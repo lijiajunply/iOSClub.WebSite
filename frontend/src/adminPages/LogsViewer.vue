@@ -119,6 +119,12 @@
               </template>
               刷新日志
             </n-button>
+            <n-button type="error" @click="showCleanupDialog = true" class="flex-1">
+              <template #icon>
+                <Icon icon="material-symbols:delete-outline" class="w-4.5 h-4.5" />
+              </template>
+              清理日志
+            </n-button>
           </div>
         </div>
 
@@ -297,12 +303,44 @@
         </div>
       </div>
     </n-modal>
+
+    <!-- 清理日志对话框 -->
+    <n-modal v-model:show="showCleanupDialog" preset="dialog" title="清理旧日志" :width="500" :bordered="false"
+      :mask-closable="false" class="backdrop-blur-md rounded-xl">
+      <div class="space-y-4">
+        <div class="text-sm text-gray-600 dark:text-gray-400">
+          此操作将删除指定天数前的所有日志，操作不可恢复。请谨慎执行。
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            保留最近的日志天数
+          </label>
+          <n-input-number v-model:value="cleanupDays" :min="1" :max="365" :step="1" placeholder="输入天数" />
+          <div class="text-xs text-gray-500 dark:text-gray-500 mt-1">
+            例如：输入7将保留最近7天的日志，删除更早的日志
+          </div>
+        </div>
+      </div>
+      <template #footer>
+        <div class="flex justify-end gap-2">
+          <n-button type="default" @click="showCleanupDialog = false">
+            取消
+          </n-button>
+          <n-button type="error" @click="confirmCleanup" :loading="cleanupLoading">
+            <template #icon>
+              <Icon icon="material-symbols:delete-outline" class="w-4.5 h-4.5" />
+            </template>
+            确认清理
+          </n-button>
+        </div>
+      </template>
+    </n-modal>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { NTag, NSelect, NDatePicker, NButton, NModal, NPagination, NInput, NSwitch, NCollapse, NCollapseItem } from 'naive-ui'
+import { NTag, NSelect, NDatePicker, NButton, NModal, NPagination, NInput, NSwitch, NCollapse, NCollapseItem, NInputNumber, useMessage } from 'naive-ui'
 import { Icon } from '@iconify/vue'
 import { LogsService, type LogEntry } from '../services/LogsService';
 
@@ -322,6 +360,14 @@ const hasException = ref<boolean>(false)
 const selectedLog = ref<LogEntry | null>(null)
 const showLogDetailsDialog = ref<boolean>(false)
 const selectedQuickTimeRange = ref<string | null>(null)
+
+// 清理日志相关数据
+const showCleanupDialog = ref<boolean>(false)
+const cleanupDays = ref<number>(7)
+const cleanupLoading = ref<boolean>(false)
+
+// 消息提示
+const message = useMessage()
 
 // 统计数据
 const totalLogsCount = ref<number>(0)
@@ -530,6 +576,30 @@ const loadStatistics = async (): Promise<void> => {
     console.error('加载统计数据失败:', error);
   } finally {
     statisticsLoading.value = false;
+  }
+}
+
+// 确认清理日志
+const confirmCleanup = async (): Promise<void> => {
+  if (!cleanupDays.value || cleanupDays.value < 1) {
+    message.warning('请输入有效的天数');
+    return;
+  }
+
+  cleanupLoading.value = true;
+  try {
+    const result = await LogsService.cleanupOldLogs(cleanupDays.value);
+    message.success(result.Message);
+    showCleanupDialog.value = false;
+    
+    // 清理成功后，刷新日志和统计数据
+    await getLogs();
+    await loadStatistics();
+  } catch (error: any) {
+    message.error(error.message || '清理日志失败');
+    console.error('清理日志失败:', error);
+  } finally {
+    cleanupLoading.value = false;
   }
 }
 

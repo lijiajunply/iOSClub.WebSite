@@ -203,4 +203,56 @@ export class LogsService {
       throw error;
     }
   }
+
+  /**
+   * 手动清理旧日志
+   * @param days 要保留的日志天数，默认为7天
+   * @returns Promise<{ Message: string }> 清理结果
+   */
+  static async cleanupOldLogs(days: number = 7): Promise<{ Message: string }> {
+    try {
+      // 参数验证
+      if (days <= 0) {
+        throw new Error('天数必须大于0');
+      }
+
+      // 获取token（假设清理日志需要认证）
+      const token = AuthService.getToken();
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json'
+      };
+
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      // 构建查询参数
+      const params = new URLSearchParams();
+      params.append('days', days.toString());
+
+      const response = await fetch(`${url}/Logs/cleanup?${params.toString()}`, {
+        method: 'POST',
+        headers
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          AuthService.clearToken();
+          throw new Error('登录已过期，请重新登录');
+        }
+        if (response.status === 403) {
+          throw new Error('权限不足，无法清理日志');
+        }
+        
+        // 尝试获取详细错误信息
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.Error || `清理旧日志失败: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('清理旧日志时发生错误:', error);
+      throw error;
+    }
+  }
 }

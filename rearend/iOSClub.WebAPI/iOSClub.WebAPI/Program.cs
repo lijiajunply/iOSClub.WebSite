@@ -202,46 +202,6 @@ builder.Services.AddScoped<ILoginService, LoginService>();
 
 var app = builder.Build();
 
-// 注册日志清理后台服务 (仅在生产环境且日志路径已设置时启用)
-if (builder.Environment.IsProduction() && !string.IsNullOrEmpty(sqlPath))
-{
-    app.Services.GetRequiredService<IHostApplicationLifetime>().ApplicationStarted.Register(() =>
-    {
-        Task.Run(async () =>
-        {
-            var logger = app.Services.GetRequiredService<ILogger<Program>>();
-            logger.LogInformation("日志清理服务已启动，将定期清理7天前的日志");
-
-            while (true)
-            {
-                try
-                {
-                    // 等待一天后执行清理
-                    await Task.Delay(TimeSpan.FromDays(1));
-
-                    // 清理7天前的日志
-                    using var connection = new SQLiteConnection($"Data Source={sqlPath}");
-                    await connection.OpenAsync();
-                    using var command = new SQLiteCommand("DELETE FROM Logs WHERE Timestamp < @cutoffDate", connection);
-                    command.Parameters.AddWithValue("@cutoffDate", DateTime.Now.AddDays(-7));
-                    int rowsAffected = await command.ExecuteNonQueryAsync();
-                    if (rowsAffected > 0)
-                    {
-                        if (logger.IsEnabled(LogLevel.Information))
-                        {
-                            logger.LogInformation("清理了 {RowsAffected} 条7天前的日志", rowsAffected);
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    logger.LogError(ex, "清理旧日志时出错");
-                }
-            }
-        });
-    });
-}
-
 // 创建数据库
 using (var scope = app.Services.CreateScope())
 {

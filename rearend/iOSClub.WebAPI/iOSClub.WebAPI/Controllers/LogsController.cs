@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Data.SQLite;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.Sqlite;
@@ -270,6 +271,48 @@ public class LogsController(ILogger<LogsController> logger)
         {
             logger.LogError(ex, "获取日志统计信息时发生错误");
             return StatusCode(500, new { Error = "获取日志统计信息时发生错误", Details = ex.Message });
+        }
+    }
+    
+    /// <summary>
+    /// 手动清理旧日志
+    /// </summary>
+    /// <param name="days">要保留的日志天数，默认为7天</param>
+    /// <returns>清理结果</returns>
+    [HttpPost("cleanup")]
+    public async Task<IActionResult> CleanupOldLogs([FromQuery] int days = 7)
+    {
+        try
+        {
+            // 验证参数
+            if (days <= 0)
+            {
+                return BadRequest(new { Error = "天数必须大于0" });
+            }
+
+            // 获取日志数据库路径
+            var sqlPath = "logs/log.db";
+            if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Production")
+            {
+                sqlPath = Environment.CurrentDirectory + "/logs/log.db";
+            }
+
+            // 清理指定天数前的日志
+            await using var connection = new SQLiteConnection($"Data Source={sqlPath}");
+            await connection.OpenAsync();
+            await using var command =
+                new SQLiteCommand("DELETE FROM Logs WHERE Timestamp < @cutoffDate", connection);
+            command.Parameters.AddWithValue("@cutoffDate", DateTime.Now.AddDays(-days));
+            var rowsAffected = await command.ExecuteNonQueryAsync();
+            
+            logger.LogInformation("手动清理了 {RowsAffected} 条 {Days} 天前的日志", rowsAffected, days);
+            
+            return Ok(new { Message = $"成功清理了 {rowsAffected} 条 {days} 天前的日志" });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "手动清理旧日志时出错");
+            return StatusCode(500, new { Error = "清理旧日志时出错", Details = ex.Message });
         }
     }
 }
