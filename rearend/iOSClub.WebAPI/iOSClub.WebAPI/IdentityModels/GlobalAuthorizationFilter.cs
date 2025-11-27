@@ -4,6 +4,7 @@ using System.Text;
 using iOSClub.DataApi.Services;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.Authorization;
 
 namespace iOSClub.WebAPI.IdentityModels;
 
@@ -14,6 +15,16 @@ public class GlobalAuthorizationFilter(
 {
     public void OnAuthorization(AuthorizationFilterContext context)
     {
+        // Check if the controller or action has the Authorize attribute
+        var hasAuthorizeAttribute = context.ActionDescriptor.EndpointMetadata
+            .Any(em => em.GetType() == typeof(AuthorizeAttribute));
+        
+        // If no Authorize attribute, skip authorization
+        if (!hasAuthorizeAttribute)
+        {
+            return;
+        }
+        
         var bearer = context.HttpContext.Request.Headers.Authorization.FirstOrDefault();
         if (string.IsNullOrEmpty(bearer) || !bearer.StartsWith("Bearer "))
         {
