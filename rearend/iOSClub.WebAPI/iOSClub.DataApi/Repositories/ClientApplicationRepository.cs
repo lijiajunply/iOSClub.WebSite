@@ -20,6 +20,13 @@ public interface IClientApplicationRepository
     Task<ClientApplication?> GetByClientIdAsync(string clientId);
 
     /// <summary>
+    /// 根据重定向URI获取应用
+    /// </summary>
+    /// <param name="redirectUri">重定向Url</param>
+    /// <returns></returns>
+    Task<ClientApplication?> GetByRedirectUriAsync(string redirectUri);
+
+    /// <summary>
     /// 创建新的客户端应用
     /// </summary>
     /// <param name="clientApplication">客户端应用</param>
@@ -61,6 +68,12 @@ public class ClientApplicationRepository(IDbContextFactory<ClubContext> contextF
     {
         await using var context = await contextFactory.CreateDbContextAsync();
         return await context.ClientApplications.FirstOrDefaultAsync(c => c.ClientId == clientId);
+    }
+
+    public async Task<ClientApplication?> GetByRedirectUriAsync(string redirectUri)
+    {
+        await using var context = await contextFactory.CreateDbContextAsync();
+        return await context.ClientApplications.FirstOrDefaultAsync(c => c.RedirectUris.Contains(redirectUri));
     }
 
     public async Task<bool> CreateAsync(ClientApplication clientApplication)

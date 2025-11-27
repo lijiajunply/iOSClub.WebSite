@@ -549,8 +549,14 @@ public class SSOController(
 
         if (string.IsNullOrEmpty(request.ClientId))
         {
-            logger.LogWarning("Token exchange failed: missing client_id parameter");
-            return BadRequest(new { error = "invalid_request", error_description = "缺少必需参数: client_id" });
+            if (string.IsNullOrEmpty(request.RedirectUri))
+            {
+                logger.LogWarning("Token exchange failed: missing client_id parameter");
+                return BadRequest(new { error = "invalid_request", error_description = "缺少必需参数: client_id" });
+            }
+
+            var app = await clientAppRepository.GetByRedirectUriAsync(request.RedirectUri);
+            request.ClientId = app?.ClientId ?? "";
         }
 
         if (string.IsNullOrEmpty(request.ClientSecret))
@@ -605,7 +611,7 @@ public class SSOController(
             }
 
             // 验证授权码与请求参数是否匹配
-            if (authCodeInfo.RedirectUri != request.RedirectUri)
+            if (authCodeInfo.ClientId != request.ClientId || authCodeInfo.RedirectUri != request.RedirectUri)
             {
                 logger.LogWarning("Token exchange failed: authorization code {Code} does not match request parameters",
                     request.Code);
