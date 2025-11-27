@@ -476,7 +476,7 @@ public class SSOController(
         // 确定使用哪种请求格式
         TokenRequest request;
         var contentType = Request.ContentType;
-        
+
         if (contentType?.Contains("application/json", StringComparison.OrdinalIgnoreCase) == true)
         {
             // 处理JSON格式请求
@@ -487,7 +487,7 @@ public class SSOController(
                 if (!string.IsNullOrEmpty(body))
                 {
                     logger.LogDebug("Received JSON request body: {Body}", body);
-                    request = System.Text.Json.JsonSerializer.Deserialize<TokenRequest>(body) ?? 
+                    request = System.Text.Json.JsonSerializer.Deserialize<TokenRequest>(body) ??
                               throw new InvalidOperationException("无法反序列化请求体");
                 }
                 else
@@ -506,7 +506,15 @@ public class SSOController(
         {
             // 处理表单格式请求
             var form = await Request.ReadFormAsync();
-            
+
+            var builder = new StringBuilder();
+            foreach (var a in form)
+            {
+                builder.Append($"{a.Key}={a.Value}&");
+            }
+
+            logger.LogInformation("Received form body: {Body}", builder.ToString());
+
             request = new TokenRequest
             {
                 GrantType = form["grant_type"].FirstOrDefault() ?? "",
@@ -520,7 +528,11 @@ public class SSOController(
         else
         {
             logger.LogWarning("Token exchange failed: unsupported Content-Type {ContentType}", contentType);
-            return BadRequest(new { error = "invalid_request", error_description = "不支持的Content-Type，仅支持application/json和application/x-www-form-urlencoded" });
+            return BadRequest(new
+            {
+                error = "invalid_request",
+                error_description = "不支持的Content-Type，仅支持application/json和application/x-www-form-urlencoded"
+            });
         }
 
         logger.LogInformation("Token exchange request received for client {ClientId}", request.ClientId);
@@ -535,7 +547,8 @@ public class SSOController(
         if (request.GrantType != "authorization_code")
         {
             logger.LogWarning("Token exchange failed: unsupported grant type {GrantType}", request.GrantType);
-            return BadRequest(new { error = "unsupported_grant_type", error_description = "不支持的授权类型: " + request.GrantType });
+            return BadRequest(new
+                { error = "unsupported_grant_type", error_description = "不支持的授权类型: " + request.GrantType });
         }
 
         if (string.IsNullOrEmpty(request.Code))
@@ -566,7 +579,8 @@ public class SSOController(
         var clientApp = await clientAppRepository.ValidateCredentialsAsync(request.ClientId, request.ClientSecret);
         if (clientApp == null)
         {
-            logger.LogWarning("Token exchange failed: invalid client credentials for client {ClientId}", request.ClientId);
+            logger.LogWarning("Token exchange failed: invalid client credentials for client {ClientId}",
+                request.ClientId);
             return Unauthorized(new { error = "invalid_client", error_description = "无效的客户端凭据" });
         }
 
@@ -595,7 +609,8 @@ public class SSOController(
             if (authCodeInfo == null)
             {
                 logger.LogWarning(
-                    "Token exchange failed: unable to deserialize authorization code info for code {Code}", request.Code);
+                    "Token exchange failed: unable to deserialize authorization code info for code {Code}",
+                    request.Code);
                 return BadRequest(new { error = "invalid_grant", error_description = "无效的授权码" });
             }
 
@@ -632,7 +647,8 @@ public class SSOController(
                 if (request.CodeVerifier.Length is < 43 or > 128)
                 {
                     logger.LogWarning(
-                        "Token exchange failed: invalid code_verifier length for authorization code {Code}", request.Code);
+                        "Token exchange failed: invalid code_verifier length for authorization code {Code}",
+                        request.Code);
                     return BadRequest(new { error = "invalid_request", error_description = "code_verifier长度无效" });
                 }
 
