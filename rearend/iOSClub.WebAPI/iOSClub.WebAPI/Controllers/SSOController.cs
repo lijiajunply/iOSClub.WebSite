@@ -463,7 +463,7 @@ public class SSOController(
         [JsonProperty("client_id")] public string ClientId { get; set; } = "";
         [JsonProperty("client_secret")] public string ClientSecret { get; set; } = "";
         [JsonProperty("redirect_uri")] public string RedirectUri { get; set; } = "";
-        [JsonProperty("code_verifier")] public string? CodeVerifier { get; set; } = null;
+        [JsonProperty("code_verifier")] public string? CodeVerifier { get; set; }
     }
 
     /// <summary>

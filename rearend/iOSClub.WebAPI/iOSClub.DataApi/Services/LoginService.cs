@@ -143,6 +143,7 @@ public class LoginService(
             {
                 if (app.IsNeedEMail && !isHasEMail)
                 {
+                    logger.LogInformation("User Need Add EMail");
                     return "";
                 }
 
