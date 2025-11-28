@@ -241,17 +241,19 @@ const updateCategory = async () => {
 const updateArticleOrders = async () => {
   try {
     updatingArticles.value = true;
-    // 构建文章顺序更新请求
-    for (let i = 0; i < articles.value.length; i++) {
-      const article = articles.value[i];
-      await ArticleService.updateArticle(article.path, {
-        articleOrder: i
-      });
-    }
+    // 构建文章顺序字典
+    const articleOrders: Record<string, number> = {};
+    articles.value.forEach((article, index) => {
+      articleOrders[article.path] = index;
+    });
+    
+    // 批量更新文章顺序
+    await ArticleService.updateArticleOrders(articleOrders);
+    
     message.success('文章顺序更新成功');
   } catch (error) {
     console.error('更新文章顺序失败:', error);
-    message.error('更新文章顺序失败');
+    message.error((error as Error).message || '更新文章顺序失败');
   } finally {
     updatingArticles.value = false;
   }

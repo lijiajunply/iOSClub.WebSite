@@ -12,6 +12,7 @@ public interface IArticleRepository
     public Task<bool> Delete(string key);
     public Task<IEnumerable<ArticleModel>> GetCategoryArticles(string category);
     public Task<Dictionary<string, IEnumerable<ArticleModel>>> GetAllCategoryArticles(string identity);
+    public Task<bool> UpdateArticleOrders(Dictionary<string, int> articleOrders);
 }
 
 public class ArticleRepository(IDbContextFactory<ClubContext> factory, ICategoryRepository repository)
@@ -199,5 +200,51 @@ public class ArticleRepository(IDbContextFactory<ClubContext> factory, ICategory
         public string CategoryName { get; set; } = "";
         public int CategoryOrder { get; set; }
         public string? Identity { get; set; }
+    }
+
+    public async Task<bool> UpdateArticleOrders(Dictionary<string, int> articleOrders)
+    {
+        if (articleOrders == null || articleOrders.Count == 0)
+        {
+            return true;
+        }
+
+        await using var context = await factory.CreateDbContextAsync();
+        
+        // 开始事务
+        await using var transaction = await context.Database.BeginTransactionAsync();
+        
+        try
+        {
+            // 获取所有需要更新的文章
+            var articlePaths = articleOrders.Keys.ToList();
+            var articles = await context.Articles
+                .Where(a => articlePaths.Contains(a.Path))
+                .ToListAsync();
+            
+            // 更新每篇文章的顺序
+            foreach (var article in articles)
+            {
+                if (articleOrders.TryGetValue(article.Path, out var order))
+                {
+                    article.ArticleOrder = order;
+                }
+            }
+            
+            // 保存更改
+            var result = await context.SaveChangesAsync();
+            
+            // 提交事务
+            await transaction.CommitAsync();
+            
+            // 返回是否所有请求的文章都被更新
+            return result == articles.Count;
+        }
+        catch
+        {
+            // 回滚事务
+            await transaction.RollbackAsync();
+            throw;
+        }
     }
 }

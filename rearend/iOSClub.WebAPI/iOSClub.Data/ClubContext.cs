@@ -49,6 +49,7 @@ public sealed class ClubContext(DbContextOptions<ClubContext> options) : DbConte
             .HasMany(x => x.Articles)
             .WithOne(x => x.Category)
             .HasForeignKey(x => x.CategoryId)
+            .OnDelete(DeleteBehavior.SetNull)
             .IsRequired(false);
     }
 }

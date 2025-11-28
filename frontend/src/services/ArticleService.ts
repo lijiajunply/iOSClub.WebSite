@@ -232,4 +232,36 @@ export class ArticleService {
 
         return await response.json();
     }
+
+    /**
+     * 批量更新文章顺序
+     * @param articleOrders 文章路径和对应顺序的字典
+     * @returns Promise<void>
+     */
+    static async updateArticleOrders(articleOrders: Record<string, number>): Promise<void> {
+        const token = AuthService.getToken();
+        if (!token) {
+            throw new Error('未登录');
+        }
+
+        const response = await fetch(`${url}/Article/update-orders`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(articleOrders),
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                AuthService.clearToken();
+                throw new Error('登录已过期，请重新登录');
+            }
+            if (response.status === 403) {
+                throw new Error('权限不足，需要管理员身份');
+            }
+            throw new Error('批量更新文章顺序失败');
+        }
+    }
 }

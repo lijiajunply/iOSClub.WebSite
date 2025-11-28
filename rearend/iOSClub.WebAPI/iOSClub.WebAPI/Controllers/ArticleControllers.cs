@@ -250,6 +250,35 @@ public class ArticleController(
             return StatusCode(500, "服务器内部错误");
         }
     }
+
+    /// <summary>
+    /// 批量更新文章顺序（需要社团成员身份）
+    /// </summary>
+    [Authorize]
+    [HttpPost("update-orders")]
+    public async Task<ActionResult> UpdateArticleOrders([FromBody] Dictionary<string, int> articleOrders)
+    {
+        try
+        {
+            if (articleOrders == null || articleOrders.Count == 0)
+            {
+                return BadRequest("文章顺序字典不能为空");
+            }
+
+            var success = await articleRepository.UpdateArticleOrders(articleOrders);
+            if (success)
+            {
+                return Ok("文章顺序更新成功");
+            }
+
+            return StatusCode(500, "文章顺序更新失败");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "批量更新文章顺序时发生错误");
+            return StatusCode(500, "服务器内部错误");
+        }
+    }
 }
 
 // 创建文章的DTO

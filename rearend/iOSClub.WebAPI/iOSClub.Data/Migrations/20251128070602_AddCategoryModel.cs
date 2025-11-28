@@ -10,6 +10,12 @@ namespace iOSClub.Data.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.Sql(@"
+                DELETE FROM ""Articles"" 
+                WHERE ""CategoryId"" IS NOT NULL 
+                AND ""CategoryId"" NOT IN (SELECT ""Id"" FROM ""Categories"");
+            ");
+            
             migrationBuilder.RenameColumn(
                 name: "Category",
                 table: "Articles",
