@@ -112,7 +112,7 @@ import PageStart from "../components/PageStart.vue";
 import { loadRssArticles, loadAtomEntries } from '../services/RssService'; // 引入新的RSS服务
 
 // 导入头部图片
-import articleHeaderImg from '/assets/Centre/Article.jpg';
+import articleHeaderImg from '/assets/Centre/Article.png';
 
 const isMobile = ref(window.innerWidth < 640);
 

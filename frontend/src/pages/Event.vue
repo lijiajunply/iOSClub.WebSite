@@ -64,7 +64,7 @@ import { NCard } from 'naive-ui'
 import PageStart from "../components/PageStart.vue";
 
 // 导入图片
-import appleLogo from '/assets/Centre/AppleLogo.jpg'
+import appleLogo from '/assets/Centre/AppleLogo.png'
 import visionProImage from '/assets/other/vision_pro.jpg'
 import launchEventImage from '/assets/other/launch_event.jpg'
 import classImage from '/assets/other/class.jpg'

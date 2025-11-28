@@ -194,7 +194,6 @@ const formattedDate = computed(() => {
 
 const identityInfo = computed(() => {
   const map: Record<string, { label: string; colorClass: string }> = {
-    'Member': {label: '所有人', colorClass: 'tag-blue'},
     'Department': {label: '部员', colorClass: 'tag-cyan'},
     'Minister': {label: '部长', colorClass: 'tag-orange'},
     'President': {label: '社长', colorClass: 'tag-red'},
@@ -297,7 +296,8 @@ onMounted(() => {
           </div>
 
           <!-- 主标题 -->
-          <div class="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white tracking-tight leading-tight font-display">
+          <div
+              class="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white tracking-tight leading-tight font-display">
             {{ content.title }}
           </div>
         </header>

@@ -43,7 +43,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
 import PageStart from "../components/PageStart.vue";
-import appleLogo from '/assets/Centre/AppleLogo.jpg'
+import appleLogo from '/assets/Centre/AppleLogo.png'
 
 // 检测是否为移动设备
 const isMobile = ref(window.innerWidth < 640);

@@ -79,7 +79,7 @@ import {NCard} from 'naive-ui';
 import PageStart from "../components/PageStart.vue";
 import {ToolService} from "../services/ToolService";
 import {LinkModel} from "../models";
-import toolsImage from '/assets/Centre/AppleLogo.jpg';
+import toolsImage from '/assets/Centre/AppleLogo.png';
 import IconFont from "../components/IconFont.vue";
 
 const models = ref<LinkModel[]>([] as LinkModel[]);

@@ -15,10 +15,10 @@
       >
         <div class="flex flex-col h-full">
           <!-- Sidebar Header / Search placeholder -->
-          <div class="p-4" style="">
+          <div class="px-5 py-4">
             <div class="flex items-center space-x-2 text-gray-500 dark:text-gray-400">
               <Icon icon="lucide:layout-grid" class="w-5 h-5"/>
-              <span class="text-sm font-semibold tracking-wide uppercase opacity-70">Library</span>
+              <span class="text-sm font-semibold tracking-wide uppercase opacity-70">Blog</span>
             </div>
           </div>
 

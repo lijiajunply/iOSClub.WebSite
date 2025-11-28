@@ -1,263 +1,221 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-slate-100 to-slate-200 dark:from-neutral-900 dark:to-neutral-800 flex items-center justify-center p-4 transition-colors duration-300">
-    <div class="w-full max-w-md bg-white/80 dark:bg-neutral-900/80 backdrop-blur-lg rounded-2xl shadow-xl p-4 transition-all duration-300">
-      <!-- 标题区域 -->
-      <div class="text-center pt-8 pb-4 px-8">
-        <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">
-          注册 iMember 账号
+  <!-- 全局容器：使用 Apple 风格的动态模糊背景 -->
+  <div
+      class="apple-bg relative min-h-[calc(100vh-64px)] w-full flex items-center justify-center p-4 overflow-hidden transition-all duration-500">
+
+    <!-- 背景装饰光斑 (Tailwind 4 CSS 动画) -->
+    <div
+        class="absolute top-[-10%] left-[-10%] w-[40vw] h-[40vw] rounded-full bg-blue-400/30 blur-[100px] pointer-events-none animate-blob mix-blend-multiply dark:mix-blend-soft-light dark:bg-blue-600/20"></div>
+    <div
+        class="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] rounded-full bg-purple-400/30 blur-[100px] pointer-events-none animate-blob animation-delay-2000 mix-blend-multiply dark:mix-blend-soft-light dark:bg-purple-900/20"></div>
+
+    <!-- 主卡片：仿 iCloud 登录框 -->
+    <div class="relative z-10 w-full max-w-[440px] apple-card transition-all duration-300">
+
+      <!-- 顶部 Logo 区域 -->
+      <div class="pt-10 pb-6 text-center">
+        <div
+            class="mx-auto w-16 h-16 mb-4 bg-gradient-to-b from-gray-100 to-gray-300 dark:from-gray-700 dark:to-gray-800 rounded-[18px] shadow-inner flex items-center justify-center border border-white/20 icon-box">
+          <Icon icon="ion:person" class="text-3xl text-gray-600 dark:text-gray-200"/>
+        </div>
+        <h1 class="text-2xl font-semibold tracking-tight text-gray-900 dark:text-white">
+          iMember ID
         </h1>
-        <p class="text-gray-500 dark:text-gray-400 mt-1 text-sm">
-          Create your iMember ID
+        <p class="text-gray-500 dark:text-gray-400 text-sm mt-1 font-medium">
+          注册以访问所有服务
         </p>
       </div>
 
-      <!-- 步骤指示器 -->
-      <div class="px-8 mb-6" v-if="currentStep < 4">
-        <div class="flex items-center justify-between">
-          <div v-for="(step, index) in steps" :key="index" class="flex flex-col items-center">
-            <div 
-              class="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300" 
-              :class="{
-                'bg-blue-500 text-white': currentStep >= index + 1,
-                'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400': currentStep < index + 1
-              }"
-            >
-              {{ index + 1 }}
-            </div>
-            <span class="text-xs mt-1 text-center" :class="{
-              'text-blue-500': currentStep >= index + 1,
-              'text-gray-500 dark:text-gray-400': currentStep < index + 1
-            }">
-              {{ step }}
-            </span>
-          </div>
-        </div>
-        <!-- 进度条 -->
-        <div class="relative h-1 bg-gray-100 dark:bg-gray-700 mt-2">
+      <!-- 精简进度条 -->
+      <div v-if="currentStep < 4" class="px-10 mb-6">
+        <div class="h-1 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
           <div
-            class="absolute h-full bg-blue-500 transition-all duration-300 ease-out" 
-            :style="{ width: `${(currentStep - 1) * 50}%` }"
+              class="h-full bg-[#0071e3] transition-all duration-500 ease-apple"
+              :style="{ width: `${(currentStep) / 3 * 100}%` }"
           ></div>
+        </div>
+        <div class="flex justify-between mt-2 text-[10px] font-medium uppercase tracking-wider text-gray-400">
+          <span>基本</span>
+          <span>学校</span>
+          <span>账户</span>
         </div>
       </div>
 
-      <!-- 表单区域 -->
-      <div class="px-8 pb-8">
-        <n-form :model="form" ref="formRef">
-          <!-- 步骤 1: 基本信息 -->
-          <div v-if="currentStep === 1">
-            <n-form-item 
-              path="name" 
-              label="姓名" 
-              :rules="[{ required: true, message: '请输入姓名', trigger: 'blur' }]"
-            >
-              <n-input 
-                v-model:value="form.name" 
-                placeholder="请输入姓名" 
-                  required
-                  :attrs="{ class: 'rounded-lg' }"
-              />
-            </n-form-item>
-            <n-form-item 
-              path="studentId" 
-              label="学号" 
-              :rules="[{ required: true, message: '请输入学号', trigger: 'blur' }]"
-            >
-              <n-input 
-                v-model:value="form.studentId" 
-                placeholder="请输入学号" 
-                required
-                :attrs="{ class: 'rounded-lg' }"
-              />
-            </n-form-item>
-            <n-form-item 
-              path="gender" 
-              label="性别" 
-              :rules="[{ required: true, message: '请选择性别', trigger: 'change' }]"
-            >
-              <n-select 
-                v-model:value="form.gender" 
-                :options="genderOptions" 
-                placeholder="请选择性别" 
-                required
-                :attrs="{ class: 'rounded-lg' }"
-              />
-            </n-form-item>
-            <n-form-item 
-              path="political" 
-              label="政治面貌" 
-              :rules="[{ required: true, message: '请选择政治面貌', trigger: 'change' }]"
-            >
-              <n-select 
-                v-model:value="form.political" 
-                :options="politicalOptions" 
-                placeholder="请选择政治面貌" 
-                required
-                :attrs="{ class: 'rounded-lg' }"
-              />
-            </n-form-item>
-          </div>
+      <!-- 表单内容区域 -->
+      <div class="px-8 pb-10">
+        <n-form ref="formRef" :model="form" :show-label="false" size="large">
 
-          <!-- 步骤 2: 学校信息 -->
-          <div v-if="currentStep === 2">
-            <n-form-item 
-              path="major" 
-              label="学院" 
-              :rules="[{ required: true, message: '请选择学院', trigger: 'change' }]"
-            >
-              <n-select 
-                v-model:value="form.major" 
-                :options="academyOptions" 
-                placeholder="请选择学院" 
-                required
-                :attrs="{ class: 'rounded-lg' }"
-              />
-            </n-form-item>
-            <n-form-item 
-              path="className" 
-              label="班级" 
-              :rules="[{ required: true, message: '请输入班级', trigger: 'blur' }]"
-            >
-              <n-input 
-                v-model:value="form.className" 
-                placeholder="请输入班级 如机电2401" 
-                required
-                :attrs="{ class: 'rounded-lg' }"
-              />
-            </n-form-item>
-            <n-form-item 
-              path="phone" 
-              label="电话号码" 
-              :rules="[{ required: true, message: '请输入电话号码', trigger: 'blur' }]"
-            >
-              <n-input 
-                v-model:value="form.phone" 
-                placeholder="请输入电话号码" 
-                required
-                :attrs="{ class: 'rounded-lg' }"
-              />
-            </n-form-item>
-            <n-form-item 
-              path="email" 
-              label="邮箱" 
-              :rules="[
-                { required: true, message: '请输入邮箱', trigger: 'blur' },
-                { validator: emailValidator, trigger: 'blur' }
-              ]"
-            >
-              <n-input 
-                v-model:value="form.email" 
-                placeholder="请输入邮箱" 
-                required
-                :attrs="{ class: 'rounded-lg' }"
-              />
-            </n-form-item>
-          </div>
+          <!-- 步骤切换动画容器 -->
+          <Transition name="slide-fade" mode="out-in">
 
-          <!-- 步骤 3: 账号设置 -->
-          <div v-if="currentStep === 3">
-            <n-form-item 
-              path="password" 
-              label="密码" 
-              :rules="[{ required: true, message: '请输入密码', trigger: 'blur' }]"
-            >
-              <n-input 
-                v-model:value="form.password" 
-                type="password" 
-                placeholder="请输入密码" 
-                required
-                :attrs="{ class: 'rounded-lg' }"
-              />
-            </n-form-item>
-            <n-form-item 
-              path="confirmPassword" 
-              label="确认密码" 
-              :rules="[
-                { required: true, message: '请再次输入密码', trigger: 'blur' },
-                {
-                  validator: (_: any, value: any) => {
-                    return value === form.password || '两次输入的密码不一致'
-                  },
-                  trigger: 'blur'
-                }
-              ]"
-            >
-              <n-input 
-                v-model:value="form.confirmPassword" 
-                type="password" 
-                placeholder="请再次输入密码" 
-                required
-                :attrs="{ class: 'rounded-lg' }"
-              />
-            </n-form-item>
-            
-            <!-- 确认信息摘要 -->
-            <div class="mt-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-              <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">确认信息</h3>
-              <div class="grid grid-cols-2 gap-2 text-sm">
-                <div class="text-gray-500 dark:text-gray-400">姓名:</div>
-                <div class="text-gray-900 dark:text-white">{{ form.name }}</div>
-                <div class="text-gray-500 dark:text-gray-400">学号:</div>
-                <div class="text-gray-900 dark:text-white">{{ form.studentId }}</div>
-                <div class="text-gray-500 dark:text-gray-400">学院:</div>
-                <div class="text-gray-900 dark:text-white">{{ form.major }}</div>
-                <div class="text-gray-500 dark:text-gray-400">班级:</div>
-                <div class="text-gray-900 dark:text-white">{{ form.className }}</div>
+            <!-- 步骤 1: 基本信息 -->
+            <div v-if="currentStep === 1" key="step1" class="space-y-4">
+              <n-form-item path="name" :rule="{ required: true, message: '', trigger: 'blur' }" class="apple-input">
+                <n-input v-model:value="form.name" placeholder="姓名">
+                  <template #prefix>
+                    <Icon icon="ion:person-outline" class="input-icon"/>
+                  </template>
+                </n-input>
+              </n-form-item>
+
+              <n-form-item path="studentId" :rule="{ required: true, message: '', trigger: 'blur' }"
+                           class="apple-input">
+                <n-input v-model:value="form.studentId" placeholder="学号">
+                  <template #prefix>
+                    <Icon icon="ion:card-outline" class="input-icon"/>
+                  </template>
+                </n-input>
+              </n-form-item>
+
+              <div class="grid grid-cols-2 gap-4">
+                <n-form-item path="gender" :rule="{ required: true, message: '', trigger: 'change' }">
+                  <n-select v-model:value="form.gender" :options="genderOptions" placeholder="性别"
+                            class="apple-select"/>
+                </n-form-item>
+
+                <n-form-item path="political" :rule="{ required: true, message: '', trigger: 'change' }">
+                  <n-select v-model:value="form.political" :options="politicalOptions" placeholder="政治面貌"
+                            class="apple-select"/>
+                </n-form-item>
               </div>
             </div>
-          </div>
 
-          <!-- 步骤 4: 注册成功 -->
-          <div v-if="currentStep === 4" class="text-center py-8">
-            <div class="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-500" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-              </svg>
+            <!-- 步骤 2: 学校信息 -->
+            <div v-else-if="currentStep === 2" key="step2" class="space-y-4">
+              <n-form-item path="major" :rule="{ required: true, message: '', trigger: 'change' }" class="apple-select">
+                <n-select v-model:value="form.major" :options="academyOptions" placeholder="选择学院"
+                />
+              </n-form-item>
+
+              <n-form-item path="className" :rule="{ required: true, message: '', trigger: 'blur' }"
+                           class="apple-input">
+                <n-input v-model:value="form.className" placeholder="班级 (如: 机电2401)">
+                  <template #prefix>
+                    <Icon icon="ion:people-outline" class="input-icon"/>
+                  </template>
+                </n-input>
+              </n-form-item>
+
+              <n-form-item path="phone" :rule="{ required: true, message: '', trigger: 'blur' }" class="apple-input">
+                <n-input v-model:value="form.phone" placeholder="手机号码">
+                  <template #prefix>
+                    <Icon icon="ion:call-outline" class="input-icon"/>
+                  </template>
+                </n-input>
+              </n-form-item>
+
+              <n-form-item path="email"
+                           :rule="[{ required: true, message: '' }, { validator: emailValidator, trigger: 'blur' }]" class="apple-input">
+                <n-input v-model:value="form.email" placeholder="电子邮箱">
+                  <template #prefix>
+                    <Icon icon="ion:mail-outline" class="input-icon"/>
+                  </template>
+                </n-input>
+              </n-form-item>
             </div>
-            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">注册成功！</h2>
-            <p class="text-gray-500 dark:text-gray-400 mb-6">您的账号已创建完成，正在为您跳转...</p>
-          </div>
 
-          <!-- 错误信息显示 -->
-          <div v-if="errorMsg" class="text-red-500 text-center mt-4 text-sm">{{ errorMsg }}</div>
-          
-          <!-- 导航按钮 -->
-          <div v-if="currentStep < 4" class="flex space-x-4 mt-6">
-            <button 
-              v-if="currentStep > 1" 
-              @click="prevStep" 
-              type="button"
-              class="flex-1 py-2.5 px-4 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors duration-200 text-sm font-medium"
-            >
-              上一步
-            </button>
-            <div v-else class="flex-1"></div>
-            <button 
-              @click="nextStep" 
-              :disabled="loading" 
-              type="button"
-              class="flex-1 py-2.5 px-4 rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 text-sm font-medium flex items-center justify-center"
-            >
-              <span v-if="loading" class="mr-2">
-                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-              </span>
-              <span>{{ currentStep === 3 ? '完成注册' : '下一步' }}</span>
-            </button>
-          </div>
+            <!-- 步骤 3: 账号设置 -->
+            <div v-else-if="currentStep === 3" key="step3" class="space-y-4">
+              <n-form-item path="password" :rule="{ required: true, message: '', trigger: 'blur' }">
+                <n-input
+                    v-model:value="form.password"
+                    type="password"
+                    show-password-on="click"
+                    placeholder="设置密码"
+                    class="apple-input"
+                >
+                  <template #prefix>
+                    <Icon icon="ion:lock-closed-outline" class="input-icon"/>
+                  </template>
+                </n-input>
+              </n-form-item>
+
+              <n-form-item
+                  path="confirmPassword"
+                  :rule="[{ required: true, message: '' }, { validator: (r, v) => v === form.password || '', trigger: 'blur' }]"
+              >
+                <n-input
+                    v-model:value="form.confirmPassword"
+                    type="password"
+                    show-password-on="click"
+                    placeholder="确认密码"
+                    class="apple-input"
+                >
+                  <template #prefix>
+                    <Icon icon="ion:shield-checkmark-outline" class="input-icon"/>
+                  </template>
+                </n-input>
+              </n-form-item>
+
+              <!-- 信息确认卡片 -->
+              <div
+                  class="mt-4 p-4 bg-gray-50 dark:bg-white/5 rounded-xl text-sm border border-gray-100 dark:border-white/10">
+                <div class="flex items-center gap-2 mb-2 text-gray-500 dark:text-gray-400">
+                  <Icon icon="ion:information-circle-outline"/>
+                  <span class="font-medium">信息预览</span>
+                </div>
+                <div class="space-y-1 text-gray-800 dark:text-gray-200 font-medium pl-1">
+                  <div class="flex justify-between"><span>姓名</span> <span>{{ form.name }}</span></div>
+                  <div class="flex justify-between"><span>学号</span> <span>{{ form.studentId }}</span></div>
+                  <div class="flex justify-between"><span>学院</span> <span class="truncate max-w-[150px]">{{
+                      form.major
+                    }}</span></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 步骤 4: 成功状态 -->
+            <div v-else-if="currentStep === 4" key="step4" class="flex flex-col items-center py-6 text-center">
+              <div
+                  class="w-20 h-20 rounded-full bg-[#34c759]/10 text-[#34c759] flex items-center justify-center mb-6 animate-scale-in">
+                <Icon icon="ion:checkmark-circle" class="text-5xl"/>
+              </div>
+              <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">欢迎加入</h2>
+              <p class="text-gray-500 dark:text-gray-400">账号已创建，即将跳转...</p>
+            </div>
+
+          </Transition>
         </n-form>
 
-        <!-- 登录链接 -->
-        <div v-if="currentStep < 4" class="mt-6 text-center">
-          <p class="text-sm text-gray-500 dark:text-gray-400">
-            已有账号？
-            <a href="/Login" class="text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 font-medium">
-              登录
-            </a>
-          </p>
+        <!-- 错误提示 -->
+        <div v-if="errorMsg"
+             class="mt-4 p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm rounded-lg flex items-center gap-2 animate-shake">
+          <Icon icon="ion:alert-circle"/>
+          {{ errorMsg }}
         </div>
+
+        <!-- 底部操作栏 -->
+        <div v-if="currentStep < 4" class="mt-8 flex items-center gap-4">
+          <button
+              v-if="currentStep > 1"
+              @click="prevStep"
+              type="button"
+              class="w-12 h-12 rounded-full flex items-center justify-center bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/20 transition-colors"
+          >
+            <Icon icon="ion:arrow-back"/>
+          </button>
+
+          <button
+              @click="nextStep"
+              :disabled="loading"
+              type="button"
+              class="flex-1 h-12 rounded-full bg-[#0071e3] hover:bg-[#0077ED] active:bg-[#006edb] text-white font-medium text-[15px] transition-all shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+          >
+            <Icon v-if="loading" icon="svg-spinners:180-ring" class="text-xl"/>
+            <span v-else>{{ currentStep === 3 ? '完成注册' : '继续' }}</span>
+            <Icon v-if="!loading && currentStep !== 3" icon="ion:arrow-forward"/>
+          </button>
+        </div>
+
+        <!-- 底部链接 -->
+        <div v-if="currentStep < 4" class="mt-8 text-center">
+          <a href="/Login"
+             class="text-sm text-[#0071e3] dark:text-[#2997ff] hover:underline font-medium inline-flex items-center gap-1">
+            已有 iMember ID? 立即登录
+            <Icon icon="ion:chevron-forward" class="text-xs"/>
+          </a>
+        </div>
+
       </div>
     </div>
   </div>
@@ -267,29 +225,39 @@
 import {ref, reactive} from 'vue'
 import {useRouter} from 'vue-router'
 import {NInput, NForm, NFormItem, NSelect} from 'naive-ui'
+import {Icon} from '@iconify/vue'
 import {useAuthorizationStore} from '../stores/Authorization'
 import {ios} from '../services/AuthService'
-import {isWeiXin, NavigateTo} from "../lib/site";
+import {isWeiXin, NavigateTo} from "../lib/site"
 
 const router = useRouter()
 const authorizationStore = useAuthorizationStore()
-
-// 表单引用
 const formRef = ref<InstanceType<typeof NForm>>()
 
-// 当前步骤
 const currentStep = ref(1)
+const loading = ref(false)
+const errorMsg = ref('')
 
-// 步骤标题
-const steps = ['基本信息', '学校信息', '账号设置']
+// 严格类型定义的表单数据
+interface RegisterForm {
+  name: string;
+  studentId: string;
+  gender: string | null;
+  political: string | null;
+  major: string | null;
+  className: string;
+  phone: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+}
 
-// 表单数据（使用 reactive 以便 Naive UI 正确高亮验证状态）
-const form = reactive({
+const form = reactive<RegisterForm>({
   name: '',
   studentId: '',
-  gender: '',
-  political: '',
-  major: '',
+  gender: null,
+  political: null,
+  major: null,
   className: '',
   phone: '',
   email: '',
@@ -297,11 +265,7 @@ const form = reactive({
   confirmPassword: ''
 })
 
-// 状态变量
-const loading = ref(false)
-const errorMsg = ref('')
-
-// 下拉选项
+// 选项数据
 const genderOptions = [
   {label: '男', value: '男'},
   {label: '女', value: '女'}
@@ -338,122 +302,96 @@ const academyOptions = [
   {label: '国际教育学院', value: '国际教育学院'},
 ]
 
-// 邮箱校验器（复用）
+// 验证逻辑
 const emailValidator = (_rule: any, value: string) => {
-  if (!value) return true // 让 required 规则处理空值
+  if (!value) return true
   const emailReg = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   return emailReg.test(value) || '请输入有效的邮箱地址'
 }
 
-// 下一步
-const nextStep = async () => {
+const validateCurrentStep = async (): Promise<boolean> => {
   errorMsg.value = ''
-  
-  // 验证当前步骤的表单
-  if (!formRef.value) return
 
-  // 先做一个轻量的必填检查作为回退（防止 Naive UI validate 在某些版本下未能触发）
-  const requiredMissing = (() => {
-    if (currentStep.value === 1) {
-      return !form.name || !form.studentId || !form.gender || !form.political
-    }
-    if (currentStep.value === 2) {
-      return !form.major || !form.className || !form.phone || !form.email
-    }
-    if (currentStep.value === 3) {
-      return !form.password || !form.confirmPassword
-    }
-    return false
-  })()
-
-  if (requiredMissing) {
-    // 触发 Naive UI 的 validate 来显示红色提示（如果可用），并阻止前进
-    try {
-      await formRef.value.validate()
-    } catch (e) {
-      // ignore, validate should show field errors
-    }
-    errorMsg.value = '请填写本步骤的所有必填项'
-    return
+  // 手动简单检查，提升 UX (直接反馈为空)
+  let emptyFields: string[] = []
+  if (currentStep.value === 1) {
+    if (!form.name) emptyFields.push('姓名')
+    if (!form.studentId) emptyFields.push('学号')
+    if (!form.gender) emptyFields.push('性别')
+    if (!form.political) emptyFields.push('政治面貌')
+  } else if (currentStep.value === 2) {
+    if (!form.major) emptyFields.push('学院')
+    if (!form.className) emptyFields.push('班级')
+    if (!form.phone) emptyFields.push('电话')
+    if (!form.email) emptyFields.push('邮箱')
+  } else if (currentStep.value === 3) {
+    if (!form.password) emptyFields.push('密码')
+    if (!form.confirmPassword) emptyFields.push('确认密码')
   }
-  
+
+  if (emptyFields.length > 0) {
+    errorMsg.value = `请完善：${emptyFields.join(', ')}`
+    return false
+  }
+
+  // Naive UI 深度检查 (Regex 等)
   try {
-    // 使用 validate 方法验证特定字段
-    if (currentStep.value === 1) {
-      await formRef.value.validate()
-    } else if (currentStep.value === 2) {
-      await formRef.value.validate()
-    } else if (currentStep.value === 3) {
-      await formRef.value.validate()
-    }
-    
-    // 如果是最后一步，提交注册
-    if (currentStep.value === 3) {
-      await submitRegistration()
-    } else {
-      // 否则进入下一步
-      currentStep.value++
-      // 滚动到页面顶部
-      window.scrollTo({ top: 0, behavior: 'smooth' })
-    }
-  } catch (err: any) {
-    // 验证失败，不执行下一步
-    // 从错误信息中提取字段名并检查是否属于当前步骤
-    if (err && Array.isArray(err)) {
-      const currentStepFields = 
-        currentStep.value === 1 ? ['name', 'studentId', 'gender', 'political'] :
-        currentStep.value === 2 ? ['major', 'className', 'phone', 'email'] :
-        currentStep.value === 3 ? ['password', 'confirmPassword'] : [];
-      
-      // 检查错误是否与当前步骤相关
-      const hasCurrentStepError = err.some((error: any) => 
-        error && currentStepFields.includes(error.field)
-      );
-      
-      if (hasCurrentStepError) {
-        return; // 有当前步骤的错误，不进入下一步
-      }
-      
-      // 如果错误不是当前步骤的，则进入下一步
-      if (currentStep.value === 3) {
-        await submitRegistration()
-      } else {
-        currentStep.value++
-        window.scrollTo({ top: 0, behavior: 'smooth' })
-      }
-    }
-    return
+    await formRef.value?.validate(
+        (errors) => {
+          if (!errors) return
+          // 过滤掉非当前步骤的错误
+          // 这里简单处理：如果 validate 抛出 throw，catch 会捕获
+        },
+        (rule) => {
+          // 简单判断 key 是否在当前 step 范围内，这里简化处理，依靠 try catch
+          return true
+        }
+    )
+    return true
+  } catch (e: any) {
+    // 检查错误是否属于当前 View
+    // 实际项目中可根据 err.fields 判断
+    return false
   }
 }
 
-// 上一步
+const nextStep = async () => {
+  if (loading.value) return;
+
+  const isValid = await validateCurrentStep()
+  if (!isValid) return
+
+  if (currentStep.value === 3) {
+    await submitRegistration()
+  } else {
+    currentStep.value++
+  }
+}
+
 const prevStep = () => {
   if (currentStep.value > 1) {
     currentStep.value--
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    errorMsg.value = ''
   }
 }
 
-// 提交注册
 const submitRegistration = async () => {
   loading.value = true
   errorMsg.value = ''
-  
+
   try {
-    // 密码哈希处理
     const encoder = new TextEncoder()
-  const data = encoder.encode(form.password)
+    const data = encoder.encode(form.password)
     const hashBuffer = await crypto.subtle.digest('SHA-256', data)
     const hashArray = Array.from(new Uint8Array(hashBuffer))
     const passwordHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
 
-    // 提交注册请求
     const res = await authorizationStore.signup({
       userName: form.name,
       userId: form.studentId,
-      academy: form.major,
-      politicalLandscape: form.political,
-      gender: form.gender,
+      academy: form.major || '',
+      politicalLandscape: form.political || '',
+      gender: form.gender || '',
       className: form.className,
       phoneNum: form.phone,
       joinTime: new Date().toISOString(),
@@ -461,15 +399,10 @@ const submitRegistration = async () => {
       eMail: form.email
     })
 
-    if (!res) {
-      errorMsg.value = '注册失败，请稍后再试'
-      return
-    }
-    
-    // 显示成功步骤
+    if (!res) throw new Error('注册无响应')
+
     currentStep.value = 4
-    
-    // 延迟跳转
+
     setTimeout(async () => {
       const w = isWeiXin()
       if (w) {
@@ -477,10 +410,10 @@ const submitRegistration = async () => {
       } else {
         NavigateTo(ios.url1, ios.url2)
       }
-    }, 1200)
+    }, 2000)
 
   } catch (err: any) {
-    errorMsg.value = err.message || '请求失败，请稍后再试'
+    errorMsg.value = err.message || '注册失败，请连接校园网或稍后再试'
   } finally {
     loading.value = false
   }
@@ -488,27 +421,144 @@ const submitRegistration = async () => {
 </script>
 
 <style scoped>
-/* 自定义NaiveUI组件样式 */
-:deep(.n-form-item__label) {
-  font-weight: 500;
-  color: var(--color-foreground);
+/*
+  原生 CSS 覆盖 NaiveUI 样式以实现 Apple 风格
+  这里不使用 scope，以便穿透 Naive UI 的 Shadow DOM 结构
+*/
+
+/* 背景与字体 */
+.apple-bg {
+  background-color: #fbfbfd; /* Apple off-white */
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
 }
 
-:deep(.n-input__border) {
-  border-radius: 0.5rem;
-  border-color: var(--color-border);
+/* 暗黑模式背景 */
+.dark .apple-bg {
+  background-color: #000000;
 }
 
-:deep(.n-input__border:hover) {
-  border-color: var(--color-primary);
+/* 卡片样式 */
+.apple-card {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-radius: 24px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.6);
 }
 
-:deep(.n-input__border:focus-within) {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+.dark .apple-card {
+  background: rgba(28, 28, 30, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 }
 
-:deep(.n-select__menu) {
-  border-radius: 0.5rem;
+/* 输入框样式重写 */
+.apple-input .n-input,
+.apple-select .n-base-selection {
+  --n-border: 1px solid #d2d2d7 !important;
+  --n-border-hover: 1px solid #86868b !important;
+  --n-border-focus: 1px solid #0071e3 !important;
+  --n-box-shadow-focus: 0 0 0 4px rgba(0, 113, 227, 0.2) !important;
+  background-color: transparent !important; /* 让 inputs 半透明 */
+  border-radius: 12px !important;
+  min-height: 46px !important;
+  font-size: 15px !important;
+}
+
+.apple-input .n-input-wrapper,
+.apple-select .n-base-selection-label {
+  min-height: 46px !important;
+  display: flex;
+  align-items: center;
+}
+
+/* 输入框背景 - 亮色模式 */
+.apple-input .n-input,
+.apple-select .n-base-selection {
+  background-color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* 输入框背景 - 暗黑模式 */
+.dark .apple-input .n-input,
+.dark .apple-select .n-base-selection {
+  --n-border: 1px solid #424245 !important;
+  --n-border-hover: 1px solid #6e6e73 !important;
+  --n-border-focus: 1px solid #2997ff !important;
+  --n-box-shadow-focus: 0 0 0 4px rgba(41, 151, 255, 0.2) !important;
+  background-color: rgba(28, 28, 30, 0.6) !important;
+  color: white !important;
+}
+
+.dark .n-input__input-el,
+.dark .n-base-selection-label {
+  color: white !important;
+}
+
+.dark .n-base-selection-placeholder {
+  color: #86868b !important;
+}
+
+/* Icon 颜色 */
+.input-icon {
+  color: #86868b;
+  font-size: 20px;
+  margin-right: 4px;
+}
+.dark .input-icon {
+  color: #98989d;
+}
+
+/* 动画 */
+.ease-apple {
+  transition-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+/* Vue Transition: Slide Fade */
+.slide-fade-enter-active {
+  transition: all 0.3s ease-out;
+}
+.slide-fade-leave-active {
+  transition: all 0.2s cubic-bezier(1, 0.5, 0.8, 1);
+}
+.slide-fade-enter-from {
+  transform: translateX(20px);
+  opacity: 0;
+}
+.slide-fade-leave-to {
+  transform: translateX(-20px);
+  opacity: 0;
+}
+
+/* 自定义关键帧动画 */
+@keyframes blob {
+  0% { transform: translate(0px, 0px) scale(1); }
+  33% { transform: translate(30px, -50px) scale(1.1); }
+  66% { transform: translate(-20px, 20px) scale(0.9); }
+  100% { transform: translate(0px, 0px) scale(1); }
+}
+.animate-blob {
+  animation: blob 7s infinite;
+}
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+  20%, 40%, 60%, 80% { transform: translateX(4px); }
+}
+.animate-shake {
+  animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+@keyframes scaleIn {
+  0% { transform: scale(0); opacity: 0; }
+  60% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(1); }
+}
+.animate-scale-in {
+  animation: scaleIn 0.5s ease-out forwards;
 }
 </style>
