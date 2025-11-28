@@ -1,655 +1,396 @@
 <template>
-  <div class="min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-300">
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="apple-container min-h-screen p-6 md:p-8 transition-colors duration-300">
+    <main class="max-w-[1400px] mx-auto space-y-6">
 
-      <!-- 主内容区 -->
-      <div
-          class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-300 hover:shadow-lg">
-        <!-- 标签页导航 -->
+      <!-- 顶部导航/Tabs 区域 -->
+      <!-- 模拟 iOS 分段控制器风格的 Tab 容器 -->
+      <div class="apple-card p-2 sticky top-4 z-20">
         <n-tabs
-            type="line"
+            type="segment"
             animated
-            class="w-full"
-            :tabs-padding="20"
+            class="apple-tabs"
             @update:value="handleTabChange"
         >
-          <!-- 总览标签页 -->
-          <n-tab-pane name="overview" tab="总览">
-            <div v-if="loading" class="p-6 space-y-8">
-              <!-- 领导层部分 -->
-              <section>
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-                  <h2 class="text-lg font-medium">社长/团支书/秘书长</h2>
-                  <div class="flex gap-2">
-                    <SkeletonLoader type="button"/>
-                    <SkeletonLoader type="button"/>
-                  </div>
-                </div>
+          <!-- 总览 Tab -->
+          <n-tab-pane name="overview" tab="总览面板">
+            <div class="space-y-8 mt-6 animate-fade-in">
 
-                <div class="flex flex-wrap gap-2 mt-4">
-                  <SkeletonLoader v-for="i in 3" :key="i" type="tag"/>
-                </div>
-              </section>
-
-              <!-- 成员列表 -->
-              <section>
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-                  <h2 class="text-lg font-medium">成员</h2>
-                  <div class="flex flex-col sm:flex-row sm:items-center gap-4">
-                    <div class="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                      <Icon icon="ion:people" class="mr-1" width="16" height="16"/>
-                      <span>所有部员: <SkeletonLoader type="text" width="20px"/></span>
+              <!-- 顶部统计卡片组 -->
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- 领导层概览 -->
+                <div class="apple-sub-card p-6 flex flex-col justify-between h-full">
+                  <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2 text-gray-500 dark:text-gray-400">
+                      <Icon icon="ion:ribbon-outline" class="text-xl" />
+                      <span class="text-sm font-medium">领导核心</span>
                     </div>
-                    <SkeletonLoader type="button"/>
-                  </div>
-                </div>
-
-                <div class="bg-gray-100 dark:bg-gray-700/50 rounded-xl overflow-hidden">
-                  <SkeletonLoader type="table" :count="5" :columns="8"/>
-                </div>
-              </section>
-
-              <!-- 项目卡片 -->
-              <section>
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                  <h2 class="text-lg font-medium">项目</h2>
-                  <SkeletonLoader type="button"/>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                  <SkeletonLoader v-for="i in 3" :key="i" type="card"/>
-                </div>
-              </section>
-
-              <!-- 数据统计卡片 -->
-              <section>
-                <h2 class="text-lg font-medium mb-4">数据统计</h2>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-                  <!-- 部门分布 -->
-                  <div
-                      class="bg-white dark:bg-gray-700 rounded-xl shadow-sm p-5 border border-gray-200 dark:border-gray-600">
-                    <h3 class="text-sm font-medium mb-3 text-gray-600 dark:text-gray-300">部门分布</h3>
-                    <div class="h-80 flex items-center justify-center">
-                      <SkeletonLoader type="chart"/>
+                    <div class="flex gap-2">
+                      <button v-if="!loading" @click="() => openAddMember(null)" class="apple-icon-btn text-blue-500">
+                        <Icon icon="ion:add-circle" width="24" />
+                      </button>
                     </div>
                   </div>
 
-                  <!-- 学院分布 -->
-                  <div
-                      class="bg-white dark:bg-gray-700 rounded-xl shadow-sm p-5 border border-gray-200 dark:border-gray-600">
-                    <h3 class="text-sm font-medium mb-3 text-gray-600 dark:text-gray-300">学院分布</h3>
-                    <div class="h-80 flex items-center justify-center">
-                      <SkeletonLoader type="chart"/>
-                    </div>
+                  <div v-if="loading" class="animate-pulse space-y-2">
+                    <div class="h-8 bg-gray-200 dark:bg-gray-700 rounded-md w-3/4"></div>
                   </div>
-
-                  <!-- 男女比例 -->
-                  <div
-                      class="bg-white dark:bg-gray-700 rounded-xl shadow-sm p-5 border border-gray-200 dark:border-gray-600">
-                    <h3 class="text-sm font-medium mb-3 text-gray-600 dark:text-gray-300">男女比例</h3>
-                    <div class="h-80 flex items-center justify-center">
-                      <SkeletonLoader type="chart"/>
+                  <div v-else class="flex flex-wrap gap-2 content-start">
+                    <div v-for="member in ministers" :key="member.userId"
+                         class="apple-chip group">
+                      <span class="font-medium">{{ member.userName }}</span>
+                      <button @click.stop="() => deleteMember(member, ministers)" class="ml-1 opacity-0 group-hover:opacity-100 transition-opacity text-red-500">
+                        <Icon icon="ion:close-circle" />
+                      </button>
                     </div>
+                    <div v-if="ministers.length === 0" class="text-gray-400 italic text-sm">暂无领导成员</div>
                   </div>
                 </div>
-              </section>
-            </div>
-            <div v-else class="p-6 space-y-8">
-              <!-- 领导层部分 -->
-              <section>
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-                  <h2 class="text-lg font-medium">社长/团支书/秘书长</h2>
-                  <div class="flex gap-2">
-                    <button
-                        @click="() => openAddMember()"
-                        class="px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
-                    >
-                      添加成员
-                    </button>
-                    <button
-                        @click="deleteAllMinisters"
-                        class="px-3 py-1.5 text-sm rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors"
-                    >
-                      全部删除
+
+                <!-- 成员概览 -->
+                <div class="apple-sub-card p-6 flex flex-col justify-between h-full">
+                  <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2 text-gray-500 dark:text-gray-400">
+                      <Icon icon="ion:people-outline" class="text-xl" />
+                      <span class="text-sm font-medium">成员总数</span>
+                    </div>
+                    <button @click="downloadMemberInfo" class="apple-icon-btn text-blue-500" title="导出数据">
+                      <Icon icon="ion:cloud-download-outline" width="24" />
                     </button>
                   </div>
-                </div>
-
-                <div class="flex flex-wrap gap-2 mt-4">
-                  <div
-                      v-for="member in ministers"
-                      :key="member.userId"
-                      class="bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-800 dark:text-blue-200 cursor-pointer rounded-full px-3 py-1 flex items-center"
-                  >
-                    <span>{{ member.userName }}</span>
-                    <button @click="() => deleteMember(member, ministers)" class="ml-1 hover:text-red-500">
-                      <Icon icon="ion:close" width="16" height="16"/>
-                    </button>
-                  </div>
-                  <div
-                      v-if="ministers.length === 0"
-                      class="bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 rounded-full px-3 py-1"
-                  >
-                    暂无领导成员
+                  <div class="text-4xl font-bold text-gray-900 dark:text-white tracking-tight">
+                    {{ loading ? '-' : members.length }}
+                    <span class="text-lg font-normal text-gray-400 ml-1">人</span>
                   </div>
                 </div>
-              </section>
 
-              <!-- 成员列表 -->
-              <section>
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-                  <h2 class="text-lg font-medium">成员</h2>
-                  <div class="flex flex-col sm:flex-row sm:items-center gap-4">
-                    <div class="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                      <Icon icon="ion:people" class="mr-1" width="16" height="16"/>
-                      <span>所有部员: {{ members.length }}</span>
+                <!-- 项目概览 -->
+                <div class="apple-sub-card p-6 flex flex-col justify-between h-full">
+                  <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2 text-gray-500 dark:text-gray-400">
+                      <Icon icon="ion:folder-open-outline" class="text-xl" />
+                      <span class="text-sm font-medium">运行项目</span>
                     </div>
-                    <button
-                        @click="downloadMemberInfo"
-                        class="px-3 py-1.5 text-sm rounded-lg bg-blue-500 hover:bg-blue-600 text-white transition-colors"
-                    >
-                      下载部员信息
+                    <button @click="addProject" class="apple-icon-btn text-blue-500">
+                      <Icon icon="ion:add-circle" width="24" />
                     </button>
                   </div>
+                  <div class="text-4xl font-bold text-gray-900 dark:text-white tracking-tight">
+                    {{ loading ? '-' : projects.length }}
+                    <span class="text-lg font-normal text-gray-400 ml-1">个</span>
+                  </div>
                 </div>
+              </div>
 
-                <div class="bg-gray-100 dark:bg-gray-700/50 rounded-xl overflow-hidden">
-                  <n-data-table
-                      :columns="memberColumns"
-                      :data="members"
-                      :pagination="pagination"
-                      :bordered="false"
-                      :single-line="false"
-                      class="min-w-full"
-                  />
+              <!-- 数据图表区 -->
+              <section>
+                <h3 class="section-title mb-4">数据透视</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div v-for="(chartId, index) in ['departmentChart', 'collegeChart', 'genderChart']"
+                       :key="chartId"
+                       class="apple-sub-card p-4 h-[350px] flex flex-col">
+                    <span class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2 ml-2">
+                      {{ ['部门分布', '学院分布', '男女比例'][index] }}
+                    </span>
+                    <div class="flex-1 rounded-xl overflow-hidden relative">
+                      <div :id="chartId" class="w-full h-full"></div>
+                      <!-- Loading State for Charts -->
+                      <div v-if="loading" class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-black/50 backdrop-blur-sm">
+                        <Icon icon="ion:load-c" class="animate-spin text-3xl text-blue-500"/>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </section>
 
-              <!-- 项目卡片 -->
-              <section>
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                  <h2 class="text-lg font-medium">项目</h2>
-                  <button
-                      @click="addProject"
-                      class="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white transition-colors flex items-center"
-                  >
-                    <Icon icon="ion:add" class="mr-1"/>
-                    添加
-                  </button>
+              <!-- 成员列表表格 -->
+              <section class="apple-sub-card overflow-hidden">
+                <div class="p-4 border-b border-gray-100 dark:border-white/10 flex justify-between items-center">
+                  <h3 class="font-semibold text-lg">全体成员名单</h3>
                 </div>
+                <n-data-table
+                    :columns="memberColumns"
+                    :data="members"
+                    :pagination="pagination"
+                    :bordered="false"
+                    :loading="loading"
+                    class="apple-table"
+                />
+              </section>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                  <div
-                      v-for="project in projects"
-                      :key="project.id"
-                      class="bg-white dark:bg-gray-700 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 p-5 border border-gray-200 dark:border-gray-600"
-                  >
+              <!-- 项目卡片网格 -->
+              <section>
+                <h3 class="section-title mb-4">项目一览</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div v-for="project in projects" :key="project.id"
+                       class="apple-item-card group cursor-pointer"
+                       @click="openProject(project)">
                     <div class="flex justify-between items-start mb-3">
-                      <h3 class="font-medium text-gray-900 dark:text-gray-100">{{ project.title }}</h3>
-                      <div
-                          v-if="project.department && project.department.name"
-                          class="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 rounded-full text-xs px-2 py-1"
-                      >
+                      <div class="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400">
+                        <Icon icon="ion:briefcase" width="20" />
+                      </div>
+                      <div v-if="project.department?.name" class="text-xs font-medium px-2 py-1 rounded-full bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-gray-300">
                         {{ project.department.name }}
                       </div>
                     </div>
-                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-4 line-clamp-2">{{ project.description }}</p>
-                    <div class="flex justify-end gap-2">
-                      <button
-                          @click="() => openProject(project)"
-                          class="px-3 py-1 text-sm rounded-lg text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100">
-                        去看看
-                      </button>
-                      <button
-                          @click="() => editProject(project)"
-                          class="px-3 py-1 text-sm rounded-lg bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-500">
-                        编辑
-                      </button>
-                      <button
-                          @click="() => deleteProject(project)"
-                          class="px-3 py-1 text-sm rounded-lg bg-red-500 hover:bg-red-600 text-white">
-                        删除
-                      </button>
+
+                    <h4 class="text-lg font-semibold mb-2 group-hover:text-blue-600 transition-colors">{{ project.title }}</h4>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-4 h-10">{{ project.description }}</p>
+
+                    <div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all translate-y-2 group-hover:translate-y-0" @click.stop>
+                      <button class="apple-btn-sm secondary" @click="editProject(project)">编辑</button>
+                      <button class="apple-btn-sm danger" @click="deleteProject(project)">删除</button>
                     </div>
                   </div>
-                  <div
-                      v-if="projects.length === 0"
-                      class="col-span-full flex flex-col items-center justify-center py-12 text-gray-400 dark:text-gray-500"
-                  >
-                    <n-empty description="暂无项目" size="large"/>
-                    <p class="mt-2">还没有添加任何项目</p>
+                  <!-- 空状态 -->
+                  <div v-if="projects.length === 0 && !loading" class="col-span-full py-12 flex flex-col items-center justify-center text-gray-400">
+                    <Icon icon="ion:file-tray-outline" width="48" class="mb-2 opacity-50"/>
+                    <p>暂无项目</p>
                   </div>
                 </div>
               </section>
 
-              <!-- 数据统计卡片 -->
-              <section>
-                <h2 class="text-lg font-medium mb-4">数据统计</h2>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-                  <!-- 部门分布 -->
-                  <div
-                      class="bg-white dark:bg-gray-700 rounded-xl shadow-sm p-5 border border-gray-200 dark:border-gray-600">
-                    <h3 class="text-sm font-medium mb-3 text-gray-600 dark:text-gray-300">部门分布</h3>
-                    <div class="h-80 flex items-center justify-center">
-                      <n-empty
-                          v-if="!departmentData || departmentData.length === 0"
-                          description="暂无数据"
-                          size="small"
-                      />
-                      <div v-else class="w-full h-full">
-                        <div
-                            id="departmentChart"
-                            class="w-full h-full"
-                        ></div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- 学院分布 -->
-                  <div
-                      class="bg-white dark:bg-gray-700 rounded-xl shadow-sm p-5 border border-gray-200 dark:border-gray-600">
-                    <h3 class="text-sm font-medium mb-3 text-gray-600 dark:text-gray-300">学院分布</h3>
-                    <div class="h-80 flex items-center justify-center">
-                      <n-empty
-                          v-if="!collegeData || collegeData.length === 0"
-                          description="暂无数据"
-                          size="small"
-                      />
-                      <div v-else class="w-full h-full">
-                        <div
-                            id="collegeChart"
-                            class="w-full h-full"
-                        ></div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- 男女比例 -->
-                  <div
-                      class="bg-white dark:bg-gray-700 rounded-xl shadow-sm p-5 border border-gray-200 dark:border-gray-600">
-                    <h3 class="text-sm font-medium mb-3 text-gray-600 dark:text-gray-300">男女比例</h3>
-                    <div class="h-80 flex items-center justify-center">
-                      <n-empty
-                          v-if="!genderData || genderData.length === 0"
-                          description="暂无数据"
-                          size="small"
-                      />
-                      <div v-else class="w-full h-full">
-                        <div
-                            id="genderChart"
-                            class="w-full h-full"
-                        ></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </section>
             </div>
           </n-tab-pane>
 
-          <!-- 各部门标签页 -->
+          <!-- 动态部门 Tab -->
           <n-tab-pane
               v-for="department in departments"
               :key="department.id"
-              :name="department.id"
+              :name="department.id || ''"
               :tab="department.name"
           >
-            <div v-if="loading" class="p-6 space-y-8">
-              <!-- 部门信息头部 -->
-              <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                <div>
-                  <h2 class="text-xl font-medium">
-                    <SkeletonLoader type="text" width="150px"/>
-                  </h2>
-                  <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 max-w-2xl">
-                    <SkeletonLoader type="text" width="300px"/>
-                  </p>
-                </div>
-                <div class="flex flex-wrap gap-2">
-                  <SkeletonLoader type="button"/>
-                  <SkeletonLoader type="button"/>
-                  <SkeletonLoader type="button"/>
-                  <SkeletonLoader type="button"/>
-                </div>
-              </div>
+            <div class="space-y-8 mt-6 animate-fade-in" v-if="!loading">
 
-              <!-- 部长列表 -->
-              <section>
-                <h3 class="text-lg font-medium mb-3">部长/副部长</h3>
-                <div class="flex flex-wrap gap-2">
-                  <SkeletonLoader v-for="i in 3" :key="i" type="tag"/>
-                </div>
-              </section>
+              <!-- 部门头部信息 -->
+              <div class="apple-sub-card p-8 relative overflow-hidden">
+                <!-- 装饰背景 -->
+                <div class="absolute -right-10 -top-10 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
-              <!-- 部门成员 -->
-              <section>
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-                  <h3 class="text-lg font-medium">成员</h3>
-                  <div class="flex gap-2">
-                    <SkeletonLoader type="button"/>
-                    <SkeletonLoader type="button"/>
-                  </div>
-                </div>
-
-                <div class="bg-gray-100 dark:bg-gray-700/50 rounded-xl overflow-hidden">
-                  <SkeletonLoader type="table" :count="5" :columns="3"/>
-                </div>
-              </section>
-
-              <!-- 部门项目 -->
-              <section>
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                  <h3 class="text-lg font-medium">项目</h3>
-                  <SkeletonLoader type="button"/>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                  <SkeletonLoader v-for="i in 3" :key="i" type="card"/>
-                </div>
-              </section>
-            </div>
-            <div v-else class="p-6 space-y-8">
-              <!-- 部门信息头部 -->
-              <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                <div>
-                  <h2 class="text-xl font-medium">{{ department.name }}</h2>
-                  <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 max-w-2xl">{{ department.description }}</p>
-                </div>
-                <div class="flex flex-wrap gap-2">
-                  <button
-                      @click="() => openAddMember(department)"
-                      class="px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
-                  >
-                    添加部长
-                  </button>
-                  <button
-                      @click="() => deleteAll(department.ministers)"
-                      class="px-3 py-1.5 text-sm rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors"
-                  >
-                    删除所有部长
-                  </button>
-                  <button
-                      @click="() => openDepartment(department)"
-                      class="px-3 py-1.5 text-sm rounded-lg bg-blue-500 hover:bg-blue-600 text-white transition-colors"
-                  >
-                    编辑部门
-                  </button>
-                  <button
-                      @click="() => deleteDepartment(department)"
-                      class="px-3 py-1.5 text-sm rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors"
-                  >
-                    删除部门
-                  </button>
-                </div>
-              </div>
-
-              <!-- 部长列表 -->
-              <section>
-                <h3 class="text-lg font-medium mb-3">部长/副部长</h3>
-                <div class="flex flex-wrap gap-2">
-                  <div
-                      v-for="member in department.ministers"
-                      :key="member.userId"
-                      class="bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-800 dark:text-blue-200 cursor-pointer rounded-full px-3 py-1 flex items-center"
-                  >
-                    <span>{{ member.name }}</span>
-                    <button @click="() => deleteMember(member, department.ministers)" class="ml-1 hover:text-red-500">
-                      <Icon icon="ion:close" width="16" height="16"/>
-                    </button>
-                  </div>
-                  <div
-                      v-if="!department.ministers || department.ministers.length === 0"
-                      class="bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 rounded-full px-3 py-1"
-                  >
-                    暂无部长
-                  </div>
-                </div>
-              </section>
-
-              <!-- 部门成员 -->
-              <section>
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-                  <h3 class="text-lg font-medium">成员</h3>
-                  <div class="flex gap-2">
-                    <button
-                        @click="() => openAddMember(department, 'Department')"
-                        class="px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
-                    >
-                      添加成员
-                    </button>
-                    <button
-                        @click="() => deleteAll(department.members)"
-                        class="px-3 py-1.5 text-sm rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors"
-                    >
-                      全部删除
-                    </button>
-                  </div>
-                </div>
-
-                <div class="bg-gray-100 dark:bg-gray-700/50 rounded-xl overflow-hidden">
-                  <n-data-table
-                      :columns="staffColumns"
-                      :data="department.members"
-                      :pagination="pagination"
-                      :bordered="false"
-                      :single-line="false"
-                      class="min-w-full"
-                  />
-                </div>
-              </section>
-
-              <!-- 部门项目 -->
-              <section>
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                  <h3 class="text-lg font-medium">项目</h3>
-                  <button
-                      @click="addProject"
-                      class="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white transition-colors flex items-center"
-                  >
-                    <Icon icon="ion:add" class="mr-1"/>
-                    添加
-                  </button>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                  <div
-                      v-for="project in department.projects"
-                      :key="project.id"
-                      class="bg-white dark:bg-gray-700 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 p-5 border border-gray-200 dark:border-gray-600"
-                  >
-                    <h3 class="font-medium text-gray-900 dark:text-gray-100 mb-3">{{ project.title }}</h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-4 line-clamp-2">{{ project.description }}</p>
-                    <div class="flex justify-end gap-2">
-                      <button
-                          @click="() => openProject(project)"
-                          class="px-3 py-1 text-sm rounded-lg text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100">
-                        去看看
+                <div class="relative z-10">
+                  <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                    <div>
+                      <h2 class="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">{{ department.name }}</h2>
+                    </div>
+                    <div class="flex gap-2">
+                      <button @click="() => openDepartment(department)" class="apple-btn secondary">
+                        <Icon icon="ion:settings-outline" class="mr-1" /> 设置
                       </button>
-                      <button
-                          @click="() => editProject(project)"
-                          class="px-3 py-1 text-sm rounded-lg bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-500">
-                        编辑
-                      </button>
-                      <button
-                          @click="() => deleteProject(project, department.projects)"
-                          class="px-3 py-1 text-sm rounded-lg bg-red-500 hover:bg-red-600 text-white">
-                        删除
+                      <button @click="() => deleteDepartment(department)" class="apple-btn danger">
+                        <Icon icon="ion:trash-outline" class="mr-1" /> 删除
                       </button>
                     </div>
                   </div>
-                  <div
-                      v-if="!department.projects || department.projects.length === 0"
-                      class="col-span-full flex flex-col items-center justify-center py-12 text-gray-400 dark:text-gray-500"
-                  >
-                    <n-empty description="暂无项目" size="large"/>
-                    <p class="mt-2">该部门还没有添加任何项目</p>
+                  <p class="text-gray-600 dark:text-gray-300 max-w-3xl leading-relaxed text-lg">
+                    {{ department.description }}
+                  </p>
+                </div>
+              </div>
+
+              <!-- 部门内容双栏布局 -->
+              <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                <!-- 左侧：部长与信息 -->
+                <div class="space-y-6">
+                  <div class="apple-sub-card p-6">
+                    <div class="flex justify-between items-center mb-4">
+                      <h3 class="font-semibold text-lg">管理团队</h3>
+                      <div class="flex gap-1">
+                        <button @click="() => openAddMember(department, 'Minister')" class="apple-icon-btn text-blue-500">
+                          <Icon icon="ion:add" />
+                        </button>
+                        <button @click="() => deleteAll(department.ministers)" class="apple-icon-btn text-red-500">
+                          <Icon icon="ion:trash-bin-outline" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div class="flex flex-wrap gap-2">
+                      <div v-for="member in department.ministers" :key="member.userId"
+                           class="apple-chip large blue group">
+                        <Icon icon="ion:shield-checkmark" class="mr-1 text-blue-600 dark:text-blue-300 opacity-70"/>
+                        <span>{{ member.name }}</span>
+                        <button @click="() => deleteMember(member, department.ministers)" class="ml-1 hover:text-red-600 transition-colors">
+                          <Icon icon="ion:close" />
+                        </button>
+                      </div>
+                      <div v-if="!department.ministers?.length" class="text-sm text-gray-400 py-2">
+                        暂未指派部长
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="apple-sub-card p-6 bg-gradient-to-br from-blue-500 to-indigo-600 text-white border-none">
+                    <h3 class="text-white/90 font-medium mb-1">项目统计</h3>
+                    <div class="text-3xl font-bold mb-4">{{ department.projects?.length || 0 }}</div>
+                    <button @click="addProject" class="w-full py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium transition-colors backdrop-blur-md flex items-center justify-center">
+                      <Icon icon="ion:add" class="mr-1"/> 新建部门项目
+                    </button>
+                  </div>
+                </div>
+
+                <!-- 右侧：成员列表 -->
+                <div class="lg:col-span-2 apple-sub-card overflow-hidden flex flex-col">
+                  <div class="p-4 border-b border-gray-100 dark:border-white/10 flex justify-between items-center bg-gray-50/50 dark:bg-white/5">
+                    <div class="flex items-center gap-2">
+                      <h3 class="font-semibold">部门成员</h3>
+                      <span class="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs px-2 py-0.5 rounded-full">{{ department.members?.length || 0 }}</span>
+                    </div>
+                    <div class="flex gap-2">
+                      <button @click="() => openAddMember(department, 'Department')" class="apple-btn-sm primary">添加成员</button>
+                      <button @click="() => deleteAll(department.members)" class="apple-btn-sm danger">清空</button>
+                    </div>
+                  </div>
+                  <div class="flex-1 overflow-auto">
+                    <n-data-table
+                        :columns="staffColumns"
+                        :data="department.members"
+                        :pagination="pagination"
+                        :bordered="false"
+                        class="apple-table"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <!-- 部门项目 -->
+              <section>
+                <h3 class="section-title mb-4">归属项目</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div v-for="project in department.projects" :key="project.id"
+                       class="apple-item-card group cursor-pointer"
+                       @click="openProject(project)">
+                    <h4 class="text-lg font-semibold mb-2 group-hover:text-blue-600 transition-colors">{{ project.title }}</h4>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-4">{{ project.description }}</p>
+                    <div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all" @click.stop>
+                      <button class="apple-btn-sm secondary" @click="editProject(project)">编辑</button>
+                      <button class="apple-btn-sm danger" @click="deleteProject(project, department.projects)">删除</button>
+                    </div>
                   </div>
                 </div>
               </section>
+            </div>
+            <!-- Loading Skeleton for specific tabs -->
+            <div v-else class="p-12 flex justify-center">
+              <Icon icon="ion:load-c" class="animate-spin text-4xl text-gray-300"/>
             </div>
           </n-tab-pane>
         </n-tabs>
       </div>
+
     </main>
   </div>
 
-  <!-- 添加成员模态框 -->
+  <!-- 模态框组件 - 样式重写 -->
+  <!-- 添加成员 -->
   <n-modal
       v-model:show="showAddMemberModal"
       preset="card"
-      style="width: 90%; max-width: 600px;"
-      title="添加成员"
+      class="apple-modal"
+      :title="`添加${addMemberType === 'minister' ? '部长' : '成员'}`"
       :bordered="false"
-      class="rounded-2xl overflow-hidden bg-white dark:bg-gray-800"
+      size="huge"
   >
-    <div class="space-y-4">
-      <div class="flex gap-2">
-        <n-input
-            v-model:value="searchKeyword"
-            placeholder="搜索成员（姓名/学号）"
+    <div class="space-y-6">
+      <div class="relative">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <Icon icon="ion:search" class="text-gray-400" />
+        </div>
+        <input
+            v-model="searchKeyword"
             @keyup.enter="searchMembers"
-            clearable
-        >
-          <template #prefix>
-            <Icon icon="ion:search"/>
-          </template>
-        </n-input>
-        <button
-            @click="searchMembers"
-            class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors">
-          搜索
-        </button>
+            type="text"
+            placeholder="搜索姓名或学号..."
+            class="w-full pl-10 pr-4 py-3 bg-gray-100 dark:bg-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+        />
       </div>
 
-      <n-data-table
-          v-if="searchResults.length > 0"
-          :columns="searchColumns"
-          :data="searchResults"
-          class="mt-2"
-          :bordered="false"
-          :pagination="{pageSize: 5}"
-          :single-line="false"
-      />
-
-      <div v-else-if="searchKeyword && searchResults.length === 0"
-           class="text-center py-8 text-gray-500 dark:text-gray-400">
-        <n-empty description="未找到相关成员"/>
-      </div>
-
-      <div v-else class="text-center py-8 text-gray-500 dark:text-gray-400">
-        <n-empty description="请输入关键词搜索成员">
-          <template #icon>
-            <Icon icon="ion:search"/>
-          </template>
-        </n-empty>
+      <div class="min-h-[200px]">
+        <n-data-table
+            v-if="searchResults.length > 0"
+            :columns="searchColumns"
+            :data="searchResults"
+            class="apple-table"
+            :bordered="false"
+            :pagination="{pageSize: 5}"
+        />
+        <div v-else class="h-full flex flex-col items-center justify-center text-gray-400 gap-2 py-8">
+          <Icon icon="ion:search-outline" width="48" class="opacity-20"/>
+          <span>{{ searchKeyword ? '未找到匹配成员' : '输入关键词开始搜索' }}</span>
+        </div>
       </div>
     </div>
-    <template #footer>
-      <div class="flex justify-end gap-2">
-        <button
-            @click="showAddMemberModal = false"
-            class="px-4 py-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
-          取消
-        </button>
-      </div>
-    </template>
   </n-modal>
 
-  <!-- 添加或更改部门模态框 -->
+  <!-- 编辑部门 -->
   <n-modal
       v-model:show="showDepartmentModal"
       preset="card"
-      style="width: 90%; max-width: 500px;"
-      :title="editingDepartment ? '编辑部门' : '添加部门'"
+      class="apple-modal"
+      :title="editingDepartment ? '编辑部门' : '新建部门'"
       :bordered="false"
-      class="rounded-2xl overflow-hidden bg-white dark:bg-gray-800"
   >
-    <n-form
-        :model="departmentForm"
-        :rules="departmentRules"
-        ref="departmentFormRef"
-        class="space-y-4"
-    >
+    <n-form :model="departmentForm" :rules="departmentRules" ref="departmentFormRef" class="space-y-4">
       <n-form-item label="部门名称" path="name">
-        <n-input
-            v-model:value="departmentForm.name"
-            placeholder="请输入部门名称"
-        />
+        <n-input v-model:value="departmentForm.name" placeholder="例如：技术部" class="apple-input-Override" />
       </n-form-item>
-      <n-form-item label="部门简介" path="description">
+      <n-form-item label="职能描述" path="description">
         <n-input
             v-model:value="departmentForm.description"
-            placeholder="请输入部门简介"
+            placeholder="描述该部门的主要职责..."
             type="textarea"
-            :autosize="{ minRows: 3, maxRows: 5 }"
+            :autosize="{ minRows: 4, maxRows: 6 }"
+            class="apple-input-Override"
         />
       </n-form-item>
     </n-form>
     <template #footer>
-      <div class="flex justify-end gap-2">
-        <button
-            @click="showDepartmentModal = false"
-            class="px-4 py-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
-          取消
-        </button>
-        <button
-            @click="saveDepartment"
-            class="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white transition-colors"
-        >
-          {{ editingDepartment ? '保存' : '添加' }}
-        </button>
+      <div class="flex justify-end gap-3">
+        <button @click="showDepartmentModal = false" class="apple-btn secondary">取消</button>
+        <button @click="saveDepartment" class="apple-btn primary">完成</button>
       </div>
     </template>
   </n-modal>
 
-  <!-- 更改部门模态框 -->
+  <!-- 更改部门 -->
   <n-modal
       v-model:show="showChangeDepartmentModalRef"
       preset="card"
-      style="width: 90%; max-width: 500px;"
-      title="更改员工部门"
+      class="apple-modal"
+      title="人事调动"
       :bordered="false"
-      class="rounded-2xl overflow-hidden bg-white dark:bg-gray-800"
   >
-    <div v-if="selectedStaff" class="space-y-4">
-      <div class="bg-gray-100 dark:bg-gray-700 rounded-lg p-4">
-        <div class="text-sm text-gray-600 dark:text-gray-300">员工信息</div>
-        <div class="font-medium">{{ selectedStaff.name }} ({{ selectedStaff.userId }})</div>
+    <div v-if="selectedStaff" class="space-y-6">
+      <div class="bg-gray-50 dark:bg-white/5 p-4 rounded-xl flex items-center gap-4">
+        <div class="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 font-bold text-xl">
+          {{ selectedStaff.name.charAt(0) }}
+        </div>
+        <div>
+          <div class="font-medium text-gray-900 dark:text-white">{{ selectedStaff.name }}</div>
+          <div class="text-sm text-gray-500">{{ selectedStaff.userId }} | {{ selectedStaff.department || '无部门' }}</div>
+        </div>
       </div>
 
-      <div class="space-y-2 pb-20">
-        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">选择新部门</label>
-        <n-select
-            v-model:value="targetDepartment"
-            :options="departmentOptions"
-            placeholder="请选择部门"
-            class="z-50"
-        />
+      <div>
+        <label class="block text-sm font-medium mb-2 text-gray-600 dark:text-gray-400">调动至</label>
+        <n-select v-model:value="targetDepartment" :options="departmentOptions" placeholder="选择新部门" />
       </div>
     </div>
-
     <template #footer>
-      <div class="flex justify-end gap-2">
-        <button
-            @click="showChangeDepartmentModalRef = false"
-            class="px-4 py-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
-          取消
-        </button>
+      <div class="flex justify-end gap-3">
+        <button @click="showChangeDepartmentModalRef = false" class="apple-btn secondary">取消</button>
         <button
             @click="handleChangeDepartment"
-            class="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white transition-colors"
+            class="apple-btn primary"
             :disabled="!targetDepartment || targetDepartment === selectedStaff?.department"
-        >
-          确认更改
-        </button>
+        >确认调动</button>
       </div>
     </template>
   </n-modal>
 </template>
 
 <script setup lang="ts">
-import {ref, onMounted, onBeforeUnmount, h, computed, nextTick, watch, defineComponent} from 'vue'
-import {useRouter} from 'vue-router'
+import { ref, onMounted, onBeforeUnmount, h, computed, nextTick, watch, defineComponent } from 'vue'
+import { useRouter } from 'vue-router'
 import {
   useMessage,
   NButton,
@@ -661,37 +402,34 @@ import {
   NModal,
   NForm,
   NFormItem,
-  NEmpty
 } from 'naive-ui'
-import {DataTableColumns} from 'naive-ui'
-import {Icon} from '@iconify/vue'
-import SkeletonLoader from '../components/SkeletonLoader.vue'
-import {DepartmentService} from '../services/DepartmentService'
-import {StaffService} from '../services/StaffService'
-import {ProjectService} from '../services/ProjectService'
-import type {Department, DepartmentModel, MemberModel, Project, StudentModel, StaffModel} from '../models'
+import type { DataTableColumns } from 'naive-ui'
+import { Icon } from '@iconify/vue'
+// import SkeletonLoader from '../components/SkeletonLoader.vue' // 已移除，页面使用自带loading状态
+import { DepartmentService } from '../services/DepartmentService'
+import { StaffService } from '../services/StaffService'
+import { ProjectService } from '../services/ProjectService'
+import type { Department, DepartmentModel, MemberModel, Project, StudentModel, StaffModel } from '../models'
 import * as echarts from 'echarts'
-import {MemberQueryService} from "../services/MemberQueryService";
-import {useLayoutStore} from '../stores/LayoutStore';
+import { MemberQueryService } from "../services/MemberQueryService";
+import { useLayoutStore } from '../stores/LayoutStore';
 
 const router = useRouter()
 const message = useMessage()
 const layoutStore = useLayoutStore()
 
-// 数据状态
+// --- 数据状态 ---
 const ministers = ref<MemberModel[]>([])
 const members = ref<MemberModel[]>([])
 const projects = ref<Project[]>([])
 const departments = ref<Department[]>([])
 const staffs = ref<MemberModel[]>([])
-const loading = ref(false)
+const loading = ref(true) // 默认 loading true
 
-// 新增的响应式变量
 const showChangeDepartmentModalRef = ref(false)
 const selectedStaff = ref<StaffModel | null>(null)
 const targetDepartment = ref('')
 
-// 模态框状态
 const showAddMemberModal = ref(false)
 const showDepartmentModal = ref(false)
 const searchKeyword = ref('')
@@ -699,7 +437,6 @@ const searchResults = ref<StudentModel[]>([])
 const addMemberType = ref('member')
 const departmentFormRef = ref<InstanceType<typeof NForm> | null>(null)
 
-// 表单数据
 const departmentForm = ref({
   name: '',
   description: ''
@@ -708,98 +445,85 @@ const departmentForm = ref({
 const editingDepartment = ref<Department | null>(null)
 const currentDepartment = ref<Department | null>(null)
 
-// 表格分页
-const pagination = {
-  pageSize: 10
+const pagination = { pageSize: 8 } // 调整每页数量适配卡片高度
+
+// --- Helper Components for Render Functions (Tailwind Styled) ---
+const AppleButton = (props: { type?: 'primary' | 'danger' | 'secondary', size?: 'small', onClick: () => void, text: string }) => {
+  const baseClass = "inline-flex items-center justify-center font-medium transition-all active:scale-95 rounded-lg"
+  const sizeClass = props.size === 'small' ? 'px-2.5 py-1 text-xs' : 'px-4 py-2 text-sm'
+
+  let colorClass = ''
+  if (props.type === 'danger') colorClass = 'bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500/20'
+  else if (props.type === 'primary') colorClass = 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm shadow-blue-500/30'
+  else colorClass = 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-white/10 dark:text-gray-200 dark:hover:bg-white/20'
+
+  return h('button', {
+    class: `${baseClass} ${sizeClass} ${colorClass}`,
+    onClick: (e: Event) => { e.stopPropagation(); props.onClick() }
+  }, props.text)
 }
 
-// 表格列定义
+// --- Table Columns Configuration ---
 const memberColumns: DataTableColumns<MemberModel> = [
-  {title: '姓名', key: 'userName', width: 100},
-  {title: '学号', key: 'userId', width: 120},
-  {title: '学院', key: 'academy', width: 150},
-  {title: '政治面貌', key: 'politicalLandscape', width: 100},
-  {title: '性别', key: 'gender', width: 60},
-  {title: '专业班级', key: 'className', width: 120},
-  {title: '手机号码', key: 'phoneNum', width: 120},
-  {
-    title: '身份', key: 'identity', width: 80,
-  },
+  { title: '姓名', key: 'userName', width: 100,
+    render: (row) => h('span', { class: 'font-medium text-gray-900 dark:text-gray-100' }, row.userName) },
+  { title: '学号', key: 'userId', width: 120, className: 'text-gray-500' },
+  { title: '学院', key: 'academy', width: 150 },
+  { title: '性别', key: 'gender', width: 60 },
+  { title: '专业班级', key: 'className', width: 140 },
+  { title: '手机', key: 'phoneNum', width: 120 },
   {
     title: '操作',
     key: 'actions',
     width: 80,
-    render: (row) => h(NButton, {
-      type: 'error',
-      secondary: true,
-      size: 'small',
-      onClick: () => deleteMember(row)
-    }, {default: () => '删除'})
+    render: (row) => AppleButton({ type: 'danger', size: 'small', onClick: () => deleteMember(row), text: '移除' })
   }
 ]
 
 const staffColumns: DataTableColumns<StaffModel> = [
-  {title: '姓名', key: 'name', width: 100},
-  {title: '学号', key: 'userId', width: 120},
+  { title: '姓名', key: 'name', width: 100,
+    render: (row) => h('div', { class: 'flex items-center gap-2' }, [
+      h(Icon, { icon: 'ion:person-circle-outline', class: 'text-lg text-gray-400' }),
+      h('span', { class: 'font-medium' }, row.name)
+    ])
+  },
+  { title: '学号', key: 'userId', width: 120, className: 'text-gray-500 font-mono text-xs' },
   {
     title: '操作',
     key: 'actions',
-    width: 120,
-    render: (row) => h('div', {class: 'flex gap-2'}, [
-      h(NButton, {
-        type: 'primary',
-        secondary: true,
-        size: 'small',
-        onClick: () => showChangeDepartmentModal(row)
-      }, {default: () => '换部门'}),
-      h(NButton, {
-        type: 'error',
-        secondary: true,
-        size: 'small',
-        onClick: () => deleteStaff(row)
-      }, {default: () => '删除'})
+    width: 140,
+    render: (row) => h('div', { class: 'flex gap-2' }, [
+      AppleButton({ type: 'secondary', size: 'small', onClick: () => showChangeDepartmentModal(row), text: '调岗' }),
+      AppleButton({ type: 'danger', size: 'small', onClick: () => deleteStaff(row), text: '移除' })
     ])
   }
 ]
 
 const searchColumns: DataTableColumns<any> = [
-  {title: '姓名', key: 'userName', width: 100},
-  {title: '学号', key: 'userId', width: 120},
-  {title: '学院', key: 'academy', width: 150},
+  { title: '姓名', key: 'userName', width: 100, render: (row) => h('b', row.userName) },
+  { title: '学号', key: 'userId', width: 120 },
+  { title: '学院', key: 'academy', width: 150 },
   {
     title: '操作',
     key: 'actions',
     width: 80,
-    render: (row) => h(NButton, {
-      type: 'primary',
-      secondary: true,
-      size: 'small',
-      onClick: () => addMember(row)
-    }, {default: () => '添加'})
+    render: (row) => AppleButton({Type: 'primary', size: 'small', onClick: () => addMember(row), text: '添加'})
   }
 ]
 
-// 表单验证规则
 const departmentRules = {
-  name: {
-    required: true,
-    message: '请输入部门名称',
-    trigger: 'blur'
-  },
-  description: {
-    required: true,
-    message: '请输入部门简介',
-    trigger: 'blur'
-  }
+  name: { required: true, message: '请输入部门名称', trigger: 'blur' },
+  description: { required: true, message: '请输入部门简介', trigger: 'blur' }
 }
 
-// 新增的计算属性
 const departmentOptions = computed(() => {
   return departments.value.map(dept => ({
     label: dept.name,
     value: dept.name
   }))
 })
+
+// --- Actions ---
 
 const openDepartment = (department: Department | null = null) => {
   if (department) {
@@ -810,12 +534,11 @@ const openDepartment = (department: Department | null = null) => {
     }
   } else {
     editingDepartment.value = null
-    departmentForm.value = {name: '', description: ''}
+    departmentForm.value = { name: '', description: '' }
   }
   showDepartmentModal.value = true
 }
 
-// 新增的函数
 const showChangeDepartmentModal = (staff: StaffModel) => {
   selectedStaff.value = staff
   targetDepartment.value = staff.department || ''
@@ -830,35 +553,35 @@ const openAddMember = (department: Department | null = null, type = 'member') =>
   addMemberType.value = type
 }
 
+// --- CRUD Operations (Logic Preserved) ---
+
 const deleteAllMinisters = async () => {
   try {
-    // 实际应用中应该添加确认对话框
-    const ministerList = ministers.value.slice() // Create a copy of the array
+    const ministerList = ministers.value.slice()
     for (const minister of ministerList) {
       await StaffService.deleteStaff(minister.userId)
     }
     await fetchData()
     message.success('所有部长已删除')
   } catch (error: any) {
-    console.error('删除部长时发生错误:', error)
-    message.error('删除部长时发生错误: ' + (error.message || '未知错误'))
+    console.error('Error:', error)
+    message.error('操作失败')
   }
 }
 
 const deleteAll = async (list: any[] | undefined) => {
   try {
-    // 实际应用中应该添加确认对话框
     if (list && Array.isArray(list)) {
-      const listCopy = [...list] // Create a copy of the array
+      const listCopy = [...list]
       for (const member of listCopy) {
         await StaffService.deleteStaff(member.userId)
       }
       await fetchData()
-      message.success('所有成员已删除')
+      message.success('清空成功')
     }
   } catch (error: any) {
-    console.error('删除成员时发生错误:', error)
-    message.error('删除成员时发生错误: ' + (error.message || '未知错误'))
+    console.error('Error:', error)
+    message.error('操作失败')
   }
 }
 
@@ -867,30 +590,22 @@ const deleteMember = async (member: any, list?: any[]) => {
     await StaffService.deleteStaff(member.userId)
     if (list && Array.isArray(list)) {
       const index = list.findIndex(m => m.userId === member.userId)
-      if (index > -1) {
-        list.splice(index, 1)
-        message.success('成员已删除')
-      }
+      if (index > -1) list.splice(index, 1)
     } else {
       const index = members.value.findIndex(m => m.userId === member.userId)
-      if (index > -1) {
-        members.value.splice(index, 1)
-        message.success('成员已删除')
-      }
+      if (index > -1) members.value.splice(index, 1)
     }
-    await fetchData()
+    message.success('已移除成员')
+    await fetchData() // Refresh mostly for charts
   } catch (error: any) {
-    console.error('删除成员时发生错误:', error)
-    message.error('删除成员时发生错误: ' + (error.message || '未知错误'))
+    message.error('删除失败')
   }
 }
 
 const deleteStaff = async (staff: any) => {
   const res = await StaffService.deleteStaff(staff.userId)
-  if (!res) {
-    return message.error('部员删除失败')
-  }
-  message.success('部员已删除')
+  if (!res) return message.error('操作失败')
+  message.success('成员已删除')
   await fetchData()
 }
 
@@ -898,73 +613,39 @@ const downloadMemberInfo = async () => {
   try {
     const blob = await DepartmentService.exportJson()
     const url = URL.createObjectURL(blob)
-
     const a = document.createElement('a')
     a.href = url
     a.download = 'member.json'
     document.body.appendChild(a)
     a.click()
-
-    setTimeout(() => {
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
-    }, 100)
-
-    message.success('数据下载成功')
+    setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url) }, 100)
+    message.success('下载已开始')
   } catch (error) {
-    console.error('导出失败:', error)
     message.error('导出失败')
   }
 }
 
-const addProject = () => {
-  router.push('/Centre/ProjectEditor')
-}
-
-const editProject = (project: Project) => {
-  router.push(`/Centre/ProjectEditor/${project.id}`)
-}
-
-const openProject = (project: Project) => {
-  router.push(`/Centre/ProjectData/${project.id}`)
-}
+const addProject = () => router.push('/Centre/ProjectEditor')
+const editProject = (project: Project) => router.push(`/Centre/ProjectEditor/${project.id}`)
+const openProject = (project: Project) => router.push(`/Centre/ProjectData/${project.id}`)
 
 const deleteProject = async (project: Project, list?: Project[]) => {
   try {
     await ProjectService.deleteProject(project.id)
-    if (list && Array.isArray(list)) {
-      const index = list.findIndex(p => p.id === project.id)
-      if (index > -1) {
-        list.splice(index, 1)
-        message.success('项目已删除')
-      }
-    } else {
-      const index = projects.value.findIndex(p => p.id === project.id)
-      if (index > -1) {
-        projects.value.splice(index, 1)
-        message.success('项目已删除')
-      }
-    }
-    await fetchData()
+    fetchData()
+    message.success('项目已删除')
   } catch (error: any) {
-    console.error('删除项目时发生错误:', error)
-    message.error('删除项目时发生错误: ' + (error.message || '未知错误'))
+    message.error('删除失败')
   }
 }
 
 const deleteDepartment = async (department: Department) => {
   try {
-    // 实际应用中应该添加确认对话框
     await DepartmentService.deleteDepartment(department.name)
-    const index = departments.value.findIndex(d => d.id === department.id)
-    if (index > -1) {
-      departments.value.splice(index, 1)
-      message.success('部门已删除')
-    }
-    await fetchData()
+    fetchData()
+    message.success('部门已删除')
   } catch (error: any) {
-    console.error('删除部门时发生错误:', error)
-    message.error('删除部门时发生错误: ' + (error.message || '未知错误'))
+    message.error('删除失败')
   }
 }
 
@@ -973,472 +654,441 @@ const searchMembers = async () => {
     searchResults.value = []
     return
   }
-
   try {
     searchResults.value = await MemberQueryService.search(searchKeyword.value, 'username')
   } catch (error) {
-    console.error('搜索成员时发生错误:', error)
-    message.error('搜索成员时发生错误')
+    message.error('搜索出错')
   }
 }
 
 const addMember = async (member: StudentModel) => {
   try {
+    const commonData = {
+      userId: member.userId,
+      name: member.userName,
+      academy: member.academy,
+      className: member.className,
+      gender: member.gender,
+      phoneNum: member.phoneNum,
+      politicalLandscape: member.politicalLandscape,
+    }
+
     if (currentDepartment.value) {
-      // 添加到特定部门
-      const staffData = {
-        userId: member.userId,
-        name: member.userName,
-        academy: member.academy,
-        className: member.className,
-        gender: member.gender,
-        phoneNum: member.phoneNum,
-        politicalLandscape: member.politicalLandscape,
+      await StaffService.createStaff({
+        ...commonData,
         identity: addMemberType.value === 'minister' ? 'Minister' : 'Department',
         department: currentDepartment.value.name
-      } as StaffModel;
-
-      await StaffService.createStaff(staffData);
-
-      message.success(`已添加${member.userName}到${currentDepartment.value.name}`)
+      } as StaffModel);
+      message.success(`已添加至 ${currentDepartment.value.name}`)
     } else {
-      // 添加到领导层
-      const staffData = {
-        userId: member.userId,
-        name: member.userName,
-        academy: member.academy,
-        className: member.className,
-        gender: member.gender,
-        phoneNum: member.phoneNum,
-        politicalLandscape: member.politicalLandscape,
+      await StaffService.createStaff({
+        ...commonData,
         identity: 'President',
         department: ''
-      } as StaffModel;
-
-      await StaffService.createStaff(staffData);
-      message.success(`已添加${member.userName}到领导层`)
+      } as StaffModel);
+      message.success(`已添加至领导层`)
     }
     await fetchData()
     showAddMemberModal.value = false
   } catch (error: any) {
-    console.error('添加成员时发生错误:', error)
-    message.error('添加成员时发生错误: ' + (error.message || '未知错误'))
+    message.error('添加失败: ' + (error.message || '未知错误'))
   }
 }
 
 const saveDepartment = async () => {
   try {
     await departmentFormRef.value?.validate()
-
     const departmentData = {
-      key: editingDepartment.value?.id.toString || '',
+      key: editingDepartment.value?.id.toString() || '',
       name: departmentForm.value.name,
       description: departmentForm.value.description
     } as DepartmentModel
 
     if (editingDepartment.value) {
-      // 更新部门
       await DepartmentService.updateDepartment(departmentData)
-      // 更新本地数据
-      if (editingDepartment.value) {
-        editingDepartment.value.name = departmentForm.value.name
-        editingDepartment.value.description = departmentForm.value.description
-      }
-      message.success('部门更新成功')
+      message.success('部门已更新')
     } else {
-      // 创建部门
       await DepartmentService.createDepartment(departmentData)
-      // 重新获取部门列表以获取新创建的部门
-      await fetchData()
-      message.success('部门添加成功')
+      message.success('部门已创建')
     }
-
+    await fetchData()
     showDepartmentModal.value = false
   } catch (error: any) {
-    console.error('保存部门时发生错误:', error)
-    message.error('保存部门时发生错误: ' + (error.message || '未知错误'))
+    message.error('保存失败')
   }
 }
 
-const changeStaffDepartment = async (userId: string, departmentName: string) => {
+const handleChangeDepartment = async () => {
+  if (!selectedStaff.value || !targetDepartment.value) return
   try {
-    await StaffService.changeDepartment(userId, departmentName);
-    message.success('员工部门变更成功');
-    await fetchData();
+    await StaffService.changeDepartment(selectedStaff.value.userId, targetDepartment.value)
+    showChangeDepartmentModalRef.value = false
+    message.success('调岗成功')
+    await fetchData()
   } catch (error: any) {
-    console.error('变更员工部门时发生错误:', error);
-    message.error('变更员工部门时发生错误: ' + (error.message || '未知错误'));
+    message.error('调岗失败')
   }
 }
 
-// 获取数据
+// --- Data Fetching ---
 const fetchData = async () => {
+  loading.value = true
   try {
-    // 获取所有部门信息
     const departmentsData = await DepartmentService.getAllDepartments()
     departments.value = departmentsData.map(dept => ({
-      id: dept.key, // 需要根据实际情况调整
+      id: dept.key,
       name: dept.name,
       description: dept.description,
-      ministers: dept.staffs?.filter((staff: any) =>
-          staff.identity === 'President' || staff.identity === 'Minister') || [],
-      members: dept.staffs?.filter((staff: any) =>
-          staff.identity === 'Department') || [],
+      ministers: dept.staffs?.filter((staff: any) => staff.identity === 'President' || staff.identity === 'Minister') || [],
+      members: dept.staffs?.filter((staff: any) => staff.identity === 'Department') || [],
       projects: (dept.projects || []).map(project => ({
         id: project.id,
         title: project.name,
         description: project.description,
-        department: {
-          id: 0, // 需要根据实际情况调整
-          name: project.department
-        }
+        department: { id: 0, name: project.department }
       }))
     } as Department))
 
-    // 获取员工信息
     staffs.value = await StaffService.getAllStaff()
+    ministers.value = staffs.value.filter(staff => staff.identity === 'President')
+    members.value = staffs.value.filter(staff => staff.identity !== 'Founder')
 
-    // 分离领导层和普通成员
-    ministers.value = staffs.value
-        .filter(staff => staff.identity === 'President')
-
-    members.value = staffs.value
-        .filter(staff => staff.identity !== 'Founder')
-
-    // 获取项目信息
     const projectsData = await ProjectService.getAllProjects()
     projects.value = projectsData.map(project => ({
-      id: project.id, // 需要根据实际情况调整
+      id: project.id,
       title: project.name,
       description: project.description,
-      department: {
-        id: 0, // 需要根据实际情况调整
-        name: project.department
-      }
+      department: { id: 0, name: project.department }
     })) as Project[]
 
   } catch (error: any) {
-    console.error('获取部门数据失败:', error)
-    message.error('获取数据时发生错误: ' + (error.message || '未知错误'))
+    console.error(error)
+    message.error('数据加载失败')
+  } finally {
+    loading.value = false
+    // Trigger chart render after data is ready
+    nextTick(() => renderAllCharts())
   }
 }
 
-// 计算属性：部门分布数据
+// --- Charts ---
+
 const departmentData = computed(() => {
-  if (!staffs.value || staffs.value.length === 0) return []
-
-  const departmentCount: Record<string, number> = {}
-
+  if (!staffs.value.length) return []
+  const map: Record<string, number> = {}
   departments.value.forEach(dept => {
-    departmentCount[dept.name] = (dept.members || []).length + (dept.ministers || []).length
+    map[dept.name] = (dept.members?.length || 0) + (dept.ministers?.length || 0)
   })
-
-  // 转换为图表需要的格式
-  return Object.entries(departmentCount).map(([name, count]) => ({
-    name,
-    value: count
-  }))
+  return Object.entries(map).map(([name, value]) => ({ name, value }))
 })
 
-// 计算属性：学院分布数据
 const collegeData = computed(() => {
-  if (!staffs.value || staffs.value.length === 0) return []
-
-  const collegeCount: Record<string, number> = {}
-
-  // 统计各学院人数
-  staffs.value.forEach(staff => {
-    const college = staff.academy || '未知学院'
-    collegeCount[college] = (collegeCount[college] || 0) + 1
-  })
-
-  // 转换为图表需要的格式
-  return Object.entries(collegeCount).map(([name, count]) => ({
-    name,
-    value: count
-  }))
+  if (!staffs.value.length) return []
+  const map: Record<string, number> = {}
+  staffs.value.forEach(s => { const c = s.academy || '未知'; map[c] = (map[c] || 0) + 1 })
+  return Object.entries(map).map(([name, value]) => ({ name, value }))
 })
 
-// 计算属性：男女比例数据
 const genderData = computed(() => {
-  if (!staffs.value || staffs.value.length === 0) return []
-
-  const genderCount: Record<string, number> = {
-    男: 0,
-    女: 0
-  }
-
-  // 统计男女比例
-  staffs.value.forEach(staff => {
-    if (staff.gender === '男') {
-      genderCount['男']++
-    } else if (staff.gender === '女') {
-      genderCount['女']++
-    }
-  })
-
-  // 转换为图表需要的格式
-  return Object.entries(genderCount).map(([name, count]) => ({
-    name,
-    value: count
-  }))
+  if (!staffs.value.length) return []
+  const map = { '男': 0, '女': 0 }
+  staffs.value.forEach(s => { if(s.gender === '男') map['男']++; else if(s.gender === '女') map['女']++ })
+  return Object.entries(map).map(([name, value]) => ({ name, value }))
 })
 
-// 图表初始化函数
-const initChart = (chartId: string, option: any) => {
-  const chartDom = document.getElementById(chartId)
-  if (chartDom) {
-    const myChart = echarts.init(chartDom)
-    myChart.setOption(option)
+const initChart = (id: string, options: any) => {
+  const dom = document.getElementById(id)
+  if (!dom) return
+  const chart = echarts.init(dom as HTMLElement)
+  chart.setOption(options)
 
-    // 响应式处理
-    window.addEventListener('resize', () => {
-      myChart.resize()
-    })
+  // Auto Resize
+  const resizeHandler = () => chart.resize()
+  window.addEventListener('resize', resizeHandler)
+  // Store implementation to remove listener later if needed (skipped for this simple implementation)
+}
+
+const getCommonChartOptions = (data: any[], name: string) => {
+  // Check if dark mode is likely active by checking body class or text color,
+  // but here we'll just use neutral colors that work on both or slightly transparent.
+  // For true adaptive ECharts, passing a theme is better.
+  return {
+    tooltip: { trigger: 'item', backgroundColor: 'rgba(255,255,255,0.95)', borderRadius: 8, textStyle: { color: '#333' } },
+    legend: { bottom: 0, left: 'center', textStyle: { color: 'inherit' }, icon: 'circle' }, // Inherit css color doesn't always work in canvas, use transparent logic or simple gray
+    series: [{
+      name: name,
+      type: 'pie',
+      radius: ['40%', '65%'],
+      center: ['50%', '45%'],
+      itemStyle: { borderRadius: 8, borderColor: 'rgba(0,0,0,0)', borderWidth: 2 },
+      label: { show: false },
+      data: data
+    }]
   }
 }
 
-// 渲染部门分布图表
-const renderDepartmentChart = () => {
-  const option = {
-    tooltip: {
-      trigger: 'item'
-    },
-    legend: {
-      bottom: '0%',
-      left: 'center'
-    },
-    series: [
-      {
-        name: '部门分布',
-        type: 'pie',
-        radius: ['40%', '70%'],
-        avoidLabelOverlap: false,
-        itemStyle: {
-          borderRadius: 10,
-          borderColor: '#fff',
-          borderWidth: 2
-        },
-        label: {
-          show: false,
-          position: 'center'
-        },
-        emphasis: {
-          label: {
-            show: true,
-            fontSize: 20,
-            fontWeight: 'bold'
-          }
-        },
-        labelLine: {
-          show: false
-        },
-        data: departmentData.value
-      }
-    ]
-  }
-
-  initChart('departmentChart', option)
-}
-
-// 渲染学院分布图表
-const renderCollegeChart = () => {
-  const option = {
-    tooltip: {
-      trigger: 'item'
-    },
-    legend: {
-      bottom: '0%',
-      left: 'center'
-    },
-    series: [
-      {
-        name: '学院分布',
-        type: 'pie',
-        radius: ['40%', '70%'],
-        avoidLabelOverlap: false,
-        itemStyle: {
-          borderRadius: 10,
-          borderColor: '#fff',
-          borderWidth: 2
-        },
-        label: {
-          show: false,
-          position: 'center'
-        },
-        emphasis: {
-          label: {
-            show: true,
-            fontSize: 20,
-            fontWeight: 'bold'
-          }
-        },
-        labelLine: {
-          show: false
-        },
-        data: collegeData.value
-      }
-    ]
-  }
-
-  initChart('collegeChart', option)
-}
-
-// 渲染男女比例图表
-const renderGenderChart = () => {
-  const option = {
-    tooltip: {
-      trigger: 'item'
-    },
-    legend: {
-      bottom: '0%',
-      left: 'center'
-    },
-    series: [
-      {
-        name: '男女比例',
-        type: 'pie',
-        radius: ['40%', '70%'],
-        avoidLabelOverlap: false,
-        itemStyle: {
-          borderRadius: 10,
-          borderColor: '#fff',
-          borderWidth: 2
-        },
-        label: {
-          show: false,
-          position: 'center'
-        },
-        emphasis: {
-          label: {
-            show: true,
-            fontSize: 20,
-            fontWeight: 'bold'
-          }
-        },
-        labelLine: {
-          show: false
-        },
-        data: genderData.value
-      }
-    ]
-  }
-
-  initChart('genderChart', option)
-}
-
-// 在数据更新后重新渲染图表
 const renderAllCharts = () => {
-  nextTick(() => {
-    renderDepartmentChart()
-    renderCollegeChart()
-    renderGenderChart()
-  })
+  initChart('departmentChart', getCommonChartOptions(departmentData.value, '部门分布'))
+  initChart('collegeChart', getCommonChartOptions(collegeData.value, '学院分布'))
+  initChart('genderChart', getCommonChartOptions(genderData.value, '男女比例'))
 }
 
-// 在组件挂载后初始化图表
+watch([departmentData, collegeData, genderData], () => renderAllCharts())
+
+const handleTabChange = (name: string) => {
+  if (name === 'overview') nextTick(() => renderAllCharts())
+}
+
+// --- Lifecycle ---
 onMounted(() => {
-  fetchData().then(() => {
-    renderAllCharts()
-  })
-
-  // Set page header
-  layoutStore.setPageHeader(
-      '社团部门',
-      '社团部门管理'
-  )
-
-  // Show page actions
+  fetchData()
+  layoutStore.setPageHeader('社团中枢', '组织架构与人员管理')
   layoutStore.setShowPageActions(true)
 
-  // 创建操作栏组件
   const ActionsComponent = defineComponent({
     setup() {
-      return () => h('div', { class: 'flex flex-wrap gap-2' }, [
-        // 添加部门按钮
-        h('button', {
-          class: 'px-4 py-2 rounded-full bg-blue-500 hover:bg-blue-600 text-white transition-colors flex items-center',
-          onClick: () => openDepartment()
-        }, [
-          h(Icon, { icon: 'ion:add', class: 'mr-1' }),
-          h('span', '添加部门')
-        ])
-      ])
+      return () => h('button', {
+        class: 'px-4 py-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white transition-transform active:scale-95 flex items-center text-sm font-medium shadow-lg shadow-blue-500/30',
+        onClick: () => openDepartment()
+      }, [ h(Icon, { icon: 'ion:add', class: 'mr-1' }), '新建部门' ])
     }
   })
-
-  // 注册操作栏组件到LayoutStore
   layoutStore.setActionsComponent(ActionsComponent);
 })
 
 onBeforeUnmount(() => {
-  // Clear page header
   layoutStore.clearPageHeader()
 })
 
-// 监听数据变化，重新渲染图表
-watch([departmentData, collegeData, genderData], () => {
-  renderAllCharts()
-})
-
-// 监听标签页切换，重新渲染图表
-const handleTabChange = (name: string) => {
-  if (name === 'overview') {
-    nextTick(() => {
-      renderAllCharts()
-    })
-  }
-}
-
-// 在方法部分添加更改部门的处理函数
-const handleChangeDepartment = async () => {
-  if (!selectedStaff.value || !targetDepartment.value) return
-
-  try {
-    await changeStaffDepartment(selectedStaff.value.userId, targetDepartment.value)
-    showChangeDepartmentModalRef.value = false
-    message.success('员工部门变更成功')
-  } catch (error: any) {
-    console.error('变更员工部门时发生错误:', error)
-    message.error('变更员工部门时发生错误: ' + (error.message || '未知错误'))
-  }
-}
 </script>
 
 <style scoped>
-/* 自定义样式以增强苹果风格 */
-.n-button {
-  transition: all 0.2s ease;
+/* 原生 CSS 适配暗黑模式 */
+/* Apple Style Base */
+.apple-container {
+  background-color: #F1F4F9; /* iCloud light gray */
+}
+
+.apple-card {
+  background-color: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+
+.apple-sub-card {
+  background-color: #FFFFFF;
+  border-radius: 24px; /* Apple uses larger border radiuses now */
+  border: 1px solid rgba(0,0,0,0.02); /* Very subtle border */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.apple-sub-card:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+}
+
+/* Buttons */
+.apple-btn {
+  padding: 8px 16px;
+  border-radius: 9999px; /* Pill shape */
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+}
+
+.apple-btn:active {
+  transform: scale(0.96);
+}
+
+.apple-btn.primary {
+  background-color: #007AFF; /* System Blue */
+  color: white;
+  box-shadow: 0 2px 6px rgba(0, 122, 255, 0.3);
+}
+
+.apple-btn.secondary {
+  background-color: rgba(0,0,0,0.05);
+  color: #1d1d1f;
+}
+
+.apple-btn.danger {
+  background-color: rgba(255, 59, 48, 0.1);
+  color: #FF3B30;
+}
+
+.apple-btn-sm {
+  padding: 4px 10px;
+  font-size: 12px;
   border-radius: 8px;
+  font-weight: 500;
+  transition: opacity 0.2s;
+}
+.apple-btn-sm.secondary {
+  background-color: #f5f5f7;
+  color: #666;
+}
+.apple-btn-sm.primary {
+  background-color: #eef6ff;
+  color: #007AFF;
+}
+.apple-btn-sm.danger {
+  background-color: #fff2f2;
+  color: #FF3B30;
 }
 
-.n-tabs-nav {
-  padding: 0 16px;
+.apple-icon-btn {
+  padding: 4px;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.apple-icon-btn:hover {
+  background-color: rgba(0,0,0,0.05);
 }
 
-.n-tabs-tab {
-  padding: 12px 4px;
-  margin-right: 24px;
+/* Chips */
+.apple-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 99px;
+  font-size: 13px;
+  background-color: #F5F5F7;
+  color: #1D1D1F;
+  transition: background-color 0.2s;
 }
-
-.n-data-table {
+.apple-chip.large {
+  padding: 6px 16px;
   font-size: 14px;
 }
+.apple-chip.blue {
+  background-color: #F0F8FF;
+  color: #007AFF;
+}
 
-.n-data-table .n-data-table-thead .n-data-table-th {
+/* Item Card (Project) */
+.apple-item-card {
+  background-color: #FFFFFF;
+  border-radius: 20px;
+  padding: 20px;
+  border: 1px solid transparent;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  transition: all 0.3s ease;
+}
+.apple-item-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(0,0,0,0.08);
+  border-color: rgba(0, 122, 255, 0.1);
+}
+
+/* Titles */
+.section-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1d1d1f;
+  letter-spacing: -0.01em;
+}
+
+/* Table overrides */
+:deep(.apple-table .n-data-table-th) {
   background-color: transparent;
-  font-weight: 500;
-  color: #6b7280;
+  border-bottom: 1px solid #f0f0f0;
+  font-weight: 600;
+  color: #86868b;
+}
+:deep(.apple-table .n-data-table-td) {
+  background-color: transparent;
+  border-bottom: 1px solid #f5f5f7;
+  padding: 16px 12px;
+}
+:deep(.apple-table .n-data-table-tr:last-child .n-data-table-td) {
+  border-bottom: none;
 }
 
-.dark .n-data-table .n-data-table-thead .n-data-table-th {
-  color: #9ca3af;
+/* Modal Override */
+:deep(.apple-modal.n-modal) {
+  border-radius: 24px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+}
+:deep(.apple-modal .n-card-header) {
+  border-bottom: none;
+  padding-top: 28px;
+  padding-left: 28px;
+}
+:deep(.apple-modal .n-card-header__main) {
+  font-size: 22px;
+  font-weight: 600;
 }
 
-/* 响应式优化 */
-@media (max-width: 640px) {
-  .n-tabs-tab {
-    margin-right: 16px;
-  }
+/* DARK MODE */
+.dark .apple-container {
+  background-color: #000000; /* Pure black for heavy contrast */
+}
+.dark .apple-card {
+  background-color: rgba(28, 28, 30, 0.6);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+.dark .apple-sub-card {
+  background-color: #1C1C1E; /* System Gray 6 Dark */
+  border-color: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+.dark .apple-sub-card:hover {
+  background-color: #242426;
+}
+.dark .apple-item-card {
+  background-color: #1C1C1E;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+.dark .apple-item-card:hover {
+  background-color: #2C2C2E;
+}
+.dark .section-title {
+  color: #F5F5F7;
+}
+.dark .apple-btn.secondary {
+  background-color: rgba(255,255,255,0.1);
+  color: #F5F5F7;
+}
+.dark .apple-chip {
+  background-color: #2C2C2E;
+  color: #E5E5E7;
+}
+.dark .apple-chip.blue {
+  background-color: rgba(10, 132, 255, 0.15);
+  color: #64D2FF;
+}
+.dark .apple-icon-btn:hover {
+  background-color: rgba(255,255,255,0.1);
+}
+/* Table Dark */
+.dark :deep(.apple-table .n-data-table-th) {
+  border-bottom: 1px solid #38383A;
+  color: #98989D;
+}
+.dark :deep(.apple-table .n-data-table-td) {
+  border-bottom: 1px solid #2C2C2E;
+  color: #D1D1D6;
+}
+.dark :deep(.apple-modal.n-card) {
+  background-color: #1C1C1E;
+  border: 1px solid #38383A;
+}
+
+/* Animation Utility */
+.animate-fade-in {
+  animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 </style>

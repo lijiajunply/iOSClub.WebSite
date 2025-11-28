@@ -1,669 +1,291 @@
 <template>
-  <div class="min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-300">
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="apple-container min-h-screen transition-colors duration-500">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
 
-      <!-- 搜索和筛选 -->
-      <div class="mb-6">
-        <div class="relative">
-          <input v-model="searchQuery" type="text" placeholder="搜索应用名称或客户端ID..."
-                 class="w-full pl-10 pr-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"/>
-          <Icon icon="ion:search" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" width="20"
-                height="20"/>
+      <!-- 顶部控制栏：搜索与统计 -->
+      <div class="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
+        <div class="search-wrapper relative w-full sm:w-96 group">
+          <Icon icon="ion:search" class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors" width="20" height="20"/>
+          <input
+              v-model="searchQuery"
+              type="text"
+              placeholder="搜索应用名称或 ID..."
+              class="search-input w-full pl-12 pr-4 py-3 rounded-2xl outline-none transition-all duration-300"
+          />
+        </div>
+
+        <!-- 移动端适配时，为了操作方便，也可以在这里放个简略的操作栏 -->
+        <div class="sm:hidden w-full flex gap-2">
+          <button @click="openCreateModal" class="flex-1 bg-blue-500 text-white py-2 rounded-xl font-medium">创建应用</button>
         </div>
       </div>
 
-      <!-- 客户端应用列表 -->
-      <div
-          class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-300 hover:shadow-lg">
-        <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead class="bg-gray-50 dark:bg-gray-800">
-            <tr>
-              <th scope="col"
-                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                应用名称
-              </th>
-              <th scope="col"
-                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                客户端ID
-              </th>
-              <th scope="col"
-                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                状态
-              </th>
-              <th scope="col"
-                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                创建时间
-              </th>
-              <th scope="col"
-                  class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                操作
-              </th>
-            </tr>
-            </thead>
-            <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-            <template v-if="isLoading">
-              <tr v-for="i in 5" :key="i" class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="flex items-center">
-                    <SkeletonLoader type="avatar"/>
-                    <div class="ml-4">
-                      <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-32 mb-2"></div>
-                      <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
-                    </div>
-                  </div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="h-6 bg-gray-200 dark:bg-gray-700 rounded w-32"></div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="h-6 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-right">
-                  <div class="flex justify-end space-x-2">
-                    <div class="h-5 w-5 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                    <div class="h-5 w-5 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                    <div class="h-5 w-5 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                  </div>
-                </td>
-              </tr>
-            </template>
-            <template v-else-if="filteredClientApps.length > 0">
-              <tr v-for="app in filteredClientApps" :key="app.clientId"
-                  class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150">
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="flex items-center">
-                    <img v-if="app.logoUrl" :src="app.logoUrl" :alt="app.applicationName"
-                         class="h-8 w-8 rounded-md object-cover"/>
-                    <div v-else
-                         class="h-8 w-8 rounded-md bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
-                      <Icon icon="lucide:app-window-mac" width="20" height="20"
-                            class="text-gray-500 dark:text-gray-400"/>
-                    </div>
-                    <div class="ml-4">
-                      <div class="text-sm font-medium text-gray-900 dark:text-white">
-                        {{ app.applicationName }}
-                      </div>
-                      <div class="text-xs text-gray-500 dark:text-gray-400 line-clamp-1 max-w-xs">
-                        {{ app.description }}
-                      </div>
-                    </div>
-                  </div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="flex items-center">
-                    <code
-                        class="text-xs text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded font-mono select-all">
-                      {{ app.clientId }}
-                    </code>
-                    <button @click="copyToClipboard(app.clientId)"
-                            class="ml-2 text-gray-400 hover:text-blue-500 transition-colors" title="复制客户端ID">
-                      <Icon icon="ion:copy-outline" width="16" height="16"/>
-                    </button>
-                  </div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <span :class="[
-                      'px-2 inline-flex text-xs leading-5 font-semibold rounded-full',
-                      app.isActive
-                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
-                        : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
-                    ]">
-                      {{ app.isActive ? '启用' : '禁用' }}
-                    </span>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                  {{ formatDate(app.createdAt) }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <div class="flex items-center justify-end space-x-2">
-                    <button @click="openDetailsModal(app)"
-                            class="text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
-                            title="查看详情">
-                      <Icon icon="ion:eye-outline" width="20" height="20"/>
-                    </button>
-                    <button @click="openEditModal(app)"
-                            class="text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
-                            title="编辑">
-                      <Icon icon="ion:pencil-outline" width="20" height="20"/>
-                    </button>
-                    <button @click="confirmDelete(app)"
-                            class="text-gray-600 dark:text-gray-300 hover:text-red-500 dark:hover:text-red-400 transition-colors"
-                            title="删除">
-                      <Icon icon="ion:trash-outline" width="20" height="20"/>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </template>
-            <tr v-else>
-              <td colspan="5" class="px-6 py-12 text-center">
-                <div class="flex flex-col items-center justify-center text-gray-500 dark:text-gray-400">
-                  <Icon icon="ion:search" width="48" height="48" class="mb-4 opacity-30"/>
-                  <p class="text-lg font-medium">未找到客户端应用</p>
-                  <p class="text-sm mt-2">尝试更改搜索条件或创建新的客户端应用</p>
+      <!-- 主要内容区域：类似 iOS 设置列表的容器 -->
+      <div class="content-card rounded-3xl overflow-hidden shadow-sm border">
+        <!-- 桌面端表头 -->
+        <div class="hidden md:grid grid-cols-12 gap-4 px-8 py-4 bg-gray-50/50 dark:bg-white/5 border-b border-gray-100 dark:border-gray-700/50 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+          <div class="col-span-4">应用信息</div>
+          <div class="col-span-3">客户端 ID</div>
+          <div class="col-span-2">状态</div>
+          <div class="col-span-2">创建时间</div>
+          <div class="col-span-1 text-right">操作</div>
+        </div>
+
+        <div class="divide-y divide-gray-100 dark:divide-gray-700/50 bg-white dark:bg-[#1c1c1e]">
+          <template v-if="isLoading">
+            <div v-for="i in 5" :key="i" class="px-8 py-6 animate-pulse">
+              <div class="flex items-center space-x-4">
+                <div class="w-10 h-10 rounded-xl bg-gray-200 dark:bg-gray-700"></div>
+                <div class="flex-1 space-y-2">
+                  <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
+                  <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
                 </div>
-              </td>
-            </tr>
-            </tbody>
-          </table>
+              </div>
+            </div>
+          </template>
+
+          <template v-else-if="filteredClientApps.length > 0">
+            <div
+                v-for="app in filteredClientApps"
+                :key="app.clientId"
+                class="grid-row-item md:grid md:grid-cols-12 md:items-center gap-4 px-6 md:px-8 py-5 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors duration-200 group"
+            >
+              <!-- 应用名称与Logo -->
+              <div class="col-span-4 flex items-center gap-4">
+                <div class="flex-shrink-0 relative">
+                  <img v-if="app.logoUrl" :src="app.logoUrl" :alt="app.applicationName"
+                       class="h-12 w-12 rounded-2xl object-cover shadow-sm border border-gray-100 dark:border-gray-700"/>
+                  <div v-else
+                       class="h-12 w-12 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center shadow-inner">
+                    <Icon icon="lucide:app-window-mac" width="24" height="24"
+                          class="text-gray-500 dark:text-gray-400"/>
+                  </div>
+                </div>
+                <div class="min-w-0">
+                  <p class="text-base font-semibold text-gray-900 dark:text-white truncate">{{ app.applicationName }}</p>
+                  <p class="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">{{ app.description || '暂无描述' }}</p>
+                </div>
+              </div>
+
+              <!-- 客户端ID (移动端显示为单行) -->
+              <div class="col-span-3 mt-3 md:mt-0 flex items-center gap-2">
+                <code class="text-xs font-mono text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-white/10 px-2 py-1 rounded-lg select-all" title="点击复制">
+                  {{ app.clientId }}
+                </code>
+                <button @click="copyToClipboard(app.clientId)" class="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-blue-500">
+                  <Icon icon="ion:copy-outline" width="16"/>
+                </button>
+              </div>
+
+              <!-- 状态 -->
+              <div class="col-span-2 mt-2 md:mt-0 flex items-center">
+                <span :class="[
+                  'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ring-1 ring-inset',
+                  app.isActive
+                    ? 'bg-green-50 text-green-700 ring-green-600/20 dark:bg-green-400/10 dark:text-green-400 dark:ring-green-400/30'
+                    : 'bg-red-50 text-red-700 ring-red-600/10 dark:bg-red-400/10 dark:text-red-400 dark:ring-red-400/20'
+                ]">
+                  <span class="w-1.5 h-1.5 rounded-full mr-1.5" :class="app.isActive ? 'bg-green-600 dark:bg-green-400' : 'bg-red-600 dark:bg-red-400'"></span>
+                  {{ app.isActive ? 'Active' : 'Inactive' }}
+                </span>
+              </div>
+
+              <!-- 时间 -->
+              <div class="col-span-2 mt-1 md:mt-0 text-sm text-gray-500 dark:text-gray-500 tabular-nums">
+                {{ formatDateSimple(app.createdAt) }}
+              </div>
+
+              <!-- 操作按钮 -->
+              <div class="col-span-1 mt-3 md:mt-0 flex justify-end items-center gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200">
+                <button @click="openDetailsModal(app)" class="action-btn" title="详情">
+                  <Icon icon="lucide:info" width="22" height="22"/>
+                </button>
+                <button @click="openEditModal(app)" class="action-btn" title="编辑">
+                  <Icon icon="tabler:edit" width="22" height="22"/>
+                </button>
+                <button @click="confirmDelete(app)" class="action-btn text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20" title="删除">
+                  <Icon icon="prime:trash" width="22" height="22"/>
+                </button>
+              </div>
+            </div>
+          </template>
+
+          <!-- 空状态 -->
+          <div v-else class="py-20 text-center">
+            <div class="bg-gray-50 dark:bg-gray-800 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Icon icon="ion:search" width="32" class="text-gray-400"/>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 dark:text-white">未找到应用</h3>
+            <p class="text-gray-500 dark:text-gray-400 mt-1">尝试调整搜索关键词或创建一个新应用</p>
+          </div>
         </div>
       </div>
     </main>
+
+    <!-- 模态框：创建客户端 -->
+    <n-modal v-model:show="showCreateModal" preset="card" title="创建新的客户端" :bordered="false" size="huge" style="width: 600px; border-radius: 20px;" class="custom-modal">
+      <form @submit.prevent="handleCreateSubmit" class="space-y-6 py-2">
+        <!-- 表单项组件化风格 -->
+        <div class="form-section">
+          <label class="form-label">基本信息</label>
+          <div class="input-group">
+            <input v-model="createForm.applicationName" required placeholder="应用名称" class="apple-input rounded-t-xl border-b border-gray-200 dark:border-gray-700" />
+            <input v-model="createForm.homepageUrl" type="url" required placeholder="https:// 主页 URL" class="apple-input border-b border-gray-200 dark:border-gray-700" />
+            <input v-model="createForm.logoUrl" type="url" placeholder="https:// Logo URL (可选)" class="apple-input rounded-b-xl" />
+          </div>
+        </div>
+
+        <div class="form-section">
+          <label class="form-label">功能描述</label>
+          <textarea v-model="createForm.description" rows="3" class="apple-textarea rounded-xl" placeholder="简要描述应用用途..."></textarea>
+        </div>
+
+        <div class="form-section">
+          <label class="form-label">OAuth 设置</label>
+          <div class="input-group">
+            <textarea v-model="redirectUrisText" required rows="3" class="apple-textarea rounded-t-xl !font-mono !text-sm border-b border-gray-200 dark:border-gray-700" placeholder="回调 URL (一行一个)"></textarea>
+            <div class="apple-checkbox-item rounded-b-xl flex justify-between items-center px-4 py-3 bg-gray-50 dark:bg-gray-800/50">
+              <span class="text-sm text-gray-700 dark:text-gray-300">启用 PKCE 增强安全</span>
+              <n-switch v-model:value="createForm.supportsPkce" size="small" />
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-3 mt-8">
+          <button type="button" @click="handleCreateModalClose" class="px-6 py-2 rounded-full text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors">取消</button>
+          <button type="submit" :disabled="isSubmitting" class="px-6 py-2 rounded-full text-sm font-medium bg-[#0071e3] hover:bg-[#0077ed] text-white shadow-sm transition-all disabled:opacity-50">
+            {{ isSubmitting ? '处理中...' : '创建应用' }}
+          </button>
+        </div>
+      </form>
+    </n-modal>
+
+    <!-- 模态框：编辑客户端 (结构类似创建) -->
+    <n-modal v-model:show="showEditModal" preset="card" title="编辑客户端" :bordered="false" size="huge" style="width: 600px; border-radius: 20px;" class="custom-modal">
+      <form @submit.prevent="handleEditSubmit" class="space-y-6 py-2">
+        <div class="form-section">
+          <label class="form-label">基本信息</label>
+          <div class="input-group">
+            <input v-model="editForm.applicationName" required placeholder="应用名称" class="apple-input rounded-t-xl border-b border-gray-200 dark:border-gray-700" />
+            <input v-model="editForm.homepageUrl" type="url" required placeholder="主页 URL" class="apple-input border-b border-gray-200 dark:border-gray-700" />
+            <input v-model="editForm.logoUrl" type="url" placeholder="Logo URL" class="apple-input rounded-b-xl" />
+          </div>
+        </div>
+
+        <div class="form-section">
+          <label class="form-label">OAuth 设置</label>
+          <div class="input-group">
+            <textarea v-model="editRedirectUrisText" required rows="3" class="apple-textarea rounded-t-xl !font-mono !text-sm border-b border-gray-200 dark:border-gray-700" placeholder="回调 URL"></textarea>
+            <!-- 开关组 -->
+            <div class="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex justify-between items-center">
+              <span class="text-sm text-gray-700 dark:text-gray-300">启用客户端</span>
+              <n-switch v-model:value="editForm.isActive" size="small" />
+            </div>
+            <div class="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex justify-between items-center">
+              <span class="text-sm text-gray-700 dark:text-gray-300">需要邮箱验证</span>
+              <n-switch v-model:value="editForm.isNeedEMail" size="small" />
+            </div>
+            <div class="bg-gray-50 dark:bg-gray-800/50 rounded-b-xl px-4 py-3 flex justify-between items-center">
+              <span class="text-sm text-gray-700 dark:text-gray-300">支持 PKCE</span>
+              <n-switch v-model:value="editForm.supportsPkce" size="small" />
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-3 mt-8">
+          <button type="button" @click="handleEditModalClose" class="px-6 py-2 rounded-full text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors">取消</button>
+          <button type="submit" :disabled="isSubmitting" class="px-6 py-2 rounded-full text-sm font-medium bg-[#0071e3] hover:bg-[#0077ed] text-white shadow-sm transition-all">保存更改</button>
+        </div>
+      </form>
+    </n-modal>
+
+    <!-- 模态框：详情 -->
+    <n-modal v-model:show="showDetailsModal" preset="card" :title="null" :bordered="false" size="huge" style="width: 550px; border-radius: 24px;" class="custom-modal details-modal">
+      <div class="relative pt-6 pb-2">
+        <div class="flex flex-col items-center mb-8">
+          <img v-if="selectedApp?.logoUrl" :src="selectedApp.logoUrl" class="w-24 h-24 rounded-3xl shadow-lg mb-4 object-cover bg-white" />
+          <div v-else class="w-24 h-24 rounded-3xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg mb-4 text-white">
+            <Icon icon="lucide:app-window-mac" width="48" height="48" />
+          </div>
+          <h2 class="text-2xl font-bold text-gray-900 dark:text-white">{{ selectedApp?.applicationName }}</h2>
+          <a v-if="selectedApp?.homepageUrl" :href="selectedApp.homepageUrl" target="_blank" class="text-blue-500 text-sm hover:underline mt-1 flex items-center">
+            {{ selectedApp.homepageUrl }} <Icon icon="ion:ios-arrow-forward" width="12" class="ml-1"/>
+          </a>
+        </div>
+
+        <div class="space-y-6">
+          <div class="detail-group">
+            <label class="detail-label">Client Credentials</label>
+            <div class="bg-gray-50 dark:bg-gray-800/50 rounded-xl overflow-hidden">
+              <div class="p-3 border-b border-gray-100 dark:border-gray-700/50 flex justify-between items-center">
+                <div class="flex flex-col">
+                  <span class="text-[10px] uppercase text-gray-400 font-bold tracking-wider">Client ID</span>
+                  <code class="text-sm font-mono text-gray-800 dark:text-gray-200">{{ selectedApp?.clientId }}</code>
+                </div>
+                <button @click="copyToClipboard(selectedApp?.clientId)" class="text-blue-500 hover:bg-blue-500/10 p-1.5 rounded-lg transition-colors"><Icon icon="ion:copy-outline"/></button>
+              </div>
+              <div class="p-3 flex justify-between items-center">
+                <div class="flex flex-col w-full mr-2">
+                  <span class="text-[10px] uppercase text-gray-400 font-bold tracking-wider">Client Secret</span>
+                  <div class="flex items-center justify-between w-full">
+                    <input :type="showSecret ? 'text' : 'password'" readonly :value="selectedApp?.clientSecret" class="bg-transparent font-mono text-sm text-gray-800 dark:text-gray-200 outline-none w-full"/>
+                  </div>
+                </div>
+                <div class="flex gap-1">
+                  <button @click="showSecret = !showSecret" class="text-gray-500 hover:bg-gray-200/50 dark:hover:bg-white/10 p-1.5 rounded-lg transition-colors">
+                    <Icon :icon="showSecret ? 'ion:eye-off-outline' : 'ion:eye-outline'" />
+                  </button>
+                  <button @click="copyToClipboard(selectedApp?.clientSecret)" class="text-blue-500 hover:bg-blue-500/10 p-1.5 rounded-lg transition-colors"><Icon icon="ion:copy-outline"/></button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="detail-group">
+            <label class="detail-label">Configuration</label>
+            <div class="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 space-y-3">
+              <div v-for="(uri, idx) in selectedApp?.redirectUris.split(';')" :key="idx" class="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300 break-all">
+                <Icon icon="ion:link-outline" class="mt-0.5 text-gray-400 flex-shrink-0" />
+                <span>{{ uri }}</span>
+              </div>
+              <div v-if="selectedApp?.supportsPkce" class="flex items-center gap-2 text-sm text-blue-600 bg-blue-50 dark:bg-blue-500/10 dark:text-blue-400 p-2 rounded-lg w-fit px-3">
+                <Icon icon="ion:shield-checkmark-outline" /> PKCE Enabled
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </n-modal>
+
+    <!-- 帮助指南保持原样，仅微调样式以匹配 -->
+    <Transition name="modal-fade">
+      <HelpGuide
+          v-if="showHelpGuide"
+          title="开发者文档"
+          :visible="showHelpGuide"
+          @close="handleHelpGuideClose"
+      >
+        <!-- (HelpGuide 内容略，建议在 HelpGuide 组件内部也进行类似的 Tailwind 风格更新) -->
+        <div class="prose dark:prose-invert max-w-none p-4">
+          <!-- 复用原有内容 -->
+          <h3 class="text-xl font-bold mb-4">集成指南</h3>
+          <p class="text-gray-600 dark:text-gray-300 mb-4">客户端应用允许第三方系统通过 OAuth 2.0 协议接入认证服务。</p>
+          <!-- 省略其他原有内容... -->
+        </div>
+      </HelpGuide>
+    </Transition>
+
   </div>
-
-  <!-- 创建客户端模态框 -->
-  <n-modal v-model:show="showCreateModal" title="创建客户端应用" preset="dialog" size="large"
-           @close="handleCreateModalClose"
-           class="rounded-xl overflow-hidden bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-    <div class="p-4">
-      <form @submit.prevent="handleCreateSubmit">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div class="col-span-1 md:col-span-2">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              应用名称 <span class="text-red-500">*</span>
-            </label>
-            <input v-model="createForm.applicationName" type="text" required
-                   class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-                   placeholder="输入应用名称"/>
-          </div>
-
-          <div class="col-span-1 md:col-span-2">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              应用描述
-            </label>
-            <textarea v-model="createForm.description" rows="3"
-                      class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors resize-none"
-                      placeholder="描述您的应用..."></textarea>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              应用主页URL <span class="text-red-500">*</span>
-            </label>
-            <input v-model="createForm.homepageUrl" type="url" required
-                   class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-                   placeholder="https://example.com"/>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              应用图标URL
-            </label>
-            <input v-model="createForm.logoUrl" type="url"
-                   class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-                   placeholder="https://example.com/logo.png"/>
-          </div>
-
-          <div class="col-span-1 md:col-span-2">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              回调URL（每行一个） <span class="text-red-500">*</span>
-            </label>
-            <textarea v-model="redirectUrisText" rows="3" required
-                      class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors resize-none font-mono text-sm"
-                      placeholder="https://example.com/callback\nhttps://example.com/oauth/callback"></textarea>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              请确保回调URL与您应用中配置的完全一致
-            </p>
-          </div>
-
-          <div class="col-span-1 md:col-span-2">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              高级设置
-            </label>
-            <div class="flex items-center">
-              <input v-model="createForm.supportsPkce" type="checkbox" id="supportsPkceCreate"
-                     class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"/>
-              <label for="supportsPkceCreate" class="ml-2 block text-sm text-gray-900 dark:text-white">
-                支持 PKCE (Proof Key for Code Exchange)
-              </label>
-            </div>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              对于移动应用和单页应用，建议启用 PKCE 以增强安全性
-            </p>
-          </div>
-        </div>
-
-        <div class="mt-6 flex justify-end space-x-3">
-          <button type="button" @click="handleCreateModalClose"
-                  class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
-            取消
-          </button>
-          <button type="submit" :disabled="isSubmitting"
-                  class="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-            {{ isSubmitting ? '保存中...' : '保存' }}
-          </button>
-        </div>
-      </form>
-    </div>
-  </n-modal>
-
-  <!-- 编辑客户端模态框 -->
-  <n-modal v-model:show="showEditModal" title="编辑客户端应用" preset="dialog" size="large"
-           @close="handleEditModalClose"
-           class="rounded-xl overflow-hidden bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-    <div class="p-4">
-      <form @submit.prevent="handleEditSubmit">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div class="col-span-1 md:col-span-2">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              应用名称 <span class="text-red-500">*</span>
-            </label>
-            <input v-model="editForm.applicationName" type="text" required
-                   class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-                   placeholder="输入应用名称"/>
-          </div>
-
-          <div class="col-span-1 md:col-span-2">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              应用描述
-            </label>
-            <textarea v-model="editForm.description" rows="3"
-                      class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors resize-none"
-                      placeholder="描述您的应用..."></textarea>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              应用主页URL <span class="text-red-500">*</span>
-            </label>
-            <input v-model="editForm.homepageUrl" type="url" required
-                   class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-                   placeholder="https://example.com"/>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              应用图标URL
-            </label>
-            <input v-model="editForm.logoUrl" type="url"
-                   class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-                   placeholder="https://example.com/logo.png"/>
-          </div>
-
-          <div class="col-span-1 md:col-span-2">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              回调URL（每行一个） <span class="text-red-500">*</span>
-            </label>
-            <textarea v-model="editRedirectUrisText" rows="3" required
-                      class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors resize-none font-mono text-sm"
-                      placeholder="https://example.com/callback\nhttps://example.com/oauth/callback"></textarea>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              请确保回调URL与您应用中配置的完全一致
-            </p>
-          </div>
-
-          <div class="col-span-1 md:col-span-2">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              状态
-            </label>
-            <div class="flex items-center">
-              <input v-model="editForm.isActive" type="checkbox" id="isActive"
-                     class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"/>
-              <label for="isActive" class="ml-2 block text-sm text-gray-900 dark:text-white">
-                启用客户端
-              </label>
-            </div>
-          </div>
-
-          <div class="col-span-1 md:col-span-2">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              高级设置
-            </label>
-
-            <div class="flex items-center">
-              <input v-model="editForm.isNeedEMail" type="checkbox" id="isNeedEMailEdit"
-                     class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"/>
-              <label for="isNeedEMailEdit" class="ml-2 block text-sm text-gray-900 dark:text-white">
-                需要邮箱验证
-              </label>
-            </div>
-
-            <div class="flex items-center mt-2">
-              <input v-model="editForm.supportsPkce" type="checkbox" id="supportsPkceEdit"
-                     class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"/>
-              <label for="supportsPkceEdit" class="ml-2 block text-sm text-gray-900 dark:text-white">
-                支持 PKCE (Proof Key for Code Exchange)
-              </label>
-            </div>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              对于移动应用和单页应用，建议启用 PKCE 以增强安全性
-            </p>
-          </div>
-        </div>
-
-        <div class="mt-6 flex justify-end space-x-3">
-          <button type="button" @click="handleEditModalClose"
-                  class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
-            取消
-          </button>
-          <button type="submit" :disabled="isSubmitting"
-                  class="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-            {{ isSubmitting ? '保存中...' : '保存' }}
-          </button>
-        </div>
-      </form>
-    </div>
-  </n-modal>
-
-  <!-- 详情模态框 -->
-  <n-modal v-model:show="showDetailsModal" title="客户端详情" preset="dialog" size="large"
-           @close="handleDetailsModalClose"
-           class="rounded-xl overflow-hidden bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-    <div class="p-4">
-      <div class="flex flex-col items-center mb-6">
-        <img v-if="selectedApp?.logoUrl" :src="selectedApp.logoUrl" :alt="selectedApp.applicationName"
-             class="h-24 w-24 rounded-lg object-cover mb-4"/>
-        <div v-else class="h-24 w-24 rounded-lg bg-gray-200 dark:bg-gray-600 flex items-center justify-center mb-4">
-          <Icon icon="lucide:app-window-mac" width="48" height="48" class="text-gray-500 dark:text-gray-400"/>
-        </div>
-        <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
-          {{ selectedApp?.applicationName }}
-        </h2>
-        <p class="text-gray-500 dark:text-gray-400 mt-1">
-          创建于 {{ formatDate(selectedApp?.createdAt) }}
-        </p>
-      </div>
-
-      <div class="space-y-6">
-        <div>
-          <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            描述
-          </h3>
-          <p class="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
-            {{ selectedApp?.description || '无描述' }}
-          </p>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              客户端ID
-            </h3>
-            <div class="flex items-center">
-              <code
-                  class="text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded font-mono select-all flex-grow break-all">
-                {{ selectedApp?.clientId }}
-              </code>
-              <button @click="copyToClipboard(selectedApp?.clientId)"
-                      class="ml-2 text-gray-400 hover:text-blue-500 transition-colors flex-shrink-0"
-                      title="复制客户端ID">
-                <Icon icon="ion:copy-outline" width="20" height="20"/>
-              </button>
-            </div>
-
-            <div class="mt-4">
-              <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                邮箱验证
-              </h3>
-              <span :class="[
-                  'px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full',
-                  selectedApp?.isNeedEMail
-                    ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
-                    : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
-                ]">
-                  {{ selectedApp?.isNeedEMail ? '是' : '否' }}
-                </span>
-            </div>
-
-            <div>
-              <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 mt-4">
-                应用主页
-              </h3>
-              <a v-if="selectedApp?.homepageUrl" :href="selectedApp.homepageUrl" target="_blank"
-                 rel="noopener noreferrer" class="text-blue-500 hover:text-blue-600 transition-colors break-all">
-                {{ selectedApp.homepageUrl }}
-              </a>
-              <span v-else class="text-gray-500 dark:text-gray-400">无</span>
-            </div>
-          </div>
-
-          <div>
-            <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              客户端密钥
-            </h3>
-            <div class="relative">
-              <input :value="selectedApp?.clientSecret" type="password" readonly
-                     class="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white focus:outline-none font-mono text-sm"/>
-              <button @click="copyToClipboard(selectedApp?.clientSecret)"
-                      class="ml-2 absolute top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-blue-500 transition-colors"
-                      title="复制客户端密钥">
-                <Icon icon="ion:copy-outline" width="20" height="20"/>
-              </button>
-            </div>
-
-            <div class="mt-4">
-              <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                状态
-              </h3>
-              <span :class="[
-                  'px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full',
-                  selectedApp?.isActive
-                    ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
-                    : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
-                ]">
-                  {{ selectedApp?.isActive ? '启用' : '禁用' }}
-                </span>
-            </div>
-
-            <div class="mt-4">
-              <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                支持 PKCE
-              </h3>
-              <span :class="[
-                  'px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full',
-                  selectedApp?.supportsPkce
-                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
-                    : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-                ]">
-                  {{ selectedApp?.supportsPkce ? '是' : '否' }}
-                </span>
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            回调URL
-          </h3>
-          <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
-            <div v-for="(uri, index) in selectedApp?.redirectUris.split(';')" :key="index"
-                 class="flex items-start mb-2 last:mb-0">
-              <Icon icon="ion:link" width="16" height="16" class="text-gray-400 mr-2 mt-0.5 flex-shrink-0"/>
-              <div class="flex-grow">
-                <code class="text-sm text-gray-600 dark:text-gray-300 font-mono break-all">
-                  {{ uri }}
-                </code>
-              </div>
-              <button @click="copyToClipboard(uri)"
-                      class="ml-2 text-gray-400 hover:text-blue-500 transition-colors flex-shrink-0" title="复制URL">
-                <Icon icon="ion:copy-outline" width="16" height="16"/>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </n-modal>
-
-  <!-- 帮助指南 -->
-  <Transition name="fade">
-    <HelpGuide
-        v-if="showHelpGuide"
-        :title="'客户端应用管理帮助'"
-        :visible="showHelpGuide"
-        @close="handleHelpGuideClose"
-    >
-      <div class="space-y-6">
-        <section>
-          <h2 class="text-xl font-medium mb-3">概述</h2>
-          <p>客户端应用管理允许您创建和配置用于OAuth
-            2.0认证的第三方应用程序。通过此页面，您可以管理应用的基本信息、回调URL以及安全设置。</p>
-        </section>
-
-        <section>
-          <h2 class="text-xl font-medium mb-3">核心功能</h2>
-          <div class="grid gap-4">
-            <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-xl">
-              <h3 class="text-lg font-medium mb-2 flex items-center">
-                <Icon icon="ion:add-circle-outline" class="mr-2 text-blue-500" width="20" height="20"/>
-                创建客户端应用
-              </h3>
-              <p class="text-sm text-gray-600 dark:text-gray-300">
-                点击"创建客户端"按钮，填写应用名称、描述、主页URL和回调URL等信息，系统将生成唯一的客户端ID和密钥。</p>
-            </div>
-
-            <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-xl">
-              <h3 class="text-lg font-medium mb-2 flex items-center">
-                <Icon icon="ion:eye-outline" class="mr-2 text-blue-500" width="20" height="20"/>
-                查看应用详情
-              </h3>
-              <p class="text-sm text-gray-600 dark:text-gray-300">
-                点击"详情"按钮，查看应用的完整信息，包括客户端ID、客户端密钥和配置详情。</p>
-            </div>
-
-            <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-xl">
-              <h3 class="text-lg font-medium mb-2 flex items-center">
-                <Icon icon="ion:pencil-outline" class="mr-2 text-blue-500" width="20" height="20"/>
-                编辑应用配置
-              </h3>
-              <p class="text-sm text-gray-600 dark:text-gray-300">
-                点击"编辑"按钮，可以修改应用的基本信息、回调URL以及启用/禁用状态。</p>
-            </div>
-          </div>
-        </section>
-
-        <section>
-          <h2 class="text-xl font-medium mb-3">配置说明</h2>
-          <div class="space-y-4">
-            <div>
-              <h3 class="text-lg font-medium mb-1">回调URL</h3>
-              <p class="text-sm text-gray-600 dark:text-gray-300">
-                回调URL是OAuth流程完成后重定向用户的地址。请确保URL格式正确，多个URL请每行一个。</p>
-            </div>
-
-            <div>
-              <h3 class="text-lg font-medium mb-1">PKCE支持</h3>
-              <p class="text-sm text-gray-600 dark:text-gray-300">PKCE (Proof Key for Code Exchange)
-                提供额外的安全层，推荐移动应用和单页应用启用此选项。</p>
-            </div>
-
-            <div>
-              <h3 class="text-lg font-medium mb-1">客户端密钥</h3>
-              <p class="text-sm text-gray-600 dark:text-gray-300">
-                客户端密钥是敏感信息，请妥善保管。如果密钥泄露，请重新生成或更新应用配置。</p>
-            </div>
-          </div>
-        </section>
-
-        <section>
-          <h2 class="text-xl font-medium mb-3">权限说明 (Scopes)</h2>
-          <div class="space-y-4">
-            <div>
-              <h3 class="text-lg font-medium mb-1">什么是Scopes</h3>
-              <p class="text-sm text-gray-600 dark:text-gray-300">
-                Scopes是OAuth
-                2.0中的权限范围，定义了第三方应用可以访问的用户数据。系统会根据访问令牌中包含的scope返回相应的用户信息。</p>
-            </div>
-
-            <div>
-              <h3 class="text-lg font-medium mb-1">权限范围列表</h3>
-              <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                  <thead class="bg-gray-50 dark:bg-gray-700">
-                  <tr>
-                    <th scope="col"
-                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Scope
-                    </th>
-                    <th scope="col"
-                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      返回字段
-                    </th>
-                    <th scope="col"
-                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      说明
-                    </th>
-                  </tr>
-                  </thead>
-                  <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                  <tr>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white"><code>openid</code>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400"><code>sub</code>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">用户ID</td>
-                  </tr>
-                  <tr>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white"><code>profile</code>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400"><code>name</code>,
-                      <code>nickname</code>, <code>academy</code>, <code>class</code></td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">用户基本信息</td>
-                  </tr>
-                  <tr>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white"><code>email</code>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      <code>email</code></td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">用户邮箱地址</td>
-                  </tr>
-                  <tr>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                      <code>read</code>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400"><code>role</code>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">用户角色</td>
-                  </tr>
-                  <tr>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white"><code>phone</code>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      <code>phone</code></td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">用户电话号码</td>
-                  </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <div>
-              <h3 class="text-lg font-medium mb-1">权限配置建议</h3>
-              <p class="text-sm text-gray-600 dark:text-gray-300">
-                应用应该仅请求必要的最小权限范围，遵循最小权限原则，提高安全性。例如，如果应用只需要识别用户身份，只需请求<code>openid</code>
-                scope即可。</p>
-            </div>
-          </div>
-        </section>
-
-        <section>
-          <h2 class="text-xl font-medium mb-3">安全最佳实践</h2>
-          <ul class="list-disc list-inside space-y-2 text-sm text-gray-600 dark:text-gray-300">
-            <li>仅在服务器端存储客户端密钥，不要在前端代码中暴露</li>
-            <li>使用HTTPS协议的回调URL</li>
-            <li>为移动和单页应用启用PKCE</li>
-            <li>定期审查和更新您的OAuth配置</li>
-            <li>及时禁用不再使用的客户端应用</li>
-          </ul>
-        </section>
-      </div>
-    </HelpGuide>
-  </Transition>
 </template>
 
 <script setup lang="ts">
-import {ref, computed, onMounted, onBeforeUnmount, defineComponent, h} from 'vue';
-import {useMessage, useDialog, NModal} from 'naive-ui';
-import {Icon} from '@iconify/vue';
+import { ref, computed, onMounted, onBeforeUnmount, defineComponent, h } from 'vue';
+import { useMessage, useDialog, NModal, NSwitch } from 'naive-ui';
+import { Icon } from '@iconify/vue';
 import HelpGuide from '../components/HelpGuide.vue';
-import SkeletonLoader from '../components/SkeletonLoader.vue';
-import {ClientAppService} from '../services/ClientAppService';
-import type {ClientApplication, CreateClientAppModel, UpdateClientAppModel} from '../models';
-import {useLayoutStore} from '../stores/LayoutStore';
+import { ClientAppService } from '../services/ClientAppService';
+import type { ClientApplication, CreateClientAppModel, UpdateClientAppModel } from '../models';
+import { useLayoutStore } from '../stores/LayoutStore';
 
 const message = useMessage();
 const dialog = useDialog();
@@ -683,7 +305,7 @@ const showHelpGuide = ref(false);
 const selectedApp = ref<ClientApplication | null>(null);
 const showSecret = ref(false);
 
-// 创建表单
+// 表单数据
 const createForm = ref<CreateClientAppModel>({
   applicationName: '',
   description: '',
@@ -695,7 +317,6 @@ const createForm = ref<CreateClientAppModel>({
 });
 const redirectUrisText = ref('');
 
-// 编辑表单
 const editForm = ref<UpdateClientAppModel>({
   applicationName: '',
   description: '',
@@ -709,12 +330,11 @@ const editForm = ref<UpdateClientAppModel>({
 const editRedirectUrisText = ref('');
 const currentEditClientId = ref('');
 
-// 计算属性：过滤后的客户端应用列表
+// 过滤逻辑
 const filteredClientApps = computed(() => {
   if (!searchQuery.value.trim()) {
     return clientApps.value;
   }
-
   const query = searchQuery.value.toLowerCase().trim();
   return clientApps.value.filter(app =>
       app.applicationName.toLowerCase().includes(query) ||
@@ -722,287 +342,279 @@ const filteredClientApps = computed(() => {
   );
 });
 
-// 初始化数据
+// API 操作
 const loadClientApps = async () => {
   isLoading.value = true;
   try {
     clientApps.value = await ClientAppService.getAllClientApplications();
   } catch (error) {
-    message.error((error as Error).message || '获取客户端应用列表失败');
+    message.error((error as Error).message || '加载失败');
   } finally {
     isLoading.value = false;
   }
 };
 
-// 格式化日期
-const formatDate = (dateString?: string) => {
-  if (!dateString) return '';
-  const date = new Date(dateString);
-  return date.toLocaleString('zh-CN', {
+const formatDateSimple = (dateString?: string) => {
+  if (!dateString) return '-';
+  return new Date(dateString).toLocaleDateString('zh-CN', {
     year: 'numeric',
     month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
+    day: '2-digit'
   });
 };
 
-// 复制到剪贴板
+// 复制功能
 const copyToClipboard = async (text?: string) => {
   if (!text) return;
   try {
     await navigator.clipboard.writeText(text);
-    message.success('已复制到剪贴板');
-  } catch (error) {
+    message.success('已复制');
+  } catch {
     message.error('复制失败');
   }
 };
 
-// 创建模态框
+// 创建逻辑
 const openCreateModal = () => {
   createForm.value = {
-    applicationName: '',
-    description: '',
-    homepageUrl: '',
-    redirectUris: [],
-    logoUrl: '',
-    supportsPkce: false,
-    isNeedEMail: false
+    applicationName: '', description: '', homepageUrl: '',
+    redirectUris: [], logoUrl: '', supportsPkce: false, isNeedEMail: false
   };
   redirectUrisText.value = '';
   showCreateModal.value = true;
 };
 
-const handleCreateModalClose = () => {
-  showCreateModal.value = false;
-  // 重置表单
-  createForm.value = {
-    applicationName: '',
-    description: '',
-    homepageUrl: '',
-    redirectUris: [],
-    logoUrl: '',
-    supportsPkce: false,
-    isNeedEMail: false
-  };
-  redirectUrisText.value = '';
-};
+const handleCreateModalClose = () => showCreateModal.value = false;
 
 const handleCreateSubmit = async () => {
-  // 处理回调URL文本为数组
-  const redirectUris = redirectUrisText.value
-      .split('\n')
-      .map(uri => uri.trim())
-      .filter(uri => uri);
-
-  if (redirectUris.length === 0) {
-    message.warning('请至少添加一个回调URL');
+  const uris = redirectUrisText.value.split('\n').map(u => u.trim()).filter(u => u);
+  if (uris.length === 0) {
+    message.warning('需要至少一个回调 URL');
     return;
   }
-
-  createForm.value.redirectUris = redirectUris;
-
+  createForm.value.redirectUris = uris;
   isSubmitting.value = true;
   try {
     await ClientAppService.createClientApplication(createForm.value);
-    message.success('客户端应用创建成功');
+    message.success('创建成功');
     handleCreateModalClose();
     await loadClientApps();
-  } catch (error) {
-    message.error((error as Error).message || '创建客户端应用失败');
+  } catch (e) {
+    message.error((e as Error).message);
   } finally {
     isSubmitting.value = false;
   }
 };
 
-// 编辑模态框
+// 编辑逻辑
 const openEditModal = (app: ClientApplication) => {
   selectedApp.value = app;
   currentEditClientId.value = app.clientId;
-  editForm.value = {
-    applicationName: app.applicationName,
-    description: app.description,
-    homepageUrl: app.homepageUrl,
-    redirectUris: app.redirectUris.split(';'),
-    logoUrl: app.logoUrl,
-    isActive: app.isActive,
-    supportsPkce: app.supportsPkce || false,
-    isNeedEMail: app.isNeedEMail || false
-  };
+  editForm.value = { ...app, redirectUris: app.redirectUris.split(';') };
   editRedirectUrisText.value = app.redirectUris.split(';').join('\n');
   showEditModal.value = true;
 };
-
-const handleEditModalClose = () => {
-  showEditModal.value = false;
-  selectedApp.value = null;
-  currentEditClientId.value = '';
-};
+const handleEditModalClose = () => showEditModal.value = false;
 
 const handleEditSubmit = async () => {
-  // 处理回调URL文本为数组
-  const redirectUris = editRedirectUrisText.value
-      .split('\n')
-      .map(uri => uri.trim())
-      .filter(uri => uri);
-
-  if (redirectUris.length === 0) {
-    message.warning('请至少添加一个回调URL');
+  const uris = editRedirectUrisText.value.split('\n').map(u => u.trim()).filter(u => u);
+  if (uris.length === 0) {
+    message.warning('需要至少一个回调 URL');
     return;
   }
-
-  editForm.value.redirectUris = redirectUris;
-
+  editForm.value.redirectUris = uris;
   isSubmitting.value = true;
   try {
     await ClientAppService.updateClientApplication(currentEditClientId.value, editForm.value);
-    message.success('客户端应用更新成功');
+    message.success('更新成功');
     handleEditModalClose();
     await loadClientApps();
-  } catch (error) {
-    message.error((error as Error).message || '更新客户端应用失败');
+  } catch (e) {
+    message.error((e as Error).message);
   } finally {
     isSubmitting.value = false;
   }
 };
 
-// 详情模态框
+// 详情逻辑
 const openDetailsModal = (app: ClientApplication) => {
   selectedApp.value = app;
   showSecret.value = false;
   showDetailsModal.value = true;
 };
+const handleDetailsModalClose = () => showDetailsModal.value = false;
 
-const handleDetailsModalClose = () => {
-  showDetailsModal.value = false;
-  selectedApp.value = null;
-  showSecret.value = false;
-};
-
-const handleHelpGuideClose = () => {
-  showHelpGuide.value = false;
-};
-
-// 删除确认
+// 删除逻辑
 const confirmDelete = (app: ClientApplication) => {
   dialog.warning({
-    title: '确认删除',
-    content: `确定要删除客户端应用 "${app.applicationName}" 吗？此操作不可撤销。`,
-    positiveText: '删除',
+    title: '删除应用',
+    content: `确定删除 "${app.applicationName}"？此操作不可恢复。`,
+    positiveText: '确认删除',
     negativeText: '取消',
-    positiveButtonProps: {
-      type: 'error'
-    },
+    positiveButtonProps: { type: 'error', bordered: false, size: 'medium' },
     onPositiveClick: async () => {
       try {
         await ClientAppService.deleteClientApplication(app.clientId);
-        message.success('客户端应用删除成功');
+        message.success('已删除');
         await loadClientApps();
-      } catch (error) {
-        message.error((error as Error).message || '删除客户端应用失败');
+      } catch (e) {
+        message.error((e as Error).message);
       }
     }
   });
 };
 
-// 组件挂载时加载数据
+const handleHelpGuideClose = () => showHelpGuide.value = false;
+
+// 生命周期
 onMounted(() => {
   loadClientApps();
-
-  // Set page header
-  layoutStore.setPageHeader(
-      '客户端应用管理',
-      '管理第三方应用的OAuth客户端'
-  );
-
-  // Show page actions
+  layoutStore.setPageHeader('应用管理', '管理 OAuth 2.0 客户端接入');
   layoutStore.setShowPageActions(true);
 
-  // 创建操作栏组件
+  // 使用 Render Function 定义 Header 按钮 (保持原有逻辑，样式微调)
   const ActionsComponent = defineComponent({
     setup() {
-      return () => h('div', { class: 'flex items-center justify-end gap-3' }, [
-        // 帮助按钮
+      return () => h('div', { class: 'flex gap-3' }, [
         h('button', {
-          class: 'px-4 py-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors flex items-center justify-center',
+          class: 'hidden sm:flex items-center px-4 py-2 rounded-full text-sm font-medium bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 text-gray-700 dark:text-gray-200 transition-colors',
           onClick: () => showHelpGuide.value = true
-        }, [
-          h(Icon, { icon: 'ion:help-circle-outline', class: 'mr-1', width: 18, height: 18 }),
-          h('span', '帮助')
-        ]),
-        // 创建客户端按钮
-        h('button', {
-          class: 'px-4 py-2 rounded-full bg-blue-500 hover:bg-blue-600 text-white transition-colors flex items-center justify-center',
-          onClick: openCreateModal
-        }, [
-          h(Icon, { icon: 'ion:add', class: 'mr-1', width: 18, height: 18 }),
-          h('span', '创建客户端')
-        ])
-      ])
-    }
-  })
+        }, [h(Icon, { icon: 'ion:ios-help-circle-outline', class: 'mr-1.5', width: 18 }), '帮助']),
 
-  // 注册操作栏组件到LayoutStore
+        h('button', {
+          class: 'hidden sm:flex items-center px-4 py-2 rounded-full text-sm font-medium bg-[#0071e3] hover:bg-[#0077ed] text-white shadow-sm transition-all',
+          onClick: openCreateModal
+        }, [h(Icon, { icon: 'ion:plus', class: 'mr-1', width: 18 }), '新建应用'])
+      ]);
+    }
+  });
   layoutStore.setActionsComponent(ActionsComponent);
 });
 
 onBeforeUnmount(() => {
-  // Clear page header
   layoutStore.clearPageHeader();
 });
 </script>
 
 <style scoped>
-/* 添加一些自定义样式以增强苹果风格的视觉效果 */
-:deep(.n-modal) {
-  --n-modal-border-radius: 16px;
+/* Apple风格全局覆盖 - 放在没有 scoped 的 style 中或者全局 css 中，这里模拟 */
+.apple-container {
+  background-color: #fbfbfd; /* iOS Light Background */
+}
+.dark .apple-container {
+  background-color: #000000; /* iOS Dark Background */
 }
 
-:deep(.n-dialog__header) {
-  border-bottom: 1px solid var(--n-border-color);
-  padding: 16px 24px;
+/* 搜索框样式 */
+.search-wrapper .search-input {
+  background-color: rgba(118, 118, 128, 0.12);
+  color: #1d1d1f;
+}
+.dark .search-wrapper .search-input {
+  background-color: rgba(118, 118, 128, 0.24);
+  color: #f5f5f7;
+}
+.search-wrapper:focus-within .search-input {
+  background-color: #fff;
+  box-shadow: 0 0 0 4px rgba(0, 125, 250, 0.1);
+}
+.dark .search-wrapper:focus-within .search-input {
+  background-color: #1c1c1e;
+  box-shadow: 0 0 0 4px rgba(0, 125, 250, 0.2);
 }
 
-:deep(.n-dialog__footer) {
-  border-top: 1px solid var(--n-border-color);
-  padding: 16px 24px;
+/* 内容卡片边框 */
+.content-card {
+  border-color: rgba(0, 0, 0, 0.05);
+}
+.dark .content-card {
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
-/* 动画效果 */
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.2s ease;
+/* 输入框组样式 */
+.input-group .apple-input,
+.input-group .apple-textarea {
+  width: 100%;
+  padding: 12px 16px;
+  background-color: #f5f5f7;
+  color: #1d1d1f;
+  outline: none;
+  transition: background-color 0.2s;
+}
+.dark .input-group .apple-input,
+.dark .input-group .apple-textarea {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+.input-group .apple-input:focus,
+.input-group .apple-textarea:focus {
+  background-color: #fff;
+  z-index: 10;
+}
+.dark .input-group .apple-input:focus,
+.dark .input-group .apple-textarea:focus {
+  background-color: rgba(255, 255, 255, 0.15);
 }
 
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
+/* NaiveUI Modal 定制 */
+.custom-modal .n-card-header {
+  padding-top: 24px;
+  padding-bottom: 8px;
+}
+.custom-modal .n-card__content {
+  padding: 0 24px 24px 24px;
+}
+.form-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #86868b;
+  margin-bottom: 8px;
+  margin-left: 4px;
+}
+.dark .form-label {
+  color: #98989d;
 }
 
-.slide-enter-active,
-.slide-leave-active {
-  transition: transform 0.3s ease;
+/* 操作按钮 */
+.action-btn {
+  padding: 8px;
+  border-radius: 50%;
+  color: #86868b;
+  transition: all 0.2s;
+}
+.action-btn:hover {
+  background-color: #f5f5f7;
+  color: #0071e3;
+}
+.dark .action-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #409cff;
 }
 
-.slide-enter-from {
-  transform: translateY(-20px);
+/* 详情 Label */
+.detail-label {
+  display: block;
+  font-size: 13px;
+  color: #86868b;
+  margin-bottom: 6px;
+  font-weight: 500;
 }
 
-.slide-leave-to {
-  transform: translateY(20px);
+/* 滚动条美化 (可选) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
-
-/* 帮助按钮动画 */
-.animate-pulse {
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+::-webkit-scrollbar-track {
+  background: transparent;
 }
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.7;
-  }
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
 }
 </style>

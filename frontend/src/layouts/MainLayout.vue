@@ -55,7 +55,7 @@
               class="apple-dropdown"
           >
             <button class="nav-link">
-              动态
+              社团动态
               <Icon icon="material-symbols:keyboard-arrow-down-rounded" class="text-gray-400" width="16" />
             </button>
           </n-dropdown>

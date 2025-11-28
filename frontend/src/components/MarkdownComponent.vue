@@ -280,25 +280,22 @@ onMounted(() => {
     <div class="w-full lg:pr-8" :class="[showNav && headings.length > 0 ? 'lg:w-4/5' : 'lg:w-full']">
       <article class="prose prose-gray max-w-none dark:prose-invert">
         <!-- 文章头部 -->
-        <header class="pb-4 border-b border-gray-100 dark:border-white/10 bg-white/50 dark:bg-white/5 backdrop-blur-sm">
+        <header class="backdrop-blur-sm">
           <!-- 身份与日期行 -->
-          <div class="flex flex-wrap items-center gap-3 mb-4 text-sm font-medium">
-                <span class="inline-flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
-                   <Icon icon="solar:calendar-mark-linear" class="w-4 h-4"/>
-                   {{ formattedDate }}
-                </span>
-
+          <h1 class="mb-2 text-3xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">
+            {{ content.title }}
+          </h1>
+          <div
+              class="flex items-center gap-4 text-sm text-gray-400 mb-8 border-b border-gray-100 dark:border-gray-800 pb-4">
+                     <span class="flex items-center gap-1">
+                        <Icon icon="solar:calendar-date-bold"/>
+                        {{ formattedDate }}
+                     </span>
             <span v-if="identityInfo"
                   class="px-2.5 py-0.5 rounded-full text-xs border transition-colors"
                   :class="identityInfo.colorClass">
                   {{ identityInfo.label }}
                 </span>
-          </div>
-
-          <!-- 主标题 -->
-          <div
-              class="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white tracking-tight leading-tight font-display">
-            {{ content.title }}
           </div>
         </header>
 

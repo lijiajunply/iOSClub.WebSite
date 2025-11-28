@@ -1,92 +1,111 @@
 <template>
-  <div class="min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-300">
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- 主内容区 -->
-      <div class="gap-5">
-        <!-- 骨架加载 -->
-        <div v-if="loading" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 w-full">
-          <div v-for="i in 8" :key="i"
-               class="rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
-            <div class="p-5">
-              <div class="flex items-center mb-4">
-                <div class="bg-gray-100 dark:bg-gray-700 p-2.5 rounded-xl mr-3 w-10 h-10"></div>
-                <div class="bg-gray-100 dark:bg-gray-700 rounded-full h-5 w-16"></div>
-              </div>
-              <div class="h-4 bg-gray-100 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
-              <div class="h-3 bg-gray-100 dark:bg-gray-700 rounded w-1/3"></div>
-            </div>
+  <div class="ios-container min-h-screen w-full transition-colors duration-300">
+    <main class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+      <!-- 顶部说明 (可选，增加苹果风格的大标题感觉) -->
+      <div class="mb-8 pl-1">
+        <h2 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+          分类概览
+        </h2>
+      </div>
+
+      <!-- 骨架屏加载状态 -->
+      <div v-if="loading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 w-full">
+        <div v-for="i in 8" :key="i" class="ios-card h-48 p-6 flex flex-col justify-between animate-pulse">
+          <div class="w-12 h-12 rounded-xl bg-gray-200 dark:bg-gray-700"></div>
+          <div class="space-y-3">
+            <div class="h-6 bg-gray-200 dark:bg-gray-700 rounded-lg w-2/3"></div>
+            <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded-md w-1/3"></div>
           </div>
         </div>
+      </div>
 
-        <!-- 分类列表 -->
-        <draggable
-            v-else
-            v-model="categories"
-            item-key="id"
-            handle=".drag-handle"
-            ghost-class="drag-ghost"
-            chosen-class="drag-chosen"
-            @start="onCategoryDragStart"
-            @end="onCategoryDragEnd"
-            class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 w-full"
-        >
-          <template #item="{ element: category }">
-            <div
-                class="group rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden cursor-move"
-            >
-              <div class="p-5">
-                <div class="flex items-center justify-between mb-4">
-                  <div class="flex items-center">
-                    <Icon
-                        icon="material-symbols:drag-indicator"
-                        class="drag-handle text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors cursor-grab active:cursor-grabbing mr-3"
-                    />
-                  </div>
-                  <button
-                      class="h-8 w-8 p-0 rounded-full bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-200 dark:hover:bg-blue-800/40 flex items-center justify-center text-blue-600 dark:text-blue-400 transition-colors duration-200"
-                      @click.stop="goToCategorySetting(category)"
-                  >
-                    <Icon icon="material-symbols:settings" class="w-4 h-4"/>
-                  </button>
+      <!-- 实际内容列表 -->
+      <draggable
+          v-else
+          v-model="categories"
+          item-key="id"
+          handle=".drag-handle"
+          ghost-class="drag-ghost"
+          chosen-class="drag-chosen"
+          @start="onCategoryDragStart"
+          @end="onCategoryDragEnd"
+          class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 w-full"
+      >
+        <template #item="{ element: category }">
+          <div class="ios-card group relative h-48 p-6 flex flex-col justify-between select-none transition-all duration-300"
+               @click="goToCategorySetting(category)">
+
+            <!-- 顶部：图标与操作 -->
+            <div class="flex justify-between items-start z-10">
+              <!-- 模拟文件夹图标 -->
+              <div class="folder-icon-bg w-12 h-12 rounded-2xl flex items-center justify-center text-blue-500 dark:text-blue-400">
+                <Icon icon="solar:folder-with-files-bold-duotone" class="w-7 h-7" />
+              </div>
+
+              <!-- 操作区 -->
+              <div class="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <!-- 拖拽手柄 -->
+                <div
+                    class="drag-handle w-8 h-8 rounded-full bg-gray-100 dark:bg-white/10 flex items-center justify-center cursor-grab active:cursor-grabbing hover:bg-gray-200 dark:hover:bg-white/20 transition-colors"
+                    @click.stop
+                >
+                  <Icon icon="material-symbols:drag-pan-rounded" class="w-4 h-4 text-gray-600 dark:text-gray-300" />
                 </div>
-
-                <h3 class="font-medium text-lg mb-2 text-gray-900 dark:text-white">{{ category.name }}</h3>
-
-                <div class="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                  <Icon icon="material-symbols:sort" class="mr-1 w-4 h-4"/>
-                  <span>顺序: {{ category.order }}</span>
+                <!-- 设置按钮 -->
+                <div
+                    class="w-8 h-8 rounded-full bg-gray-100 dark:bg-white/10 flex items-center justify-center cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-500/30 transition-colors"
+                >
+                  <Icon icon="material-symbols:arrow-forward-ios-rounded" class="w-3 h-3 text-gray-600 dark:text-white" />
                 </div>
               </div>
             </div>
-          </template>
-        </draggable>
 
-        <!-- 空状态 -->
-        <div
-            v-if="categories.length === 0 && !loading"
-            class="col-span-full py-16 flex flex-col items-center justify-center rounded-2xl bg-white dark:bg-gray-800 border border-dashed border-gray-200 dark:border-gray-700"
-        >
-          <div
-              class="w-16 h-16 flex items-center justify-center bg-gray-50 dark:bg-gray-700 rounded-full mb-4 border border-gray-100 dark:border-gray-600">
-            <Icon icon="material-symbols:category-off" class="text-gray-400 dark:text-gray-500 w-7 h-7"/>
+            <!-- 底部：信息 -->
+            <div class="z-10 mt-4">
+              <h3 class="text-xl font-semibold text-gray-900 dark:text-white tracking-tight leading-tight line-clamp-1">
+                {{ category.name }}
+              </h3>
+              <div class="flex items-center mt-1 space-x-2">
+                 <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300">
+                   # {{ category.order + 1 }}
+                 </span>
+                <span class="text-xs text-gray-400 dark:text-gray-500">ID: {{ category.id.slice(0,4) }}</span>
+              </div>
+            </div>
+
+            <!-- 背景装饰 (玻璃光泽) -->
+            <div class="absolute -right-4 -bottom-4 w-32 h-32 bg-gradient-to-br from-blue-500/5 to-purple-500/5 rounded-full blur-2xl pointer-events-none"></div>
           </div>
-          <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-1">暂无分类</h3>
-          <p class="text-sm text-gray-500 dark:text-gray-400">请先创建分类</p>
+        </template>
+      </draggable>
+
+      <!-- 空状态 (Apple Style) -->
+      <div
+          v-if="categories.length === 0 && !loading"
+          class="flex flex-col items-center justify-center py-32 text-center"
+      >
+        <div class="w-24 h-24 bg-gray-100 dark:bg-white/5 rounded-[2rem] flex items-center justify-center mb-6">
+          <Icon icon="solar:box-minimalistic-linear" class="w-12 h-12 text-gray-400" />
         </div>
+        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">没有分类</h3>
+        <p class="text-gray-500 dark:text-gray-400 max-w-xs mx-auto">
+          看起来这里还是空的。
+        </p>
       </div>
     </main>
   </div>
 </template>
 
 <script setup lang="ts">
-import {ref, onMounted, onBeforeUnmount} from 'vue';
-import {useRouter} from 'vue-router';
-import {useMessage} from 'naive-ui';
-import {Icon} from '@iconify/vue';
+import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { useRouter } from 'vue-router';
+import { useMessage } from 'naive-ui';
+import { Icon } from '@iconify/vue';
 import draggable from 'vuedraggable';
-import {CategoryService} from '../services/CategoryService';
-import type {CategoryModel} from '../models';
-import {useLayoutStore} from '../stores/LayoutStore';
+import { CategoryService } from '../services/CategoryService';
+import type { CategoryModel } from '../models';
+import { useLayoutStore } from '../stores/LayoutStore';
 
 const message = useMessage();
 const router = useRouter();
@@ -113,85 +132,113 @@ const goToCategorySetting = (category: CategoryModel) => {
 
 // 拖拽开始事件
 const onCategoryDragStart = () => {
-  // 添加全局样式防止选中文本
-  document.body.classList.add('dragging');
+  document.body.classList.add('dragging-active');
 };
 
 // 拖拽结束事件
 const onCategoryDragEnd = async () => {
   try {
-    // 构建分类顺序字典 - 使用ID而不是名称
     const categoryOrders: Record<string, number> = {};
     categories.value.forEach((category, index) => {
       category.order = index;
       categoryOrders[category.id] = index;
     });
 
-    // 批量更新分类顺序
     await CategoryService.updateCategoryOrders(categoryOrders);
-
-    message.success('分类顺序更新成功');
+    message.success('顺序已更新');
   } catch (error) {
-    message.error((error as Error).message || '更新分类顺序失败');
-    // 失败时重新加载数据
+    message.error((error as Error).message || '更新失败');
     await loadCategories();
   } finally {
-    // 移除全局样式
-    document.body.classList.remove('dragging');
+    document.body.classList.remove('dragging-active');
   }
 };
 
 onMounted(() => {
-  // Set page header
+  // 与 LayoutStore 交互
   layoutStore.setPageHeader(
-      '分类管理',
-      '管理文章分类及其显示顺序'
+      '文章分类',
+      '管理内容结构与排序'
   );
-
-  // Show page actions (none for this page)
   layoutStore.setShowPageActions(false);
-
   loadCategories();
 });
 
 onBeforeUnmount(() => {
-  // Clear page header
   layoutStore.clearPageHeader();
+  document.body.classList.remove('dragging-active');
 });
 </script>
 
 <style scoped>
-/* 防止拖拽时选中文本 */
-div {
-  user-select: none;
+/* 核心卡片样式 - iOS/macOS 风格 */
+.ios-card {
+  /* Light Mode */
+  background-color: #ffffff;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02),
+  0 2px 4px -1px rgba(0, 0, 0, 0.02),
+  0 0 0 1px rgba(0, 0, 0, 0.04); /* 微妙边框 */
+  border-radius: 24px; /* 大圆角 */
+  cursor: pointer;
+  transform: translateZ(0); /* 开启硬件加速 */
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+  box-shadow 0.3s ease,
+  background-color 0.3s ease;
+  overflow: hidden;
 }
 
-/* 拖拽时的全局样式 */
-:deep(.dragging) {
-  user-select: none;
+.ios-card:hover {
+  /* 悬停时轻微抬起缩放 */
+  transform: scale(1.02);
+  box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.08),
+  0 8px 10px -5px rgba(0, 0, 0, 0.02);
+  z-index: 10;
 }
 
-/* 拖拽手柄样式优化 */
-.drag-handle {
-  user-select: none;
-  -webkit-user-drag: none;
-  -khtml-user-drag: none;
-  -moz-user-drag: none;
-  -o-user-drag: none;
-  user-drag: none;
+.folder-icon-bg {
+  background-color: #F5F5F7; /* Apple 浅灰色 */
+  transition: background-color 0.3s ease;
 }
 
-/* 拖拽时的幽灵元素样式 */
+/* 暗黑模式适配 Dark Mode Overrides */
+.dark .ios-card {
+  background-color: #1C1C1E; /* Apple Dark Background Secondary */
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08); /* 非常淡的内描边 */
+}
+
+.dark .ios-card:hover {
+  background-color: #2C2C2E; /* 悬停变更亮一点的灰 */
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+}
+
+.dark .folder-icon-bg {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* 拖拽相关样式 */
+
+/* 拖住时的“幽灵”元素 */
 :deep(.drag-ghost) {
-  background-color: rgb(239 246 255 / 1) !important;
-  background-color: rgb(30 58 138 / 0.2) !important;
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
-  opacity: 0.8;
+  opacity: 0.3 !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border: 2px dashed #3B82F6 !important; /* 蓝色虚线框占位 */
 }
 
-/* 拖拽时选中元素的样式 */
+/* 拖住时选中的元素 */
 :deep(.drag-chosen) {
-  outline: 2px solid rgb(59 130 246);
-  outline-offset: 2px;
+  cursor: grabbing;
+  transform: scale(1.05);
+}
+
+/* 全局防止选中 */
+:deep(.dragging-active) {
+  user-select: none;
+  cursor: grabbing;
+}
+
+/* 容器背景（如果父级没有设置，这里保底） */
+.ios-container {
+  /* 通常 LayoutStore 会处理背景，这里作为容器微调 */
 }
 </style>

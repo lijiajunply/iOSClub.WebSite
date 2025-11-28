@@ -1,212 +1,214 @@
 <template>
-  <div class="min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-300">
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- 日志统计图表区域 -->
+  <div class="apple-page min-h-screen bg-[#f5f5f7] dark:bg-black text-slate-900 dark:text-slate-100 transition-colors duration-500">
+    <main class="max-w-[1440px] mx-auto px-6 py-10">
 
-      <!-- 日志统计图表区域 -->
-      <div
-          class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 mb-6 transition-all duration-300 shadow-sm hover:shadow-lg">
-        <h2 class="text-lg font-medium text-gray-900 dark:text-white mb-4">日志统计</h2>
+      <!-- 顶部统计与图表区 (Grid布局) -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
 
-        <!-- 统计卡片 -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <!-- 总日志数 -->
-          <div
-              class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border-l-4 border-blue-500 transition-transform hover:scale-[1.02]">
-            <p class="text-sm text-gray-500 dark:text-gray-400">总日志数</p>
-            <p class="text-2xl font-bold mt-1">{{ statisticsLoading ? '-' : totalLogsCount }}</p>
-            <div class="flex items-center text-xs text-gray-500 dark:text-gray-400 mt-2">
-              <span class="w-1 h-1 bg-gray-400 rounded-full mr-1"></span>
-              {{ statisticsLoading ? '加载中...' : `今日新增: ${Math.floor(totalLogsCount / 2)}` }}
+        <!-- 左侧：关键指标卡片 (2/3 宽度) -->
+        <div class="lg:col-span-3 xl:col-span-1 grid grid-cols-2 sm:grid-cols-2 gap-4">
+          <!-- 总日志 -->
+          <div class="apple-card relative overflow-hidden group p-6 flex flex-col justify-between h-40">
+            <div class="absolute -right-4 -top-4 opacity-10 group-hover:opacity-20 transition-opacity transform rotate-12">
+              <Icon icon="solar:documents-bold" width="120" />
             </div>
-            <div v-if="statisticsError && !statisticsLoading" class="text-xs text-red-500 mt-1">
-              {{ statisticsError }}
+            <div>
+              <p class="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">总日志数</p>
+              <h3 class="text-4xl font-semibold mt-2 tracking-tight">{{ statisticsLoading ? '...' : totalLogsCount }}</h3>
+            </div>
+            <div class="flex items-center gap-2 mt-4">
+              <span class="flex h-2 w-2 rounded-full bg-blue-500"></span>
+              <span class="text-xs text-slate-400">系统活跃</span>
             </div>
           </div>
 
-          <!-- 错误日志数 -->
-          <div
-              class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border-l-4 border-red-500 transition-transform hover:scale-[1.02]">
-            <p class="text-sm text-gray-500 dark:text-gray-400">错误日志</p>
-            <p class="text-2xl font-bold mt-1 text-red-500">{{ errorLogsCount }}</p>
-            <div class="flex items-center text-xs text-gray-500 dark:text-gray-400 mt-2">
-              <span class="w-1 h-1 bg-red-400 rounded-full mr-1"></span>
-              需紧急处理
+          <!-- 错误日志 -->
+          <div class="apple-card relative overflow-hidden group p-6 flex flex-col justify-between h-40 bg-red-50/50 dark:bg-red-900/10 border-red-100 dark:border-red-900/30">
+            <div class="absolute -right-4 -top-4 opacity-10 text-red-500 group-hover:opacity-20 transition-opacity transform rotate-12">
+              <Icon icon="solar:danger-triangle-bold" width="120" />
+            </div>
+            <div>
+              <p class="text-sm font-medium text-red-600/80 dark:text-red-400 uppercase tracking-wide">错误</p>
+              <h3 class="text-4xl font-semibold mt-2 text-red-600 dark:text-red-400 tracking-tight">{{ errorLogsCount }}</h3>
+            </div>
+            <div class="flex items-center gap-2 mt-4">
+              <span class="flex h-2 w-2 rounded-full bg-red-500 animate-pulse"></span>
+              <span class="text-xs text-red-600/70 dark:text-red-400/70">需要关注</span>
             </div>
           </div>
 
-          <!-- 警告日志数 -->
-          <div
-              class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border-l-4 border-yellow-500 transition-transform hover:scale-[1.02]">
-            <p class="text-sm text-gray-500 dark:text-gray-400">警告日志</p>
-            <p class="text-2xl font-bold mt-1 text-yellow-500">{{ warningLogsCount }}</p>
-            <div class="flex items-center text-xs text-gray-500 dark:text-gray-400 mt-2">
-              <span class="w-1 h-1 bg-yellow-400 rounded-full mr-1"></span>
-              需要关注
+          <!-- 警告日志 -->
+          <div class="apple-card p-6 flex flex-col justify-center h-32">
+            <div class="flex justify-between items-center mb-2">
+                 <span class="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400">
+                    <Icon icon="solar:bell-bing-bold" width="18" />
+                 </span>
+              <span class="text-xs font-bold bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-full">警告</span>
             </div>
+            <div class="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{{ warningLogsCount }}</div>
+            <div class="text-xs text-slate-400 mt-1">发现潜在问题</div>
           </div>
 
-          <!-- 信息日志数 -->
-          <div
-              class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border-l-4 border-green-500 transition-transform hover:scale-[1.02]">
-            <p class="text-sm text-gray-500 dark:text-gray-400">信息日志</p>
-            <p class="text-2xl font-bold mt-1 text-green-500">{{ infoLogsCount }}</p>
-            <div class="flex items-center text-xs text-gray-500 dark:text-gray-400 mt-2">
-              <span class="w-1 h-1 bg-green-400 rounded-full mr-1"></span>
-              正常运行信息
+          <!-- 信息日志 -->
+          <div class="apple-card p-6 flex flex-col justify-center h-32">
+            <div class="flex justify-between items-center mb-2">
+                 <span class="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400">
+                    <Icon icon="solar:info-circle-bold" width="18" />
+                 </span>
+              <span class="text-xs font-bold bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-full">信息</span>
             </div>
+            <div class="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{{ infoLogsCount }}</div>
+            <div class="text-xs text-slate-400 mt-1">正常运行</div>
+          </div>
+        </div>
+
+        <!-- 右侧：ECharts 趋势图 (占据剩余空间) -->
+        <div class="lg:col-span-3 xl:col-span-2 apple-card p-6 min-h-[340px] flex flex-col">
+          <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+            <Icon icon="solar:graph-new-up-bold" class="text-blue-500"/>
+            日志活动趋势
+          </h2>
+          <div class="flex-1 w-full relative">
+            <div ref="chartDom" class="w-full h-full absolute inset-0"></div> <!-- Absolute positioning for responsive resizing -->
           </div>
         </div>
       </div>
 
-      <!-- 过滤和操作栏 -->
-      <div
-          class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 mb-6 transition-all duration-300 shadow-sm hover:shadow-lg">
-        <!-- 快速搜索 -->
-        <div class="mb-4">
-          <div class="relative">
-            <Icon icon="material-symbols:search"
-                  class="z-50 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4.5 h-4.5"/>
-            <n-input v-model:value="searchKeyword" placeholder="搜索日志消息或来源..." class="pl-10"
-                     @keyup.enter="applyFilters"/>
-            <n-button v-if="searchKeyword" type="default" text circle size="small"
-                      class="absolute right-2 top-1/2 transform -translate-y-1/2"
-                      @click="searchKeyword = ''; applyFilters()">
-              <Icon icon="material-symbols:close" class="z-50 w-4 h-4"/>
-            </n-button>
-          </div>
-        </div>
+      <!-- 控制栏与表格区域 -->
+      <div class="apple-card p-0 overflow-hidden flex flex-col min-h-[600px]">
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <!-- 日志级别过滤 -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              日志级别
-            </label>
-            <n-select v-model:value="selectedLevel" placeholder="选择日志级别" :options="logLevelOptions" clearable
-                      class="w-full" @update:value="applyFilters"/>
-          </div>
+        <!-- 顶部工具栏 -->
+        <div class="p-5 border-b border-slate-100 dark:border-slate-800/50 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm sticky top-0 z-10">
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
 
-          <!-- 时间范围 -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              时间范围
-            </label>
-            <n-date-picker v-model:value="dateRange" type="daterange" clearable class="w-full"
-                           format="yyyy-MM-dd HH:mm:ss" @update:value="applyFilters"/>
-          </div>
-
-          <!-- 操作按钮组 -->
-        <div class="flex items-end gap-2">
-          <n-button type="default" @click="resetFilters" class="flex-1">
-            重置过滤
-          </n-button>
-        </div>
-        </div>
-
-        <!-- 高级过滤 (默认折叠) -->
-        <div class="mt-4">
-          <n-collapse>
-            <n-collapse-item title="高级过滤" name="1">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                <!-- 异常信息过滤 -->
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    包含异常
-                  </label>
-                  <n-switch v-model:value="hasException" @update:value="applyFilters"/>
-                </div>
-
-                <!-- 快速时间范围选择 -->
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    快速时间选择
-                  </label>
-                  <div class="flex gap-2 flex-wrap">
-                    <n-button v-for="range in quickTimeRanges" :key="range.value" type="default" size="small"
-                              :secondary="selectedQuickTimeRange !== range.value"
-                              :tertiary="selectedQuickTimeRange === range.value"
-                              @click="applyQuickTimeRange(range.value)"
-                              class="text-xs">
-                      {{ range.label }}
-                    </n-button>
-                  </div>
-                </div>
+            <!-- 搜索与筛选左侧 -->
+            <div class="flex flex-1 flex-col sm:flex-row gap-3">
+              <!-- 搜索框 - iOS 风格 -->
+              <div class="relative flex-1 max-w-md group">
+                <Icon icon="solar:magnifer-linear" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" width="18"/>
+                <!-- 使用原生 input 配合样式实现更纯粹的 Tailwind 4 控制 -->
+                <input
+                    v-model="searchKeyword"
+                    @keyup.enter="applyFilters"
+                    type="text"
+                    placeholder="搜索日志..."
+                    class="w-full bg-slate-100 dark:bg-slate-900/80 border-none rounded-lg py-2.5 pl-10 pr-4 text-sm focus:ring-2 focus:ring-blue-500/50 outline-none transition-all"
+                />
+                <button
+                    v-if="searchKeyword"
+                    @click="searchKeyword = ''; applyFilters()"
+                    class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                  <Icon icon="solar:close-circle-bold" width="16" />
+                </button>
               </div>
-            </n-collapse-item>
-          </n-collapse>
-        </div>
-      </div>
 
-      <!-- 日志列表 -->
-      <div
-          class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden transition-all duration-300 shadow-sm hover:shadow-lg">
-        <div class="overflow-x-auto">
-          <table class="w-full">
-            <thead class="bg-gray-50 dark:bg-gray-800">
+              <!-- 下拉筛选 NaiveUI -->
+              <div class="w-full sm:w-48">
+                <n-select
+                    v-model:value="selectedLevel"
+                    :options="logLevelOptions"
+                    placeholder="所有级别"
+                    clearable
+                    size="medium"
+                    class="apple-select"
+                    @update:value="applyFilters"
+                />
+              </div>
+            </div>
+
+            <!-- 右侧操作 -->
+            <div class="flex items-center gap-2 self-end lg:self-auto">
+              <!-- 时间范围选择 -->
+              <div class="hidden md:flex items-center bg-slate-100 dark:bg-slate-900/80 rounded-lg p-1">
+                <button
+                    v-for="range in quickTimeRanges.slice(0, 4)"
+                    :key="range.value"
+                    @click="applyQuickTimeRange(range.value)"
+                    :class="['px-3 py-1.5 text-xs font-medium rounded-md transition-all',
+                      selectedQuickTimeRange === range.value
+                      ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white'
+                      : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300']"
+                >
+                  {{ range.label }}
+                </button>
+              </div>
+              <n-button secondary circle class="ml-2" @click="refreshLogs">
+                <template #icon><Icon icon="solar:restart-bold" /></template>
+              </n-button>
+              <n-button secondary circle type="error" @click="showCleanupDialog = true">
+                <template #icon><Icon icon="solar:trash-bin-trash-bold" /></template>
+              </n-button>
+            </div>
+          </div>
+
+          <!-- 高级过滤器折叠区域 -->
+          <n-collapse-transition v-show="false"> <!-- 这里可以根据需要绑定变量控制显示 -->
+            <!-- Expandable content if needed -->
+          </n-collapse-transition>
+        </div>
+
+        <!-- 表格内容区 -->
+        <div class="flex-1 overflow-x-auto relative custom-scrollbar">
+          <table class="w-full text-left border-collapse">
+            <thead class="bg-slate-50/80 dark:bg-slate-800/30 backdrop-blur sticky top-0 z-9 text-xs uppercase tracking-wider text-slate-500 font-semibold">
             <tr>
-              <th
-                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                时间
-              </th>
-              <th
-                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                级别
-              </th>
-              <th
-                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                消息
-              </th>
+              <th class="px-6 py-4 w-48">时间戳</th>
+              <th class="px-6 py-4 w-32 text-center">级别</th>
+              <th class="px-6 py-4">消息</th>
+              <th class="px-6 py-4 w-24 text-right">操作</th>
             </tr>
             </thead>
-            <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-            <!-- 骨架加载 -->
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
             <template v-if="loading">
-              <tr v-for="i in 5" :key="i">
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-32"></div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="h-5 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
-                </td>
-                <td class="px-6 py-4">
-                  <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
-                  <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
-                </td>
+              <tr v-for="i in 8" :key="i" class="animate-pulse">
+                <td class="px-6 py-4"><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-32"></div></td>
+                <td class="px-6 py-4"><div class="h-6 bg-slate-200 dark:bg-slate-700 rounded-full w-16 mx-auto"></div></td>
+                <td class="px-6 py-4"><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-3/4"></div></td>
+                <td class="px-6 py-4"></td>
               </tr>
             </template>
 
-            <!-- 日志列表 -->
-            <template v-else>
-              <tr v-for="log in paginatedLogs" :key="`${log.timestamp}-${log.level}`"
-                  class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150">
-                <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+            <template v-else-if="paginatedLogs.length > 0">
+              <tr
+                  v-for="log in paginatedLogs"
+                  :key="`${log.timestamp}-${log.level}`"
+                  class="group hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-colors cursor-pointer"
+                  @click="showLogDetails(log)"
+              >
+                <td class="px-6 py-4 text-sm text-slate-500 dark:text-slate-400 font-mono whitespace-nowrap">
                   {{ formatDateTime(log.timestamp) }}
                 </td>
-                <td class="px-4 sm:px-6 py-4 whitespace-nowrap">
-                  <n-tag :type="getLogLevelType(log.level)" :bordered="false" class="rounded-full">
-                    {{ log.level }}
-                  </n-tag>
+                <td class="px-6 py-4 text-center">
+                     <span
+                         :class="[
+                        'px-3 py-1 text-[11px] font-bold rounded-full border inline-flex items-center gap-1',
+                        getBadgeStyle(log.level)
+                      ]">
+                      {{ log.level }}
+                     </span>
                 </td>
-                <td class="px-4 sm:px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
-                  <div
-                      class="line-clamp-2 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                      @click="showLogDetails(log)">
+                <td class="px-6 py-4">
+                  <div class="text-sm text-slate-700 dark:text-slate-200 font-medium line-clamp-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                     {{ log.message || '无消息内容' }}
                   </div>
+                  <div v-if="log.exception" class="text-xs text-red-500 mt-1 line-clamp-1 font-mono bg-red-50 dark:bg-red-900/20 px-2 py-0.5 rounded inline-block">
+                    异常: {{ log.exception.substring(0, 50) }}...
+                  </div>
+                </td>
+                <td class="px-6 py-4 text-right opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button class="text-slate-400 hover:text-blue-500 p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-all" @click.stop="showLogDetails(log)">
+                    <Icon icon="solar:info-circle-linear" width="20" />
+                  </button>
                 </td>
               </tr>
             </template>
 
-            <tr v-if="paginatedLogs.length === 0">
-              <td colspan="3" class="px-4 sm:px-6 py-12 text-center">
-                <div class="flex flex-col items-center">
-                  <div
-                      class="w-16 h-16 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-full mb-4">
-                    <Icon icon="material-symbols:history-off" class="text-gray-400 dark:text-gray-500 w-7 h-7"/>
-                  </div>
-                  <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-1">暂无日志记录</h3>
-                  <p class="text-sm text-gray-500 dark:text-gray-400">系统尚未生成任何日志记录</p>
+            <tr v-else>
+              <td colspan="4" class="px-6 py-20 text-center">
+                <div class="flex flex-col items-center justify-center text-slate-400">
+                  <Icon icon="solar:box-minimalistic-linear" width="64" class="mb-4 opacity-50"/>
+                  <p class="text-lg">未找到日志</p>
+                  <p class="text-sm opacity-70">尝试调整筛选条件</p>
                 </div>
               </td>
             </tr>
@@ -214,153 +216,142 @@
           </table>
         </div>
 
-        <!-- 分页 -->
-        <div class="px-4 sm:px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
-          <div class="flex-1 flex justify-between sm:hidden">
-            <n-button type="default" size="small" disabled v-if="currentPage === 1">
-              上一页
-            </n-button>
-            <n-button type="default" size="small" v-else @click="currentPage--">
-              上一页
-            </n-button>
-            <n-button type="default" size="small" disabled v-if="!hasMore">
-              下一页
-            </n-button>
-            <n-button type="default" size="small" v-else @click="currentPage++">
-              下一页
-            </n-button>
-          </div>
-          <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-            <div>
-              <p class="text-sm text-gray-700 dark:text-gray-300">
-                显示第 <span class="font-medium">{{ Math.max(0, (currentPage - 1) * pageSize + 1) }}</span> 到 <span
-                  class="font-medium">{{ Math.min(totalLogs, currentPage * pageSize) }}</span> 条，共 <span
-                  class="font-medium">{{ totalLogs }}</span> 条日志
-              </p>
-            </div>
-            <div>
-              <n-pagination v-model:page="currentPage" v-model:page-size="pageSize" :page-sizes="[10, 20, 50, 100]"
-                            :item-count="totalLogs" show-size-picker show-quick-jumper show-total
-                            @update:page="handlePageChange"
-                            @update:page-size="handlePageSizeChange"/>
-            </div>
-          </div>
+        <!-- 底部页码 -->
+        <div class="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 flex justify-between items-center">
+           <span class="text-xs text-slate-500">
+              {{ totalLogs }} 条记录总数
+           </span>
+          <n-pagination
+              v-model:page="currentPage"
+              v-model:page-size="pageSize"
+              :item-count="totalLogs"
+              :page-sizes="[10, 25, 50, 100]"
+              show-size-picker
+              simple
+              @update:page="handlePageChange"
+              @update:page-size="handlePageSizeChange"
+              class="apple-pagination"
+          />
         </div>
       </div>
+
     </main>
-  </div>
 
-  <!-- 日志详情对话框 -->
-  <n-modal v-model:show="showLogDetailsDialog" preset="dialog" title="日志详情" :width="600" :bordered="false"
-           :mask-closable="false" class="backdrop-blur-md rounded-xl">
-    <div v-if="selectedLog" class="space-y-4">
-      <div>
-        <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">时间</h3>
-        <p class="text-gray-900 dark:text-white">{{ formatDateTime(selectedLog.timestamp) }}</p>
-      </div>
-      <div>
-        <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">级别</h3>
-        <n-tag :type="getLogLevelType(selectedLog.level)" :bordered="false" class="rounded-full">
-          {{ selectedLog.level }}
-        </n-tag>
-      </div>
-      <div>
-        <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">消息</h3>
-        <p class="text-gray-900 dark:text-white whitespace-pre-wrap">{{ selectedLog.message || '无消息内容' }}</p>
-      </div>
-      <div v-if="selectedLog.properties && Object.keys(selectedLog.properties).length > 0">
-        <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">属性</h3>
-        <pre
-            class="bg-gray-100 dark:bg-gray-800 p-3 rounded-md text-sm text-gray-900 dark:text-gray-100 overflow-auto max-h-40 shadow-inner">
-        {{ JSON.stringify(selectedLog.properties, null, 2) }}</pre>
-      </div>
-      <div v-if="selectedLog.exception">
-        <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">异常信息</h3>
-        <pre
-            class="bg-gray-100 dark:bg-gray-800 p-3 rounded-md text-sm text-gray-900 dark:text-gray-100 overflow-auto max-h-40 shadow-inner">
-        {{ selectedLog.exception }}</pre>
-      </div>
-    </div>
-  </n-modal>
+    <!-- 详情弹窗：使用 macOS 风格的 Modal -->
+    <n-modal
+        v-model:show="showLogDetailsDialog"
+        preset="card"
+        :bordered="false"
+        class="!w-[90vw] !max-w-[700px] !rounded-2xl apple-modal overflow-hidden"
+        :mask-closable="true"
+    >
+      <template #header>
+        <div class="flex items-center gap-3 pt-2 pl-2">
+          <div class="h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-500">
+            <Icon icon="solar:document-text-bold-duotone" width="24" />
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold">日志详情</h3>
+            <p class="text-xs text-slate-400 font-mono">{{ selectedLog ? formatDateTime(selectedLog.timestamp) : '' }}</p>
+          </div>
+        </div>
+      </template>
 
-  <!-- 清理日志对话框 -->
-  <n-modal v-model:show="showCleanupDialog" preset="card" title="清理旧日志" :bordered="false" style="max-width: 500px"
-           class="backdrop-blur-md rounded-xl">
-    <div class="space-y-4">
-      <div class="text-sm text-gray-600 dark:text-gray-400">
-        此操作将删除指定天数前的所有日志，操作不可恢复。请谨慎执行。
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-          保留最近的日志天数
-        </label>
-        <n-input-number v-model:value="cleanupDays" :min="1" :max="365" :step="1" placeholder="输入天数"/>
-        <div class="text-xs text-gray-500 dark:text-gray-500 mt-1">
-          例如：输入7将保留最近7天的日志，删除更早的日志
+      <div v-if="selectedLog" class="py-2 space-y-6">
+        <!-- 级别与基本信息 -->
+        <div class="flex flex-wrap gap-3">
+          <div class="bg-slate-50 dark:bg-slate-800 rounded-lg px-4 py-2 flex-1 min-w-[120px]">
+            <div class="text-xs text-slate-400 uppercase mb-1">Level</div>
+            <span :class="['px-2 py-0.5 rounded text-xs font-bold inline-block', getBadgeStyle(selectedLog.level)]">
+                 {{ selectedLog.level }}
+              </span>
+          </div>
+          <!-- 其他属性占位 -->
+        </div>
+
+        <div>
+          <h4 class="text-sm font-medium text-slate-500 mb-2 flex items-center gap-2">
+            <Icon icon="solar:chat-square-text-bold" class="text-blue-500" width="16" />
+            消息
+          </h4>
+          <div class="bg-slate-50 dark:bg-slate-900/80 p-4 rounded-xl text-sm leading-relaxed text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 select-text whitespace-pre-wrap">
+            {{ selectedLog.message }}
+          </div>
+        </div>
+
+        <div v-if="selectedLog.exception">
+          <h4 class="text-sm font-medium text-red-500 mb-2 flex items-center gap-2">
+            <Icon icon="solar:danger-circle-bold" width="16" />
+            异常追踪
+          </h4>
+          <div class="bg-red-50/50 dark:bg-red-900/10 p-4 rounded-xl border border-red-100 dark:border-red-900/30 overflow-x-auto">
+            <pre class="text-xs font-mono text-red-700 dark:text-red-300 whitespace-pre">{{ selectedLog.exception }}</pre>
+          </div>
+        </div>
+
+        <div v-if="selectedLog.properties && Object.keys(selectedLog.properties).length > 0">
+          <h4 class="text-sm font-medium text-slate-500 mb-2">Properties (JSON)</h4>
+          <div class="bg-slate-800 text-slate-200 p-4 rounded-xl overflow-auto max-h-40 custom-scrollbar">
+            <pre class="text-xs font-mono">{{ JSON.stringify(selectedLog.properties, null, 2) }}</pre>
+          </div>
         </div>
       </div>
-    </div>
-    <template #footer>
-      <div class="flex justify-end gap-2">
-        <n-button type="default" @click="showCleanupDialog = false">
-          取消
-        </n-button>
-        <n-button type="error" @click="confirmCleanup" :loading="cleanupLoading">
-          <template #icon>
-            <Icon icon="material-symbols:delete-outline" class="w-4.5 h-4.5"/>
-          </template>
-          确认清理
-        </n-button>
+    </n-modal>
+
+    <!-- 清理弹窗 -->
+    <n-modal v-model:show="showCleanupDialog" preset="dialog" title="清理日志" positive-text="清理" negative-text="取消"
+             @positive-click="confirmCleanup" @negative-click="showCleanupDialog = false"
+             class="!rounded-2xl apple-modal"
+             :show-icon="false"
+    >
+      <div class="pt-4 pb-2">
+        <div class="flex items-center gap-4 mb-4 bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg text-yellow-700 dark:text-yellow-400 text-sm">
+          <Icon icon="solar:alert-circle-bold" width="24" class="shrink-0"/>
+          此操作不可撤销。仅保留最近几天的日志。
+        </div>
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+          保留期限 (天)
+        </label>
+        <n-input-number v-model:value="cleanupDays" :min="1" :max="365" class="w-full text-center" size="large"/>
       </div>
-    </template>
-  </n-modal>
+    </n-modal>
+
+  </div>
 </template>
 
 <script setup lang="ts">
-import {ref, computed, onMounted, onBeforeUnmount, defineComponent, h} from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
 import {
-  NTag,
-  NSelect,
-  NDatePicker,
-  NButton,
-  NModal,
-  NPagination,
-  NInput,
-  NSwitch,
-  NCollapse,
-  NCollapseItem,
-  NInputNumber,
-  useMessage
+  NSelect, NButton, NModal, NPagination, NInputNumber, NCollapseTransition,
+  useMessage, type MessageReactive
 } from 'naive-ui'
-import {Icon} from '@iconify/vue'
-import {LogsService, type LogEntry} from '../services/LogsService';
-import {useLayoutStore} from '../stores/LayoutStore';
+import { Icon } from '@iconify/vue'
+// 假设 API 服务路径不变
+import { LogsService, type LogEntry } from '../services/LogsService'
+import { useLayoutStore } from '../stores/LayoutStore'
+import * as echarts from 'echarts'
 
-// 响应式数据
+// ---------------------------------------------------------
+// State
+// ---------------------------------------------------------
 const logs = ref<LogEntry[]>([])
 const loading = ref<boolean>(false)
 const statisticsLoading = ref<boolean>(false)
-const statisticsError = ref<string | null>(null)
+
+// 筛选与分页
+const searchKeyword = ref<string>('')
 const selectedLevel = ref<string | null>(null)
-const dateRange = ref<[number, number] | null>(null)
+const selectedQuickTimeRange = ref<string | null>('today') // 默认选中 'today'
 const currentPage = ref<number>(1)
 const pageSize = ref<number>(20)
 const totalLogs = ref<number>(0)
 const totalPages = ref<number>(1)
-const searchKeyword = ref<string>('')
-const hasException = ref<boolean>(false)
+
+// 详情与模态框
 const selectedLog = ref<LogEntry | null>(null)
 const showLogDetailsDialog = ref<boolean>(false)
-const selectedQuickTimeRange = ref<string | null>(null)
-
-// 清理日志相关数据
 const showCleanupDialog = ref<boolean>(false)
 const cleanupDays = ref<number>(7)
-const cleanupLoading = ref<boolean>(false)
-
-// 消息提示
-const message = useMessage()
-const layoutStore = useLayoutStore()
 
 // 统计数据
 const totalLogsCount = ref<number>(0)
@@ -368,344 +359,353 @@ const errorLogsCount = ref<number>(0)
 const warningLogsCount = ref<number>(0)
 const infoLogsCount = ref<number>(0)
 
-// 日志级别选项
+// ECharts 实例
+const chartDom = ref<HTMLElement | null>(null)
+let chartInstance: echarts.ECharts | null = null
+
+// Store & Hooks
+const message = useMessage()
+const layoutStore = useLayoutStore()
+
+// ---------------------------------------------------------
+// Constants & Options
+// ---------------------------------------------------------
 const logLevelOptions = [
-  {label: 'Information', value: 'Information'},
-  {label: 'Warning', value: 'Warning'},
-  {label: 'Error', value: 'Error'},
-  {label: 'Critical', value: 'Critical'},
-  {label: 'Debug', value: 'Debug'},
-  {label: 'Trace', value: 'Trace'}
+  { label: '信息', value: 'Information' },
+  { label: '警告', value: 'Warning' },
+  { label: '错误', value: 'Error' },
+  { label: '严重', value: 'Critical' },
+  { label: '调试', value: 'Debug' },
+  { label: '跟踪', value: 'Trace' }
 ]
 
-// 时间范围选项
 const quickTimeRanges = [
-  {label: '今天', value: 'today'},
-  {label: '昨天', value: 'yesterday'},
-  {label: '近7天', value: '7days'},
-  {label: '近30天', value: '30days'},
-  {label: '本周', value: 'thisWeek'},
-  {label: '本月', value: 'thisMonth'}
+  { label: '今天', value: 'today' },
+  { label: '昨天', value: 'yesterday' },
+  { label: '最近7天', value: '7days' },
+  { label: '30天', value: '30days' },
 ]
 
-// 工具函数
-const getLogLevelType = (level: string): 'default' | 'success' | 'error' | 'warning' | 'primary' | 'info' => {
+// ---------------------------------------------------------
+// UI Helpers
+// ---------------------------------------------------------
+// 根据日志级别返回样式类
+const getBadgeStyle = (level: string) => {
   switch (level) {
     case 'Information':
-      return 'info'
+      return 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-900/50'
     case 'Warning':
-      return 'warning'
+      return 'bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-900/50'
     case 'Error':
     case 'Critical':
-      return 'error'
-    case 'Debug':
-    case 'Trace':
-      return 'default'
+      return 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-900/50'
     default:
-      return 'default'
+      return 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
   }
 }
 
 const formatDateTime = (dateString: string): string => {
   const date = new Date(dateString)
   return date.toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
+    month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit',
+    hour12: false
   })
 }
 
-// 快速时间范围选择
-const applyQuickTimeRange = async (range: string): Promise<void> => {
+// ---------------------------------------------------------
+// Logic Actions
+// ---------------------------------------------------------
+
+const applyQuickTimeRange = (range: string) => {
+  if(selectedQuickTimeRange.value === range) return
   selectedQuickTimeRange.value = range
-  const now = new Date()
-  const start = new Date()
-
-  switch (range) {
-    case 'today':
-      start.setHours(0, 0, 0, 0)
-      break
-    case 'yesterday':
-      start.setDate(now.getDate() - 1)
-      start.setHours(0, 0, 0, 0)
-      now.setDate(now.getDate() - 1)
-      now.setHours(23, 59, 59, 999)
-      break
-    case '7days':
-      start.setDate(now.getDate() - 6)
-      start.setHours(0, 0, 0, 0)
-      break
-    case '30days':
-      start.setDate(now.getDate() - 29)
-      start.setHours(0, 0, 0, 0)
-      break
-    case 'thisWeek':
-      // 设置为本周的第一天（周一）
-      const day = now.getDay() || 7 // 将周日(0)转换为7
-      start.setDate(now.getDate() - day + 1)
-      start.setHours(0, 0, 0, 0)
-      break
-    case 'thisMonth':
-      start.setDate(1)
-      start.setHours(0, 0, 0, 0)
-      break
-  }
-
-  dateRange.value = [
-    start.getTime(),
-    now.getTime()
-  ]
-
-  await applyFilters()
+  applyFilters()
 }
 
-// 直接使用从API获取的已过滤日志数据，不再进行前端过滤
-const filteredLogs = computed((): LogEntry[] => {
-  return logs.value;
-})
+// 将 computed 简化为直接返回
+const paginatedLogs = computed(() => logs.value)
 
-// 移除前端分页逻辑，使用API返回的数据
-const paginatedLogs = computed((): LogEntry[] => {
-  return filteredLogs.value
-})
-
-
-// 获取日志数据，支持多条件搜索
 const getLogs = async (): Promise<void> => {
-  if (loading.value) return;
+  if (loading.value) return
+  loading.value = true
 
-  loading.value = true;
   try {
-    // 确定时间范围参数
-    let timeRangeParam: string | undefined;
-    if (selectedQuickTimeRange.value === 'today') {
-      timeRangeParam = 'today';
-    } else if (selectedQuickTimeRange.value && selectedQuickTimeRange.value.endsWith('days')) {
-      // 提取天数（如7days -> 7）
-      const daysMatch = selectedQuickTimeRange.value.match(/^(\d+)days$/);
+    // 解析时间参数，适配后端接口逻辑
+    let timeRangeParam: string | undefined = selectedQuickTimeRange.value || undefined
+
+    // 简单处理: 如果是 days 才去提取数字，否则传 original string
+    if (timeRangeParam && timeRangeParam.endsWith('days') && !timeRangeParam.startsWith('today')) {
+      const daysMatch = timeRangeParam.match(/^(\d+)days$/)
       if (daysMatch) {
-        timeRangeParam = daysMatch[1];
+        timeRangeParam = daysMatch[1]
       }
     }
 
-    // 调用更新后的服务方法，传入所有搜索参数
     const response = await LogsService.getRecentLogs(
         currentPage.value,
         pageSize.value,
         searchKeyword.value,
         selectedLevel.value || undefined,
         timeRangeParam
-    );
+    )
+    logs.value = response.data
+    totalLogs.value = response.totalCount
+    totalPages.value = response.totalPages
 
-    logs.value = response.data;
-    totalLogs.value = response.totalCount;
-    totalPages.value = response.totalPages;
+    // 数据更新后刷新图表 (仅演示逻辑，实际可能需要独立的统计接口)
+    updateChart()
   } catch (error) {
-    console.error('获取日志时发生错误:', error);
-    // 可以添加错误提示逻辑
+    console.error('Failed to fetch logs:', error)
+    message.error('加载日志失败')
   } finally {
-    loading.value = false;
+    loading.value = false
   }
 }
 
-// 刷新日志
-const refreshLogs = async (): Promise<void> => {
-  await getLogs();
+const refreshLogs = async () => await getLogs()
+
+const applyFilters = async () => {
+  currentPage.value = 1
+  await getLogs()
 }
 
-// 应用过滤条件
-const applyFilters = async (): Promise<void> => {
-  // 重置到第一页
-  currentPage.value = 1;
-  await getLogs();
+const handlePageChange = async (page: number) => {
+  currentPage.value = page
+  await getLogs()
 }
 
-// 重置过滤条件
-const resetFilters = (): void => {
-  selectedLevel.value = null;
-  searchKeyword.value = '';
-  dateRange.value = null;
-  selectedQuickTimeRange.value = null;
-  hasException.value = false;
-  currentPage.value = 1;
-  applyFilters();
+const handlePageSizeChange = async (size: number) => {
+  pageSize.value = size
+  currentPage.value = 1
+  await getLogs()
 }
 
-// 处理页码变化
-const handlePageChange = async (page: number): Promise<void> => {
-  currentPage.value = page;
-  await getLogs();
+const showLogDetails = (log: LogEntry) => {
+  selectedLog.value = log
+  showLogDetailsDialog.value = true
 }
 
-// 处理每页数量变化
-const handlePageSizeChange = async (size: number): Promise<void> => {
-  pageSize.value = size;
-  currentPage.value = 1;
-  await getLogs();
-}
-
-// 显示日志详情
-const showLogDetails = (log: LogEntry): void => {
-  selectedLog.value = log;
-  showLogDetailsDialog.value = true;
-}
-
-// 加载统计数据
-const loadStatistics = async (): Promise<void> => {
-  statisticsLoading.value = true;
-  statisticsError.value = null;
+const loadStatistics = async () => {
+  statisticsLoading.value = true
   try {
-    const stats = await LogsService.getLogStatistics();
-    totalLogsCount.value = stats.totalCount;
-    errorLogsCount.value = stats.levelCounts['Error'] || 0;
-    warningLogsCount.value = stats.levelCounts['Warning'] || 0;
-    infoLogsCount.value = stats.levelCounts['Information'] || 0;
+    const stats = await LogsService.getLogStatistics()
+    totalLogsCount.value = stats.totalCount
+    errorLogsCount.value = stats.levelCounts['Error'] || 0
+    warningLogsCount.value = stats.levelCounts['Warning'] || 0
+    infoLogsCount.value = stats.levelCounts['Information'] || 0
+
+    // 统计数据加载后也尝试初始化图表
+    updateChart()
   } catch (error) {
-    statisticsError.value = '加载统计数据失败';
-    console.error('加载统计数据失败:', error);
+    console.error(error)
   } finally {
-    statisticsLoading.value = false;
+    statisticsLoading.value = false
   }
 }
 
-// 确认清理日志
-const confirmCleanup = async (): Promise<void> => {
-  if (!cleanupDays.value || cleanupDays.value < 1) {
-    message.warning('请输入有效的天数');
-    return;
-  }
-
-  cleanupLoading.value = true;
+const confirmCleanup = async () => {
+  const msgRef = message.loading('清理日志中...')
   try {
-    const result = await LogsService.cleanupOldLogs(cleanupDays.value);
-    message.success(result.Message);
-    showCleanupDialog.value = false;
-
-    // 清理成功后，刷新日志和统计数据
-    await getLogs();
-    await loadStatistics();
+    const result = await LogsService.cleanupOldLogs(cleanupDays.value)
+    msgRef.destroy()
+    message.success(result.Message || '日志清理成功')
+    showCleanupDialog.value = false
+    await getLogs()
+    await loadStatistics()
   } catch (error: any) {
-    message.error(error.message || '清理日志失败');
-    console.error('清理日志失败:', error);
-  } finally {
-    cleanupLoading.value = false;
+    msgRef.destroy()
+    message.error(error.message || '清理失败')
   }
 }
 
-// 生命周期钩子
-onMounted(async (): Promise<void> => {
-  // Set page header
-  layoutStore.setPageHeader(
-      '系统日志管理',
-      '查看、过滤和分析系统运行日志'
-  );
+// ---------------------------------------------------------
+// ECharts Logic (模拟趋势数据，实际应从 API 获取)
+// ---------------------------------------------------------
+const initChart = () => {
+  if (!chartDom.value) return
+  chartInstance = echarts.init(chartDom.value)
+  updateChart()
+  window.addEventListener('resize', resizeChart)
+}
 
-  // Show page actions
-  layoutStore.setShowPageActions(true);
+const resizeChart = () => chartInstance?.resize()
 
-  // 创建操作栏组件
-  const ActionsComponent = defineComponent({
-    setup() {
-      return () => h('div', { class: 'flex items-center justify-end space-x-3' }, [
-        // 刷新日志按钮
-        h('button', {
-          class: 'rounded-full bg-blue-500 hover:bg-blue-600 h-9 space-x-1 px-4 flex items-center justify-center text-gray-100 transition-colors duration-200',
-          onClick: refreshLogs
-        }, [
-          h(Icon, { icon: 'material-symbols:refresh', class: 'w-4.5 h-4.5' }),
-          h('span', '刷新日志')
-        ]),
-        // 清理日志按钮
-        h('button', {
-          class: 'rounded-full bg-red-500 hover:bg-red-600 h-9 space-x-1 px-4 flex items-center justify-center text-gray-100 transition-colors duration-200',
-          onClick: () => showCleanupDialog.value = true
-        }, [
-          h(Icon, { icon: 'material-symbols:delete-outline', class: 'w-4.5 h-4.5' }),
-          h('span', '清理日志')
-        ])
-      ])
-    }
+const updateChart = () => {
+  if (!chartInstance) return
+
+  // 这里使用假数据进行演示。
+  // 在真实场景中，你应该调用一个 API 获取 "按小时/按天分布的日志数量"
+  // 并使用 isDark 模式来切换颜色主题
+  const isDark = document.documentElement.classList.contains('dark')
+  const textColor = isDark ? '#94a3b8' : '#64748b'
+  const splitLineColor = isDark ? '#334155' : '#e2e8f0'
+
+  // Mock Data Generation
+  const hours = Array.from({length: 12}, (_, i) => `${i * 2}:00`)
+  const dataError = hours.map(() => Math.floor(Math.random() * 20))
+  const dataInfo = hours.map(() => Math.floor(Math.random() * 100 + 50))
+
+  const option = {
+    backgroundColor: 'transparent',
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: isDark ? 'rgba(30, 41, 59, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+      borderColor: isDark ? '#475569' : '#e2e8f0',
+      textStyle: { color: textColor },
+      borderRadius: 8,
+      padding: 12
+    },
+    legend: {
+      bottom: 0,
+      itemWidth: 8,
+      itemHeight: 8,
+      icon: 'circle',
+      textStyle: { color: textColor },
+      data: ['信息', '错误']
+    },
+    grid: {
+      left: 10, right: 20, top: 30, bottom: 40, containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      boundaryGap: false,
+      data: hours,
+      axisLine: { show: false },
+      axisTick: { show: false },
+      axisLabel: { color: textColor, fontSize: 11 }
+    },
+    yAxis: {
+      type: 'value',
+      splitLine: { lineStyle: { color: splitLineColor, type: 'dashed' } },
+      axisLabel: { show: false } // Hide Y labels for cleaner look
+    },
+    series: [
+      {
+        name: '信息',
+        type: 'line',
+        smooth: true,
+        showSymbol: false,
+        lineStyle: { width: 3, color: '#10b981' }, // Emerald
+        areaStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: 'rgba(16, 185, 129, 0.4)' },
+            { offset: 1, color: 'rgba(16, 185, 129, 0.01)' }
+          ])
+        },
+        data: dataInfo
+      },
+      {
+        name: '错误',
+        type: 'line',
+        smooth: true,
+        showSymbol: false,
+        lineStyle: { width: 3, color: '#ef4444' }, // Red
+        areaStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: 'rgba(239, 68, 68, 0.4)' },
+            { offset: 1, color: 'rgba(239, 68, 68, 0.01)' }
+          ])
+        },
+        data: dataError
+      }
+    ]
+  }
+
+  // @ts-ignore
+  chartInstance.setOption(option)
+}
+
+// ---------------------------------------------------------
+// Lifecycle
+// ---------------------------------------------------------
+onMounted(async () => {
+  layoutStore.setPageHeader('系统日志', '监控系统事件和健康状态')
+
+  // 移除原始代码中硬编码在 setup 里的 Button Render，
+  // 改用模板内更灵活的声明，或者如果你需要在 Header 渲染，保持之前的逻辑，
+  // 但通常全尺寸设计的页面不需要 Header Action，而是在页面内部控制。
+  // layoutStore.setShowPageActions(false)
+
+  await getLogs()
+  await loadStatistics()
+
+  nextTick(() => {
+    initChart()
   })
-
-  // 注册操作栏组件到LayoutStore
-  layoutStore.setActionsComponent(ActionsComponent);
-
-  // 加载日志数据
-  await getLogs();
-  // 加载统计数据
-  await loadStatistics();
 })
 
 onBeforeUnmount(() => {
-  // Clear page header
-  layoutStore.clearPageHeader();
-})
-
-// 计算属性 - 是否有更多页
-const hasMore = computed((): boolean => {
-  return currentPage.value < totalPages.value
+  layoutStore.clearPageHeader()
+  if (chartInstance) {
+    chartInstance.dispose()
+  }
+  window.removeEventListener('resize', resizeChart)
 })
 </script>
 
 <style scoped>
-/* 自定义样式优化 */
-.n-button {
+/* 通用基础样式补充 (Tailwind 4 原生支持 css 变量，这里做一些特定的覆盖) */
+
+/* Apple Card 风格 */
+.apple-card {
+  background: white;
+  border-radius: 1.5rem; /* rounded-3xl equivalent or 2xl */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+  transition: all 0.3s ease;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+.dark .apple-card {
+  background: #1e1e1e; /* Dark gray like iOS Settings dark mode */
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: none;
+}
+.apple-card:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+}
+
+/* 覆盖 NaiveUI 默认圆角，使其更符合 Apple 风格 */
+.n-button, .n-input, .n-input-wrapper {
   border-radius: 10px !important;
-  transition: all 0.2s ease;
 }
 
-.n-button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+/* 模态框深度定制 */
+.apple-modal .n-card {
+  background-color: rgba(255, 255, 255, 0.85) !important;
+  backdrop-filter: blur(20px) !important;
+}
+.dark .apple-modal .n-card {
+  background-color: rgba(30, 30, 30, 0.8) !important;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.apple-modal .n-card-header {
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+.dark .apple-modal .n-card-header {
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.apple-select .n-base-selection {
+  border-radius: 8px !important;
 }
 
-.n-select,
-.n-input,
-.n-date-picker {
-  border-radius: 10px !important;
-  border: 1px solid #e5e7eb !important;
+/* 自定义滚动条 */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 163, 175, 0.3);
+  border-radius: 20px;
+}
+.custom-scrollbar:hover::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 163, 175, 0.5);
 }
 
-.dark .n-select,
-.dark .n-input,
-.dark .n-date-picker {
-  border-color: #374151 !important;
-}
-
-.n-dialog {
-  border-radius: 20px !important;
-  overflow: hidden;
-}
-
-/* 表格样式优化 */
-table {
-  border-collapse: separate;
-  border-spacing: 0;
-}
-
-table thead th {
-  font-weight: 500;
-  letter-spacing: 0.05em;
-}
-
-/* 动画效果 */
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-
-/* 统计卡片样式优化 */
-@media (max-width: 640px) {
-  .grid-cols-4 {
-    grid-template-columns: repeat(2, 1fr);
-  }
+/* 文字选择颜色 */
+::selection {
+  background-color: rgba(59, 130, 246, 0.2);
+  color: inherit;
 }
 </style>
