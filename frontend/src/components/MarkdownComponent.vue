@@ -183,6 +183,27 @@ watch(() => props.content, async (newValue) => {
     }, {immediate: true}
 )
 
+const formattedDate = computed(() => {
+  if (!props.content?.date) return '';
+  return new Date(props.content.date).toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+});
+
+const identityInfo = computed(() => {
+  const map: Record<string, { label: string; colorClass: string }> = {
+    'Member': {label: '所有人', colorClass: 'tag-blue'},
+    'Department': {label: '部员', colorClass: 'tag-cyan'},
+    'Minister': {label: '部长', colorClass: 'tag-orange'},
+    'President': {label: '社长', colorClass: 'tag-red'},
+    'Founder': {label: '创始人', colorClass: 'tag-purple'},
+  };
+  // 默认 fallback
+  return map[props.content?.identity || ''] || null;
+});
+
 // 递归渲染导航链接
 const renderAnchorLinks = (items: Array<{
   id: string;
@@ -202,40 +223,11 @@ const renderAnchorLinks = (items: Array<{
 const anchorLinks = computed(() => renderAnchorLinks(headings.value))
 const date = computed(() => props.content?.date ? new Date(props.content.date).toLocaleDateString('zh-CN') : '')
 
-// 根据权限值获取显示标签
-const getIdentityLabel = computed(() => {
-  const options = [
-    {label: '所有人', value: 'Member'},
-    {label: '部员', value: 'Department'},
-    {label: '部长', value: 'Minister'},
-    {label: '社长', value: 'President'},
-    {label: '创始人', value: 'Founder'}
-  ];
-  const option = options.find(item => item.value === props.content?.identity);
-  return option ? option.label : '未知';
-});
-
-// 根据权限值获取标签样式
-const getIdentityClass = (identity: string) => {
-  switch (identity) {
-    case 'Department':
-      return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100';
-    case 'Minister':
-      return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100';
-    case 'President':
-      return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100';
-    case 'Founder':
-      return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-100';
-    default:
-      return 'hidden';
-  }
-};
-
 // 添加处理锚点点击的方法
 const handleAnchorClick = (event: Event, href: string) => {
   event.preventDefault();
   const targetId = href.substring(1).toLowerCase(); // 移除 # 前缀
-  
+
   // 对 targetId 进行 URL 编码
   const encodedTargetId = encodeURIComponent(targetId);
 
@@ -286,21 +278,27 @@ onMounted(() => {
 <template>
   <div v-if="content" class="flex flex-col md:flex-row">
     <!-- 文章内容区 -->
-    <div class="w-full p-4 md:p-8" :class="[showNav && headings.length > 0 ? 'md:w-4/5' : 'md:w-full']">
+    <div class="w-full lg:pr-8" :class="[showNav && headings.length > 0 ? 'lg:w-4/5' : 'lg:w-full']">
       <article class="prose prose-gray max-w-none dark:prose-invert">
         <!-- 文章头部 -->
-        <header class="mb-8 border-b border-gray-200 pb-6 dark:border-gray-700">
-          <h1 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+        <header class="pb-4 border-b border-gray-100 dark:border-white/10 bg-white/50 dark:bg-white/5 backdrop-blur-sm">
+          <!-- 身份与日期行 -->
+          <div class="flex flex-wrap items-center gap-3 mb-4 text-sm font-medium">
+                <span class="inline-flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
+                   <Icon icon="solar:calendar-mark-linear" class="w-4 h-4"/>
+                   {{ formattedDate }}
+                </span>
+
+            <span v-if="identityInfo"
+                  class="px-2.5 py-0.5 rounded-full text-xs border transition-colors"
+                  :class="identityInfo.colorClass">
+                  {{ identityInfo.label }}
+                </span>
+          </div>
+
+          <!-- 主标题 -->
+          <div class="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white tracking-tight leading-tight font-display">
             {{ content.title }}
-          </h1>
-          <div class="flex items-center gap-4 text-gray-500 dark:text-gray-400 text-sm">
-            <time class="flex items-center gap-1">
-              <Icon icon="mdi:calendar" width="16" height="16"/>
-              {{ date }}
-            </time>
-            <div v-if="content.identity" class="gap-1 p-1 rounded-lg" :class="getIdentityClass(content.identity)">
-              {{ getIdentityLabel }}
-            </div>
           </div>
         </header>
 
@@ -312,7 +310,7 @@ onMounted(() => {
     </div>
 
     <!-- 目录导航 -->
-    <div v-if="showNav && headings.length > 0" class="hidden md:block w-1/5 sticky top-8 h-fit self-start p-4">
+    <div v-if="showNav && headings.length > 0" class="hidden lg:block w-1/5 sticky top-8 h-fit self-start p-4">
       <nav class="toc-nav bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
         <h3 class="text-sm font-semibold mb-3 text-gray-900 dark:text-white">
           目录
@@ -365,6 +363,67 @@ onMounted(() => {
 <style scoped>
 @reference 'tailwindcss';
 @import "prismjs/themes/prism-tomorrow.min.css";
+
+.tag-blue {
+  background-color: #E1F3FF;
+  color: #007AFF;
+  border-color: rgba(0, 122, 255, 0.2);
+}
+
+.tag-cyan {
+  background-color: #E0F8F2;
+  color: #00A3FF;
+  border-color: rgba(0, 163, 255, 0.2);
+}
+
+.tag-orange {
+  background-color: #FFF4E5;
+  color: #FF9500;
+  border-color: rgba(255, 149, 0, 0.2);
+}
+
+.tag-red {
+  background-color: #FFEAE9;
+  color: #FF3B30;
+  border-color: rgba(255, 59, 48, 0.2);
+}
+
+.tag-purple {
+  background-color: #F3E8FF;
+  color: #AF52DE;
+  border-color: rgba(175, 82, 222, 0.2);
+}
+
+/* Dark Mode Tags */
+.dark .tag-blue {
+  background-color: rgba(0, 122, 255, 0.15);
+  color: #64D2FF;
+  border-color: rgba(100, 210, 255, 0.2);
+}
+
+.dark .tag-cyan {
+  background-color: rgba(100, 210, 255, 0.15);
+  color: #70D7FF;
+  border-color: rgba(112, 215, 255, 0.2);
+}
+
+.dark .tag-orange {
+  background-color: rgba(255, 149, 0, 0.15);
+  color: #FFD60A;
+  border-color: rgba(255, 214, 10, 0.2);
+}
+
+.dark .tag-red {
+  background-color: rgba(255, 69, 58, 0.15);
+  color: #FF9F0A;
+  border-color: rgba(255, 159, 10, 0.2);
+}
+
+.dark .tag-purple {
+  background-color: rgba(191, 90, 242, 0.15);
+  color: #DA8FFF;
+  border-color: rgba(218, 143, 255, 0.2);
+}
 
 /* 自定义块样式 */
 :deep(.custom-block) {
