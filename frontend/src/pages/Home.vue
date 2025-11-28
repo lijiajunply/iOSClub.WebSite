@@ -1,219 +1,163 @@
 <template>
-  <div class="min-h-screen transition-colors duration-500">
+  <div class="page-wrapper transition-colors duration-500">
+    <!-- 背景装饰 (Mesh Gradient) -->
+    <div class="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+      <div class="background-blob blob-1"></div>
+      <div class="background-blob blob-2"></div>
+      <div class="background-blob blob-3"></div>
+    </div>
 
-    <!-- Hero Section - Apple Style -->
-    <section class="relative flex items-center justify-center px-6 lg:px-8 overflow-hidden"
-             style="min-height: calc(100vh - 64px);">
-      <!-- Background Gradient -->
-      <div
-          class="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-pink-500/5 dark:from-blue-500/10 dark:via-purple-500/10 dark:to-pink-500/10"></div>
+    <!-- Hero Section -->
+    <section class="relative z-10 flex flex-col items-center justify-center min-h-[calc(100vh-64px)] px-6 pt-20 pb-10">
+      <div class="max-w-7xl w-full mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
 
-      <div class="relative max-w-7xl w-full mx-auto">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-
-          <!-- Logo Section -->
-          <div class="flex justify-center lg:justify-start mt-6 md:mt-0 ">
-            <div
-                class="relative w-72 h-72 md:w-96 md:h-96 group"
-                @mouseenter="logoHovered = true"
-                @mouseleave="logoHovered = false"
-            >
-              <!-- Floating Background Layers -->
-              <div
-                  class="absolute inset-0 bg-gradient-to-br from-blue-500 to-blue-600 rounded-[3rem] transform transition-all duration-700 ease-out"
-                  :class="logoHovered ? 'rotate-12 scale-105' : 'rotate-6'"
-                  style="opacity: 0.15"
-              ></div>
-              <div
-                  class="absolute inset-0 bg-gradient-to-br from-purple-500 to-purple-600 rounded-[3rem] transform transition-all duration-700 ease-out"
-                  :class="logoHovered ? '-rotate-12 scale-105' : '-rotate-6'"
-                  style="opacity: 0.15"
-              ></div>
-
-              <!-- Main Logo Card -->
-              <div
-                  class="relative w-full h-full bg-white/90 dark:bg-white/10 backdrop-blur-3xl rounded-[3rem] flex items-center justify-center shadow-2xl border border-gray-200/50 dark:border-white/10 transition-all duration-700"
-                  :class="logoHovered ? 'scale-105' : 'scale-100'">
-                <img
-                    src="/assets/iOS_Club_LOGO.png"
-                    alt="iOS Club Logo"
-                    class="w-3/5 h-3/5 object-contain transition-transform duration-700"
-                    :class="logoHovered ? 'scale-110' : 'scale-100'"
-                />
-              </div>
-            </div>
+        <!-- Hero Text Content -->
+        <div class="order-2 lg:order-1 text-center lg:text-left space-y-8">
+          <div class="space-y-2">
+            <h1 class="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-tight">
+              <span class="gradient-text">iOS Club of XAUAT</span>
+            </h1>
+            <p class="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white tracking-tight">
+              在此，创造未来。
+            </p>
           </div>
 
-          <!-- Hero Content -->
-          <div class="text-center lg:text-left space-y-8">
-            <div class="space-y-4">
-              <h1 class="text-4xl md:text-7xl font-bold tracking-tight gradient-text leading-tight">
-                iOS Club of XAUAT
-              </h1>
-            </div>
-
-            <p class="text-base md:text-2xl text-gray-700 dark:text-gray-300 leading-relaxed max-w-xl mx-auto lg:mx-0">
-              西安建筑科技大学iOS众创空间俱乐部
+          <div class="flex flex-col gap-4 max-w-2xl mx-auto lg:mx-0">
+            <p class="text-lg md:text-xl text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
+              我们是受 Apple 公司支持的创新创业类社团。<br class="hidden md:block"/>
+              <span class="opacity-75 font-normal">Stay hungry, stay foolish.</span>
             </p>
+          </div>
 
-            <div class="flex items-center justify-center lg:justify-start gap-3 text-gray-500 dark:text-gray-400">
-              <Icon icon="material-symbols:format-quote" class="text-base md:text-xl"/>
-              <p class="text-base md:text-xl italic">
-                Stay hungry, stay foolish
-              </p>
+          <!-- Action Buttons (Apple Style Pills) -->
+          <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start pt-4">
+            <button @click="scrollToAbout" class="apple-btn-primary">
+              <span>了解更多</span>
+              <Icon icon="fluent:arrow-down-20-filled" class="ml-2 text-lg"/>
+            </button>
+
+            <button @click="router.push('/login')" class="apple-btn-secondary">
+              <span>加入我们</span>
+              <Icon icon="fluent:person-add-20-filled" class="ml-2 text-lg"/>
+            </button>
+          </div>
+        </div>
+
+        <!-- Hero Visual (Logo Card) -->
+        <div class="order-1 lg:order-2 flex justify-center lg:justify-end relative">
+          <div
+              class="relative w-72 h-72 md:w-96 md:h-96 group"
+              @mouseenter="logoHovered = true"
+              @mouseleave="logoHovered = false"
+          >
+            <!-- Floating Background Layers -->
+            <div
+                class="absolute inset-0 bg-gradient-to-br from-blue-500 to-blue-600 rounded-[3rem] transform transition-all duration-700 ease-out"
+                :class="logoHovered ? 'rotate-12 scale-105' : 'rotate-6'"
+                style="opacity: 0.15"
+            ></div>
+            <div
+                class="absolute inset-0 bg-gradient-to-br from-purple-500 to-purple-600 rounded-[3rem] transform transition-all duration-700 ease-out"
+                :class="logoHovered ? '-rotate-12 scale-105' : '-rotate-6'"
+                style="opacity: 0.15"
+            ></div>
+
+            <!-- Main Logo Card -->
+            <div
+                class="relative w-full h-full bg-white/90 dark:bg-white/10 backdrop-blur-3xl rounded-[3rem] flex items-center justify-center shadow-2xl border border-gray-200/50 dark:border-white/10 transition-all duration-700"
+                :class="logoHovered ? 'scale-105' : 'scale-100'">
+              <img
+                  src="/assets/iOS_Club_LOGO.png"
+                  alt="iOS Club Logo"
+                  class="w-3/5 h-3/5 object-contain transition-transform duration-700"
+                  :class="logoHovered ? 'scale-110' : 'scale-100'"
+              />
             </div>
-
-            <!-- CTA Buttons -->
-            <div class="pt-4 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <button
-                  @click="scrollToAbout"
-                  class="group relative px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-full font-medium text-lg transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
-              >
-                <span class="flex items-center justify-center gap-2">
-                  了解更多
-                  <Icon icon="heroicons:arrow-down-20-solid"
-                        class="text-xl group-hover:translate-y-1 transition-transform duration-300"/>
-                </span>
-              </button>
-
-              <button
-                  @click="router.push('/login')"
-                  class="px-8 py-4 bg-white/80 dark:bg-white/10 hover:bg-white dark:hover:bg-white/20 backdrop-blur-xl text-gray-900 dark:text-white rounded-full font-medium text-lg transition-all duration-300 border border-gray-300 dark:border-white/20 hover:scale-105 active:scale-95 hover:shadow-lg"
-              >
-                登录/注册
-              </button>
-            </div>
-
-            <div class="h-4 md:h-0"></div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- About Section -->
-    <section
-        id="about"
-        class="py-32 px-6 lg:px-8 "
-    >
+    <!-- Bento Grid Section (About) -->
+    <section id="about" class="relative z-10 py-24 px-6">
       <div class="max-w-7xl mx-auto">
-        <!-- Section Header -->
-        <div class="text-center mb-20 space-y-4">
-          <h2 class="text-4xl md:text-5xl font-semibold text-gray-900 dark:text-white tracking-tight">
-            关于我们
+        <div class="flex flex-col items-center text-center mb-16">
+          <h2 class="ml-3 text-3xl md:text-5xl font-bold text-slate-900 dark:text-white mb-6">
+            不仅是社团，<br/>更是你的<span class="text-blue-600 dark:text-blue-400">创意实验室</span>。
           </h2>
-          <p class="text-base md:text-lg lg:text-xl text-gray-500 dark:text-gray-400">
-            探索 iOS Club 的更多可能
+          <p class="text-lg text-slate-500 dark:text-slate-400 max-w-2xl">
+            探索 iOS Club 的核心价值，发现属于你的无限可能。
           </p>
         </div>
 
-        <!-- Feature Cards Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
-          <a
+        <!-- Bento Grid Layout -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div
               v-for="(card, index) in cards"
-              :href="card.url"
               :key="index"
-              class="group relative p-8 rounded-3xl bg-gradient-to-br from-gray-50 to-gray-100/50 dark:from-white/5 dark:to-white/[0.02] border border-gray-200/50 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20 transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl cursor-pointer overflow-hidden"
+              class="apple-bento-card group"
+              :class="{'col-span-1 md:col-span-2 lg:col-span-1': index === 0 || index === 3}"
+              @click="card.url ? router.push(card.url) : null"
           >
-            <!-- Hover Gradient Effect -->
-            <div
-                class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl"
-                :style="{ background: `radial-gradient(circle at 50% 0%, ${card.color}15, transparent 70%)` }"
-            ></div>
-
-            <div class="relative z-10 space-y-4">
-              <!-- Icon -->
-              <div
-                  class="inline-flex p-4 rounded-2xl transition-all duration-500 group-hover:scale-110"
-                  :style="{
-                  backgroundColor: `${card.color}15`,
-                }"
-              >
-                <Icon
-                    :icon="card.iconName"
-                    class="text-4xl"
-                    :style="{ color: card.color }"
-                />
+            <div class="relative z-10 h-full flex flex-col justify-between">
+              <div class="mb-6">
+                <div
+                    class="w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-transform duration-300 group-hover:scale-110"
+                    :style="{ backgroundColor: card.bgColor, color: card.color }"
+                >
+                  <Icon :icon="card.iconName" class="text-2xl"/>
+                </div>
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2 pr-4">
+                  {{ card.title }}
+                </h3>
+                <p class="text-sm md:text-base text-slate-600 dark:text-slate-300 leading-relaxed opacity-90">
+                  {{ card.content }}
+                </p>
               </div>
 
-              <!-- Title -->
-              <h3 class="text-xl font-semibold text-gray-900 dark:text-white tracking-tight">
-                {{ card.title }}
-              </h3>
-
-              <!-- Content -->
-              <p class="text-base text-gray-600 dark:text-gray-400 leading-relaxed">
-                {{ card.content }}
-              </p>
+              <div class="flex items-center text-sm font-semibold transition-all duration-300 group-hover:translate-x-1"
+                   :style="{ color: card.color }">
+                <span v-if="card.url">了解更多</span>
+                <Icon v-if="card.url" icon="fluent:arrow-right-20-filled" class="ml-1"/>
+              </div>
             </div>
 
-            <!-- Bottom Accent Line -->
+            <!-- Hover Gradient Overlay -->
             <div
-                class="absolute bottom-0 left-0 right-0 h-1 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 rounded-full"
-                :style="{ backgroundColor: card.color }"
-            ></div>
-          </a>
+                class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                :style="{ background: `radial-gradient(800px circle at top right, ${card.color}15, transparent 40%)` }">
+            </div>
+          </div>
         </div>
 
-        <!-- More Details Button -->
-        <div class="text-center">
-          <button
-              @click="router.push('/About')"
-              class="group inline-flex items-center gap-3 px-10 py-5 bg-gray-900 dark:bg-white text-white dark:text-black rounded-full font-medium text-base lg:text-lg transition-all duration-300 hover:scale-105 active:scale-95 hover:shadow-2xl"
-          >
-            查看更多详情
-            <Icon
-                icon="heroicons:arrow-right-20-solid"
-                class="text-xl group-hover:translate-x-2 transition-transform duration-300"
-            />
+        <div class="mt-16 text-center">
+          <button @click="router.push('/About')" class="apple-text-link text-lg group">
+            深入了解我们的故事
+            <Icon icon="fluent:chevron-right-20-regular"
+                  class="inline-block ml-1 group-hover:translate-x-1 transition-transform"/>
           </button>
         </div>
       </div>
     </section>
 
-    <!-- Footer -->
+    <!-- Minimal Footer -->
     <footer
-        class="relative border-t border-gray-200 dark:border-white/10 bg-white/50 dark:bg-white/[0.02] backdrop-blur-xl">
-      <div class="max-w-7xl mx-auto px-6 lg:px-8 py-12">
-        <div class="text-center space-y-6">
-          <!-- Copyright -->
-          <p class="text-sm text-gray-600 dark:text-gray-400">
-            Copyright © 2023 - 2024 XAUAT iOS Club
-          </p>
+        class="relative z-10 border-t border-slate-200 dark:border-white/10 bg-white/50 dark:bg-black/20 backdrop-blur-xl">
+      <div class="max-w-7xl mx-auto px-6 py-12 flex flex-col md:flex-row justify-between items-center gap-6">
+        <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">
+          Copyright © {{ new Date().getFullYear() }} XAUAT iOS Club. All rights reserved.
+        </p>
 
-          <!-- Links -->
-          <div class="flex flex-wrap justify-center items-center gap-4 text-sm">
-            <a
-                href="https://cn.xauat.edu.cn/"
-                class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-300"
-                target="_blank"
-                rel="noopener"
-            >
-              西安建筑科技大学
-            </a>
-
-            <span class="text-gray-300 dark:text-gray-700">·</span>
-
-            <a
-                href="https://beian.miit.gov.cn/"
-                class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-300"
-                target="_blank"
-                rel="noopener"
-            >
-              陕ICP备2024031872号
-            </a>
-
-            <span class="text-gray-300 dark:text-gray-700">·</span>
-
-            <a
-                href="https://gitee.com/XAUATiOSClub"
-                class="inline-flex items-center gap-1.5 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-300"
-                target="_blank"
-                rel="noopener"
-            >
-              <Icon icon="simple-icons:gitee" class="text-base"/>
-              Gitee
-            </a>
-          </div>
+        <div class="flex items-center gap-6 text-xs font-medium text-slate-600 dark:text-slate-300">
+          <a href="https://cn.xauat.edu.cn/" target="_blank"
+             class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">学校官网</a>
+          <a href="https://beian.miit.gov.cn/" target="_blank"
+             class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">陕ICP备2024031872号</a>
+          <a href="https://gitee.com/XAUATiOSClub" target="_blank"
+             class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-1">
+            <Icon icon="simple-icons:gitee"/>
+            Gitee
+          </a>
         </div>
       </div>
     </footer>
@@ -225,69 +169,271 @@ import {ref} from 'vue'
 import {useRouter} from 'vue-router'
 import {Icon} from '@iconify/vue'
 
+const router = useRouter()
+const logoHovered = ref(false)
+
 interface Card {
   iconName: string
   title: string
   content: string
-  color: string,
+  color: string
+  bgColor?: string // Derived light background
   url?: string
 }
 
-const router = useRouter()
-const logoHovered = ref(false)
+// 辅助函数：生成淡色背景
+const getBgColor = (hex: string) => {
+  // 这里简单演示，实际可以使用 polished 库或者 CSS 变量
+  return hex + '1A' // 10% opacity
+}
 
+// Data adapted with updated Icons (Fluent UI style for Apple look)
 const cards: Card[] = [
   {
-    iconName: 'heroicons:academic-cap-20-solid',
+    iconName: 'fluent:hat-graduation-20-filled',
     title: '我们是谁?',
-    content: '我们是由Apple公司资金支持，受学管和西安建筑科技大学大学生创新创业实践中心指导的创新创业类社团。',
+    content: '由 Apple 公司资金支持，受西建大学管中心指导的顶尖科技社团。在这里，创意不再是空想。',
     color: '#0071E3', // Apple Blue
+    bgColor: getBgColor('#0071E3'),
     url: '/About'
   },
   {
-    iconName: 'heroicons:bolt-solid',
-    title: '和 iOS Club 一起结伴同行',
-    content: '不管是零基础的小白还是大神，只要你有兴趣，这里就是你的天堂',
+    iconName: 'fluent:people-community-20-filled',
+    title: '结伴同行',
+    content: '无论你是代码大神还是小白，这里都有你的位置。',
     color: '#FF9500', // Apple Orange
+    bgColor: getBgColor('#FF9500'),
   },
   {
-    iconName: 'heroicons:user-group-solid',
-    title: 'iOS Club，不止 iOS',
-    content: '我们不止只有 iOS ，西建大 iOS Club 是一个跨专业与课堂的数码编程爱好者社团',
+    iconName: 'fluent:phone-laptop-20-filled',
+    title: '不止 iOS',
+    content: '跨越专业界限，涵盖软件开发、硬件开发、产品策划与前沿数码体验。',
     color: '#34C759', // Apple Green
+    bgColor: getBgColor('#34C759'),
   },
   {
-    iconName: 'heroicons:chat-bubble-left-ellipsis-solid',
-    title: '和 iOS Club 一起玩',
-    content: '活动覆盖编程和数码，不仅有最新数码设备体验活动，还有大咖沙龙和Apple官方活动',
+    iconName: 'fluent:calendar-star-20-filled',
+    title: '精彩活动',
+    content: '定期的 WWDC 观影、技术沙龙、Swift 编程挑战赛以及 Apple 官方专家讲座。',
     color: '#FF375F', // Apple Pink
+    bgColor: getBgColor('#FF375F'),
   },
   {
-    iconName: 'heroicons:code-bracket-solid',
-    title: '合作软件开发',
-    content: '和志同道合的iMember一起合作开发，一起创造世界',
+    iconName: 'fluent:code-circle-20-filled',
+    title: '项目孵化',
+    content: '寻找志同道合的 iMember，从 0 到 1 开发上架 App Store 的应用。',
     color: '#AF52DE', // Apple Purple
+    bgColor: getBgColor('#AF52DE'),
   },
   {
-    iconName: 'heroicons:arrow-trending-up-solid',
-    title: '全校数码编程爱好者,联合起来！',
-    content: '我们意图打造全校最大的科技社区，快来加入我们成为一名iMember吧',
+    iconName: 'fluent:rocket-20-filled',
+    title: '构建社区',
+    content: '致力于打造西建大最具影响力的科技社区，连接全校每一位极客。',
     color: '#5E5CE6', // Apple Indigo
+    bgColor: getBgColor('#5E5CE6'),
   }
 ]
 
 const scrollToAbout = (): void => {
   const element = document.getElementById('about')
   if (element) {
-    element.scrollIntoView({behavior: 'smooth', block: 'start'})
+    const headerOffset = 80
+    const elementPosition = element.getBoundingClientRect().top
+    const offsetPosition = elementPosition + window.pageYOffset - headerOffset
+    window.scrollTo({top: offsetPosition, behavior: 'smooth'})
   }
 }
 </script>
 
 <style scoped>
-/* Apple-style Gradient Text */
+/*
+  Native CSS Styling as requested
+  Using CSS Variables for easy dark mode handling
+*/
+
+.page-wrapper {
+  background-color: #F5F5F7; /* Apple light gray background */
+  min-height: 100vh;
+  color: #1D1D1F;
+}
+
+/* Dark Mode Overrides */
+.dark .page-wrapper {
+  background-color: #000000;
+  color: #F5F5F7;
+}
+
+/* Apple Card Style (Glassmorphism Base) */
+.apple-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05);
+}
+
+.dark .apple-card {
+  background: rgba(28, 28, 30, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* Bento Box Card */
+.apple-bento-card {
+  position: relative;
+  background: #FFFFFF;
+  border-radius: 24px;
+  padding: 2rem;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+}
+
+.apple-bento-card:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+}
+
+.dark .apple-bento-card {
+  background: #1C1C1E;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: none;
+}
+
+.dark .apple-bento-card:hover {
+  background: #2C2C2E;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Buttons */
+.apple-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 32px;
+  border-radius: 9999px;
+  background-color: #0071E3;
+  color: white;
+  font-weight: 600;
+  font-size: 1.05rem;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.apple-btn-primary:hover {
+  background-color: #0077ED;
+  transform: scale(1.02);
+  box-shadow: 0 8px 20px rgba(0, 113, 227, 0.3);
+}
+
+.apple-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 32px;
+  border-radius: 9999px;
+  background-color: rgba(0, 0, 0, 0.05);
+  color: #1D1D1F;
+  font-weight: 600;
+  font-size: 1.05rem;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.dark .apple-btn-secondary {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.apple-btn-secondary:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.dark .apple-btn-secondary:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Text Link */
+.apple-text-link {
+  color: #06c;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.apple-text-link:hover {
+  text-decoration: underline;
+  opacity: 0.8;
+}
+
+.dark .apple-text-link {
+  color: #2997ff;
+}
+
+/* Background Blobs (Mesh Gradient simulation) */
+.background-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.4;
+  animation: blobFloat 10s infinite alternate;
+}
+
+.blob-1 {
+  top: -10%;
+  left: -10%;
+  width: 50vw;
+  height: 50vw;
+  background: radial-gradient(circle, #E0F2FE 0%, transparent 70%);
+}
+
+.dark .blob-1 {
+  background: radial-gradient(circle, #1e3a8a40 0%, transparent 70%);
+}
+
+.blob-2 {
+  bottom: 10%;
+  right: -10%;
+  width: 40vw;
+  height: 40vw;
+  background: radial-gradient(circle, #F5F3FF 0%, transparent 70%);
+  animation-delay: -2s;
+}
+
+.dark .blob-2 {
+  background: radial-gradient(circle, #4c1d9540 0%, transparent 70%);
+}
+
+.blob-3 {
+  top: 40%;
+  left: 30%;
+  width: 30vw;
+  height: 30vw;
+  background: radial-gradient(circle, #FCE7F3 0%, transparent 70%);
+  animation-delay: -5s;
+}
+
+.dark .blob-3 {
+  background: radial-gradient(circle, #83184340 0%, transparent 70%);
+}
+
+@keyframes blobFloat {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    transform: translate(20px, -20px) scale(1.1);
+  }
+}
+
+/* Gradient Text - Kept from original */
 .gradient-text {
-  background: -webkit-linear-gradient(
+  background: linear-gradient(
       -64deg,
       #f9bf65, #ffab6b, #ff9977, #fc8986,
       #ef7e95, #e47da6, #d37fb5, #bf83c1,
@@ -309,47 +455,9 @@ const scrollToAbout = (): void => {
   }
 }
 
-/* Smooth Scrolling */
-html {
-  scroll-behavior: smooth;
-}
-
-/* Custom Scrollbar - macOS Style */
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-
-::-webkit-scrollbar-track {
+  width: 0px; /* Hide scrollbar for cleaner look on macOS */
   background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 10px;
-  border: 2px solid transparent;
-  background-clip: padding-box;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.3);
-  background-clip: padding-box;
-}
-
-.dark ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  background-clip: padding-box;
-}
-
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
-  background-clip: padding-box;
-}
-
-/* Apple SF Pro Font - Optional but recommended */
-* {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 </style>

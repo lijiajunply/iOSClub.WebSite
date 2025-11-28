@@ -107,7 +107,7 @@ const toggleSidebar = () => {
 onMounted(async () => {
   const isValid = await store.validate()
   if (!isValid) {
-    store.logout()
+    await store.logout()
     await router.push('/login')
   }
 })

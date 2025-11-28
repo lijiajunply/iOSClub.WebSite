@@ -20,16 +20,6 @@
             :style="`animation-delay: ${index * 100}ms`"
             @click="handleCardClick(item)"
         >
-          <template #cover>
-            <div class="h-48 flex items-center justify-center overflow-hidden">
-              <img
-                  :src="item.imageUrl"
-                  alt="Event Icon"
-                  class="w-24 h-24 object-contain group-hover:scale-110 transition-transform duration-500"
-              />
-            </div>
-          </template>
-
           <div class="p-6 space-y-4">
             <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 group-hover:text-purple-600 transition-colors duration-300">
               {{ item.title }}
@@ -65,10 +55,6 @@ import PageStart from "../components/PageStart.vue";
 
 // 导入图片
 import appleLogo from '/assets/Centre/AppleLogo.png'
-import visionProImage from '/assets/other/vision_pro.jpg'
-import launchEventImage from '/assets/other/launch_event.jpg'
-import classImage from '/assets/other/class.jpg'
-import partyImage from '/assets/other/you_yuan_hui.jpg'
 
 // 移动端判断状态
 const isMobile = ref(false)
@@ -93,25 +79,21 @@ onUnmounted(() => {
 
 const cards = ref([
   {
-    imageUrl: visionProImage,
     title: 'iOS Club和你一起体验最新产品',
     content: 'iOS Club与许多企业进行合作，我们将带您体验最新的设备与最新应用',
     url: '/Article/VisionPro'
   },
   {
-    imageUrl: launchEventImage,
     title: 'iOS Club和你一起看发布会',
     content: 'iOS Club和你一起见证未来。未来已来，你来不来？',
     url: '/Article/PressConference'
   },
   {
-    imageUrl: classImage,
     title: 'iOS Club和你一起夜校培训',
     content: 'iOS Club携手专业讲师，和你一起开启夜校培训，带你深入学习前沿知识',
     url: '/Article/Class'
   },
   {
-    imageUrl: partyImage,
     title: 'iOS Club和你一起进行游园会',
     content: 'iOS Club和你一起漫步校园，在游园会中打卡互动、畅享欢乐时光',
     url: '/Article/Party'
