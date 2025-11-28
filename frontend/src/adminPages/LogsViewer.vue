@@ -1,13 +1,7 @@
 <template>
   <div class="min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-300">
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- 页面标题 -->
-      <div class="mb-8">
-        <div>
-          <h1 class="text-2xl font-semibold tracking-tight">系统日志管理</h1>
-          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">查看、过滤和分析系统运行日志</p>
-        </div>
-      </div>
+      <!-- 日志统计图表区域 -->
 
       <!-- 日志统计图表区域 -->
       <div
@@ -335,7 +329,7 @@
 </template>
 
 <script setup lang="ts">
-import {ref, computed, onMounted} from 'vue'
+import {ref, computed, onMounted, onBeforeUnmount} from 'vue'
 import {
   NTag,
   NSelect,
@@ -352,6 +346,7 @@ import {
 } from 'naive-ui'
 import {Icon} from '@iconify/vue'
 import {LogsService, type LogEntry} from '../services/LogsService';
+import {useLayoutStore} from '../stores/LayoutStore';
 
 // 响应式数据
 const logs = ref<LogEntry[]>([])
@@ -377,6 +372,7 @@ const cleanupLoading = ref<boolean>(false)
 
 // 消息提示
 const message = useMessage()
+const layoutStore = useLayoutStore()
 
 // 统计数据
 const totalLogsCount = ref<number>(0)
@@ -613,10 +609,24 @@ const confirmCleanup = async (): Promise<void> => {
 
 // 生命周期钩子
 onMounted(async (): Promise<void> => {
+  // Set page header
+  layoutStore.setPageHeader(
+      '系统日志管理',
+      '查看、过滤和分析系统运行日志'
+  );
+
+  // Show page actions (none for this page)
+  layoutStore.setShowPageActions(false);
+
   // 加载日志数据
   await getLogs();
   // 加载统计数据
   await loadStatistics();
+})
+
+onBeforeUnmount(() => {
+  // Clear page header
+  layoutStore.clearPageHeader();
 })
 
 // 计算属性 - 是否有更多页

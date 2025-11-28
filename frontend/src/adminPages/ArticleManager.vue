@@ -1,27 +1,19 @@
 <template>
   <div class="min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-300">
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- 页面标题 -->
-      <div class="mb-8">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-          <div>
-            <h1 class="text-2xl font-semibold tracking-tight">社团文章管理</h1>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">创建、编辑和删除社团文章</p>
-          </div>
-          <div class="mt-4 sm:mt-0">
-            <n-button
-              type="primary"
-              size="small"
-              @click="goToCategoryManager"
-              class="rounded-full bg-blue-500 hover:bg-blue-600"
-            >
-              <template #icon>
-                <Icon icon="material-symbols:category" class="w-4 h-4"/>
-              </template>
-              管理分类和文章排序
-            </n-button>
-          </div>
-        </div>
+      <!-- 页面操作栏 -->
+      <div class="flex items-center justify-end space-x-3 mb-8">
+        <n-button
+          type="primary"
+          size="small"
+          @click="goToCategoryManager"
+          class="rounded-full bg-blue-500 hover:bg-blue-600"
+        >
+          <template #icon>
+            <Icon icon="material-symbols:category" class="w-4 h-4"/>
+          </template>
+          管理分类和文章排序
+        </n-button>
       </div>
       
       <!-- 主要内容区域 -->
@@ -156,16 +148,18 @@
 </template>
 
 <script setup lang="ts">
-import {ref, onMounted} from 'vue'
+import {ref, onMounted, onBeforeUnmount} from 'vue'
 import {useRouter} from 'vue-router'
 import {useDialog, useMessage, NButton, NTag} from 'naive-ui'
 import {Icon} from '@iconify/vue'
 import {ArticleService} from '../services/ArticleService'
 import type {ArticleModel} from '../models'
+import {useLayoutStore} from '../stores/LayoutStore'
 
 const router = useRouter()
 const dialog = useDialog()
 const message = useMessage()
+const layoutStore = useLayoutStore()
 
 const articles = ref<ArticleModel[]>([])
 const loading = ref(false)
@@ -269,6 +263,20 @@ const deleteArticle = (article: ArticleModel) => {
 }
 
 onMounted(() => {
+  // Set page header
+  layoutStore.setPageHeader(
+      '社团文章管理',
+      '创建、编辑和删除社团文章'
+  )
+
+  // Show page actions
+  layoutStore.setShowPageActions(true)
+
   fetchArticles()
+})
+
+onBeforeUnmount(() => {
+  // Clear page header
+  layoutStore.clearPageHeader()
 })
 </script>

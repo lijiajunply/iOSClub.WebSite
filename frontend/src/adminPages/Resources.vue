@@ -1,13 +1,8 @@
 <template>
   <div class="min-h-screen transition-colors duration-300 text-gray-900 dark:text-gray-100">
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- Header -->
-      <div class="flex items-center justify-between mb-8">
-        <div>
-          <h1 class="text-2xl font-semibold tracking-tight">社团资源</h1>
-          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">社团资源管理</p>
-        </div>
-
+      <!-- 页面操作栏 -->
+      <div class="flex items-center justify-end space-x-3 mb-8">
         <n-button v-if="authorizationStore.isAdmin()" @click="showAddResourceModal"
                   type="primary"
                   class="rounded-full bg-blue-500 hover:bg-blue-600 text-white flex items-center gap-2">
@@ -73,11 +68,11 @@
 
             <div v-if="authorizationStore.isAdmin" class="flex mt-8 space-x-3">
               <button @click="editResource(resource)"
-                        class="rounded-full px-4 py-1.5 text-sm bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/50 dark:hover:bg-blue-800 text-blue-700 dark:text-blue-200 transition-colors">
+                      class="rounded-full px-4 py-1.5 text-sm bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/50 dark:hover:bg-blue-800 text-blue-700 dark:text-blue-200 transition-colors">
                 编辑
               </button>
               <button @click="deleteResource(resource)"
-                        class="rounded-full px-4 py-1.5 text-sm bg-red-100 hover:bg-red-200 dark:bg-red-900/50 dark:hover:bg-red-800 text-red-700 dark:text-red-200 transition-colors">
+                      class="rounded-full px-4 py-1.5 text-sm bg-red-100 hover:bg-red-200 dark:bg-red-900/50 dark:hover:bg-red-800 text-red-700 dark:text-red-200 transition-colors">
                 删除
               </button>
             </div>
@@ -164,13 +159,14 @@
 </template>
 
 <script setup lang="ts">
-import {ref, computed, onMounted} from 'vue'
+import {ref, computed, onMounted, onBeforeUnmount} from 'vue'
 import {Icon} from '@iconify/vue'
 import SkeletonLoader from '../components/SkeletonLoader.vue'
 import {useAuthorizationStore} from '../stores/Authorization'
 import {ResourceService} from '../services/ResourceService'
 import {NButton, useDialog, NInput} from 'naive-ui'
 import type {ResourceModel} from '../models'
+import {useLayoutStore} from '../stores/LayoutStore'
 
 interface Resource {
   id: string
@@ -181,6 +177,7 @@ interface Resource {
 
 const dialog = useDialog()
 const authorizationStore = useAuthorizationStore()
+const layoutStore = useLayoutStore()
 
 const showModal = ref(false)
 const searchTerm = ref('')
@@ -341,6 +338,20 @@ const fetchResources = async () => {
 // 组件挂载时初始化
 onMounted(() => {
   fetchResources()
+
+  // Set page header
+  layoutStore.setPageHeader(
+      '社团资源',
+      '社团资源管理'
+  )
+
+  // Show page actions
+  layoutStore.setShowPageActions(true)
+})
+
+onBeforeUnmount(() => {
+  // Clear page header
+  layoutStore.clearPageHeader()
 })
 </script>
 

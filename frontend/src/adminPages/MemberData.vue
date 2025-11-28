@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {ref, computed, h, onMounted, nextTick} from 'vue'
+import {ref, computed, h, onMounted, onBeforeUnmount, nextTick} from 'vue'
 import {useDialog, useMessage} from 'naive-ui'
 // 导入所有需要的 NaiveUI 组件
 import {
@@ -32,9 +32,11 @@ import {
 } from '../services/DataCentreService'
 import type {MemberModel, PaginatedMemberResponse} from '../models'
 import * as echarts from 'echarts'
+import {useLayoutStore} from '../stores/LayoutStore';
 
 const dialog = useDialog()
 const message = useMessage()
+const layoutStore = useLayoutStore()
 const showModal = ref(false)
 const showPasswordModal = ref(false)
 const searchTerm = ref('')
@@ -799,50 +801,57 @@ onMounted(() => {
   fetchMembers()
   loadChartData()
   window.addEventListener('resize', handleResize)
+  
+  // Set page header
+  layoutStore.setPageHeader(
+    '成员数据管理',
+    '社团成员信息管理与数据分析'
+  )
+  
+  // Show page actions
+  layoutStore.setShowPageActions(true)
+})
+
+onBeforeUnmount(() => {
+  // Clear page header
+  layoutStore.clearPageHeader()
+  window.removeEventListener('resize', handleResize)
 })
 </script>
 
 <template>
   <div class="min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-300">
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- 页面标题 -->
-      <div class="mb-8">
-        <div class="flex items-center justify-between">
-          <div>
-            <h1 class="text-2xl font-semibold tracking-tight">成员数据管理</h1>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">社团成员信息管理与数据分析</p>
-          </div>
-          <div class="flex items-center space-x-3">
-            <n-button type="primary" @click="showAddMemberModal" class="rounded-full bg-blue-500 hover:bg-blue-600">
-              <template #icon>
-                <Icon icon="ion:person-add" class="w-4 h-4"/>
-              </template>
-              添加成员
-            </n-button>
-            <n-dropdown trigger="hover" :options="downloadOptions" @select="handleDownloadSelect">
-              <n-button class="rounded-full">
-                <template #icon>
-                  <Icon icon="ion:download" class="w-4 h-4"/>
-                </template>
-                导出数据
-              </n-button>
-            </n-dropdown>
-            <n-button class="rounded-full" @click="triggerFileInput">
-              <template #icon>
-                <Icon icon="lucide:arrow-big-up-dash" class="w-4 h-4"/>
-              </template>
-              上传数据
-            </n-button>
-            <n-button @click="fetchMembers" class="rounded-full">
-              <template #icon>
-                <Icon icon="ion:refresh" class="w-4 h-4"/>
-              </template>
-              刷新
-            </n-button>
-          </div>
-        </div>
+      <!-- 页面操作栏 -->
+      <div class="flex items-center justify-end space-x-3 mb-8">
+        <n-button type="primary" @click="showAddMemberModal" class="rounded-full bg-blue-500 hover:bg-blue-600">
+          <template #icon>
+            <Icon icon="ion:person-add" class="w-4 h-4"/>
+          </template>
+          添加成员
+        </n-button>
+        <n-dropdown trigger="hover" :options="downloadOptions" @select="handleDownloadSelect">
+          <n-button class="rounded-full">
+            <template #icon>
+              <Icon icon="ion:download" class="w-4 h-4"/>
+            </template>
+            导出数据
+          </n-button>
+        </n-dropdown>
+        <n-button class="rounded-full" @click="triggerFileInput">
+          <template #icon>
+            <Icon icon="lucide:arrow-big-up-dash" class="w-4 h-4"/>
+          </template>
+          上传数据
+        </n-button>
+        <n-button @click="fetchMembers" class="rounded-full">
+          <template #icon>
+            <Icon icon="ion:refresh" class="w-4 h-4"/>
+          </template>
+          刷新
+        </n-button>
       </div>
-
+      
       <input
           ref="fileInput"
           type="file"

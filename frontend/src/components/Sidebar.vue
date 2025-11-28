@@ -39,7 +39,7 @@
         
         <button 
           @click="layoutStore.toggleSidebarCollapse()" 
-          class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors hidden md:block"
           :class="layoutStore.isSidebarCollapsed ? 'ml-0' : ''"
         >
           <Icon 

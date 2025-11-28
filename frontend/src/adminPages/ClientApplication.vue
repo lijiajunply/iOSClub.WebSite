@@ -1,27 +1,18 @@
 <template>
   <div class="min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-300">
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- 页面标题 -->
-      <div class="mb-8">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 class="text-2xl font-semibold tracking-tight">客户端应用管理</h1>
-            <p class="text-sm text-gray-500 dark:text-gray-400">管理第三方应用的OAuth客户端</p>
-          </div>
-
-          <div class="flex items-center gap-3 mt-4 sm:mt-0">
-            <button @click="showHelpGuide = true"
-                    class="px-4 py-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors flex items-center justify-center">
-              <Icon icon="ion:help-circle-outline" class="mr-1" width="18" height="18"/>
-              帮助
-            </button>
-            <button @click="openCreateModal"
-                    class="px-4 py-2 rounded-full bg-blue-500 hover:bg-blue-600 text-white transition-colors flex items-center justify-center">
-              <Icon icon="ion:add" class="mr-1" width="18" height="18"/>
-              创建客户端
-            </button>
-          </div>
-        </div>
+      <!-- 页面操作栏 -->
+      <div class="flex items-center justify-end gap-3 mb-8">
+        <button @click="showHelpGuide = true"
+                class="px-4 py-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors flex items-center justify-center">
+          <Icon icon="ion:help-circle-outline" class="mr-1" width="18" height="18"/>
+          帮助
+        </button>
+        <button @click="openCreateModal"
+                class="px-4 py-2 rounded-full bg-blue-500 hover:bg-blue-600 text-white transition-colors flex items-center justify-center">
+          <Icon icon="ion:add" class="mr-1" width="18" height="18"/>
+          创建客户端
+        </button>
       </div>
 
       <!-- 搜索和筛选 -->
@@ -678,16 +669,18 @@
 </template>
 
 <script setup lang="ts">
-import {ref, computed, onMounted} from 'vue';
+import {ref, computed, onMounted, onBeforeUnmount} from 'vue';
 import {useMessage, useDialog, NModal} from 'naive-ui';
 import {Icon} from '@iconify/vue';
 import HelpGuide from '../components/HelpGuide.vue';
 import SkeletonLoader from '../components/SkeletonLoader.vue';
 import {ClientAppService} from '../services/ClientAppService';
 import type {ClientApplication, CreateClientAppModel, UpdateClientAppModel} from '../models';
+import {useLayoutStore} from '../stores/LayoutStore';
 
 const message = useMessage();
 const dialog = useDialog();
+const layoutStore = useLayoutStore();
 
 // 状态管理
 const clientApps = ref<ClientApplication[]>([]);
@@ -928,6 +921,20 @@ const confirmDelete = (app: ClientApplication) => {
 // 组件挂载时加载数据
 onMounted(() => {
   loadClientApps();
+
+  // Set page header
+  layoutStore.setPageHeader(
+      '客户端应用管理',
+      '管理第三方应用的OAuth客户端'
+  );
+
+  // Show page actions
+  layoutStore.setShowPageActions(true);
+});
+
+onBeforeUnmount(() => {
+  // Clear page header
+  layoutStore.clearPageHeader();
 });
 </script>
 

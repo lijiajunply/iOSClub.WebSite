@@ -1,20 +1,17 @@
 <template>
   <div class="min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-300">
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- 页面标题 -->
-      <div class="mb-8">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center">
-            <button @click="goBack" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200">
-              <Icon icon="material-symbols:arrow-back" class="w-5 h-5 text-gray-600 dark:text-gray-300"/>
-            </button>
-            <h1 class="ml-3 text-2xl font-semibold tracking-tight">分类设置 - {{ category.name || '加载中' }}</h1>
-          </div>
-        </div>
+      <!-- 返回按钮 -->
+      <div class="mb-6">
+        <button @click="goBack"
+                class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200">
+          <Icon icon="material-symbols:arrow-back" class="w-5 h-5 text-gray-600 dark:text-gray-300"/>
+        </button>
       </div>
-      
+
       <!-- 分类信息卡片 -->
-      <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-lg mb-8">
+      <div
+          class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-lg mb-8">
         <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
           <h2 class="text-lg font-semibold tracking-tight">分类信息</h2>
         </div>
@@ -23,29 +20,29 @@
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">分类名称</label>
               <n-input
-                v-model:value="category.name"
-                placeholder="请输入分类名称"
-                class="rounded-xl"
-                :bordered="true"
+                  v-model:value="category.name"
+                  placeholder="请输入分类名称"
+                  class="rounded-xl"
+                  :bordered="true"
               />
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">分类ID</label>
               <n-input
-                :value="category.id"
-                placeholder="分类ID"
-                class="rounded-xl"
-                :bordered="true"
-                disabled
+                  :value="category.id"
+                  placeholder="分类ID"
+                  class="rounded-xl"
+                  :bordered="true"
+                  disabled
               />
             </div>
           </div>
           <div class="mt-6">
             <n-button
-              type="primary"
-              @click="updateCategory"
-              :loading="updatingCategory"
-              class="rounded-full bg-blue-500 hover:bg-blue-600"
+                type="primary"
+                @click="updateCategory"
+                :loading="updatingCategory"
+                class="rounded-full bg-blue-500 hover:bg-blue-600"
             >
               更新分类信息
             </n-button>
@@ -54,15 +51,16 @@
       </div>
 
       <!-- 文章排序卡片 -->
-      <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-lg">
+      <div
+          class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-lg">
         <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
           <div class="flex justify-between items-center">
             <h2 class="text-lg font-semibold tracking-tight">文章排序</h2>
             <n-button
-              type="primary"
-              @click="updateArticleOrders"
-              :loading="updatingArticles"
-              class="rounded-full bg-green-500 hover:bg-green-600"
+                type="primary"
+                @click="updateArticleOrders"
+                :loading="updatingArticles"
+                class="rounded-full bg-green-500 hover:bg-green-600"
             >
               保存文章顺序
             </n-button>
@@ -82,33 +80,33 @@
 
           <!-- 文章列表 -->
           <draggable
-            v-else
-            v-model="articles"
-            item-key="path"
-            handle=".drag-handle"
-            ghost-class="bg-blue-50 dark:bg-blue-900/20 shadow-md"
-            chosen-class="ring-2 ring-blue-500"
-            @start="onDragStart"
-            @end="onDragEnd"
-            class="space-y-4"
+              v-else
+              v-model="articles"
+              item-key="path"
+              handle=".drag-handle"
+              ghost-class="bg-blue-50 dark:bg-blue-900/20 shadow-md"
+              chosen-class="ring-2 ring-blue-500"
+              @start="onDragStart"
+              @end="onDragEnd"
+              class="space-y-4"
           >
             <template #item="{ element: article }">
-              <div 
-                class="flex items-center p-4 bg-gray-50 dark:bg-gray-700 rounded-xl hover:shadow-md transition-all duration-200 cursor-move"
+              <div
+                  class="flex items-center p-4 bg-gray-50 dark:bg-gray-700 rounded-xl hover:shadow-md transition-all duration-200 cursor-move"
               >
-                <Icon 
-                  icon="material-symbols:drag-indicator" 
-                  class="drag-handle text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors cursor-grab active:cursor-grabbing mr-4"
+                <Icon
+                    icon="material-symbols:drag-indicator"
+                    class="drag-handle text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors cursor-grab active:cursor-grabbing mr-4"
                 />
                 <div class="flex-1">
                   <h3 class="font-medium text-gray-900 dark:text-white">{{ article.title || '无标题文章' }}</h3>
                   <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ article.path }}</p>
                 </div>
                 <n-tag
-                  size="small"
-                  :type="getIdentityType(article.identity)"
-                  :bordered="false"
-                  class="rounded-full px-2 py-0.5 ml-4"
+                    size="small"
+                    :type="getIdentityType(article.identity)"
+                    :bordered="false"
+                    class="rounded-full px-2 py-0.5 ml-4"
                 >
                   {{ getIdentityLabel(article.identity || '') }}
                 </n-tag>
@@ -118,11 +116,12 @@
 
           <!-- 空状态 -->
           <div
-            v-if="articles.length === 0 && !loadingArticles"
-            class="py-12 flex flex-col items-center justify-center rounded-xl bg-gray-50 dark:bg-gray-700"
+              v-if="articles.length === 0 && !loadingArticles"
+              class="py-12 flex flex-col items-center justify-center rounded-xl bg-gray-50 dark:bg-gray-700"
           >
-            <div class="w-16 h-16 flex items-center justify-center bg-gray-100 dark:bg-gray-600 rounded-full mb-4 border border-gray-200 dark:border-gray-500">
-              <Icon icon="material-symbols:article-off" class="text-gray-400 dark:text-gray-500 w-7 h-7" />
+            <div
+                class="w-16 h-16 flex items-center justify-center bg-gray-100 dark:bg-gray-600 rounded-full mb-4 border border-gray-200 dark:border-gray-500">
+              <Icon icon="material-symbols:article-off" class="text-gray-400 dark:text-gray-500 w-7 h-7"/>
             </div>
             <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-1">暂无文章</h3>
             <p class="text-sm text-gray-500 dark:text-gray-400">该分类下还没有文章</p>
@@ -134,22 +133,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { useMessage, NButton, NInput, NTag } from 'naive-ui';
-import { Icon } from '@iconify/vue';
+import {ref, onMounted, onBeforeUnmount} from 'vue';
+import {useRoute, useRouter} from 'vue-router';
+import {useMessage, NButton, NInput, NTag} from 'naive-ui';
+import {Icon} from '@iconify/vue';
 import draggable from 'vuedraggable';
-import { CategoryService } from '../services/CategoryService';
-import { ArticleService } from '../services/ArticleService';
-import type { CategoryModel } from '../models';
-import type { ArticleModel } from '../models';
+import {CategoryService} from '../services/CategoryService';
+import {ArticleService} from '../services/ArticleService';
+import type {CategoryModel} from '../models';
+import type {ArticleModel} from '../models';
+import {useLayoutStore} from '../stores/LayoutStore';
 
 const route = useRoute();
 const router = useRouter();
 const message = useMessage();
+const layoutStore = useLayoutStore();
 
 const categoryId = ref<string>(route.params.id as string);
-const category = ref<CategoryModel>({ id: '', name: '', order: 0 });
+const category = ref<CategoryModel>({id: '', name: '', order: 0});
 const articles = ref<ArticleModel[]>([]);
 const loadingArticles = ref(false);
 const updatingCategory = ref(false);
@@ -158,11 +159,11 @@ const updatingArticles = ref(false);
 // 根据权限值获取显示标签
 const getIdentityLabel = (identity: string) => {
   const options = [
-    { label: '所有人', value: 'Member' },
-    { label: '部员', value: 'Department' },
-    { label: '部长', value: 'Minister' },
-    { label: '社长', value: 'President' },
-    { label: '创始人', value: 'Founder' }
+    {label: '所有人', value: 'Member'},
+    {label: '部员', value: 'Department'},
+    {label: '部长', value: 'Minister'},
+    {label: '社长', value: 'President'},
+    {label: '创始人', value: 'Founder'}
   ];
   const option = options.find(item => item.value === identity);
   return option ? option.label : '未知';
@@ -244,10 +245,10 @@ const updateArticleOrders = async () => {
     articles.value.forEach((article, index) => {
       articleOrders[article.path] = index;
     });
-    
+
     // 批量更新文章顺序
     await ArticleService.updateArticleOrders(articleOrders);
-    
+
     message.success('文章顺序更新成功');
   } catch (error) {
     console.error('更新文章顺序失败:', error);
@@ -277,6 +278,20 @@ const goBack = () => {
 onMounted(async () => {
   await loadCategory();
   await loadArticles();
+
+  // Set page header
+  layoutStore.setPageHeader(
+      `分类设置 - ${category.value.name || '加载中'}`,
+      '管理分类信息和文章顺序'
+  );
+
+  // Show page actions (none for this page)
+  layoutStore.setShowPageActions(false);
+});
+
+onBeforeUnmount(() => {
+  // Clear page header
+  layoutStore.clearPageHeader();
 });
 </script>
 

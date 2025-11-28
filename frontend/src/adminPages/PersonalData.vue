@@ -1,16 +1,6 @@
 <template>
   <div class="min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-300">
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- 页面标题 -->
-      <div class="mb-8">
-        <div class="flex items-center justify-between">
-          <div>
-            <h1 class="text-2xl font-semibold tracking-tight">个人信息</h1>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">管理您的个人资料</p>
-          </div>
-        </div>
-      </div>
-
       <!-- 加载状态 -->
       <div v-if="loading" class="py-6">
         <div
@@ -315,7 +305,7 @@
 </template>
 
 <script setup lang="ts">
-import {ref, reactive, onMounted} from 'vue';
+import {ref, reactive, onMounted, onBeforeUnmount} from 'vue';
 import {useMessage, NButton, NForm, NFormItem, NInput, NSelect, NModal} from 'naive-ui';
 import {Icon} from '@iconify/vue';
 import SkeletonLoader from '../components/SkeletonLoader.vue';
@@ -324,10 +314,12 @@ import {UserService} from '../services/UserService';
 import {AuthService} from '../services/AuthService';
 import type {MemberModel} from '../models';
 import {useRouter} from 'vue-router';
+import {useLayoutStore} from '../stores/LayoutStore';
 
 const message = useMessage();
 const authorizationStore = useAuthorizationStore();
 const router = useRouter();
+const layoutStore = useLayoutStore();
 
 const loading = ref(false);
 const confirmLoading = ref(false);
@@ -621,6 +613,20 @@ const confirmPasswordChange = async () => {
 // 组件挂载时获取用户信息
 onMounted(() => {
   fetchUserInfo();
+  
+  // Set page header
+  layoutStore.setPageHeader(
+    '个人信息',
+    '管理您的个人资料'
+  );
+  
+  // Show page actions (none for this page)
+  layoutStore.setShowPageActions(false);
+});
+
+onBeforeUnmount(() => {
+  // Clear page header
+  layoutStore.clearPageHeader();
 });
 </script>
 

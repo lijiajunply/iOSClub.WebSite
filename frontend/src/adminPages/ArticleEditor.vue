@@ -1,28 +1,22 @@
 <template>
   <div class="min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-300">
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- 页面标题 -->
-      <div class="mb-8">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center">
-            <button @click="goBack" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200">
-              <Icon icon="material-symbols:arrow-back" class="w-5 h-5 text-gray-600 dark:text-gray-300"/>
-            </button>
-            <h1 class="ml-3 text-2xl font-semibold tracking-tight">
-              {{ editingArticle ? '编辑文章' : '新建文章' }}
-            </h1>
-          </div>
-          <div class="flex items-center space-x-3">
-            <n-button 
-              @click="saveArticle" 
-              type="primary" 
-              :loading="saving" 
-              class="rounded-full bg-blue-500 hover:bg-blue-600"
-            >
-              保存文章
-            </n-button>
-          </div>
-        </div>
+      <!-- 页面操作栏 -->
+      <div class="flex items-center justify-end space-x-3 mb-8">
+        <n-button 
+          @click="saveArticle" 
+          type="primary" 
+          :loading="saving" 
+          class="rounded-full bg-blue-500 hover:bg-blue-600"
+        >
+          保存文章
+        </n-button>
+      </div>
+      <!-- 返回按钮 -->
+      <div class="mb-6">
+        <button @click="goBack" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200">
+          <Icon icon="material-symbols:arrow-back" class="w-5 h-5 text-gray-600 dark:text-gray-300"/>
+        </button>
       </div>
       
       <!-- 内容区域 -->
@@ -117,13 +111,14 @@
 </template>
 
 <script setup lang="ts">
-import {ref, computed, onMounted} from 'vue'
+import {ref, computed, onMounted, onBeforeUnmount} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
-import {useMessage, NButton, NForm, NFormItem, NInput, NSelect, NInputNumber} from 'naive-ui'
+import {useMessage, NButton, NForm, NFormItem, NInput, NSelect} from 'naive-ui'
 import {Icon} from '@iconify/vue'
 import {ArticleService} from '../services/ArticleService'
 import type {ArticleModel, ArticleCreateDto, ArticleUpdateDto} from '../models'
 import MarkdownComponent from '../components/MarkdownComponent.vue'
+import {useLayoutStore} from '../stores/LayoutStore'
 
 interface EditFormType {
   path: string
@@ -137,6 +132,7 @@ interface EditFormType {
 const route = useRoute()
 const router = useRouter()
 const message = useMessage()
+const layoutStore = useLayoutStore()
 
 const saving = ref(false)
 const editingArticle = ref<ArticleModel | null>(null)
@@ -298,6 +294,15 @@ const saveArticle = async () => {
 }
 
 onMounted(async () => {
+  // Set page header
+  layoutStore.setPageHeader(
+      editingArticle.value ? '编辑文章' : '新建文章',
+      ''
+  )
+
+  // Show page actions
+  layoutStore.setShowPageActions(true)
+
   // 先获取分类选项
   await fetchCategoryOptions()
 
@@ -305,6 +310,12 @@ onMounted(async () => {
   if (articlePath) {
     await fetchArticle(articlePath)
   }
+
+})
+
+onBeforeUnmount(() => {
+  // Clear page header
+  layoutStore.clearPageHeader()
 })
 </script>
 

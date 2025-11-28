@@ -18,16 +18,19 @@
                   height="32"
               />
             </button>
-            <router-link to="/" class="flex items-center gap-3 group">
-              <img
-                  src="/assets/iOS_Club_LOGO.png"
-                  alt="iOS Club Logo"
-                  class="w-10 h-10 rounded-lg object-contain"
-              />
-              <h2 class="text-xl font-semibold text-gray-900 dark:text-white">iMember</h2>
-            </router-link>
           </div>
-          <div class=""/>
+          
+          <!-- Desktop Header Content -->
+          <div class="hidden md:flex items-center justify-between flex-1 mx-4">
+            <div v-if="pageTitle">
+              <h1 class="text-lg font-semibold tracking-tight text-gray-900 dark:text-white">{{ pageTitle }}</h1>
+              <p v-if="pageSubtitle" class="text-xs text-gray-500 dark:text-gray-400">{{ pageSubtitle }}</p>
+            </div>
+            <div class="flex items-center space-x-2" v-if="showPageActions">
+              <slot name="page-actions"></slot>
+            </div>
+          </div>
+          
           <div class="flex items-center space-x-2">
             <!-- Theme Toggle -->
             <button
@@ -49,6 +52,19 @@
           </div>
         </div>
       </header>
+
+      <!-- Mobile Header Content -->
+      <div v-if="pageTitle && isMobile" class="bg-white/90 dark:bg-gray-800/90 border-b border-gray-100 dark:border-gray-700 px-4 py-3">
+        <div class="flex flex-col space-y-3">
+          <div>
+            <h1 class="text-lg font-semibold tracking-tight text-gray-900 dark:text-white">{{ pageTitle }}</h1>
+            <p v-if="pageSubtitle" class="text-xs text-gray-500 dark:text-gray-400">{{ pageSubtitle }}</p>
+          </div>
+          <div class="flex items-center space-x-2" v-if="showPageActions">
+            <slot name="page-actions"></slot>
+          </div>
+        </div>
+      </div>
 
       <!-- Main Content -->
       <main class="flex-1 overflow-y-auto bg-white/90 dark:bg-gray-800/90">
@@ -74,6 +90,7 @@ const themeStore = useThemeStore()
 const {isDark} = storeToRefs(themeStore)
 const {toggleTheme} = themeStore
 const layoutStore = useLayoutStore()
+const {isMobile, pageTitle, pageSubtitle, showPageActions} = storeToRefs(layoutStore)
 
 const toggleSidebar = () => {
   layoutStore.showSidebar = !layoutStore.showSidebar

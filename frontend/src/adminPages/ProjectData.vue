@@ -1,15 +1,17 @@
 <script setup lang="ts">
-import {ref, computed, onMounted} from 'vue'
+import {ref, computed, onMounted, onBeforeUnmount} from 'vue'
 import {useRouter, useRoute} from 'vue-router'
-import {NCard, useMessage} from 'naive-ui'
+import {useMessage} from 'naive-ui'
 import {NDatePicker, NButton, NSelect, NModal} from 'naive-ui'
 import {Icon} from '@iconify/vue'
 import {ProjectService} from '../services/ProjectService'
 import type {ProjectModel, StaffModel, TaskModel} from '../models'
+import {useLayoutStore} from '../stores/LayoutStore'
 
 const router = useRouter()
 const route = useRoute()
 const message = useMessage()
+const layoutStore = useLayoutStore()
 
 // 获取路由参数
 const projectId = computed(() => route.params.id as string | undefined)
@@ -45,6 +47,20 @@ onMounted(async () => {
   await loadProjectData()
   await loadProjectMembers()
   await loadProjectTasks()
+
+  // Set page header
+  layoutStore.setPageHeader(
+      '项目详情',
+      '查看和管理项目信息'
+  )
+
+  // Show page actions (none for this page)
+  layoutStore.setShowPageActions(false)
+})
+
+onBeforeUnmount(() => {
+  // Clear page header
+  layoutStore.clearPageHeader()
 })
 
 // 加载项目数据
@@ -178,16 +194,10 @@ const deleteTask = async (taskId: string) => {
   <div class="min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-300">
     <!-- 页面头部 -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div class="flex items-center justify-between mb-8">
-        <div>
-          <h1 class="text-2xl font-semibold tracking-tight">
-            项目详情
-          </h1>
-          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            查看和管理项目信息
-          </p>
-        </div>
 
+
+      <!-- 返回按钮 -->
+      <div class="mb-6">
         <n-button
             @click="router.push('/Centre/Admin')"
             class="rounded-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center"

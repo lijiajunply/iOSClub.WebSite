@@ -5,6 +5,9 @@ export const useLayoutStore = defineStore('layout', {
         showSidebar: true, // 侧边栏是否显示
         isMobile: typeof window !== 'undefined' ? window.innerWidth < 768 : false, // 是否为移动端
         isSidebarCollapsed: false, // 侧边栏是否折叠
+        pageTitle: '', // 页面标题
+        pageSubtitle: '', // 页面副标题
+        showPageActions: false, // 是否显示页面操作栏
     }),
     actions: {
         toggleSidebar() {
@@ -19,6 +22,18 @@ export const useLayoutStore = defineStore('layout', {
             } else {
                 this.showSidebar = true;
             }
+        },
+        setPageHeader(title: string, subtitle: string = '') {
+            this.pageTitle = title;
+            this.pageSubtitle = subtitle;
+        },
+        setShowPageActions(show: boolean) {
+            this.showPageActions = show;
+        },
+        clearPageHeader() {
+            this.pageTitle = '';
+            this.pageSubtitle = '';
+            this.showPageActions = false;
         },
     },
 });

@@ -1,54 +1,45 @@
 <template>
   <div class="min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-300">
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- 页面标题 -->
-      <div class="mb-8">
-        <div class="flex items-center justify-between">
-          <div>
-            <h1 class="text-2xl font-semibold tracking-tight">其他数据</h1>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">社团管理系统数据分析</p>
-          </div>
+      <!-- 页面操作栏 -->
+      <div class="flex items-center justify-end space-x-3 mb-8">
+        <n-button
+            v-if="isAdmin"
+            type="primary"
+            size="small"
+            class="rounded-full bg-blue-500 hover:bg-blue-600"
+            @click="triggerFileInput"
+        >
+          <template #icon>
+            <Icon icon="material-symbols:upload" class="w-4 h-4"/>
+          </template>
+          上传数据
+        </n-button>
+        
+        <div v-if="isAdmin" class="relative" ref="dropdownContainer">
+          <button
+              @click="toggleDropdown"
+              class="h-9 w-9 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
+          >
+            <Icon icon="material-symbols:more-horiz" class="w-5 h-5 text-gray-600 dark:text-gray-400"/>
+          </button>
           
-          <div class="flex items-center space-x-3">
-            <n-button
-                v-if="isAdmin"
-                type="primary"
-                size="small"
-                class="rounded-full bg-blue-500 hover:bg-blue-600"
-                @click="triggerFileInput"
+          <div
+              v-if="dropdownOpen"
+              class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-lg py-2 z-10 border border-gray-200 dark:border-gray-700 transition-all duration-200"
+          >
+            <button
+                @click="handleDropdownSelect('download')"
+                class="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150"
             >
-              <template #icon>
-                <Icon icon="material-symbols:upload" class="w-4 h-4"/>
-              </template>
-              上传数据
-            </n-button>
-            
-            <div v-if="isAdmin" class="relative" ref="dropdownContainer">
-              <button
-                  @click="toggleDropdown"
-                  class="h-9 w-9 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
-              >
-                <Icon icon="material-symbols:more-horiz" class="w-5 h-5 text-gray-600 dark:text-gray-400"/>
-              </button>
-              
-              <div
-                  v-if="dropdownOpen"
-                  class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-lg py-2 z-10 border border-gray-200 dark:border-gray-700 transition-all duration-200"
-              >
-                <button
-                    @click="handleDropdownSelect('download')"
-                    class="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150"
-                >
-                  下载所有数据
-                </button>
-                <button
-                    @click="handleDropdownSelect('remove')"
-                    class="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-150"
-                >
-                  删除所有数据
-                </button>
-              </div>
-            </div>
+              下载所有数据
+            </button>
+            <button
+                @click="handleDropdownSelect('remove')"
+                class="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-150"
+            >
+              删除所有数据
+            </button>
           </div>
         </div>
       </div>
@@ -195,10 +186,12 @@ import {Icon} from '@iconify/vue'
 import SkeletonLoader from '../components/SkeletonLoader.vue'
 import {DataCentreService} from "../services/DataCentreService";
 import {useAuthorizationStore} from "../stores/Authorization";
+import {useLayoutStore} from "../stores/LayoutStore";
 
 const message = useMessage()
 const dialog = useDialog()
 const authorizationStore = useAuthorizationStore()
+const layoutStore = useLayoutStore()
 
 // Refs
 const fileInput = ref<HTMLInputElement>()
@@ -355,6 +348,15 @@ const fetchData = async () => {
 
 // Mount and unmount lifecycle
 onMounted(async () => {
+  // Set page header
+  layoutStore.setPageHeader(
+      '其他数据',
+      '社团管理系统数据分析'
+  )
+
+  // Show page actions
+  layoutStore.setShowPageActions(true)
+
   isAdmin.value = authorizationStore.isAdmin()
   await fetchData()
   await nextTick()
@@ -364,6 +366,9 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
+  // Clear page header
+  layoutStore.clearPageHeader()
+  
   document.removeEventListener('click', handleClickOutside)
 })
 </script>

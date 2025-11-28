@@ -1,21 +1,12 @@
 <template>
   <div class="min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-300">
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- 页面标题 -->
-      <div class="mb-8">
-        <div class="flex items-center justify-between">
-          <div>
-            <h1 class="text-2xl font-semibold tracking-tight">分类管理</h1>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">管理文章分类及其显示顺序</p>
-          </div>
-        </div>
-      </div>
-      
       <!-- 主内容区 -->
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
         <!-- 骨架加载 -->
         <div v-if="loading">
-          <div v-for="i in 8" :key="i" class="rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+          <div v-for="i in 8" :key="i"
+               class="rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
             <div class="p-5">
               <div class="flex items-center mb-4">
                 <div class="bg-gray-100 dark:bg-gray-700 p-2.5 rounded-xl mr-3 w-10 h-10"></div>
@@ -29,46 +20,46 @@
 
         <!-- 分类列表 -->
         <draggable
-          v-else
-          v-model="categories"
-          item-key="id"
-          handle=".drag-handle"
-          ghost-class="drag-ghost"
-          chosen-class="drag-chosen"
-          @start="onCategoryDragStart"
-          @end="onCategoryDragEnd"
-          class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 w-full"
+            v-else
+            v-model="categories"
+            item-key="id"
+            handle=".drag-handle"
+            ghost-class="drag-ghost"
+            chosen-class="drag-chosen"
+            @start="onCategoryDragStart"
+            @end="onCategoryDragEnd"
+            class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 w-full"
         >
           <template #item="{ element: category }">
-            <div 
-              class="group rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden cursor-move"
+            <div
+                class="group rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden cursor-move"
             >
               <div class="p-5">
                 <div class="flex items-center justify-between mb-4">
                   <div class="flex items-center">
-                    <Icon 
-                      icon="material-symbols:drag-indicator" 
-                      class="drag-handle text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors cursor-grab active:cursor-grabbing mr-3"
+                    <Icon
+                        icon="material-symbols:drag-indicator"
+                        class="drag-handle text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors cursor-grab active:cursor-grabbing mr-3"
                     />
                   </div>
                   <n-button
-                    type="primary"
-                    size="small"
-                    quaternary
-                    circle
-                    class="h-8 w-8 p-0 rounded-full"
-                    @click.stop="goToCategorySetting(category)"
+                      type="primary"
+                      size="small"
+                      quaternary
+                      circle
+                      class="h-8 w-8 p-0 rounded-full"
+                      @click.stop="goToCategorySetting(category)"
                   >
                     <template #icon>
-                      <Icon icon="material-symbols:settings" class="w-4 h-4" />
+                      <Icon icon="material-symbols:settings" class="w-4 h-4"/>
                     </template>
                   </n-button>
                 </div>
-                
+
                 <h3 class="font-medium text-lg mb-2 text-gray-900 dark:text-white">{{ category.name }}</h3>
-                
+
                 <div class="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                  <Icon icon="material-symbols:sort" class="mr-1 w-4 h-4" />
+                  <Icon icon="material-symbols:sort" class="mr-1 w-4 h-4"/>
                   <span>顺序: {{ category.order }}</span>
                 </div>
               </div>
@@ -78,11 +69,12 @@
 
         <!-- 空状态 -->
         <div
-          v-if="categories.length === 0 && !loading"
-          class="col-span-full py-16 flex flex-col items-center justify-center rounded-2xl bg-white dark:bg-gray-800 border border-dashed border-gray-200 dark:border-gray-700"
+            v-if="categories.length === 0 && !loading"
+            class="col-span-full py-16 flex flex-col items-center justify-center rounded-2xl bg-white dark:bg-gray-800 border border-dashed border-gray-200 dark:border-gray-700"
         >
-          <div class="w-16 h-16 flex items-center justify-center bg-gray-50 dark:bg-gray-700 rounded-full mb-4 border border-gray-100 dark:border-gray-600">
-            <Icon icon="material-symbols:category-off" class="text-gray-400 dark:text-gray-500 w-7 h-7" />
+          <div
+              class="w-16 h-16 flex items-center justify-center bg-gray-50 dark:bg-gray-700 rounded-full mb-4 border border-gray-100 dark:border-gray-600">
+            <Icon icon="material-symbols:category-off" class="text-gray-400 dark:text-gray-500 w-7 h-7"/>
           </div>
           <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-1">暂无分类</h3>
           <p class="text-sm text-gray-500 dark:text-gray-400">请先创建分类</p>
@@ -93,16 +85,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import { NTag, NButton, useMessage } from 'naive-ui';
-import { Icon } from '@iconify/vue';
+import {ref, onMounted, onBeforeUnmount} from 'vue';
+import {useRouter} from 'vue-router';
+import {NButton, useMessage} from 'naive-ui';
+import {Icon} from '@iconify/vue';
 import draggable from 'vuedraggable';
-import { CategoryService } from '../services/CategoryService';
-import type { CategoryModel } from '../models';
+import {CategoryService} from '../services/CategoryService';
+import type {CategoryModel} from '../models';
+import {useLayoutStore} from '../stores/LayoutStore';
 
 const message = useMessage();
 const router = useRouter();
+const layoutStore = useLayoutStore();
 const loading = ref(true);
 const categories = ref<CategoryModel[]>([]);
 
@@ -138,10 +132,10 @@ const onCategoryDragEnd = async () => {
       category.order = index;
       categoryOrders[category.id] = index;
     });
-    
+
     // 批量更新分类顺序
     await CategoryService.updateCategoryOrders(categoryOrders);
-    
+
     message.success('分类顺序更新成功');
   } catch (error) {
     message.error((error as Error).message || '更新分类顺序失败');
@@ -154,7 +148,21 @@ const onCategoryDragEnd = async () => {
 };
 
 onMounted(() => {
+  // Set page header
+  layoutStore.setPageHeader(
+      '分类管理',
+      '管理文章分类及其显示顺序'
+  );
+
+  // Show page actions (none for this page)
+  layoutStore.setShowPageActions(false);
+
   loadCategories();
+});
+
+onBeforeUnmount(() => {
+  // Clear page header
+  layoutStore.clearPageHeader();
 });
 </script>
 

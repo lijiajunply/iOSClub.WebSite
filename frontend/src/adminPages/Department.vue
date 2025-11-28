@@ -1,23 +1,15 @@
 <template>
   <div class="min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-300">
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- 页面标题 -->
-      <div class="mb-8">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-          <div>
-            <h1 class="text-2xl font-semibold tracking-tight">社团部门</h1>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">社团部门管理</p>
-          </div>
-          <div class="flex flex-wrap gap-2 mt-4 sm:mt-0">
-            <button
-                @click="() => openDepartment()"
-                class="px-4 py-2 rounded-full bg-blue-500 hover:bg-blue-600 text-white transition-colors flex items-center"
-            >
-              <Icon icon="ion:add" class="mr-1"/>
-              添加部门
-            </button>
-          </div>
-        </div>
+      <!-- 页面操作栏 -->
+      <div class="flex flex-wrap gap-2 mb-8">
+        <button
+            @click="() => openDepartment()"
+            class="px-4 py-2 rounded-full bg-blue-500 hover:bg-blue-600 text-white transition-colors flex items-center"
+        >
+          <Icon icon="ion:add" class="mr-1"/>
+          添加部门
+        </button>
       </div>
 
       <!-- 主内容区 -->
@@ -666,21 +658,19 @@
 </template>
 
 <script setup lang="ts">
-import {ref, onMounted, h, computed, nextTick, watch} from 'vue'
+import {ref, onMounted, onBeforeUnmount, h, computed, nextTick, watch} from 'vue'
 import {useRouter} from 'vue-router'
 import {
   useMessage,
   NButton,
   NTabs,
   NTabPane,
+  NSelect,
   NInput,
-  NForm,
-  NFormItem,
   NDataTable,
   NModal,
-  NEmpty,
-  NSelect,
-  type DataTableColumns
+  NForm,
+  NFormItem,
 } from 'naive-ui'
 import {Icon} from '@iconify/vue'
 import SkeletonLoader from '../components/SkeletonLoader.vue'
@@ -690,9 +680,11 @@ import {ProjectService} from '../services/ProjectService'
 import type {Department, DepartmentModel, MemberModel, Project, StudentModel, StaffModel} from '../models'
 import * as echarts from 'echarts'
 import {MemberQueryService} from "../services/MemberQueryService";
+import {useLayoutStore} from '../stores/LayoutStore';
 
 const router = useRouter()
 const message = useMessage()
+const layoutStore = useLayoutStore()
 
 // 数据状态
 const ministers = ref<MemberModel[]>([])
@@ -1357,6 +1349,20 @@ onMounted(() => {
   fetchData().then(() => {
     renderAllCharts()
   })
+
+  // Set page header
+  layoutStore.setPageHeader(
+      '社团部门',
+      '社团部门管理'
+  )
+
+  // Show page actions
+  layoutStore.setShowPageActions(true)
+})
+
+onBeforeUnmount(() => {
+  // Clear page header
+  layoutStore.clearPageHeader()
 })
 
 // 监听数据变化，重新渲染图表
