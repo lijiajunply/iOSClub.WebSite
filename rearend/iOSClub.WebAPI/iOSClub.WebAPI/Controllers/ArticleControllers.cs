@@ -145,6 +145,7 @@ public class ArticleController(
             existingArticle.Content = updateDto.Content;
             existingArticle.Identity = updateDto.Identity;
             existingArticle.LastWriteTime = DateTime.UtcNow;
+            existingArticle.Category = updateDto.Category;
 
             var success = await articleRepository.CreateOrUpdate(existingArticle);
             return !success ? StatusCode(500, "更新文章失败") : Ok(new { message = "文章更新成功", path });
@@ -279,4 +280,6 @@ public class ArticleUpdateDto
 
     [StringLength(20, ErrorMessage = "身份标识长度不能超过20个字符")]
     public string? Identity { get; set; }
+
+    public string? Category { get; set; }
 }
