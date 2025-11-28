@@ -1,27 +1,16 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace iOSClub.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class AddCategoryModel : Migration
+    public partial class AddC : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.RenameColumn(
-                name: "Category",
-                table: "Articles",
-                newName: "CategoryId");
-
-            migrationBuilder.AddColumn<int>(
-                name: "ArticleOrder",
-                table: "Articles",
-                type: "integer",
-                nullable: false,
-                defaultValue: 0);
-
+            // 1. First, create the Categories table
             migrationBuilder.CreateTable(
                 name: "Categories",
                 columns: table => new
@@ -36,6 +25,23 @@ namespace iOSClub.Data.Migrations
                     table.PrimaryKey("PK_Categories", x => x.Id);
                 });
 
+            // 2. Update existing Category values to NULL before renaming
+            // This prevents foreign key constraint violations
+            migrationBuilder.Sql("UPDATE \"Articles\" SET \"Category\" = NULL");
+            
+            // 3. Rename the column and add other changes
+            migrationBuilder.RenameColumn(
+                name: "Category",
+                table: "Articles",
+                newName: "CategoryId");
+
+            migrationBuilder.AddColumn<int>(
+                name: "ArticleOrder",
+                table: "Articles",
+                type: "integer",
+                nullable: false,
+                defaultValue: 0);
+
             migrationBuilder.CreateIndex(
                 name: "IX_Articles_CategoryId",
                 table: "Articles",
@@ -46,7 +52,8 @@ namespace iOSClub.Data.Migrations
                 table: "Articles",
                 column: "CategoryId",
                 principalTable: "Categories",
-                principalColumn: "Id");
+                principalColumn: "Id",
+                onDelete: ReferentialAction.SetNull);
         }
 
         /// <inheritdoc />

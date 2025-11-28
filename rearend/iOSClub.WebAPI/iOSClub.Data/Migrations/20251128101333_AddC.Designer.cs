@@ -12,8 +12,8 @@ using iOSClub.Data;
 namespace iOSClub.Data.Migrations
 {
     [DbContext(typeof(ClubContext))]
-    [Migration("20251128070602_AddCategoryModel")]
-    partial class AddCategoryModel
+    [Migration("20251128101333_AddC")]
+    partial class AddC
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -445,7 +445,8 @@ namespace iOSClub.Data.Migrations
                 {
                     b.HasOne("iOSClub.Data.DataModels.CategoryModel", "Category")
                         .WithMany("Articles")
-                        .HasForeignKey("CategoryId");
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Category");
                 });
