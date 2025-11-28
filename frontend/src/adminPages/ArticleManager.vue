@@ -3,17 +3,20 @@
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <!-- 页面操作栏 -->
       <div class="flex items-center justify-end space-x-3 mb-8">
-        <n-button
-          type="primary"
-          size="small"
+        <button
           @click="goToCategoryManager"
-          class="rounded-full bg-blue-500 hover:bg-blue-600"
+          class="rounded-full bg-blue-500 hover:bg-blue-600 h-9 space-x-1 px-2 flex items-center justify-center text-gray-100"
         >
-          <template #icon>
-            <Icon icon="material-symbols:category" class="w-4 h-4"/>
-          </template>
-          管理分类和文章排序
-        </n-button>
+          <Icon icon="material-symbols:category" class="w-4 h-4"/>
+          <span>管理分类和文章排序</span>
+        </button>
+
+        <button
+            class="bg-blue-500 text-white w-9 h-9 rounded-full shadow-lg flex items-center justify-center hover:bg-blue-600 hover:scale-105 transition-all duration-200"
+            @click="openCreateModal"
+        >
+          <Icon icon="material-symbols:add" class="w-4 h-4"/>
+        </button>
       </div>
       
       <!-- 主要内容区域 -->
@@ -132,16 +135,6 @@
             </n-button>
           </div>
         </template>
-      </div>
-      
-      <!-- 添加文章按钮 -->
-      <div class="fixed bottom-6 right-6 z-10">
-        <button
-            class="bg-blue-600 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center hover:bg-blue-700 hover:scale-105 transition-all duration-200"
-            @click="openCreateModal"
-        >
-          <Icon icon="material-symbols:add" class="w-6 h-6"/>
-        </button>
       </div>
     </main>
   </div>

@@ -5,7 +5,7 @@
     <div class="flex-1 flex flex-col overflow-hidden h-screen">
       <!-- Header -->
       <header class="bg-white/90 dark:bg-gray-800/90 backdrop-blur-md h-16 border-b border-gray-100 dark:border-gray-700">
-        <div class="flex items-center justify-between px-4 py-3 h-full">
+        <div class="flex items-center justify-between px-2 py-3 h-full max-w-7xl mx-auto">
           <div class="md:hidden flex items-center gap-3">
             <button
                 @click="toggleSidebar"
@@ -27,7 +27,7 @@
               <p v-if="pageSubtitle" class="text-xs text-gray-500 dark:text-gray-400">{{ pageSubtitle }}</p>
             </div>
             <div class="flex items-center space-x-2" v-if="showPageActions">
-              <slot name="page-actions"></slot>
+              <slot name="actions"></slot>
             </div>
           </div>
           
@@ -61,7 +61,7 @@
             <p v-if="pageSubtitle" class="text-xs text-gray-500 dark:text-gray-400">{{ pageSubtitle }}</p>
           </div>
           <div class="flex items-center space-x-2" v-if="showPageActions">
-            <slot name="page-actions"></slot>
+            <slot name="actions"></slot>
           </div>
         </div>
       </div>
