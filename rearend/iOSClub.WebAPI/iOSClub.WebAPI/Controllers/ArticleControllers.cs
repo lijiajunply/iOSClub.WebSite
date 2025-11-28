@@ -256,7 +256,7 @@ public class ArticleController(
     /// </summary>
     [Authorize]
     [HttpPost("update-orders")]
-    public async Task<ActionResult> UpdateArticleOrders([FromBody] Dictionary<string, int> articleOrders)
+    public async Task<ActionResult> UpdateArticleOrders([FromBody] Dictionary<string, int>? articleOrders)
     {
         try
         {

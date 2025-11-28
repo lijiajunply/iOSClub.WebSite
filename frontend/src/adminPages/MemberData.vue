@@ -78,12 +78,6 @@ const searchItems = [
   {label: '手机号', value: 'phone_num'}
 ]
 
-// 下载选项
-const downloadOptions = [
-  {label: '下载CSV文件', key: 'csv'},
-  {label: '下载JSON文件', key: 'json'}
-]
-
 // 学院选项
 const academyOptions = [
   '建筑学院',

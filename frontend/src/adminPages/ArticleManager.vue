@@ -252,22 +252,22 @@ onMounted(() => {
   const ActionsComponent = defineComponent({
     setup() {
       return () => h('div', { class: 'flex items-center justify-end space-x-3' }, [
+        // 创建文章按钮
+        h('button', {
+          class: 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200',
+          onClick: openCreateModal
+        }, [
+          h(Icon, { icon: 'material-symbols:add', class: 'w-4 h-4' })
+        ]),
+
         // 管理分类和文章排序按钮
         h('button', {
-          class: 'rounded-full bg-blue-500 hover:bg-blue-600 h-9 space-x-1 px-2 flex items-center justify-center text-gray-100',
+          class: 'rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 h-9 space-x-1 px-2 flex items-center justify-center',
           onClick: goToCategoryManager
         }, [
           h(Icon, { icon: 'material-symbols:category', class: 'w-4 h-4' }),
           h('span', '管理分类和文章排序')
         ]),
-
-        // 创建文章按钮
-        h('button', {
-          class: 'bg-blue-500 text-white w-9 h-9 rounded-full shadow-lg flex items-center justify-center hover:bg-blue-600 hover:scale-105 transition-all duration-200',
-          onClick: openCreateModal
-        }, [
-          h(Icon, { icon: 'material-symbols:add', class: 'w-4 h-4' })
-        ])
       ])
     }
   })

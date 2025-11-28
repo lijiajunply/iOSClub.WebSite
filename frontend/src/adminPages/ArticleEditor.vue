@@ -1,13 +1,7 @@
 <template>
   <div class="min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-300">
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- 返回按钮 -->
-      <div class="mb-6">
-        <button @click="goBack" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200">
-          <Icon icon="material-symbols:arrow-back" class="w-5 h-5 text-gray-600 dark:text-gray-300"/>
-        </button>
-      </div>
-      
+    
       <!-- 内容区域 -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <!-- 编辑区域 -->
@@ -102,7 +96,7 @@
 <script setup lang="ts">
 import {ref, computed, onMounted, onBeforeUnmount, defineComponent, h} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
-import {useMessage, NButton, NForm, NFormItem, NInput, NSelect} from 'naive-ui'
+import {useMessage, NForm, NFormItem, NInput, NSelect} from 'naive-ui'
 import {Icon} from '@iconify/vue'
 import {ArticleService} from '../services/ArticleService'
 import type {ArticleModel, ArticleCreateDto, ArticleUpdateDto} from '../models'
@@ -296,6 +290,12 @@ onMounted(async () => {
   const ActionsComponent = defineComponent({
     setup() {
       return () => h('div', { class: 'flex items-center justify-end space-x-3' }, [
+        h('button', {
+          class: 'rounded-full bg-gray-500 hover:bg-gray-600 h-9 w-9 space-x-1 flex items-center justify-center text-gray-100',
+          onClick: goBack
+        }, [
+          h(Icon, { icon: 'material-symbols:arrow-back', class: 'w-4 h-4' }),
+        ]),
         // 保存文章按钮
         h('button', {
           class: 'rounded-full bg-blue-500 hover:bg-blue-600 h-9 space-x-1 px-4 flex items-center justify-center text-gray-100',

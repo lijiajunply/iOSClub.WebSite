@@ -1,297 +1,328 @@
 <template>
-  <div class="min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-300">
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- 加载状态 -->
-      <div v-if="loading" class="py-6">
-        <div
-            class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden max-w-4xl mx-auto">
-          <!-- 卡片头部骨架 -->
-          <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
-            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-              <div class="h-6 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
-              <div class="flex items-center">
-                <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-16 mr-2"></div>
-                <div class="h-6 bg-gray-200 dark:bg-gray-700 rounded-full w-20"></div>
-              </div>
-            </div>
-          </div>
+  <!-- 页面容器：类 iOS 设置背景 -->
+  <div class="min-h-screen bg-[#F2F2F7] dark:bg-[#000000] transition-colors duration-300 pb-20">
 
-          <!-- 表单内容骨架 -->
-          <div class="p-6">
-            <!-- 表单行：姓名和性别 -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              <div>
-                <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-12 mb-2"></div>
-                <div class="h-12 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
-              </div>
+    <!-- 内容区域 -->
+    <main class="max-w-3xl mx-auto px-4 sm:px-6 pt-12">
 
-              <div>
-                <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-12 mb-2"></div>
-                <div class="h-12 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
-              </div>
-            </div>
-
-            <!-- 表单行：学号和学院 -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              <div>
-                <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-12 mb-2"></div>
-                <div class="h-12 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
-              </div>
-
-              <div>
-                <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-12 mb-2"></div>
-                <div class="h-12 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
-              </div>
-            </div>
-
-            <!-- 表单行：政治面貌和专业班级 -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              <div>
-                <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-16 mb-2"></div>
-                <div class="h-12 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
-              </div>
-
-              <div>
-                <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-16 mb-2"></div>
-                <div class="h-12 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
-              </div>
-            </div>
-
-            <!-- 表单行：手机号 -->
-            <div class="mb-6">
-              <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-12 mb-2"></div>
-              <div class="h-12 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
-            </div>
-
-            <!-- 操作按钮 -->
-            <div class="flex justify-center pt-4">
-              <div class="h-12 bg-gray-200 dark:bg-gray-700 rounded-xl w-40"></div>
-            </div>
-          </div>
-        </div>
+      <!-- 骨架屏加载状态 -->
+      <div v-if="loading" class="animate-pulse space-y-6">
+        <div class="h-32 w-32 bg-gray-300 dark:bg-gray-800 rounded-full mx-auto"></div>
+        <div class="h-8 w-48 bg-gray-300 dark:bg-gray-800 rounded mx-auto"></div>
+        <div class="bg-white dark:bg-[#1C1C1E] rounded-xl h-64 w-full"></div>
       </div>
 
-      <!-- 表单卡片 -->
-      <div v-else
-           class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden max-w-4xl mx-auto">
-        <!-- 卡片头部 -->
-        <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
-          <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-            <h2 class="text-lg font-medium text-gray-900 dark:text-white">基本信息</h2>
-            <div class="flex items-center">
-              <span class="text-sm text-gray-500 dark:text-gray-400 mr-2">当前身份:</span>
-              <span
-                  class="px-3 py-1 text-xs rounded-full font-medium"
-                  :class="getIdentityBadgeClass(userInfo.identity)"
-              >
-                {{ identityMap[userInfo.identity] || userInfo.identity }}
+      <!-- 真实内容 -->
+      <div v-else class="flex flex-col gap-8">
+
+        <!-- 头部：头像与身份 -->
+        <div class="flex flex-col items-center space-y-4">
+          <div class="relative group">
+            <!-- 模拟头像 (Apple ID 风格) -->
+            <div
+                class="w-28 h-28 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-4xl shadow-lg ring-4 ring-white dark:ring-[#1C1C1E] overflow-hidden">
+              <span class="font-medium">{{ userInfo.userName ? userInfo.userName[0] : 'U' }}</span>
+            </div>
+            <!-- 身份徽章 -->
+            <div class="absolute bottom-0 right-0 translate-x-1/4 translate-y-1/4">
+               <span
+                   class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border-2 border-white dark:border-black shadow-sm"
+                   :class="getIdentityBadgeClass(userInfo.identity)">
+                {{ identityMap[userInfo.identity] || userInfo.identity || '成员' }}
               </span>
             </div>
           </div>
+
+          <div class="text-center">
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
+              {{ userInfo.userName || '未命名' }}
+            </h1>
+            <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">
+              {{ userInfo.userId || '无学号' }} · {{ userInfo.academy || '未选择学院' }}
+            </p>
+          </div>
         </div>
 
-        <!-- 表单内容 -->
-        <div class="p-6">
-          <n-form
-              :model="userInfo"
-              :rules="rules"
-              ref="formRef"
-              label-placement="top"
-              require-mark-placement="right"
-          >
-            <!-- 表单行：姓名和性别 -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              <n-form-item label="姓名" path="userName" class="mb-0">
-                <n-input
-                    v-model:value="userInfo.userName"
-                    placeholder="请输入姓名"
-                    class="bg-gray-50 dark:bg-gray-750 border-gray-200 dark:border-gray-700 rounded-xl"
-                    :bordered="false"
-                >
-                  <template #prefix>
-                    <Icon icon="lucide:user" class="text-gray-700 dark:text-gray-300" size="18"/>
-                  </template>
-                </n-input>
-              </n-form-item>
+        <!-- 表单区域 -->
+        <n-form
+            :model="userInfo"
+            :rules="rules"
+            ref="formRef"
+            :show-label="false"
+            class="space-y-6"
+        >
 
-              <n-form-item label="性别" path="gender" class="mb-0">
-                <div class="flex gap-4 mt-1">
-                  <label
-                      v-for="gender in genderOptions"
-                      :key="gender"
-                      class="flex items-center space-x-2 cursor-pointer"
-                  >
-                    <input
-                        type="radio"
-                        :value="gender"
-                        v-model="userInfo.gender"
-                        class="peer h-4 w-4 text-blue-500 border-gray-300 focus:ring-blue-500 dark:border-gray-600"
+          <!-- 分组 1: 基本资料 -->
+          <section>
+            <h3 class="pl-4 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              基本资料
+            </h3>
+            <div
+                class="bg-white dark:bg-[#1C1C1E] rounded-xl overflow-hidden shadow-sm border border-gray-200/50 dark:border-gray-800">
+
+              <!-- 姓名 -->
+              <div class="group-row">
+                <div class="row-label">
+                  <Icon icon="lucide:user" class="text-blue-500 mr-2"/>
+                  姓名
+                </div>
+                <div class="row-content">
+                  <n-form-item path="userName" class="w-full !m-0 !p-0">
+                    <n-input
+                        v-model:value="userInfo.userName"
+                        placeholder="你的名字"
+                        class="apple-input"
+                        :bordered="false"
                     />
-                    <span class="text-sm text-gray-700 dark:text-gray-300 peer-checked:text-blue-500 transition-colors">{{ gender }}</span>
-                  </label>
+                  </n-form-item>
                 </div>
-              </n-form-item>
-            </div>
+              </div>
+              <div class="separator"></div>
 
-            <!-- 表单行：学号和学院 -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              <n-form-item label="学号" path="userId" class="mb-0">
-                <n-input
-                    v-model:value="userInfo.userId"
-                    placeholder="请输入10位学号"
-                    class=" bg-gray-50 dark:bg-gray-750 border-gray-200 dark:border-gray-700 rounded-xl"
-                    :bordered="false"
-                >
-                  <template #prefix>
-                    <Icon icon="iconoir:hashtag" class="text-gray-700 dark:text-gray-300" size="18"/>
-                  </template>
-                </n-input>
-              </n-form-item>
-
-              <n-form-item label="学院" path="academy" class="mb-0">
-                <div class="relative">
-                  <div class="absolute z-10 inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <Icon icon="iconoir:graduation-cap" class="text-gray-700 dark:text-gray-300" size="18"/>
-                  </div>
-                  <n-select
-                      v-model:value="userInfo.academy"
-                      :options="academyOptions"
-                      placeholder="请选择学院"
-                      filterable
-                      class="pl-10 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-700 rounded-xl"
-                      :bordered="false"
-                  />
+              <!-- 性别 -->
+              <div class="group-row">
+                <div class="row-label">
+                  <Icon icon="lucide:users" class="text-blue-500 mr-2"/>
+                  性别
                 </div>
-              </n-form-item>
-            </div>
-
-            <!-- 表单行：政治面貌和专业班级 -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              <n-form-item label="政治面貌" path="politicalLandscape" class="mb-0">
-                <div class="relative">
-                  <div class="absolute z-10 inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <Icon icon="lucide:flag" class="text-gray-700 dark:text-gray-300" size="18"/>
-                  </div>
-                  <n-select
-                      v-model:value="userInfo.politicalLandscape"
-                      :options="politicalLandscapeOptions"
-                      placeholder="请选择政治面貌"
-                      class="pl-10 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-700 rounded-xl"
-                      :bordered="false"
-                  />
+                <div class="row-content justify-end">
+                  <n-form-item path="gender" class="!m-0 !p-0">
+                    <div class="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5">
+                      <button
+                          v-for="g in genderOptions"
+                          :key="g"
+                          type="button"
+                          @click="userInfo.gender = g"
+                          class="px-4 py-1.5 text-sm rounded-md transition-all duration-200"
+                          :class="userInfo.gender === g
+                           ? 'bg-white dark:bg-gray-600 text-black dark:text-white shadow-sm'
+                           : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'"
+                      >
+                        {{ g }}
+                      </button>
+                    </div>
+                  </n-form-item>
                 </div>
-              </n-form-item>
+              </div>
+              <div class="separator"></div>
 
-              <n-form-item label="专业班级" path="className" class="mb-0">
-                <n-input
-                    v-model:value="userInfo.className"
-                    placeholder="请输入专业班级"
-                    class="bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-700 rounded-xl"
-                    :bordered="false"
-                >
-                  <template #prefix>
-                    <Icon icon="lucide:users" class="text-gray-700 dark:text-gray-300" size="18"/>
-                  </template>
-                </n-input>
-              </n-form-item>
+              <!-- 政治面貌 -->
+              <div class="group-row">
+                <div class="row-label">
+                  <Icon icon="lucide:flag" class="text-blue-500 mr-2"/>
+                  政治面貌
+                </div>
+                <div class="row-content">
+                  <n-form-item path="politicalLandscape" class="w-full !m-0 !p-0">
+                    <n-select
+                        v-model:value="userInfo.politicalLandscape"
+                        :options="politicalLandscapeOptions"
+                        placeholder="选择面貌"
+                        class="apple-select"
+                        :bordered="false"
+                    />
+                  </n-form-item>
+                </div>
+              </div>
             </div>
+            <p class="pl-4 mt-2 text-xs text-gray-400">请保持您的基本信息真实有效。</p>
+          </section>
 
-            <!-- 表单行：手机号 -->
-            <div class="mb-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-              <n-form-item label="手机号" path="phoneNum" class="mb-0">
-                <n-input
-                    v-model:value="userInfo.phoneNum"
-                    placeholder="请输入手机号"
-                    class="bg-gray-50 dark:bg-gray-750 border-gray-200 dark:border-gray-700 rounded-xl"
-                    :bordered="false"
-                >
-                  <template #prefix>
-                    <Icon icon="lucide:phone" class="text-gray-700 dark:text-gray-300" size="18"/>
-                  </template>
-                </n-input>
-              </n-form-item>
-              <n-form-item label="邮箱" path="eMail" class="mb-0">
-                <n-input
-                    v-model:value="userInfo.eMail"
-                    placeholder="请输入邮箱地址"
-                    class="bg-gray-50 dark:bg-gray-750 border-gray-200 dark:border-gray-700 rounded-xl"
-                    :bordered="false"
-                >
-                  <template #prefix>
-                    <Icon icon="lucide:mail" class="text-gray-700 dark:text-gray-300" size="18"/>
-                  </template>
-                </n-input>
-              </n-form-item>
-            </div>
+          <!-- 分组 2: 学籍信息 -->
+          <section>
+            <h3 class="pl-4 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              学籍信息
+            </h3>
+            <div
+                class="bg-white dark:bg-[#1C1C1E] rounded-xl overflow-hidden shadow-sm border border-gray-200/50 dark:border-gray-800">
 
-            <!-- 操作按钮 -->
-            <div class="flex flex-col md:flex-row justify-center gap-4 pt-4">
-              <button
-                  @click="handleSubmit"
-                  :disabled="confirmLoading"
-                  class="w-full md:w-auto px-8 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-full shadow-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Icon icon="lucide:save" size="18"/>
-                <span>{{ confirmLoading ? '保存中...' : '保存修改' }}</span>
-              </button>
-              <button
-                  @click="handlePasswordSubmit"
-                  class="w-full md:w-auto px-8 py-2.5 bg-purple-500 hover:bg-purple-600 text-white font-medium rounded-full shadow-sm transition-all flex items-center justify-center gap-2"
-              >
-                <Icon icon="lucide:lock" size="18"/>
-                <span>修改密码</span>
-              </button>
+              <!-- 学号 -->
+              <div class="group-row">
+                <div class="row-label">
+                  <Icon icon="iconoir:hashtag" class="text-orange-500 mr-2"/>
+                  学号
+                </div>
+                <div class="row-content">
+                  <n-form-item path="userId" class="w-full !m-0 !p-0">
+                    <n-input
+                        v-model:value="userInfo.userId"
+                        placeholder="10位学号"
+                        class="apple-input"
+                        :bordered="false"
+                        :disabled="true"
+                    />
+                  </n-form-item>
+                  <Icon icon="lucide:lock" class="text-gray-400 ml-2 w-4 h-4"/>
+                </div>
+              </div>
+              <div class="separator"></div>
+
+              <!-- 学院 -->
+              <div class="group-row">
+                <div class="row-label">
+                  <Icon icon="iconoir:graduation-cap" class="text-orange-500 mr-2"/>
+                  学院
+                </div>
+                <div class="row-content">
+                  <n-form-item path="academy" class="w-full !m-0 !p-0">
+                    <n-select
+                        v-model:value="userInfo.academy"
+                        :options="academyOptions"
+                        placeholder="所在学院"
+                        filterable
+                        class="apple-select"
+                        :bordered="false"
+                    />
+                  </n-form-item>
+                </div>
+              </div>
+              <div class="separator"></div>
+
+              <!-- 班级 -->
+              <div class="group-row">
+                <div class="row-label">
+                  <Icon icon="lucide:book-open" class="text-orange-500 mr-2"/>
+                  班级
+                </div>
+                <div class="row-content">
+                  <n-form-item path="className" class="w-full !m-0 !p-0">
+                    <n-input
+                        v-model:value="userInfo.className"
+                        placeholder="例：计科2101"
+                        class="apple-input"
+                        :bordered="false"
+                    />
+                  </n-form-item>
+                </div>
+              </div>
+
             </div>
-          </n-form>
-        </div>
+          </section>
+
+          <!-- 分组 3: 联系方式 -->
+          <section>
+            <h3 class="pl-4 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              联系方式
+            </h3>
+            <div
+                class="bg-white dark:bg-[#1C1C1E] rounded-xl overflow-hidden shadow-sm border border-gray-200/50 dark:border-gray-800">
+
+              <!-- 手机 -->
+              <div class="group-row">
+                <div class="row-label">
+                  <Icon icon="lucide:phone" class="text-green-500 mr-2"/>
+                  手机
+                </div>
+                <div class="row-content">
+                  <n-form-item path="phoneNum" class="w-full !m-0 !p-0">
+                    <n-input
+                        v-model:value="userInfo.phoneNum"
+                        placeholder="联系电话"
+                        class="apple-input"
+                        :bordered="false"
+                    />
+                  </n-form-item>
+                </div>
+              </div>
+              <div class="separator"></div>
+
+              <!-- 邮箱 -->
+              <div class="group-row">
+                <div class="row-label">
+                  <Icon icon="lucide:mail" class="text-green-500 mr-2"/>
+                  邮箱
+                </div>
+                <div class="row-content">
+                  <n-form-item path="eMail" class="w-full !m-0 !p-0">
+                    <n-input
+                        v-model:value="userInfo.eMail"
+                        placeholder="电子邮箱"
+                        class="apple-input"
+                        :bordered="false"
+                    />
+                  </n-form-item>
+                </div>
+              </div>
+
+            </div>
+          </section>
+
+          <!-- 操作按钮组 -->
+          <div class="pt-4 space-y-3">
+            <button
+                type="button"
+                @click="handleSubmit"
+                :disabled="confirmLoading"
+                class="w-full py-3.5 bg-[#007AFF] hover:bg-[#0062cc] active:scale-[0.98] text-white font-medium rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <span v-if="!confirmLoading">保存更改</span>
+              <span v-else>保存中...</span>
+            </button>
+
+            <button
+                type="button"
+                @click="handlePasswordSubmit"
+                class="w-full py-3.5 bg-white dark:bg-[#1C1C1E] text-[#007AFF] border border-transparent hover:bg-gray-50 dark:hover:bg-gray-800 active:scale-[0.98] font-medium rounded-xl transition-all flex items-center justify-center gap-2"
+            >
+              修改密码
+            </button>
+          </div>
+
+        </n-form>
       </div>
     </main>
 
-    <!-- 确认对话框 -->
-    <n-modal v-model:show="showModal" preset="dialog" title="确认更改" positive-text="确认" negative-text="取消"
-             @positive-click="handleConfirm" :loading="confirmLoading">
-      <div class="space-y-2">
-        <p class="text-gray-600 dark:text-gray-300">您确定要保存这些更改吗？</p>
-        <p class="text-sm text-gray-500 dark:text-gray-400">请仔细核对您的个人信息</p>
+    <!-- 确认对话框 - iOS Style -->
+    <n-modal v-model:show="showModal" preset="dialog" title="确认更改" positive-text="更新资料" negative-text="取消"
+             @positive-click="handleConfirm" :loading="confirmLoading"
+             :style="{ width: '90%', maxWidth: '400px', borderRadius: '16px' }">
+      <div class="py-2">
+        <p class="text-gray-600 dark:text-gray-300">您确定要更新个人资料吗？请确保所有信息准确无误。</p>
       </div>
     </n-modal>
 
     <!-- 密码修改对话框 -->
-    <n-modal v-model:show="showPasswordModal" preset="dialog" title="修改密码" positive-text="确认" negative-text="取消"
-             @positive-click="confirmPasswordChange" :loading="passwordLoading">
-      <div class="space-y-4">
+    <n-modal v-model:show="showPasswordModal" preset="card" title="修改密码"
+             :style="{ width: '90%', maxWidth: '450px', borderRadius: '16px' }">
+      <div class="space-y-4 pt-2">
         <n-form :model="passwordForm" :rules="passwordRules" ref="passwordFormRef">
-          <n-form-item path="oldPassword" label="旧密码">
-            <n-input
-                v-model:value="passwordForm.oldPassword"
-                type="password"
-                show-password-on="click"
-                placeholder="请输入旧密码"
-                class="bg-gray-50 dark:bg-gray-750 border-gray-200 dark:border-gray-700 rounded-xl"
-                :bordered="false"
-            />
-          </n-form-item>
-          <n-form-item path="newPassword" label="新密码">
-            <n-input
-                v-model:value="passwordForm.newPassword"
-                type="password"
-                show-password-on="click"
-                placeholder="请输入新密码（至少6位）"
-                class="bg-gray-50 dark:bg-gray-750 border-gray-200 dark:border-gray-700 rounded-xl"
-                :bordered="false"
-            />
-          </n-form-item>
-          <n-form-item path="confirmPassword" label="确认新密码">
-            <n-input
-                v-model:value="passwordForm.confirmPassword"
-                type="password"
-                show-password-on="click"
-                placeholder="请再次输入新密码"
-                class="bg-gray-50 dark:bg-gray-750 border-gray-200 dark:border-gray-700 rounded-xl"
-                :bordered="false"
-            />
-          </n-form-item>
+          <div class="bg-gray-50 dark:bg-black/20 rounded-xl p-1 space-y-3">
+            <n-form-item path="oldPassword" label="旧密码">
+              <n-input
+                  v-model:value="passwordForm.oldPassword"
+                  type="password"
+                  show-password-on="click"
+                  placeholder="当前使用的密码"
+                  class="rounded-lg"
+              />
+            </n-form-item>
+            <n-form-item path="newPassword" label="新密码">
+              <n-input
+                  v-model:value="passwordForm.newPassword"
+                  type="password"
+                  show-password-on="click"
+                  placeholder="至少 6 位字符"
+                  class="rounded-lg"
+              />
+            </n-form-item>
+            <n-form-item path="confirmPassword" label="确认密码">
+              <n-input
+                  v-model:value="passwordForm.confirmPassword"
+                  type="password"
+                  show-password-on="click"
+                  placeholder="再次输入新密码"
+                  class="rounded-lg"
+              />
+            </n-form-item>
+          </div>
         </n-form>
+        <div class="flex justify-end gap-3 mt-4">
+          <button @click="showPasswordModal = false" class="px-4 py-2 text-gray-500">取消</button>
+          <button @click="confirmPasswordChange"
+                  class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+            确认修改
+          </button>
+        </div>
       </div>
     </n-modal>
   </div>
@@ -301,7 +332,6 @@
 import {ref, reactive, onMounted, onBeforeUnmount} from 'vue';
 import {useMessage, NForm, NFormItem, NInput, NSelect, NModal} from 'naive-ui';
 import {Icon} from '@iconify/vue';
-import SkeletonLoader from '../components/SkeletonLoader.vue';
 import {useAuthorizationStore} from '../stores/Authorization';
 import {UserService} from '../services/UserService';
 import {AuthService} from '../services/AuthService';
@@ -322,334 +352,272 @@ const formRef = ref<InstanceType<typeof NForm> | null>(null);
 // 身份映射
 const identityMap: Record<string, string> = {
   'Founder': '创始人',
-  'President': '社长/团支书',
-  'Minister': '部长/副部长',
+  'President': '社长',
+  'Minister': '部长',
   'Department': '部员',
-  'Member': '普通成员'
+  'Member': '成员'
 };
 
-// 根据身份获取徽章样式
 const getIdentityBadgeClass = (identity: string) => {
   switch (identity) {
     case 'Founder':
-      return 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400';
+      return 'bg-amber-500 text-white';
     case 'President':
-      return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
+      return 'bg-blue-500 text-white';
     case 'Minister':
-      return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
-    case 'Department':
-      return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400';
-    case 'Member':
-      return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+      return 'bg-green-500 text-white';
     default:
-      return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+      return 'bg-gray-500 text-white';
   }
 };
 
-// 性别选项
 const genderOptions = ['男', '女'];
-
-// 政治面貌选项
-const politicalLandscapeOptions = [
-  '群众',
-  '共青团员',
-  '中共党员',
-  '中共预备党员'
-].map(item => ({label: item, value: item}));
-
-// 学院选项
+const politicalLandscapeOptions = ['群众', '共青团员', '中共党员', '中共预备党员'].map(i => ({label: i, value: i}));
 const academyOptions = [
-  '信息与控制工程学院',
-  '理学院',
-  '机电工程学院',
-  '管理学院',
-  '土木工程学院',
-  '环境与市政工程学院',
-  '建筑设备科学与工程学院',
-  '材料科学与工程学院',
-  '冶金工程学院',
-  '资源工程学院',
-  '城市发展与现代交通学院',
-  '文学院',
-  '艺术学院',
-  '建筑学院',
-  '马克思主义学院',
-  '公共管理学院',
-  '化学与化工学院',
-  '体育学院',
-  '安德学院',
-  '未来技术学院',
-  '国际教育学院'
-].map(academy => ({label: academy, value: academy}));
+  '信息与控制工程学院', '理学院', '机电工程学院', '管理学院', '土木工程学院',
+  '环境与市政工程学院', '建筑设备科学与工程学院', '材料科学与工程学院', '冶金工程学院',
+  '资源工程学院', '城市发展与现代交通学院', '文学院', '艺术学院', '建筑学院',
+  '马克思主义学院', '公共管理学院', '化学与化工学院', '体育学院', '安德学院',
+  '未来技术学院', '国际教育学院'
+].map(a => ({label: a, value: a}));
 
-// 密码修改相关状态
+// 密码相关
 const showPasswordModal = ref(false);
 const passwordLoading = ref(false);
-const passwordForm = reactive({
-  oldPassword: '',
-  newPassword: '',
-  confirmPassword: ''
-});
+const passwordFormRef = ref<InstanceType<typeof NForm> | null>(null);
+const passwordForm = reactive({oldPassword: '', newPassword: '', confirmPassword: ''});
+
 const passwordRules = {
-  oldPassword: {
-    required: true,
-    message: '请输入旧密码',
+  oldPassword: {required: true, message: '请输入旧密码', trigger: 'blur'},
+  newPassword: [{required: true, message: '请输入新密码', trigger: 'blur'}, {
+    min: 6,
+    message: '至少6位',
     trigger: 'blur'
-  },
-  newPassword: [
-    {
-      required: true,
-      message: '请输入新密码',
-      trigger: 'blur'
-    },
-    {
-      min: 6,
-      message: '密码长度至少为6位',
-      trigger: 'blur'
-    }
-  ],
+  }],
   confirmPassword: [
-    {
-      required: true,
-      message: '请确认新密码',
-      trigger: 'blur'
-    },
-    {
-      validator: (_: any, value: string) => {
-        return value === passwordForm.newPassword;
-      },
-      message: '两次输入的密码不一致',
-      trigger: 'blur'
-    }
+    {required: true, message: '请确认', trigger: 'blur'},
+    {validator: (_: any, v: string) => v === passwordForm.newPassword, message: '密码不一致', trigger: 'blur'}
   ]
 };
 
-// 表单数据
 const userInfo = reactive<MemberModel>({
-  userName: '',
-  gender: '男',
-  userId: '',
-  academy: '',
-  politicalLandscape: '群众',
-  className: '',
-  phoneNum: '',
-  identity: '',
-  joinTime: '',
-  passwordHash: '',
-  eMail: null
+  userName: '', gender: '男', userId: '', academy: '', politicalLandscape: '群众',
+  className: '', phoneNum: '', identity: '', joinTime: '', passwordHash: '', eMail: null
 });
 
-// 表单验证规则
 const rules = {
-  userName: [
-    {
-      required: true,
-      message: '请输入姓名',
-      trigger: 'blur'
-    },
-    {
-      pattern: /^[\u4E00-\u9FA5A-Za-z\s]+(·[\u4E00-\u9FA5A-Za-z]+)*$/,
-      message: '姓名格式不正确',
-      trigger: 'blur'
-    }
-  ],
-  gender: {
-    required: true,
-    message: '请选择性别',
-    trigger: 'change'
-  },
-  userId: [
-    {
-      required: true,
-      message: '请输入学号',
-      trigger: 'blur'
-    },
-    {
-      len: 10,
-      message: '学号应为10位数字',
-      trigger: 'blur'
-    }
-  ],
-  academy: {
-    required: true,
-    message: '请选择学院',
-    trigger: 'change'
-  },
-  politicalLandscape: {
-    required: true,
-    message: '请选择政治面貌',
-    trigger: 'change'
-  },
-  className: [
-    {
-      required: true,
-      message: '请输入专业班级',
-      trigger: 'blur'
-    }
-  ],
-  phoneNum: [
-    {
-      required: true,
-      message: '请输入手机号',
-      trigger: 'blur'
-    },
-    {
-      pattern: /^1\d{10}$/,
-      message: '请输入正确的手机号',
-      trigger: 'blur'
-    }
-  ],
-  eMail: [
-    {
-      required: false,
-      message: '请输入正确的邮箱地址',
-      trigger: 'blur'
-    },
-    {
-      pattern: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-      message: '请输入正确的邮箱格式',
-      trigger: 'blur'
-    }
-  ]
+  userName: [{required: true, message: '姓名必填', trigger: 'blur'}],
+  userId: [{required: true, min: 10, max: 10, message: '10位学号', trigger: 'blur'}],
+  academy: {required: true, message: '必选', trigger: 'blur'},
+  className: {required: true, message: '必填', trigger: 'blur'},
+  phoneNum: [{required: true, pattern: /^1\d{10}$/, message: '格式错误', trigger: 'blur'}],
+  eMail: [{pattern: /.+@.+\..+/, message: '格式错误', trigger: 'blur'}]
 };
 
-// 获取用户信息
 const fetchUserInfo = async () => {
   try {
     loading.value = true;
     const data = await UserService.getUserData();
     Object.assign(userInfo, data);
   } catch (error: any) {
-    console.error('获取用户信息时出错:', error);
-    message.error('获取用户信息时出错: ' + (error instanceof Error ? error.message : String(error)));
-
-    if (error.message.includes('认证已过期')) {
-      authorizationStore.logout();
-      await router.push('/login');
-    }
+    message.error(error.message || '获取失败');
+    if (error.message?.includes('认证')) authorizationStore.logout();
   } finally {
     loading.value = false;
   }
 };
 
-// 提交表单
 const handleSubmit = () => {
-  formRef.value?.validate((errors: any) => {
-    if (!errors) {
-      showModal.value = true;
-    } else {
-      message.error('请检查填写内容');
-    }
+  formRef.value?.validate((errors) => {
+    if (!errors) showModal.value = true;
+    else message.error('请检查红色标记的字段');
   });
 };
 
-// 确认更改
 const handleConfirm = async () => {
   try {
     confirmLoading.value = true;
-
-    // 使用 UserService 更新用户信息
-    await UserService.updateProfile({
-      userName: userInfo.userName,
-      gender: userInfo.gender,
-      userId: userInfo.userId,
-      academy: userInfo.academy,
-      politicalLandscape: userInfo.politicalLandscape,
-      className: userInfo.className,
-      phoneNum: userInfo.phoneNum,
-      identity: userInfo.identity,
-      joinTime: userInfo.joinTime,
-      passwordHash: userInfo.passwordHash,
-      eMail: userInfo.eMail
-    });
-
-    message.success('信息更新成功');
+    await UserService.updateProfile(userInfo);
+    message.success('已更新');
     showModal.value = false;
   } catch (error: any) {
-    console.error('信息更新时出错:', error);
-    message.error('信息更新失败: ' + (error instanceof Error ? error.message : String(error)));
-
-    if (error.message.includes('认证已过期')) {
-      authorizationStore.logout();
-      await router.push('/login');
-    }
+    message.error(error.message || '更新失败');
   } finally {
     confirmLoading.value = false;
   }
 };
 
-// 处理密码修改
-const handlePasswordSubmit = () => {
-  showPasswordModal.value = true;
-};
+const handlePasswordSubmit = () => showPasswordModal.value = true;
 
-// 确认修改密码
 const confirmPasswordChange = async () => {
-  try {
-    passwordLoading.value = true;
-    await AuthService.changePassword(userInfo.userId, passwordForm.oldPassword, passwordForm.newPassword);
-    message.success('密码修改成功');
-    showPasswordModal.value = false;
-
-    // 重置密码表单
-    passwordForm.oldPassword = '';
-    passwordForm.newPassword = '';
-    passwordForm.confirmPassword = '';
-  } catch (error: any) {
-    console.error('密码修改失败:', error);
-    message.error('密码修改失败: ' + (error instanceof Error ? error.message : String(error)));
-  } finally {
-    passwordLoading.value = false;
-  }
+  passwordFormRef.value?.validate(async (errors) => {
+    if (!errors) {
+      try {
+        passwordLoading.value = true;
+        await AuthService.changePassword(userInfo.userId, passwordForm.oldPassword, passwordForm.newPassword);
+        message.success('密码已修改');
+        showPasswordModal.value = false;
+        passwordForm.oldPassword = '';
+        passwordForm.newPassword = '';
+        passwordForm.confirmPassword = '';
+      } catch (e: any) {
+        message.error(e.message || '修改失败');
+      } finally {
+        passwordLoading.value = false;
+      }
+    }
+  });
 };
 
-// 组件挂载时获取用户信息
 onMounted(() => {
   fetchUserInfo();
-  
-  // Set page header
-  layoutStore.setPageHeader(
-    '个人信息',
-    '管理您的个人资料'
-  );
-  
-  // Show page actions (none for this page)
+  layoutStore.setPageHeader('个人信息', '管理您的个人资料');
   layoutStore.setShowPageActions(false);
 });
 
 onBeforeUnmount(() => {
-  // Clear page header
   layoutStore.clearPageHeader();
 });
 </script>
 
 <style scoped>
-/* 添加全局样式重置 */
-:deep(.n-form-item-label) {
+
+/* 核心布局样式 - Apple Settings List Style */
+.group-row {
+  display: flex;
+  padding: 0.75rem 1rem;
+  min-height: 50px;
+  transition: colors 0.2s ease;
+  position: relative;
+  flex-direction: row;
+  align-items: center;
+}
+
+@media (min-width: 640px) {
+  .group-row {
+
+  }
+}
+
+/* 标签样式 */
+.row-label {
+  font-size: 1rem;
   font-weight: 500;
+  color: #111827;
+  display: flex;
+  align-items: center;
+  min-width: 120px;
+  margin-bottom: 0.25rem;
 }
 
-:deep(.n-input__input) {
-  transition: all 0.2s ease;
+.dark .row-label {
+  color: #ffffff;
 }
 
-:deep(.n-input__input:focus) {
-  background-color: rgba(255, 255, 255, 0.9);
-}
-
-:deep(.dark .n-input__input:focus) {
-  background-color: rgba(55, 65, 81, 0.9);
-}
-
-/* 动画效果 */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
+@media (min-width: 640px) {
+  .row-label {
+    margin-bottom: 0;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+}
+
+/* 内容区域样式 */
+.row-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  color: #6b7280;
+}
+
+.dark .row-content {
+  color: #9ca3af;
+}
+
+/* 分割线 - 只有中间有，最后一行没有 */
+.separator {
+  border-bottom: 1px solid #e5e7eb;
+  height: 1px;
+  width: 100%;
+  margin-left: 1rem;
+}
+
+.dark .separator {
+  border-color: #1f2937;
+}
+
+.separator:last-child {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .separator {
+
   }
+}
+
+/* 定制 Naive UI Input 以适应 iOS 风格 */
+:deep(.apple-input .n-input__input-el),
+:deep(.apple-input .n-input__textarea-el) {
+  text-align: right !important;
+  font-size: 1rem !important;
+  color: #2563eb !important;
+  caret-color: #3b82f6 !important;
+}
+
+:deep(.apple-input .n-input__input-el).dark,
+:deep(.apple-input .n-input__textarea-el).dark {
+  color: #60a5fa !important;
+}
+
+/* 占位符样式 */
+:deep(.apple-input .n-input__placeholder) {
+  text-align: right !important;
+  color: #9ca3af !important;
+}
+
+/* Select 样式定制 */
+:deep(.apple-select .n-base-selection-label) {
+  background-color: transparent !important;
+  text-align: right !important;
+  justify-content: flex-end !important;
+}
+
+:deep(.apple-select .n-base-selection-input__content) {
+  text-align: right !important;
+  color: #2563eb !important;
+  padding-right: 1.5rem !important;
+}
+
+:deep(.apple-select .n-base-selection-input__content).dark {
+  color: #60a5fa !important;
+}
+
+/* 消除输入框默认背景和焦点边框 */
+:deep(.n-input), :deep(.n-input:hover), :deep(.n-input:focus) {
+  background-color: transparent !important;
+}
+
+:deep(.n-input .n-input__state-border), :deep(.n-input .n-input__border) {
+  display: none !important;
+}
+
+/* 消除 Select 默认背景 */
+:deep(.n-base-selection) {
+  --n-border: none !important;
+  --n-box-shadow-focus: none !important;
+  --n-box-shadow-active: none !important;
+  --n-box-shadow-hover: none !important;
+  background-color: transparent !important;
+}
+
+/* 修复 Naive Form Item 的默认间距，使其紧凑 */
+:deep(.n-form-item-feedback-wrapper) {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  padding-top: 2px;
+  font-size: 12px;
+  text-align: right;
+  z-index: 10;
 }
 </style>

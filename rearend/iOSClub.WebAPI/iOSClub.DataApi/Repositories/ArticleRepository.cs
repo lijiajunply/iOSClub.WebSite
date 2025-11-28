@@ -199,7 +199,7 @@ public class ArticleRepository(IDbContextFactory<ClubContext> factory, ICategory
         public string? Identity { get; set; }
     }
 
-    public async Task<bool> UpdateArticleOrders(Dictionary<string, int> articleOrders)
+    public async Task<bool> UpdateArticleOrders(Dictionary<string, int>? articleOrders)
     {
         if (articleOrders == null || articleOrders.Count == 0)
         {
@@ -207,10 +207,10 @@ public class ArticleRepository(IDbContextFactory<ClubContext> factory, ICategory
         }
 
         await using var context = await factory.CreateDbContextAsync();
-        
+
         // 开始事务
         await using var transaction = await context.Database.BeginTransactionAsync();
-        
+
         try
         {
             // 获取所有需要更新的文章
@@ -218,7 +218,7 @@ public class ArticleRepository(IDbContextFactory<ClubContext> factory, ICategory
             var articles = await context.Articles
                 .Where(a => articlePaths.Contains(a.Path))
                 .ToListAsync();
-            
+
             // 更新每篇文章的顺序
             foreach (var article in articles)
             {
@@ -227,13 +227,13 @@ public class ArticleRepository(IDbContextFactory<ClubContext> factory, ICategory
                     article.ArticleOrder = order;
                 }
             }
-            
+
             // 保存更改
             var result = await context.SaveChangesAsync();
-            
+
             // 提交事务
             await transaction.CommitAsync();
-            
+
             // 返回是否所有请求的文章都被更新
             return result == articles.Count;
         }

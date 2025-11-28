@@ -3,8 +3,8 @@
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
       <!-- Search -->
-      <div class="mb-8">
-        <div class="relative max-w-md">
+      <div class="mb-8 w-full">
+        <div class="relative w-full">
           <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
             <Icon icon="ion:search" class="text-gray-400 w-5 h-5"/>
           </div>
