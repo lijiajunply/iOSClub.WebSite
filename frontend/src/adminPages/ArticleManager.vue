@@ -68,12 +68,16 @@
                 <h3 class="font-medium text-base md:text-lg mb-2 line-clamp-2 text-gray-900 group-hover:text-indigo-600 dark:text-white dark:group-hover:text-indigo-400 transition-colors">
                   {{ article.title || '无标题文章' }}
                 </h3>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  <span class="flex items-center">
+                    <Icon icon="material-symbols:category" class="mr-1 w-3 h-3"/>
+                    {{ article.category || '其他' }}
+                  </span>
                   <span class="flex items-center">
                     <Icon icon="material-symbols:schedule" class="mr-1 w-3 h-3"/>
                     {{ formatDate(article.lastWriteTime) }}
                   </span>
-                </p>
+                </div>
               </div>
 
               <!-- 操作按钮 -->

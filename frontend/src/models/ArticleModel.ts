@@ -5,6 +5,7 @@ export interface ArticleModel {
   content: string;
   lastWriteTime: string;
   identity?: string;
+  category?: string;
 }
 
 // 文章创建DTO接口
@@ -12,10 +13,13 @@ export interface ArticleCreateDto {
   path: string;
   title: string;
   content: string;
+  identity?: string;
+  category?: string;
 }
 
 export interface ArticleUpdateDto{
   title: string;
   content: string;
   identity?: string;
+  category?: string;
 }

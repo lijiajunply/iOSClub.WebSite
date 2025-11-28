@@ -7,7 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace iOSClub.WebAPI.IdentityModels;
 
-public class JwtHelper(IConfiguration configuration) : IJwtHelper
+public class JwtGenerator(IConfiguration configuration) : ITokenGenerator
 {
     public string GetMemberToken(MemberModel model, bool rememberMe = false, string scope = "", string clientId = "")
     {

@@ -1,5 +1,6 @@
 <template>
   <n-menu
+      v-if="!loading"
       :value="activeKey"
       :options="menuOptions"
       :root-indent="24"
@@ -7,114 +8,121 @@
       @update:value="handleSelect"
       class="apple-menu"
   />
+  <div v-else class="p-6">
+    <div class="flex items-center justify-center">
+      <n-skeleton width="200" height="20" class="mb-2" />
+    </div>
+    <div class="space-y-2 mt-4">
+      <n-skeleton width="160" height="32" class="ml-8" />
+      <n-skeleton width="160" height="32" class="ml-8" />
+      <n-skeleton width="160" height="32" class="ml-8" />
+      <n-skeleton width="200" height="20" class="mt-6" />
+      <n-skeleton width="160" height="32" class="ml-8" />
+      <n-skeleton width="160" height="32" class="ml-8" />
+    </div>
+  </div>
 </template>
 
-<script setup>
-import {computed, ref} from 'vue'
+<script setup lang="ts">
+import {computed, ref, onMounted} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
-import {NMenu} from 'naive-ui'
+import {NMenu, NSkeleton} from 'naive-ui'
+import {ArticleService} from '../services/ArticleService'
+import type {ArticleModel} from '../models'
 
 const emit = defineEmits(['menu-item-click'])
 const route = useRoute()
 const router = useRouter()
 
 const activeKey = computed(() => route.path)
+const loading = ref(true)
+const menuOptions = ref<any[]>([])
 
 // 用于跟踪是否正在刷新当前页面
 const isReloading = ref(false)
 
-const menuOptions = [
-  {
-    type: 'group',
-    label: '社团简介',
-    key: 'about-group',
-    children: [
-      {
-        label: '关于我们',
-        key: '/About'
-      },
-      {
-        label: '社团结构',
-        key: '/Structure'
-      },
-      {
-        label: '其他组织',
-        key: '/OtherOrg'
-      }
-    ]
-  },
-  {
-    type: 'group',
-    label: '竞赛资源',
-    key: 'competition-group',
-    children: [
-      {
-        label: '资源支持',
-        key: '/Article/Competitions'
-      },
-      {
-        label: '移动应用创新赛',
-        key: '/Article/MobileApplication'
-      },
-      {
-        label: 'WWDC-Swift学生挑战赛',
-        key: '/Article/Swift'
-      }
-    ]
-  },
-  {
-    type: 'group',
-    label: '社团活动',
-    key: 'activity-group',
-    children: [
-      {
-        label: 'iOS Learn',
-        key: '/Article/iOSLearn'
-      },
-      {
-        label: '项目开发活动',
-        key: '/Article/TimeToCode'
-      },
-      {
-        label: '体验最新产品',
-        key: '/Article/VisionPro'
-      },
-      {
-        label: '一起看发布会',
-        key: '/Article/PressConference'
-      }
-    ]
-  },
-  {
-    type: 'group',
-    label: '社团历史',
-    key: 'history-group',
-    children: [
-      {
-        label: '总述',
-        key: '/Article/History-Overview'
-      },
-      {
-        label: '历届干部',
-        key: '/Article/PreviousCadres'
-      },
-      {
-        label: '创社史',
-        key: '/Article/History-Founding'
-      },
-      {
-        label: '邵韩之治',
-        key: '/Article/History-Shao Han\'s Reign'
-      },
-      {
-        label: '活动室变迁',
-        key: '/Article/History-Room'
-      }
-    ]
-  }
-]
+// 从后端获取分类文章并生成菜单
+const fetchCategoryArticles = async () => {
+  // 定义默认菜单
+  const defaultMenu = [
+    {
+      type: 'group',
+      label: '社团简介',
+      key: 'about-group',
+      children: [
+        {
+          label: '关于我们',
+          key: '/About'
+        },
+        {
+          label: '社团结构',
+          key: '/Structure'
+        },
+        {
+          label: '其他组织',
+          key: '/OtherOrg'
+        }
+      ]
+    }
+  ]
 
-const handleSelect = (key) => {
+  try {
+    loading.value = true
+    const categoryArticles = await ArticleService.getAllCategoryArticles()
+    
+    // 转换为菜单选项格式
+    const apiOptions = Object.entries(categoryArticles).map(([category, articles]) => {
+      return {
+        type: 'group',
+        label: category,
+        key: `${category}-group`,
+        children: articles.map((article: ArticleModel) => ({
+          label: article.title || '无标题',
+          key: `/Article/${article.path}`
+        }))
+      }
+    })
+
+    // 提取默认菜单中的所有路径
+    const defaultPaths = new Set<string>()
+    defaultMenu.forEach(group => {
+      if (group.children) {
+        group.children.forEach(item => {
+          defaultPaths.add(item.key)
+        })
+      }
+    })
+
+    // 处理API返回的菜单，过滤掉与默认菜单重复的路径
+    const filteredApiOptions = apiOptions.map(group => {
+      if (!group.children) return group
+      
+      return {
+        ...group,
+        children: group.children.filter(item => {
+          // 检查是否存在重复路径
+          const isDuplicate = defaultPaths.has(item.key) || 
+                             defaultPaths.has(item.key.replace('/Article/', '/'))
+          return !isDuplicate
+        })
+      }
+    }).filter(group => {
+      // 过滤掉没有子项的分组
+      return !group.children || group.children.length > 0
+    })
+
+    // 合并菜单：默认菜单 + 过滤后的API菜单
+    menuOptions.value = [...defaultMenu, ...filteredApiOptions]
+  } catch (error) {
+    console.error('获取分类文章失败:', error)
+    // 失败时使用默认菜单
+    menuOptions.value = defaultMenu
+  } finally {
+    loading.value = false
+  }
+}
+
+const handleSelect = (key: string) => {
   emit('menu-item-click', key)
   // 如果当前路由与点击的路由相同，则刷新页面
   if (route.path === key) {
@@ -126,6 +134,10 @@ const handleSelect = (key) => {
     router.push(key)
   }
 }
+
+onMounted(() => {
+  fetchCategoryArticles()
+})
 </script>
 
 <style>

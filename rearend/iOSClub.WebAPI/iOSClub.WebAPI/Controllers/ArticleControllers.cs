@@ -4,7 +4,6 @@ using iOSClub.WebAPI.IdentityModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
-using iOSClub.DataApi.Services;
 
 namespace iOSClub.WebAPI.Controllers;
 
@@ -12,9 +11,7 @@ namespace iOSClub.WebAPI.Controllers;
 [Route("[controller]")] // 使用C#推荐的API路径格式
 public class ArticleController(
     IArticleRepository articleRepository,
-    IStaffRepository staffRepository,
-    ILogger<ArticleController> logger,
-    ILoginService loginService)
+    ILogger<ArticleController> logger)
     : ControllerBase
 {
     /// <summary>
@@ -48,13 +45,17 @@ public class ArticleController(
 
         try
         {
-            var article = await articleRepository.GetFromPath(path);
+            var userIdentity = "";
+            var userJwt = HttpContext.User.GetUser();
+            if (userJwt != null) userIdentity = userJwt.Identity;
+
+            var article = await articleRepository.GetFromPath(path, userIdentity);
             if (article == null)
             {
                 return NotFound($"未找到路径为 '{path}' 的文章");
             }
 
-            return Ok(article);
+            return article;
         }
         catch (Exception ex)
         {
@@ -67,17 +68,11 @@ public class ArticleController(
     /// 创建新文章（需要社团成员身份）
     /// </summary>
     [Authorize]
-    [TokenActionFilter]
     [HttpPost]
     public async Task<ActionResult<ArticleModel>> CreateArticle([FromBody] ArticleCreateDto createDto)
     {
         try
         {
-            // 身份验证和权限检查
-            var (isValid, errorResult) = await ValidateUserAccess(["Founder", "President", "Minister", "Department"]);
-            if (!isValid)
-                return errorResult!;
-
             // 数据验证
             var validationResults = new List<ValidationResult>();
             if (!Validator.TryValidateObject(createDto, new ValidationContext(createDto), validationResults, true))
@@ -121,17 +116,11 @@ public class ArticleController(
     /// 更新文章（需要社团成员身份）- 使用POST更安全
     /// </summary>
     [Authorize]
-    [TokenActionFilter]
     [HttpPost("update/{path}")]
     public async Task<ActionResult> UpdateArticle(string path, [FromBody] ArticleUpdateDto updateDto)
     {
         try
         {
-            // 身份验证和权限检查
-            var validationResult = await ValidateUserAccess(["Founder", "President", "Minister", "Department"]);
-            if (!validationResult.isValid)
-                return validationResult.errorResult!;
-
             if (string.IsNullOrWhiteSpace(path))
             {
                 return BadRequest("路径不能为空");
@@ -171,17 +160,11 @@ public class ArticleController(
     /// 删除文章（需要管理员身份）
     /// </summary>
     [Authorize]
-    [TokenActionFilter]
     [HttpPost("delete/{path}")]
     public async Task<ActionResult> DeleteArticle(string path)
     {
         try
         {
-            // 身份验证和权限检查（管理员权限）
-            var validationResult = await ValidateUserAccess(["Founder", "President", "Minister"]);
-            if (!validationResult.isValid)
-                return validationResult.errorResult!;
-
             if (string.IsNullOrWhiteSpace(path))
             {
                 return BadRequest("路径不能为空");
@@ -239,24 +222,25 @@ public class ArticleController(
     }
 
     /// <summary>
-    /// 验证用户访问权限
+    /// 获取文章分类列表
     /// </summary>
-    private async Task<(bool isValid, ActionResult? errorResult)> ValidateUserAccess(string[] allowedIdentities)
+    [HttpGet("category")]
+    public async Task<IActionResult> GetAllCategoryArticles()
     {
-        var userJwt = HttpContext.User.GetUser();
-        if (userJwt == null)
-            return (false, Unauthorized("用户未认证"));
+        try
+        {
+            var userIdentity = "";
+            var userJwt = HttpContext.User.GetUser();
+            if (userJwt != null) userIdentity = userJwt.Identity;
 
-        var jwt = HttpContext.GetJwt();
-        if (jwt == null || !await loginService.ValidateToken(userJwt.UserId, jwt))
-            return (false, Unauthorized("用户未认证"));
-
-        var user = await staffRepository.GetStaffByIdWithoutOtherData(userJwt.UserId);
-
-        if (user == null)
-            return (false, Unauthorized("用户不存在"));
-
-        return !allowedIdentities.Contains(user.Identity) ? (false, Forbid("权限不足")) : (true, null);
+            var articles = await articleRepository.GetAllCategoryArticles(userIdentity);
+            return Ok(articles);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "获取文章分类列表时发生错误");
+            return StatusCode(500, "服务器内部错误");
+        }
     }
 }
 

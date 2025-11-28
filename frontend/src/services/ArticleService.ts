@@ -193,4 +193,23 @@ export class ArticleService {
     static async getArticle(path: string): Promise<ArticleModel> {
         return this.getArticleByPath(path);
     }
+
+    /**
+     * 获取所有分类的文章（公开访问）
+     * @returns Promise<Dictionary<string, ArticleModel[]>> 分类文章列表
+     */
+    static async getAllCategoryArticles(): Promise<Record<string, ArticleModel[]>> {
+        const response = await fetch(`${url}/Article/category`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error('获取分类文章失败');
+        }
+
+        return await response.json();
+    }
 }

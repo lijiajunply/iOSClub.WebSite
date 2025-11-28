@@ -55,6 +55,20 @@
                   />
                 </n-form-item>
 
+                <n-form-item label="文章分类" path="category">
+                  <n-input
+                      v-model:value="editForm.category"
+                      placeholder="请输入文章分类，如：社团简介"
+                      class="rounded-lg"
+                      :bordered="true"
+                  />
+                  <template #feedback>
+                    <p class="text-xs mt-1 text-gray-500 dark:text-gray-400">
+                      分类用于左侧菜单分组显示，留空则显示在"其他"分类下
+                    </p>
+                  </template>
+                </n-form-item>
+
                 <n-form-item label="访问权限" path="identity">
                   <n-select
                       v-model:value="editForm.identity"
@@ -108,6 +122,7 @@ interface EditFormType {
   title: string
   content: string
   identity: 'Member' | 'Department' | 'Minister' | 'President' | 'Founder'
+  category?: string
   lastWriteTime: string
 }
 
@@ -124,6 +139,7 @@ const editForm = ref<EditFormType>({
   title: '',
   content: '',
   identity: 'Member',
+  category: '',
   lastWriteTime: new Date().toISOString()
 })
 
@@ -177,6 +193,7 @@ const fetchArticle = async (path: string) => {
       title: article.title || '',
       content: article.content || '',
       identity: (article.identity as EditFormType['identity']) || 'Member',
+      category: article.category || '',
       lastWriteTime: article.lastWriteTime || new Date().toISOString()
     }
   } catch (error) {
@@ -203,7 +220,8 @@ const saveArticle = async () => {
       const updateDto: ArticleUpdateDto = {
         title: editForm.value.title,
         content: editForm.value.content,
-        identity: editForm.value.identity
+        identity: editForm.value.identity,
+        category: editForm.value.category
       }
       await ArticleService.updateArticle(editForm.value.path, updateDto)
       message.success('文章更新成功')
@@ -212,7 +230,9 @@ const saveArticle = async () => {
       const createDto: ArticleCreateDto = {
         path: editForm.value.path,
         title: editForm.value.title,
-        content: editForm.value.content
+        content: editForm.value.content,
+        identity: editForm.value.identity,
+        category: editForm.value.category
       }
       await ArticleService.createArticle(createDto)
       message.success('文章创建成功')

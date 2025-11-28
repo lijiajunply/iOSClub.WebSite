@@ -1,7 +1,6 @@
-using System;
-using System.Collections.Generic;
 using System.Data.SQLite;
 using System.Text.Json;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.Sqlite;
 
@@ -12,6 +11,7 @@ namespace iOSClub.WebAPI.Controllers;
 /// 可以获取最近的日志条目或按级别过滤日志
 /// </summary>
 [ApiController]
+[Authorize]
 [Route("[controller]")]
 public class LogsController(ILogger<LogsController> logger)
     : ControllerBase
@@ -41,7 +41,8 @@ public class LogsController(ILogger<LogsController> logger)
     /// <param name="timeRange">时间范围过滤："today"表示当天，或正整数表示最近几天</param>
     /// <returns>包含分页信息和日志条目的JSON响应</returns>
     [HttpGet]
-    public async Task<IActionResult> GetRecentLogs(int pageIndex = 1, int pageSize = 10, string? searchTerm = null, string? levelFilter = null, string? timeRange = null)
+    public async Task<IActionResult> GetRecentLogs(int pageIndex = 1, int pageSize = 10, string? searchTerm = null,
+        string? levelFilter = null, string? timeRange = null)
     {
         try
         {
@@ -55,7 +56,7 @@ public class LogsController(ILogger<LogsController> logger)
                 // 确保参数有效
                 if (pageIndex < 1) pageIndex = 1;
                 if (pageSize < 1 || pageSize > 100) pageSize = 10;
-                
+
                 // 搜索参数验证
                 if (!string.IsNullOrEmpty(searchTerm))
                 {
@@ -64,17 +65,18 @@ public class LogsController(ILogger<LogsController> logger)
                     {
                         searchTerm = searchTerm.Substring(0, 100);
                     }
+
                     // 去除前后空白
                     searchTerm = searchTerm.Trim();
                 }
-                
+
                 // 日志级别验证 - 可选，取决于系统支持的日志级别
                 if (!string.IsNullOrEmpty(levelFilter))
                 {
                     // 转换为标准格式
                     levelFilter = levelFilter.Trim();
                 }
-                
+
                 // 时间范围验证
                 if (!string.IsNullOrEmpty(timeRange))
                 {
@@ -89,22 +91,22 @@ public class LogsController(ILogger<LogsController> logger)
                         }
                     }
                 }
-                
+
                 // 构建基础查询和参数
                 var conditions = new List<string>();
-                
+
                 // 名称/内容搜索
                 if (!string.IsNullOrEmpty(searchTerm))
                 {
                     conditions.Add("(RenderedMessage LIKE @SearchTerm OR Properties LIKE @SearchTerm)");
                 }
-                
+
                 // 级别搜索
                 if (!string.IsNullOrEmpty(levelFilter))
                 {
                     conditions.Add("Level = @LevelFilter");
                 }
-                
+
                 // 时间差搜索
                 if (!string.IsNullOrEmpty(timeRange))
                 {
@@ -117,25 +119,25 @@ public class LogsController(ILogger<LogsController> logger)
                         conditions.Add("Timestamp >= @DateThreshold");
                     }
                 }
-                
+
                 // 构建WHERE子句
                 var whereClause = conditions.Count > 0 ? " WHERE " + string.Join(" AND ", conditions) : "";
-                
+
                 // 获取总日志数量（带过滤条件）
                 var countCommand = connection.CreateCommand();
                 countCommand.CommandText = $"SELECT COUNT(*) FROM Logs{whereClause}";
-                
+
                 // 设置参数
                 if (!string.IsNullOrEmpty(searchTerm))
                 {
                     countCommand.Parameters.AddWithValue("@SearchTerm", $"%{searchTerm}%");
                 }
-                
+
                 if (!string.IsNullOrEmpty(levelFilter))
                 {
                     countCommand.Parameters.AddWithValue("@LevelFilter", levelFilter);
                 }
-                
+
                 if (!string.IsNullOrEmpty(timeRange))
                 {
                     if (timeRange.Equals("today", StringComparison.OrdinalIgnoreCase))
@@ -147,30 +149,30 @@ public class LogsController(ILogger<LogsController> logger)
                         countCommand.Parameters.AddWithValue("@DateThreshold", DateTime.Now.AddDays(-days));
                     }
                 }
-                
+
                 totalCount = Convert.ToInt32(await countCommand.ExecuteScalarAsync());
-                
+
                 // 构建分页查询
                 var command = connection.CreateCommand();
                 command.CommandText = $"""
-                                      SELECT Timestamp, Level, Exception, Properties, RenderedMessage
-                                      FROM Logs
-                                      {whereClause}
-                                      ORDER BY Timestamp DESC 
-                                      LIMIT @PageSize OFFSET @Offset
-                                      """;
-                
+                                       SELECT Timestamp, Level, Exception, Properties, RenderedMessage
+                                       FROM Logs
+                                       {whereClause}
+                                       ORDER BY Timestamp DESC 
+                                       LIMIT @PageSize OFFSET @Offset
+                                       """;
+
                 // 设置查询参数
                 if (!string.IsNullOrEmpty(searchTerm))
                 {
                     command.Parameters.AddWithValue("@SearchTerm", $"%{searchTerm}%");
                 }
-                
+
                 if (!string.IsNullOrEmpty(levelFilter))
                 {
                     command.Parameters.AddWithValue("@LevelFilter", levelFilter);
                 }
-                
+
                 if (!string.IsNullOrEmpty(timeRange))
                 {
                     if (timeRange.Equals("today", StringComparison.OrdinalIgnoreCase))
@@ -182,7 +184,7 @@ public class LogsController(ILogger<LogsController> logger)
                         command.Parameters.AddWithValue("@DateThreshold", DateTime.Now.AddDays(-days));
                     }
                 }
-                
+
                 command.Parameters.AddWithValue("@PageSize", pageSize);
                 command.Parameters.AddWithValue("@Offset", (pageIndex - 1) * pageSize);
 
@@ -206,7 +208,7 @@ public class LogsController(ILogger<LogsController> logger)
 
             // 计算总页数
             int totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
-            
+
             // 创建分页响应
             var response = new PaginatedResponse<LogEntry>
             {
@@ -222,12 +224,12 @@ public class LogsController(ILogger<LogsController> logger)
         catch (Exception ex)
         {
             // 记录包含搜索参数的详细错误日志，便于调试
-            logger.LogError(ex, "获取日志时发生错误，搜索参数：searchTerm={SearchTerm}, levelFilter={LevelFilter}, timeRange={TimeRange}", 
+            logger.LogError(ex,
+                "获取日志时发生错误，搜索参数：searchTerm={SearchTerm}, levelFilter={LevelFilter}, timeRange={TimeRange}",
                 searchTerm ?? "null", levelFilter ?? "null", timeRange ?? "null");
             return StatusCode(500, new { Error = "获取日志时发生错误", Details = ex.Message });
         }
     }
-
 
 
     /// <summary>
@@ -273,7 +275,7 @@ public class LogsController(ILogger<LogsController> logger)
             return StatusCode(500, new { Error = "获取日志统计信息时发生错误", Details = ex.Message });
         }
     }
-    
+
     /// <summary>
     /// 手动清理旧日志
     /// </summary>
@@ -304,9 +306,9 @@ public class LogsController(ILogger<LogsController> logger)
                 new SQLiteCommand("DELETE FROM Logs WHERE Timestamp < @cutoffDate", connection);
             command.Parameters.AddWithValue("@cutoffDate", DateTime.Now.AddDays(-days));
             var rowsAffected = await command.ExecuteNonQueryAsync();
-            
+
             logger.LogInformation("手动清理了 {RowsAffected} 条 {Days} 天前的日志", rowsAffected, days);
-            
+
             return Ok(new { Message = $"成功清理了 {rowsAffected} 条 {days} 天前的日志" });
         }
         catch (Exception ex)
@@ -344,22 +346,22 @@ public class PaginatedResponse<T>
     /// 数据列表
     /// </summary>
     public List<T> Data { get; set; } = new List<T>();
-    
+
     /// <summary>
     /// 总记录数
     /// </summary>
     public int TotalCount { get; set; }
-    
+
     /// <summary>
     /// 当前页码
     /// </summary>
     public int PageIndex { get; set; }
-    
+
     /// <summary>
     /// 每页记录数
     /// </summary>
     public int PageSize { get; set; }
-    
+
     /// <summary>
     /// 总页数
     /// </summary>

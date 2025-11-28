@@ -181,8 +181,7 @@ if (builder.Environment.IsProduction())
 builder.Services.AddHttpClient();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<GlobalAuthorizationFilter>();
-builder.Services.AddScoped<TokenActionFilter>();
-builder.Services.AddScoped<IJwtHelper, JwtHelper>();
+builder.Services.AddScoped<ITokenGenerator, JwtGenerator>();
 
 builder.Services.AddScoped<IArticleRepository, ArticleRepository>();
 builder.Services.AddScoped<IDepartmentRepository, DepartmentRepository>();

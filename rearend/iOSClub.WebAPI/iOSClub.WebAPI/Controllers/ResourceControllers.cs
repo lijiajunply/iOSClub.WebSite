@@ -9,7 +9,6 @@ using Microsoft.EntityFrameworkCore;
 namespace iOSClub.WebAPI.Controllers;
 
 [Authorize]
-[TokenActionFilter]
 [ApiController]
 [Route("[controller]")]  // 使用C#推荐的API路径格式
 public class ResourceController(

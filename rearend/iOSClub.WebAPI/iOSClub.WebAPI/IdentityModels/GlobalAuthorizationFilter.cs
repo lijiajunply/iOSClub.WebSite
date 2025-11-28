@@ -1,10 +1,10 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using iOSClub.Data.ShowModels;
 using iOSClub.DataApi.Services;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.AspNetCore.Authorization;
 
 namespace iOSClub.WebAPI.IdentityModels;
 
@@ -15,20 +15,9 @@ public class GlobalAuthorizationFilter(
 {
     public void OnAuthorization(AuthorizationFilterContext context)
     {
-        // Check if the controller or action has the Authorize attribute
-        var hasAuthorizeAttribute = context.ActionDescriptor.EndpointMetadata
-            .Any(em => em.GetType() == typeof(AuthorizeAttribute));
-        
-        // If no Authorize attribute, skip authorization
-        if (!hasAuthorizeAttribute)
-        {
-            return;
-        }
-        
         var bearer = context.HttpContext.Request.Headers.Authorization.FirstOrDefault();
         if (string.IsNullOrEmpty(bearer) || !bearer.StartsWith("Bearer "))
         {
-            logger.LogInformation("Requested API: {api}: No bearer token found.", context.HttpContext.Request.Path);
             return;
         }
 
@@ -96,4 +85,34 @@ public class GlobalAuthorizationFilter(
             Console.WriteLine($"Token validation error: {ex.Message}");
         }
     }
+}
+
+public static class TokenHelper
+{
+    public static MemberModel? GetUser(this ClaimsPrincipal? claimsPrincipal)
+    {
+        var claimId = claimsPrincipal?.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+        var claimRole = claimsPrincipal?.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role);
+        if (claimId.IsNull() || claimRole.IsNull())
+        {
+            return null;
+        }
+
+        return new MemberModel()
+        {
+            UserId = claimId!.Value,
+            Identity = claimRole!.Value,
+        };
+    }
+
+    public static string? GetJwt(this HttpContext context)
+    {
+        var bearer = context.Request.Headers.Authorization.FirstOrDefault();
+        if (string.IsNullOrEmpty(bearer) || !bearer.Contains("Bearer")) return null;
+        var jwt = bearer.Split(' ');
+        return jwt.Length != 2 ? null : jwt[1];
+    }
+
+    private static bool IsNull(this Claim? claim)
+        => claim == null || string.IsNullOrEmpty(claim.Value);
 }

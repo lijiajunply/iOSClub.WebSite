@@ -35,4 +35,10 @@ public class ArticleModel
     /// </summary>
     [MaxLength(20)]
     public string? Identity { get; set; }
+
+    /// <summary>
+    /// 分类
+    /// </summary>
+    [MaxLength(128)]
+    public string? Category { get; set; }
 }

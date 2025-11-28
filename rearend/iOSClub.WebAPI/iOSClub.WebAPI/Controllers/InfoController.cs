@@ -32,7 +32,6 @@ public class InfoController(
     /// - 社长/创始人：返回所有系统信息
     /// </remarks>
     /// <returns>根据用户身份返回相应的用户信息</returns>
-    [TokenActionFilter]
     [Authorize]
     [HttpGet("user-info")]
     public async Task<IActionResult> GetUserInfo()
