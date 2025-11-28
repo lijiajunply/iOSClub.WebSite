@@ -55,13 +55,19 @@
                   />
                 </n-form-item>
 
-                <n-form-item label="文章分类" path="category">
-                  <n-input
-                      v-model:value="editForm.category"
-                      placeholder="请输入文章分类，如：社团简介"
+                <n-form-item label="文章分类" path="categoryId">
+                  <n-select
+                      v-model:value="editForm.categoryName"
+                      :options="categoryOptions"
+                      placeholder="请选择文章分类"
+                      filterable
+                      clearable
+                      tag
                       class="rounded-lg"
                       :bordered="true"
-                  />
+                      @update:value="handleCategoryChange"
+                  >
+                  </n-select>
                   <template #feedback>
                     <p class="text-xs mt-1 text-gray-500 dark:text-gray-400">
                       分类用于左侧菜单分组显示，留空则显示在"其他"分类下
@@ -111,7 +117,7 @@
 <script setup lang="ts">
 import {ref, computed, onMounted} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
-import {useMessage, NButton, NForm, NFormItem, NInput, NSelect} from 'naive-ui'
+import {useMessage, NButton, NForm, NFormItem, NInput, NSelect, NInputNumber} from 'naive-ui'
 import {Icon} from '@iconify/vue'
 import {ArticleService} from '../services/ArticleService'
 import type {ArticleModel, ArticleCreateDto, ArticleUpdateDto} from '../models'
@@ -122,7 +128,7 @@ interface EditFormType {
   title: string
   content: string
   identity: 'Member' | 'Department' | 'Minister' | 'President' | 'Founder'
-  category?: string
+  categoryName?: string
   lastWriteTime: string
 }
 
@@ -133,14 +139,15 @@ const message = useMessage()
 const saving = ref(false)
 const editingArticle = ref<ArticleModel | null>(null)
 const formRef = ref<InstanceType<typeof NForm> | null>(null)
+const categoryOptions = ref<Array<{ label: string, value: string }>>([])
 
 const editForm = ref<EditFormType>({
   path: '',
   title: '',
   content: '',
   identity: 'Member',
-  category: '',
-  lastWriteTime: new Date().toISOString()
+  categoryName: '',
+  lastWriteTime: new Date().toISOString(),
 })
 
 const identityOptions = [
@@ -159,6 +166,48 @@ const previewContent = computed(() => {
     content: editForm.value.content || '在这里输入文章内容...'
   }
 })
+
+// 获取所有分类选项
+const fetchCategoryOptions = async () => {
+  try {
+    // 获取所有分类列表
+    const categories = await ArticleService.getAllCategories()
+
+    console.log('获取分类列表成功:', categories)
+
+    // 转换为选项格式
+    categoryOptions.value = categories.map(category => ({
+      label: category.name,
+      value: category.name
+    }))
+
+    // 如果当前编辑的文章有分类，自动选择对应的分类
+    if (editForm.value.categoryName) {
+      // 分类选项已经加载，无需额外处理
+    }
+  } catch (error) {
+    console.error('获取分类选项失败:', error)
+    // 降级方案：从分类文章中获取分类信息
+    try {
+      const categoryArticles = await ArticleService.getAllCategoryArticles()
+      const categories = Object.keys(categoryArticles)
+
+      // 转换为选项格式
+      categoryOptions.value = categories.map(category => ({
+        label: category,
+        value: category // 临时使用分类名称作为value，后续需要更新为categoryId
+      }))
+    } catch (fallbackError) {
+      console.error('获取分类选项失败（降级方案）:', fallbackError)
+    }
+  }
+}
+
+// 处理分类变化
+const handleCategoryChange = (categoryName: string) => {
+  // 当分类变化时，更新categoryId
+  editForm.value.categoryName = categoryName
+}
 
 const rules = {
   path: {
@@ -193,8 +242,8 @@ const fetchArticle = async (path: string) => {
       title: article.title || '',
       content: article.content || '',
       identity: (article.identity as EditFormType['identity']) || 'Member',
-      category: article.category || '',
-      lastWriteTime: article.lastWriteTime || new Date().toISOString()
+      categoryName: article.category?.name || '',
+      lastWriteTime: article.lastWriteTime || new Date().toISOString(),
     }
   } catch (error) {
     console.error('获取文章失败:', error)
@@ -221,7 +270,7 @@ const saveArticle = async () => {
         title: editForm.value.title,
         content: editForm.value.content,
         identity: editForm.value.identity,
-        category: editForm.value.category
+        category: editForm.value.categoryName,
       }
       await ArticleService.updateArticle(editForm.value.path, updateDto)
       message.success('文章更新成功')
@@ -232,7 +281,7 @@ const saveArticle = async () => {
         title: editForm.value.title,
         content: editForm.value.content,
         identity: editForm.value.identity,
-        category: editForm.value.category
+        category: editForm.value.categoryName,
       }
       await ArticleService.createArticle(createDto)
       message.success('文章创建成功')
@@ -246,10 +295,13 @@ const saveArticle = async () => {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
+  // 先获取分类选项
+  await fetchCategoryOptions()
+
   const articlePath = route.params.path as string
   if (articlePath) {
-    fetchArticle(articlePath)
+    await fetchArticle(articlePath)
   }
 })
 </script>

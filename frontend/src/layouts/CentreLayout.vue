@@ -4,7 +4,7 @@
 
     <div class="flex-1 flex flex-col overflow-hidden h-screen">
       <!-- Header -->
-      <header class="bg-white/90 dark:bg-gray-800/90 backdrop-blur-md h-22 border-b border-gray-100 dark:border-gray-700">
+      <header class="bg-white/90 dark:bg-gray-800/90 backdrop-blur-md h-16 border-b border-gray-100 dark:border-gray-700">
         <div class="flex items-center justify-between px-4 py-3 h-full">
           <div class="md:hidden flex items-center gap-3">
             <button
@@ -38,12 +38,12 @@
               <Icon
                   v-if="!isDark"
                   icon="material-symbols:light-mode"
-                  class="h-8 w-8 text-yellow-500"
+                  class="h-6 w-6 text-yellow-500"
               />
               <Icon
                   v-else
                   icon="material-symbols:dark-mode"
-                  class="h-8 w-8 text-blue-400"
+                  class="h-6 w-6 text-blue-400"
               />
             </button>
           </div>

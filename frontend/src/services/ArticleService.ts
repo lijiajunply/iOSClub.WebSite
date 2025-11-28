@@ -1,15 +1,12 @@
 import {url} from './Url';
 import {AuthService} from './AuthService';
 import type {ArticleModel, ArticleCreateDto, ArticleUpdateDto} from "../models";
+import type {CategoryModel} from '../models/ArticleModel'
 
 /**
  * 文章服务类 - 处理文章相关的API调用
  */
 export class ArticleService {
-    /**
-     * 获取所有文章（公开访问）
-     * @returns Promise<ArticleModel[]> 文章列表
-     */
     static async getAllArticles(): Promise<ArticleModel[]> {
         const response = await fetch(`${url}/Article`, {
             method: 'GET',
@@ -194,16 +191,39 @@ export class ArticleService {
         return this.getArticleByPath(path);
     }
 
+    static async getAllCategories(): Promise<CategoryModel[]> {
+        const response = await fetch(`${url}/Category/all`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error('获取分类列表失败');
+        }
+
+        return await response.json();
+    }
+
     /**
      * 获取所有分类的文章（公开访问）
      * @returns Promise<Dictionary<string, ArticleModel[]>> 分类文章列表
      */
     static async getAllCategoryArticles(): Promise<Record<string, ArticleModel[]>> {
+        const token = AuthService.getToken();
+
+        const headers: Record<string, string> = {
+            'Content-Type': 'application/json',
+        };
+
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
         const response = await fetch(`${url}/Article/category`, {
             method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: headers
         });
 
         if (!response.ok) {

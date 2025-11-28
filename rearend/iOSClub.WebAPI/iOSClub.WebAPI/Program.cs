@@ -1,4 +1,4 @@
-using System.Data.SQLite;
+using System.IO.Compression;
 using System.Text;
 using iOSClub.Data;
 using iOSClub.Data.DataModels;
@@ -7,6 +7,7 @@ using iOSClub.DataApi.Services;
 using iOSClub.WebAPI.IdentityModels;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.IdentityModel.Tokens;
@@ -143,11 +144,10 @@ if (!string.IsNullOrEmpty(redis))
 #region 日志设置
 
 // 定义日志数据库路径
-string sqlPath = "";
 
 if (builder.Environment.IsProduction())
 {
-    sqlPath = Environment.CurrentDirectory + "/logs/log.db";
+    var sqlPath = Environment.CurrentDirectory + "/logs/log.db";
 
     // 确保日志目录存在
     var logDir = Path.GetDirectoryName(sqlPath);
@@ -184,6 +184,7 @@ builder.Services.AddScoped<GlobalAuthorizationFilter>();
 builder.Services.AddScoped<ITokenGenerator, JwtGenerator>();
 
 builder.Services.AddScoped<IArticleRepository, ArticleRepository>();
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<IDepartmentRepository, DepartmentRepository>();
 builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
 builder.Services.AddScoped<IResourceRepository, ResourceRepository>();
@@ -198,6 +199,23 @@ builder.Services.AddScoped<ILoginService, LoginService>();
 
 #endregion
 
+#region 压缩
+
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.Providers.Add<BrotliCompressionProvider>();
+    options.Providers.Add<GzipCompressionProvider>();
+});
+
+builder.Services.Configure<BrotliCompressionProviderOptions>(options =>
+{
+    options.Level = CompressionLevel.Fastest; // 或 CompressionLevel.Optimal
+});
+
+builder.Services.Configure<GzipCompressionProviderOptions>(options => { options.Level = CompressionLevel.Fastest; });
+
+#endregion
 
 var app = builder.Build();
 

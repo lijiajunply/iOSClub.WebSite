@@ -10,6 +10,19 @@
           <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">
             创建、编辑和删除社团文章
           </p>
+          <div class="mt-4">
+            <n-button
+              type="info"
+              size="small"
+              @click="goToCategoryManager"
+              class="rounded-full"
+            >
+              <template #icon>
+                <Icon icon="material-symbols:category" class="w-4 h-4"/>
+              </template>
+              管理分类和文章排序
+            </n-button>
+          </div>
         </div>
       </div>
     </div>
@@ -68,10 +81,10 @@
                 <h3 class="font-medium text-base md:text-lg mb-2 line-clamp-2 text-gray-900 group-hover:text-indigo-600 dark:text-white dark:group-hover:text-indigo-400 transition-colors">
                   {{ article.title || '无标题文章' }}
                 </h3>
-                <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-1">
+                <div class="flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-1">
                   <span class="flex items-center">
                     <Icon icon="material-symbols:category" class="mr-1 w-3 h-3"/>
-                    {{ article.category || '其他' }}
+                    {{ article.category?.name || '其他' }}
                   </span>
                   <span class="flex items-center">
                     <Icon icon="material-symbols:schedule" class="mr-1 w-3 h-3"/>
@@ -137,13 +150,12 @@
 
     <!-- 添加文章按钮 -->
     <div class="fixed bottom-6 right-6 z-10">
-      <n-button
-          type="primary"
-          class="w-14 h-14 rounded-full shadow-lg backdrop-blur-xl flex items-center justify-center hover:scale-105 transition-transform duration-200"
+      <button
+          class="bg-green-600 text-white w-14 h-14 rounded-full shadow-lg backdrop-blur-xl flex items-center justify-center hover:scale-105 transition-transform duration-200"
           @click="openCreateModal"
       >
         <Icon icon="material-symbols:add" class="w-6 h-6"/>
-      </n-button>
+      </button>
     </div>
   </div>
 </template>
@@ -232,6 +244,11 @@ const openCreateModal = () => {
 // 编辑文章
 const editArticle = (article: ArticleModel) => {
   router.push(`/Centre/Article/edit/${article.path}`)
+}
+
+// 跳转到分类管理页面
+const goToCategoryManager = () => {
+  router.push('/Centre/Category')
 }
 
 // 删除文章

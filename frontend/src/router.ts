@@ -151,6 +151,18 @@ const routes = [
                 component: () => import('./adminPages/Department.vue'),
             },
             {
+                path: 'Category',
+                name: 'CategoryManager',
+                meta: {title: "分类管理 - 西建大 iOS Club"},
+                component: () => import('./adminPages/CategoryManager.vue'),
+            },
+            {
+                path: 'Category/:id',
+                name: 'CategorySetting',
+                meta: {title: "分类设置 - 西建大 iOS Club"},
+                component: () => import('./adminPages/CategorySetting.vue'),
+            },
+            {
                 path: 'Projects',
                 name: 'ProjectsData',
                 meta: {title: "项目管理 - 西建大 iOS Club"},

@@ -1,4 +1,4 @@
-﻿using iOSClub.Data.DataModels;
+using iOSClub.Data.DataModels;
 using iOSClub.DataApi.Repositories;
 using iOSClub.WebAPI.IdentityModels;
 using Microsoft.AspNetCore.Authorization;
@@ -23,7 +23,7 @@ public class ArticleController(
         try
         {
             var articles = await articleRepository.GetAll();
-            return Ok(articles.OrderBy(x => x.LastWriteTime));
+            return Ok(articles.OrderByDescending(x => x.LastWriteTime));
         }
         catch (Exception ex)
         {
@@ -93,6 +93,10 @@ public class ArticleController(
                 Title = createDto.Title,
                 Content = createDto.Content,
                 Identity = createDto.Identity,
+                Category = string.IsNullOrEmpty(createDto.Category)
+                    ? null
+                    : new CategoryModel() { Name = createDto.Category },
+                ArticleOrder = createDto.ArticleOrder,
                 LastWriteTime = DateTime.UtcNow
             };
 
@@ -144,8 +148,11 @@ public class ArticleController(
             existingArticle.Title = updateDto.Title;
             existingArticle.Content = updateDto.Content;
             existingArticle.Identity = updateDto.Identity;
+            existingArticle.Category = string.IsNullOrEmpty(updateDto.Category)
+                ? null
+                : new CategoryModel() { Name = updateDto.Category };
+            existingArticle.ArticleOrder = updateDto.ArticleOrder;
             existingArticle.LastWriteTime = DateTime.UtcNow;
-            existingArticle.Category = updateDto.Category;
 
             var success = await articleRepository.CreateOrUpdate(existingArticle);
             return !success ? StatusCode(500, "更新文章失败") : Ok(new { message = "文章更新成功", path });
@@ -264,6 +271,12 @@ public class ArticleCreateDto(string? identity)
 
     [StringLength(20, ErrorMessage = "身份标识长度不能超过20个字符")]
     public string? Identity { get; set; } = identity;
+
+    [StringLength(128, ErrorMessage = "分类长度不能超过128个字符")]
+    public string? Category { get; set; }
+
+    [Range(0, 1000, ErrorMessage = "文章排序值必须在0-1000之间")]
+    public int ArticleOrder { get; set; } = 0;
 }
 
 // 更新文章的DTO
@@ -281,5 +294,9 @@ public class ArticleUpdateDto
     [StringLength(20, ErrorMessage = "身份标识长度不能超过20个字符")]
     public string? Identity { get; set; }
 
+    [StringLength(128, ErrorMessage = "分类长度不能超过128个字符")]
     public string? Category { get; set; }
+
+    [Range(0, 1000, ErrorMessage = "文章排序值必须在0-1000之间")]
+    public int ArticleOrder { get; set; } = 0;
 }

@@ -17,6 +17,7 @@ public sealed class ClubContext(DbContextOptions<ClubContext> options) : DbConte
     public DbSet<ResourceModel> Resources { get; init; }
     public DbSet<DepartmentModel> Departments { get; init; }
     public DbSet<ArticleModel> Articles { get; init; }
+    public DbSet<CategoryModel> Categories { get; init; }
     public DbSet<ClientApplication> ClientApplications { get; init; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -42,6 +43,12 @@ public sealed class ClubContext(DbContextOptions<ClubContext> options) : DbConte
         modelBuilder.Entity<DepartmentModel>()
             .HasMany(x => x.Projects)
             .WithOne(x => x.Department)
+            .IsRequired(false);
+
+        modelBuilder.Entity<CategoryModel>()
+            .HasMany(x => x.Articles)
+            .WithOne(x => x.Category)
+            .HasForeignKey(x => x.CategoryId)
             .IsRequired(false);
     }
 }

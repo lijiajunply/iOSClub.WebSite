@@ -10,21 +10,21 @@
   />
   <div v-else class="p-6">
     <div class="flex items-center justify-center">
-      <n-skeleton width="200" height="20" class="mb-2" />
+      <n-skeleton width="200" height="20" class="mb-2"/>
     </div>
     <div class="space-y-2 mt-4">
-      <n-skeleton width="160" height="32" class="ml-8" />
-      <n-skeleton width="160" height="32" class="ml-8" />
-      <n-skeleton width="160" height="32" class="ml-8" />
-      <n-skeleton width="200" height="20" class="mt-6" />
-      <n-skeleton width="160" height="32" class="ml-8" />
-      <n-skeleton width="160" height="32" class="ml-8" />
+      <n-skeleton width="160" height="32" class="ml-8"/>
+      <n-skeleton width="160" height="32" class="ml-8"/>
+      <n-skeleton width="160" height="32" class="ml-8"/>
+      <n-skeleton width="200" height="20" class="mt-6"/>
+      <n-skeleton width="160" height="32" class="ml-8"/>
+      <n-skeleton width="160" height="32" class="ml-8"/>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import {computed, ref, onMounted} from 'vue'
+import {computed, onMounted, ref} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
 import {NMenu, NSkeleton} from 'naive-ui'
 import {ArticleService} from '../services/ArticleService'
@@ -66,53 +66,34 @@ const fetchCategoryArticles = async () => {
     }
   ]
 
+  const l = ['About', 'Structure']
+
   try {
     loading.value = true
     const categoryArticles = await ArticleService.getAllCategoryArticles()
-    
+
     // 转换为菜单选项格式
-    const apiOptions = Object.entries(categoryArticles).map(([category, articles]) => {
+    // 合并菜单：默认菜单 + 过滤后的API菜单
+    menuOptions.value = Object.entries(categoryArticles).map(([category, articles]) => {
+      const c = articles.map((article: ArticleModel) => ({
+        label: article.title || '无标题',
+        key: l.includes(article.path) ? `/${article.path}` : `/Article/${article.path}`
+      }));
+
+      if (category === '社团简介') {
+         c.push({
+           label: '其他组织',
+           key: '/OtherOrg'
+         })
+      }
+
       return {
         type: 'group',
         label: category,
         key: `${category}-group`,
-        children: articles.map((article: ArticleModel) => ({
-          label: article.title || '无标题',
-          key: `/Article/${article.path}`
-        }))
+        children: c
       }
     })
-
-    // 提取默认菜单中的所有路径
-    const defaultPaths = new Set<string>()
-    defaultMenu.forEach(group => {
-      if (group.children) {
-        group.children.forEach(item => {
-          defaultPaths.add(item.key)
-        })
-      }
-    })
-
-    // 处理API返回的菜单，过滤掉与默认菜单重复的路径
-    const filteredApiOptions = apiOptions.map(group => {
-      if (!group.children) return group
-      
-      return {
-        ...group,
-        children: group.children.filter(item => {
-          // 检查是否存在重复路径
-          const isDuplicate = defaultPaths.has(item.key) || 
-                             defaultPaths.has(item.key.replace('/Article/', '/'))
-          return !isDuplicate
-        })
-      }
-    }).filter(group => {
-      // 过滤掉没有子项的分组
-      return !group.children || group.children.length > 0
-    })
-
-    // 合并菜单：默认菜单 + 过滤后的API菜单
-    menuOptions.value = [...defaultMenu, ...filteredApiOptions]
   } catch (error) {
     console.error('获取分类文章失败:', error)
     // 失败时使用默认菜单
