@@ -1,7 +1,16 @@
 <template>
-  <div class="flex-1 flex flex-col transition-colors duration-300">
-    <!-- 主内容区域 -->
-    <main class="flex-1 overflow-y-auto p-4 md:p-6">
+  <div class="min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-300">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <!-- 页面标题 -->
+      <div class="mb-8">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-2xl font-semibold tracking-tight">个人信息</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">管理您的个人资料</p>
+          </div>
+        </div>
+      </div>
+
       <!-- 加载状态 -->
       <div v-if="loading" class="py-6">
         <div
@@ -69,11 +78,6 @@
               <div class="h-12 bg-gray-200 dark:bg-gray-700 rounded-xl w-40"></div>
             </div>
           </div>
-        </div>
-
-        <!-- 数据统计卡片骨架 -->
-        <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
-          <SkeletonLoader v-for="i in 3" :key="i" type="card"/>
         </div>
       </div>
 
@@ -237,7 +241,7 @@
                   @click="handleSubmit"
                   :loading="confirmLoading"
                   size="large"
-                  class="w-full md:w-auto px-8 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-xl shadow-sm transition-all"
+                  class="w-full md:w-auto px-8 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-full shadow-sm transition-all"
               >
                 <template #icon>
                   <Icon icon="lucide:save" size="18"/>
@@ -247,7 +251,7 @@
               <n-button
                   @click="handlePasswordSubmit"
                   size="large"
-                  class="w-full md:w-auto px-8 py-2.5 bg-purple-500 hover:bg-purple-600 text-white font-medium rounded-xl shadow-sm transition-all"
+                  class="w-full md:w-auto px-8 py-2.5 bg-purple-500 hover:bg-purple-600 text-white font-medium rounded-full shadow-sm transition-all"
               >
                 <template #icon>
                   <Icon icon="lucide:lock" size="18"/>

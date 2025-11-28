@@ -1,28 +1,30 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 text-gray-900 dark:text-white transition-colors duration-300">
+  <div class="min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-300">
     <!-- 页面头部 -->
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div class="flex items-center justify-between mb-8">
         <div>
           <h1 class="text-2xl font-semibold tracking-tight">
             {{ isEditing ? '编辑项目' : '新增项目' }}
           </h1>
-          <p class="text-sm text-gray-500 dark:text-gray-400">
+          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
             {{ isEditing ? '修改现有项目信息' : '创建一个新的项目' }}
           </p>
         </div>
         
-        <button
+        <n-button
           @click="handleCancel"
-          class="px-4 py-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center"
+          class="rounded-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center"
         >
-          <Icon icon="ion:arrow-back" class="mr-1.5" />
+          <template #icon>
+            <Icon icon="ion:arrow-back" />
+          </template>
           返回
-        </button>
+        </n-button>
       </div>
       
       <!-- 表单区域 -->
-      <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div class="p-6">
           <form @submit.prevent="handleSubmit">
             <!-- 项目基本信息 -->
@@ -32,13 +34,13 @@
                 <label for="projectName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                   项目名称 <span class="text-red-500">*</span>
                 </label>
-                <input
+                <n-input
                   id="projectName"
-                  v-model="formData.name"
+                  v-model:value="formData.name"
                   type="text"
                   required
                   placeholder="请输入项目名称"
-                  class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                  class="w-full"
                 />
               </div>
               
@@ -47,14 +49,15 @@
                 <label for="projectDescription" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                   项目描述 <span class="text-red-500">*</span>
                 </label>
-                <textarea
+                <n-input
                   id="projectDescription"
-                  v-model="formData.description"
+                  v-model:value="formData.description"
+                  type="textarea"
                   rows="4"
                   required
                   placeholder="请详细描述项目内容、目标和范围"
-                  class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all resize-none"
-                ></textarea>
+                  class="w-full"
+                />
               </div>
               
               <!-- 项目时间 -->
@@ -109,32 +112,37 @@
             
             <!-- 表单底部操作按钮 -->
             <div class="flex flex-col sm:flex-row sm:justify-end gap-3 mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-              <button
+              <n-button
                 type="button"
                 @click="handleCancel"
-                class="px-4 py-2.5 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 transition-colors flex-1 sm:flex-none flex items-center justify-center"
+                class="px-4 py-2.5 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 transition-colors flex-1 sm:flex-none flex items-center justify-center"
               >
-                <Icon icon="ion:close" class="mr-1.5" />
+                <template #icon>
+                  <Icon icon="ion:close" />
+                </template>
                 取消
-              </button>
-              <button
-                type="submit"
+              </n-button>
+              <n-button
+                type="primary"
                 :disabled="showLoadingModal || !isFormValid"
-                class="px-6 py-2.5 rounded-lg bg-blue-500 hover:bg-blue-600 text-white transition-colors flex-1 sm:flex-none flex items-center justify-center"
+                class="px-6 py-2.5 rounded-full bg-blue-500 hover:bg-blue-600 text-white transition-colors flex-1 sm:flex-none flex items-center justify-center"
                 :class="{ 'opacity-70 cursor-not-allowed': showLoadingModal || !isFormValid }"
+                native-type="submit"
               >
                 <n-spin v-if="showLoadingModal" class="mr-2" />
-                <Icon v-else icon="ion:checkmark" class="mr-1.5" />
+                <template v-else #icon>
+                  <Icon icon="ion:checkmark" />
+                </template>
                 {{ isEditing ? '更新项目' : '创建项目' }}
-              </button>
+              </n-button>
             </div>
           </form>
         </div>
       </div>
-    </div>
+    </main>
     
     <!-- 加载状态遮罩 -->
-      <n-modal v-model:show="showLoadingModal" preset="card" title="" :closable="false" :mask-closable="false">
+      <n-modal v-model:show="showLoadingModal" preset="dialog" title="" :closable="false" :mask-closable="false" class="w-full max-w-md">
         <div class="flex justify-center items-center py-12">
           <n-spin size="large" />
           <div class="ml-4">

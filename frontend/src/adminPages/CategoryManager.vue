@@ -1,94 +1,94 @@
 <template>
   <div class="min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-300">
-    <!-- 页面头部 -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div class="flex items-center space-x-3">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <!-- 页面标题 -->
+      <div class="mb-8">
+        <div class="flex items-center justify-between">
           <div>
             <h1 class="text-2xl font-semibold tracking-tight">分类管理</h1>
-            <p class="text-sm text-gray-500 dark:text-gray-400">管理文章分类及其显示顺序</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">管理文章分类及其显示顺序</p>
           </div>
         </div>
       </div>
-    </div>
-
-    <!-- 主内容区 -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-      <!-- 骨架加载 -->
-      <div v-if="loading" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        <div v-for="i in 8" :key="i" class="rounded-xl bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
-          <div class="p-5">
-            <div class="flex items-center mb-4">
-              <div class="bg-gray-200 dark:bg-gray-700 p-2.5 rounded-xl mr-3 w-10 h-10"></div>
-              <div class="bg-gray-200 dark:bg-gray-700 rounded-full h-5 w-16"></div>
-            </div>
-            <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
-            <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 分类列表 -->
-      <draggable
-        v-else
-        v-model="categories"
-        item-key="id"
-        handle=".drag-handle"
-        ghost-class="drag-ghost"
-        chosen-class="drag-chosen"
-        @start="onCategoryDragStart"
-        @end="onCategoryDragEnd"
-        class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
-      >
-        <template #item="{ element: category }">
-          <div 
-            class="group rounded-xl bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden cursor-move"
-          >
+      
+      <!-- 主内容区 -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+        <!-- 骨架加载 -->
+        <div v-if="loading">
+          <div v-for="i in 8" :key="i" class="rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
             <div class="p-5">
-              <div class="flex items-center justify-between mb-4">
-                <div class="flex items-center">
-                  <Icon 
-                    icon="material-symbols:drag-indicator" 
-                    class="drag-handle text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors cursor-grab active:cursor-grabbing mr-3"
-                  />
-                </div>
-                <n-button
-                  type="primary"
-                  size="small"
-                  quaternary
-                  circle
-                  class="h-8 w-8 p-0 rounded-full"
-                  @click.stop="goToCategorySetting(category)"
-                >
-                  <template #icon>
-                    <Icon icon="material-symbols:settings" class="w-4 h-4" />
-                  </template>
-                </n-button>
+              <div class="flex items-center mb-4">
+                <div class="bg-gray-100 dark:bg-gray-700 p-2.5 rounded-xl mr-3 w-10 h-10"></div>
+                <div class="bg-gray-100 dark:bg-gray-700 rounded-full h-5 w-16"></div>
               </div>
-              
-              <h3 class="font-medium text-lg mb-2 text-gray-900 dark:text-gray-100">{{ category.name }}</h3>
-              
-              <div class="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                <Icon icon="material-symbols:sort" class="mr-1 w-4 h-4" />
-                <span>顺序: {{ category.order }}</span>
-              </div>
+              <div class="h-4 bg-gray-100 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
+              <div class="h-3 bg-gray-100 dark:bg-gray-700 rounded w-1/3"></div>
             </div>
           </div>
-        </template>
-      </draggable>
-
-      <!-- 空状态 -->
-      <div
-        v-if="categories.length === 0 && !loading"
-        class="col-span-full py-16 flex flex-col items-center justify-center rounded-2xl bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border border-dashed border-gray-300 dark:border-gray-600"
-      >
-        <div class="w-16 h-16 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-full mb-4">
-          <Icon icon="material-symbols:category-off" class="text-gray-400 dark:text-gray-500 w-7 h-7" />
         </div>
-        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-1">暂无分类</h3>
-        <p class="text-sm text-gray-500 dark:text-gray-400">请先创建分类</p>
+
+        <!-- 分类列表 -->
+        <draggable
+          v-else
+          v-model="categories"
+          item-key="id"
+          handle=".drag-handle"
+          ghost-class="drag-ghost"
+          chosen-class="drag-chosen"
+          @start="onCategoryDragStart"
+          @end="onCategoryDragEnd"
+          class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 w-full"
+        >
+          <template #item="{ element: category }">
+            <div 
+              class="group rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden cursor-move"
+            >
+              <div class="p-5">
+                <div class="flex items-center justify-between mb-4">
+                  <div class="flex items-center">
+                    <Icon 
+                      icon="material-symbols:drag-indicator" 
+                      class="drag-handle text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors cursor-grab active:cursor-grabbing mr-3"
+                    />
+                  </div>
+                  <n-button
+                    type="primary"
+                    size="small"
+                    quaternary
+                    circle
+                    class="h-8 w-8 p-0 rounded-full"
+                    @click.stop="goToCategorySetting(category)"
+                  >
+                    <template #icon>
+                      <Icon icon="material-symbols:settings" class="w-4 h-4" />
+                    </template>
+                  </n-button>
+                </div>
+                
+                <h3 class="font-medium text-lg mb-2 text-gray-900 dark:text-white">{{ category.name }}</h3>
+                
+                <div class="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                  <Icon icon="material-symbols:sort" class="mr-1 w-4 h-4" />
+                  <span>顺序: {{ category.order }}</span>
+                </div>
+              </div>
+            </div>
+          </template>
+        </draggable>
+
+        <!-- 空状态 -->
+        <div
+          v-if="categories.length === 0 && !loading"
+          class="col-span-full py-16 flex flex-col items-center justify-center rounded-2xl bg-white dark:bg-gray-800 border border-dashed border-gray-200 dark:border-gray-700"
+        >
+          <div class="w-16 h-16 flex items-center justify-center bg-gray-50 dark:bg-gray-700 rounded-full mb-4 border border-gray-100 dark:border-gray-600">
+            <Icon icon="material-symbols:category-off" class="text-gray-400 dark:text-gray-500 w-7 h-7" />
+          </div>
+          <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-1">暂无分类</h3>
+          <p class="text-sm text-gray-500 dark:text-gray-400">请先创建分类</p>
+        </div>
       </div>
-    </div>
+    </main>
   </div>
 </template>
 

@@ -1,130 +1,198 @@
 <template>
-  <div class="transition-colors duration-300">
-    <!-- 主内容区域 -->
-    <div class="max-w-7xl mx-auto p-4 md:p-6">
+  <div class="min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-300">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <!-- 页面标题 -->
-      <div class="flex items-center justify-between mb-6">
-        <div>
-          <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">其他数据</h1>
-          <p class="text-sm text-gray-500 dark:text-gray-400">社团管理系统数据分析</p>
-        </div>
-
-        <div class="flex items-center space-x-2">
-          <button
-              v-if="isAdmin"
-              @click="triggerFileInput"
-              class="hidden sm:flex items-center px-4 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors text-sm"
-          >
-            <Icon icon="material-symbols:upload" class="mr-1" width="20" height="20"/>
-            上传数据
-          </button>
-
-          <div v-if="isAdmin" class="relative" ref="dropdownContainer">
-            <button
-                @click="toggleDropdown"
-                class="h-9 w-9 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+      <div class="mb-8">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-2xl font-semibold tracking-tight">其他数据</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">社团管理系统数据分析</p>
+          </div>
+          
+          <div class="flex items-center space-x-3">
+            <n-button
+                v-if="isAdmin"
+                type="primary"
+                size="small"
+                class="rounded-full bg-blue-500 hover:bg-blue-600"
+                @click="triggerFileInput"
             >
-              <Icon icon="material-symbols:more-horiz" width="20" height="20" class="text-gray-700 dark:text-gray-300"/>
-            </button>
-
-            <div
-                v-if="dropdownOpen"
-                class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-700 rounded-lg shadow-lg py-1 z-10 border border-gray-200 dark:border-gray-600"
-            >
+              <template #icon>
+                <Icon icon="material-symbols:upload" class="w-4 h-4"/>
+              </template>
+              上传数据
+            </n-button>
+            
+            <div v-if="isAdmin" class="relative" ref="dropdownContainer">
               <button
-                  @click="handleDropdownSelect('download')"
-                  class="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
+                  @click="toggleDropdown"
+                  class="h-9 w-9 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
               >
-                下载所有数据
+                <Icon icon="material-symbols:more-horiz" class="w-5 h-5 text-gray-600 dark:text-gray-400"/>
               </button>
-              <button
-                  @click="handleDropdownSelect('remove')"
-                  class="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-600"
+              
+              <div
+                  v-if="dropdownOpen"
+                  class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-lg py-2 z-10 border border-gray-200 dark:border-gray-700 transition-all duration-200"
               >
-                删除所有数据
-              </button>
+                <button
+                    @click="handleDropdownSelect('download')"
+                    class="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150"
+                >
+                  下载所有数据
+                </button>
+                <button
+                    @click="handleDropdownSelect('remove')"
+                    class="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-150"
+                >
+                  删除所有数据
+                </button>
+              </div>
             </div>
           </div>
-
-          <input
-              ref="fileInput"
-              type="file"
-              accept=".json"
-              multiple
-              @change="uploadFiles"
-              style="display: none"
-          />
         </div>
       </div>
-
+      
       <!-- 加载状态 -->
       <div v-if="loading" class="space-y-8">
         <!-- 数据概览卡片骨架 -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-8">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           <SkeletonLoader v-for="i in 7" :key="i" type="card"/>
         </div>
-
-        <!-- 图表区域骨架 -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          <SkeletonLoader v-for="i in 2" :key="i" type="chart"/>
+      </div>
+      
+      <!-- 数据概览卡片 -->
+      <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+        <div
+            class="p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 hover:shadow-md transition-all duration-200"
+        >
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-xs text-gray-500 dark:text-gray-400">社员人数</p>
+              <p class="text-2xl font-semibold mt-1 text-blue-600 dark:text-blue-400">{{ statistics.members }}</p>
+            </div>
+            <div
+                class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-800/50 flex items-center justify-center"
+            >
+              <Icon icon="ion:people" class="w-4 h-4 text-blue-600 dark:text-blue-400"/>
+            </div>
+          </div>
+        </div>
+        
+        <div
+            class="p-4 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800/30 hover:shadow-md transition-all duration-200"
+        >
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-xs text-gray-500 dark:text-gray-400">部员人数</p>
+              <p class="text-2xl font-semibold mt-1 text-green-600 dark:text-green-400">{{ statistics.staffs }}</p>
+            </div>
+            <div
+                class="w-8 h-8 rounded-full bg-green-100 dark:bg-green-800/50 flex items-center justify-center"
+            >
+              <Icon icon="material-symbols:badge" class="w-4 h-4 text-green-600 dark:text-green-400"/>
+            </div>
+          </div>
+        </div>
+        
+        <div
+            class="p-4 rounded-xl bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800/30 hover:shadow-md transition-all duration-200"
+        >
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-xs text-gray-500 dark:text-gray-400">项目数</p>
+              <p class="text-2xl font-semibold mt-1 text-purple-600 dark:text-purple-400">{{ statistics.projects }}</p>
+            </div>
+            <div
+                class="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-800/50 flex items-center justify-center"
+            >
+              <Icon icon="material-symbols:folder" class="w-4 h-4 text-purple-600 dark:text-purple-400"/>
+            </div>
+          </div>
+        </div>
+        
+        <div
+            class="p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800/30 hover:shadow-md transition-all duration-200"
+        >
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-xs text-gray-500 dark:text-gray-400">任务数</p>
+              <p class="text-2xl font-semibold mt-1 text-amber-600 dark:text-amber-400">{{ statistics.tasks }}</p>
+            </div>
+            <div
+                class="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-800/50 flex items-center justify-center"
+            >
+              <Icon icon="material-symbols:task" class="w-4 h-4 text-amber-600 dark:text-amber-400"/>
+            </div>
+          </div>
+        </div>
+        
+        <div
+            class="p-4 rounded-xl bg-pink-50 dark:bg-pink-900/20 border border-pink-100 dark:border-pink-800/30 hover:shadow-md transition-all duration-200"
+        >
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-xs text-gray-500 dark:text-gray-400">资源数</p>
+              <p class="text-2xl font-semibold mt-1 text-pink-600 dark:text-pink-400">{{ statistics.resources }}</p>
+            </div>
+            <div
+                class="w-8 h-8 rounded-full bg-pink-100 dark:bg-pink-800/50 flex items-center justify-center"
+            >
+              <Icon icon="material-symbols:folder-open" class="w-4 h-4 text-pink-600 dark:text-pink-400"/>
+            </div>
+          </div>
+        </div>
+        
+        <div
+            class="p-4 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800/30 hover:shadow-md transition-all duration-200"
+        >
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-xs text-gray-500 dark:text-gray-400">部门数</p>
+              <p class="text-2xl font-semibold mt-1 text-indigo-600 dark:text-indigo-400">{{ statistics.departments }}</p>
+            </div>
+            <div
+                class="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-800/50 flex items-center justify-center"
+            >
+              <Icon icon="material-symbols:groups" class="w-4 h-4 text-indigo-600 dark:text-indigo-400"/>
+            </div>
+          </div>
+        </div>
+        
+        <div
+            class="p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/30 hover:shadow-md transition-all duration-200"
+        >
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-xs text-gray-500 dark:text-gray-400">待办数</p>
+              <p class="text-2xl font-semibold mt-1 text-red-600 dark:text-red-400">{{ statistics.todos }}</p>
+            </div>
+            <div
+                class="w-8 h-8 rounded-full bg-red-100 dark:bg-red-800/50 flex items-center justify-center"
+            >
+              <Icon icon="ion:checkbox" class="w-4 h-4 text-red-600 dark:text-red-400"/>
+            </div>
+          </div>
         </div>
       </div>
-
-      <!-- 数据概览卡片 -->
-      <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-8">
-        <StatCard
-            title="社员人数"
-            :value="statistics.members"
-            icon="ion:people"
-            color="blue"
-        />
-        <StatCard
-            title="部员人数"
-            :value="statistics.staffs"
-            icon="material-symbols:badge"
-            color="green"
-        />
-        <StatCard
-            title="项目数"
-            :value="statistics.projects"
-            icon="material-symbols:folder"
-            color="purple"
-        />
-        <StatCard
-            title="任务数"
-            :value="statistics.tasks"
-            icon="material-symbols:task"
-            color="amber"
-        />
-        <StatCard
-            title="资源数"
-            :value="statistics.resources"
-            icon="material-symbols:folder-open"
-            color="pink"
-        />
-        <StatCard
-            title="部门数"
-            :value="statistics.departments"
-            icon="material-symbols:groups"
-            color="indigo"
-        />
-        <StatCard
-            title="待办数"
-            :value="statistics.todos"
-            icon="ion:checkbox"
-            color="red"
-        />
-      </div>
-    </div>
+      
+      <input
+          ref="fileInput"
+          type="file"
+          accept=".json"
+          multiple
+          @change="uploadFiles"
+          style="display: none"
+      />
+    </main>
   </div>
 </template>
 
 <script setup lang="ts">
 import {ref, onMounted, onBeforeUnmount, nextTick} from 'vue'
-import {useMessage, useDialog} from 'naive-ui'
+import {useMessage, useDialog, NButton} from 'naive-ui'
 import {Icon} from '@iconify/vue'
 import SkeletonLoader from '../components/SkeletonLoader.vue'
-import StatCard from '../components/StatCard.vue'
 import {DataCentreService} from "../services/DataCentreService";
 import {useAuthorizationStore} from "../stores/Authorization";
 

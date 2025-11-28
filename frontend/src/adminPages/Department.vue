@@ -1,31 +1,28 @@
 <template>
   <div class="min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-300">
-    <!-- 页面头部 -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div class="flex items-center space-x-3">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <!-- 页面标题 -->
+      <div class="mb-8">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center">
           <div>
             <h1 class="text-2xl font-semibold tracking-tight">社团部门</h1>
-            <p class="text-sm text-gray-500 dark:text-gray-400">社团部门管理</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">社团部门管理</p>
+          </div>
+          <div class="flex flex-wrap gap-2 mt-4 sm:mt-0">
+            <button
+                @click="() => openDepartment()"
+                class="px-4 py-2 rounded-full bg-blue-500 hover:bg-blue-600 text-white transition-colors flex items-center"
+            >
+              <Icon icon="ion:add" class="mr-1"/>
+              添加部门
+            </button>
           </div>
         </div>
-
-        <div class="flex flex-wrap gap-2">
-          <button
-              @click="() => openDepartment()"
-              class="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white transition-colors flex items-center"
-          >
-            <Icon icon="ion:add" class="mr-1"/>
-            添加部门
-          </button>
-        </div>
       </div>
-    </div>
 
-    <!-- 主内容区 -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+      <!-- 主内容区 -->
       <div
-          class="overflow-hidden bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
+          class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-300 hover:shadow-lg">
         <!-- 标签页导航 -->
         <n-tabs
             type="line"
@@ -511,161 +508,161 @@
           </n-tab-pane>
         </n-tabs>
       </div>
+    </main>
+  </div>
+
+  <!-- 添加成员模态框 -->
+  <n-modal
+      v-model:show="showAddMemberModal"
+      preset="card"
+      style="width: 90%; max-width: 600px;"
+      title="添加成员"
+      :bordered="false"
+      class="rounded-2xl overflow-hidden bg-white dark:bg-gray-800"
+  >
+    <div class="space-y-4">
+      <div class="flex gap-2">
+        <n-input
+            v-model:value="searchKeyword"
+            placeholder="搜索成员（姓名/学号）"
+            @keyup.enter="searchMembers"
+            clearable
+        >
+          <template #prefix>
+            <Icon icon="ion:search"/>
+          </template>
+        </n-input>
+        <button
+            @click="searchMembers"
+            class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors">
+          搜索
+        </button>
+      </div>
+
+      <n-data-table
+          v-if="searchResults.length > 0"
+          :columns="searchColumns"
+          :data="searchResults"
+          class="mt-2"
+          :bordered="false"
+          :pagination="{pageSize: 5}"
+          :single-line="false"
+      />
+
+      <div v-else-if="searchKeyword && searchResults.length === 0"
+           class="text-center py-8 text-gray-500 dark:text-gray-400">
+        <n-empty description="未找到相关成员"/>
+      </div>
+
+      <div v-else class="text-center py-8 text-gray-500 dark:text-gray-400">
+        <n-empty description="请输入关键词搜索成员">
+          <template #icon>
+            <Icon icon="ion:search"/>
+          </template>
+        </n-empty>
+      </div>
+    </div>
+    <template #footer>
+      <div class="flex justify-end gap-2">
+        <button
+            @click="showAddMemberModal = false"
+            class="px-4 py-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+          取消
+        </button>
+      </div>
+    </template>
+  </n-modal>
+
+  <!-- 添加或更改部门模态框 -->
+  <n-modal
+      v-model:show="showDepartmentModal"
+      preset="card"
+      style="width: 90%; max-width: 500px;"
+      :title="editingDepartment ? '编辑部门' : '添加部门'"
+      :bordered="false"
+      class="rounded-2xl overflow-hidden bg-white dark:bg-gray-800"
+  >
+    <n-form
+        :model="departmentForm"
+        :rules="departmentRules"
+        ref="departmentFormRef"
+        class="space-y-4"
+    >
+      <n-form-item label="部门名称" path="name">
+        <n-input
+            v-model:value="departmentForm.name"
+            placeholder="请输入部门名称"
+        />
+      </n-form-item>
+      <n-form-item label="部门简介" path="description">
+        <n-input
+            v-model:value="departmentForm.description"
+            placeholder="请输入部门简介"
+            type="textarea"
+            :autosize="{ minRows: 3, maxRows: 5 }"
+        />
+      </n-form-item>
+    </n-form>
+    <template #footer>
+      <div class="flex justify-end gap-2">
+        <button
+            @click="showDepartmentModal = false"
+            class="px-4 py-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+          取消
+        </button>
+        <button
+            @click="saveDepartment"
+            class="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white transition-colors"
+        >
+          {{ editingDepartment ? '保存' : '添加' }}
+        </button>
+      </div>
+    </template>
+  </n-modal>
+
+  <!-- 更改部门模态框 -->
+  <n-modal
+      v-model:show="showChangeDepartmentModalRef"
+      preset="card"
+      style="width: 90%; max-width: 500px;"
+      title="更改员工部门"
+      :bordered="false"
+      class="rounded-2xl overflow-hidden bg-white dark:bg-gray-800"
+  >
+    <div v-if="selectedStaff" class="space-y-4">
+      <div class="bg-gray-100 dark:bg-gray-700 rounded-lg p-4">
+        <div class="text-sm text-gray-600 dark:text-gray-300">员工信息</div>
+        <div class="font-medium">{{ selectedStaff.name }} ({{ selectedStaff.userId }})</div>
+      </div>
+
+      <div class="space-y-2 pb-20">
+        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">选择新部门</label>
+        <n-select
+            v-model:value="targetDepartment"
+            :options="departmentOptions"
+            placeholder="请选择部门"
+            class="z-50"
+        />
+      </div>
     </div>
 
-    <!-- 添加成员模态框 -->
-    <n-modal
-        v-model:show="showAddMemberModal"
-        preset="card"
-        style="width: 90%; max-width: 600px;"
-        title="添加成员"
-        :bordered="false"
-        class="rounded-2xl overflow-hidden bg-white dark:bg-gray-800"
-    >
-      <div class="space-y-4">
-        <div class="flex gap-2">
-          <n-input
-              v-model:value="searchKeyword"
-              placeholder="搜索成员（姓名/学号）"
-              @keyup.enter="searchMembers"
-              clearable
-          >
-            <template #prefix>
-              <Icon icon="ion:search"/>
-            </template>
-          </n-input>
-          <button
-              @click="searchMembers"
-              class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors">
-            搜索
-          </button>
-        </div>
-
-        <n-data-table
-            v-if="searchResults.length > 0"
-            :columns="searchColumns"
-            :data="searchResults"
-            class="mt-2"
-            :bordered="false"
-            :pagination="{pageSize: 5}"
-            :single-line="false"
-        />
-
-        <div v-else-if="searchKeyword && searchResults.length === 0"
-             class="text-center py-8 text-gray-500 dark:text-gray-400">
-          <n-empty description="未找到相关成员"/>
-        </div>
-
-        <div v-else class="text-center py-8 text-gray-500 dark:text-gray-400">
-          <n-empty description="请输入关键词搜索成员">
-            <template #icon>
-              <Icon icon="ion:search"/>
-            </template>
-          </n-empty>
-        </div>
+    <template #footer>
+      <div class="flex justify-end gap-2">
+        <button
+            @click="showChangeDepartmentModalRef = false"
+            class="px-4 py-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+          取消
+        </button>
+        <button
+            @click="handleChangeDepartment"
+            class="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white transition-colors"
+            :disabled="!targetDepartment || targetDepartment === selectedStaff?.department"
+        >
+          确认更改
+        </button>
       </div>
-      <template #footer>
-        <div class="flex justify-end gap-2">
-          <button
-              @click="showAddMemberModal = false"
-              class="px-4 py-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
-            取消
-          </button>
-        </div>
-      </template>
-    </n-modal>
-
-    <!-- 添加或更改部门模态框 -->
-    <n-modal
-        v-model:show="showDepartmentModal"
-        preset="card"
-        style="width: 90%; max-width: 500px;"
-        :title="editingDepartment ? '编辑部门' : '添加部门'"
-        :bordered="false"
-        class="rounded-2xl overflow-hidden bg-white dark:bg-gray-800"
-    >
-      <n-form
-          :model="departmentForm"
-          :rules="departmentRules"
-          ref="departmentFormRef"
-          class="space-y-4"
-      >
-        <n-form-item label="部门名称" path="name">
-          <n-input
-              v-model:value="departmentForm.name"
-              placeholder="请输入部门名称"
-          />
-        </n-form-item>
-        <n-form-item label="部门简介" path="description">
-          <n-input
-              v-model:value="departmentForm.description"
-              placeholder="请输入部门简介"
-              type="textarea"
-              :autosize="{ minRows: 3, maxRows: 5 }"
-          />
-        </n-form-item>
-      </n-form>
-      <template #footer>
-        <div class="flex justify-end gap-2">
-          <button
-              @click="showDepartmentModal = false"
-              class="px-4 py-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
-            取消
-          </button>
-          <button
-              @click="saveDepartment"
-              class="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white transition-colors"
-          >
-            {{ editingDepartment ? '保存' : '添加' }}
-          </button>
-        </div>
-      </template>
-    </n-modal>
-
-    <!-- 更改部门模态框 -->
-    <n-modal
-        v-model:show="showChangeDepartmentModalRef"
-        preset="card"
-        style="width: 90%; max-width: 500px;"
-        title="更改员工部门"
-        :bordered="false"
-        class="rounded-2xl overflow-hidden bg-white dark:bg-gray-800"
-    >
-      <div v-if="selectedStaff" class="space-y-4">
-        <div class="bg-gray-100 dark:bg-gray-700 rounded-lg p-4">
-          <div class="text-sm text-gray-600 dark:text-gray-300">员工信息</div>
-          <div class="font-medium">{{ selectedStaff.name }} ({{ selectedStaff.userId }})</div>
-        </div>
-
-        <div class="space-y-2 pb-20">
-          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">选择新部门</label>
-          <n-select
-              v-model:value="targetDepartment"
-              :options="departmentOptions"
-              placeholder="请选择部门"
-              class="z-50"
-          />
-        </div>
-      </div>
-
-      <template #footer>
-        <div class="flex justify-end gap-2">
-          <button
-              @click="showChangeDepartmentModalRef = false"
-              class="px-4 py-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
-            取消
-          </button>
-          <button
-              @click="handleChangeDepartment"
-              class="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white transition-colors"
-              :disabled="!targetDepartment || targetDepartment === selectedStaff?.department"
-          >
-            确认更改
-          </button>
-        </div>
-      </template>
-    </n-modal>
-  </div>
+    </template>
+  </n-modal>
 </template>
 
 <script setup lang="ts">

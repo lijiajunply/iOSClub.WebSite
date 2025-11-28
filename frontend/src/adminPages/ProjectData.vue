@@ -175,32 +175,33 @@ const deleteTask = async (taskId: string) => {
 </script>
 
 <template>
-  <div
-      class="min-h-screen bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 text-gray-900 dark:text-white transition-colors duration-300">
+  <div class="min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-300">
     <!-- 页面头部 -->
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div class="flex items-center justify-between mb-8">
         <div>
           <h1 class="text-2xl font-semibold tracking-tight">
             项目详情
           </h1>
-          <p class="text-sm text-gray-500 dark:text-gray-400">
+          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
             查看和管理项目信息
           </p>
         </div>
 
-        <button
+        <n-button
             @click="router.push('/Centre/Admin')"
-            class="px-4 py-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center"
+            class="rounded-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center"
         >
-          <Icon icon="ion:arrow-back" class="mr-1.5"/>
+          <template #icon>
+            <Icon icon="ion:arrow-back"/>
+          </template>
           返回
-        </button>
+        </n-button>
       </div>
 
       <!-- 项目基本信息 -->
       <div v-if="loading"
-           class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mb-8">
+           class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mb-8">
         <div class="p-6">
           <div class="animate-pulse space-y-4">
             <div class="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
@@ -212,7 +213,7 @@ const deleteTask = async (taskId: string) => {
       </div>
 
       <div v-else-if="project"
-           class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mb-8">
+           class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mb-8">
         <div class="p-6">
           <div class="flex justify-between items-start">
             <div>
@@ -233,13 +234,16 @@ const deleteTask = async (taskId: string) => {
                 </div>
               </div>
             </div>
-            <button
+            <n-button
                 @click="router.push(`/Centre/ProjectEditor/${project.id}`)"
-                class="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white transition-colors flex items-center"
+                type="primary"
+                class="rounded-full bg-blue-500 hover:bg-blue-600 text-white transition-colors flex items-center"
             >
-              <Icon icon="ion:edit" class="mr-1.5"/>
+              <template #icon>
+                <Icon icon="ion:edit"/>
+              </template>
               编辑
-            </button>
+            </n-button>
           </div>
         </div>
       </div>
@@ -248,7 +252,7 @@ const deleteTask = async (taskId: string) => {
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- 项目成员 -->
         <div
-            class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+            class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
           <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
             <h2 class="text-lg font-medium">项目成员</h2>
             <p class="text-sm text-gray-500 dark:text-gray-400">参与该项目的成员列表</p>
@@ -268,7 +272,7 @@ const deleteTask = async (taskId: string) => {
               <div
                   v-for="member in projectMembers"
                   :key="member.userId"
-                  class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 flex items-center"
+                  class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 flex items-center hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
               >
                 <div
                     class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-300 font-medium mr-3">
@@ -287,19 +291,22 @@ const deleteTask = async (taskId: string) => {
 
         <!-- 项目任务 -->
         <div
-            class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+            class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
           <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
             <div>
               <h2 class="text-lg font-medium">项目任务</h2>
               <p class="text-sm text-gray-500 dark:text-gray-400">该项目下的任务列表</p>
             </div>
-            <button
+            <n-button
                 @click="openAddTaskDialog"
-                class="px-3 py-1.5 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-sm transition-colors flex items-center"
+                type="primary"
+                class="rounded-full bg-blue-500 hover:bg-blue-600 text-white text-sm transition-colors flex items-center"
             >
-              <Icon icon="ion:add" class="mr-1"/>
+              <template #icon>
+                <Icon icon="ion:add"/>
+              </template>
               添加任务
-            </button>
+            </n-button>
           </div>
           <div class="p-6">
             <div v-if="loadingTasks" class="space-y-3">
@@ -324,7 +331,7 @@ const deleteTask = async (taskId: string) => {
               <div
                   v-for="task in projectTasks"
                   :key="task.id"
-                  class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3"
+                  class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
               >
                 <div class="flex justify-between items-start mb-2">
                   <p class="font-medium">{{ task.name }}</p>
@@ -345,12 +352,16 @@ const deleteTask = async (taskId: string) => {
                   <span>{{ formatDate(task.startTime) }} - {{ formatDate(task.endTime) }}</span>
                   <div class="flex items-center space-x-2">
                     <span>{{ task.users?.length || 0 }} 人参与</span>
-                    <button
+                    <n-button
                         @click="deleteTask(task.id)"
-                        class="text-red-500 hover:text-red-700 transition-colors"
+                        text
+                        type="error"
+                        size="small"
                     >
-                      <Icon icon="ion:trash"/>
-                    </button>
+                      <template #icon>
+                        <Icon icon="ion:trash"/>
+                      </template>
+                    </n-button>
                   </div>
                 </div>
               </div>
@@ -358,26 +369,20 @@ const deleteTask = async (taskId: string) => {
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- 添加任务对话框 -->
-    <n-modal v-model:show="showAddTaskDialog" title="添加任务">
-      <n-card style="width: 600px"
-              :bordered="false"
-              size="huge"
-              role="dialog"
-              aria-modal="true">
+      <!-- 添加任务对话框 -->
+      <n-modal v-model:show="showAddTaskDialog" title="添加任务" class="w-full max-w-md rounded-xl">
         <div class="space-y-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
               任务名称 <span class="text-red-500">*</span>
             </label>
-            <input
-                v-model="taskForm.name"
+            <n-input
+                v-model:value="taskForm.name"
                 type="text"
                 required
                 placeholder="请输入任务名称"
-                class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                class="w-full"
             />
           </div>
 
@@ -385,12 +390,13 @@ const deleteTask = async (taskId: string) => {
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
               任务描述
             </label>
-            <textarea
-                v-model="taskForm.description"
+            <n-input
+                v-model:value="taskForm.description"
+                type="textarea"
                 rows="3"
                 placeholder="请输入任务描述"
-                class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all resize-none"
-            ></textarea>
+                class="w-full"
+            />
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -435,18 +441,19 @@ const deleteTask = async (taskId: string) => {
               { label: '完成', value: '完成' },
               { label: '延期', value: '延期' }
             ]"
+                class="w-full"
             />
           </div>
         </div>
 
         <template #footer>
           <div class="flex justify-end space-x-3">
-            <n-button @click="showAddTaskDialog = false">取消</n-button>
-            <n-button type="primary" @click="addTask">确定</n-button>
+            <n-button @click="showAddTaskDialog = false" class="rounded-full">取消</n-button>
+            <n-button type="primary" @click="addTask" class="rounded-full">确定</n-button>
           </div>
         </template>
-      </n-card>
-    </n-modal>
+      </n-modal>
+    </main>
   </div>
 </template>
 

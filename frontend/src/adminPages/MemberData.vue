@@ -803,37 +803,43 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="p-4 md:p-6">
-    <div class="max-w-7xl mx-auto rounded-xl mb-6 p-4 duration-200">
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-        <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">成员数据管理</h1>
-        <div class="flex flex-wrap gap-2">
-          <n-button type="primary" @click="showAddMemberModal" class="rounded-lg flex items-center">
-            <template #icon>
-              <Icon icon="ion:person-add" class="text-lg"/>
-            </template>
-            添加成员
-          </n-button>
-          <n-dropdown trigger="hover" :options="downloadOptions" @select="handleDownloadSelect">
-            <n-button class="rounded-lg flex items-center">
+  <div class="min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-300">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <!-- 页面标题 -->
+      <div class="mb-8">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-2xl font-semibold tracking-tight">成员数据管理</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">社团成员信息管理与数据分析</p>
+          </div>
+          <div class="flex items-center space-x-3">
+            <n-button type="primary" @click="showAddMemberModal" class="rounded-full bg-blue-500 hover:bg-blue-600">
               <template #icon>
-                <Icon icon="ion:download" class="text-lg"/>
+                <Icon icon="ion:person-add" class="w-4 h-4"/>
               </template>
-              导出数据
+              添加成员
             </n-button>
-          </n-dropdown>
-          <n-button class="rounded-lg flex items-center" @click="triggerFileInput">
-            <template #icon>
-              <Icon icon="lucide:arrow-big-up-dash" class="text-lg"/>
-            </template>
-            上传数据
-          </n-button>
-          <n-button @click="fetchMembers" class="rounded-lg flex items-center">
-            <template #icon>
-              <Icon icon="ion:refresh" class="text-lg"/>
-            </template>
-            刷新
-          </n-button>
+            <n-dropdown trigger="hover" :options="downloadOptions" @select="handleDownloadSelect">
+              <n-button class="rounded-full">
+                <template #icon>
+                  <Icon icon="ion:download" class="w-4 h-4"/>
+                </template>
+                导出数据
+              </n-button>
+            </n-dropdown>
+            <n-button class="rounded-full" @click="triggerFileInput">
+              <template #icon>
+                <Icon icon="lucide:arrow-big-up-dash" class="w-4 h-4"/>
+              </template>
+              上传数据
+            </n-button>
+            <n-button @click="fetchMembers" class="rounded-full">
+              <template #icon>
+                <Icon icon="ion:refresh" class="w-4 h-4"/>
+              </template>
+              刷新
+            </n-button>
+          </div>
         </div>
       </div>
 
@@ -850,7 +856,7 @@ onMounted(() => {
         <n-tab-pane name="memberData" tab="成员数据">
           <div class="space-y-6">
             <!-- 搜索区域 -->
-            <div class="flex flex-col md:flex-row md:items-center gap-3">
+            <div class="flex flex-col md:flex-row md:items-center gap-3 p-4 rounded-xl bg-white dark:bg-gray-800 transition-colors duration-200">
               <!-- 搜索类型选择 -->
               <div class="w-full md:w-40 flex-shrink-0">
                 <n-select
@@ -899,18 +905,18 @@ onMounted(() => {
             <div v-if="loading">
               <SkeletonLoader type="table" :count="pageSize" :columns="8"/>
             </div>
-            <n-data-table
-                v-else
-                remote
-                :columns="columns"
-                :data="filteredMembers"
-                @update:page-size="onUpdatePageSize"
-                @update:page="onChange"
-                :pagination="paginationConfig"
-                :bordered="false"
-                :loading="loading"
-                class="rounded-xl overflow-hidden bg-white dark:bg-gray-800 shadow-sm transition-colors duration-200"
-            />
+            <div v-else class="rounded-xl overflow-hidden bg-white dark:bg-gray-800 shadow-sm transition-colors duration-200">
+              <n-data-table
+                  remote
+                  :columns="columns"
+                  :data="filteredMembers"
+                  @update:page-size="onUpdatePageSize"
+                  @update:page="onChange"
+                  :pagination="paginationConfig"
+                  :bordered="false"
+                  :loading="loading"
+              />
+            </div>
           </div>
         </n-tab-pane>
 
@@ -974,7 +980,7 @@ onMounted(() => {
           </div>
         </n-tab-pane>
       </n-tabs>
-    </div>
+    </main>
 
     <!-- 添加/编辑成员模态框 -->
     <n-modal v-model:show="showModal" preset="card" class="w-full max-w-md rounded-xl"

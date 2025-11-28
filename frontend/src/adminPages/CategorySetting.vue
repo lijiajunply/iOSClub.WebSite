@@ -1,34 +1,31 @@
 <template>
   <div class="min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-300">
-    <!-- 顶部导航栏 -->
-    <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex items-center justify-between h-16">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <!-- 页面标题 -->
+      <div class="mb-8">
+        <div class="flex items-center justify-between">
           <div class="flex items-center">
-            <n-button text @click="goBack" class="mr-4">
-              <Icon icon="material-symbols:arrow-back" class="w-6 h-6 text-gray-600 dark:text-gray-300"/>
-            </n-button>
-            <h1 class="ml-2 text-lg font-semibold text-gray-900 dark:text-white">
-              分类设置 - {{ category.name || '加载中' }}
-            </h1>
+            <button @click="goBack" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200">
+              <Icon icon="material-symbols:arrow-back" class="w-5 h-5 text-gray-600 dark:text-gray-300"/>
+            </button>
+            <h1 class="ml-3 text-2xl font-semibold tracking-tight">分类设置 - {{ category.name || '加载中' }}</h1>
           </div>
         </div>
       </div>
-    </div>
-
-    <!-- 主要内容区域 -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      
       <!-- 分类信息卡片 -->
-      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm mb-6">
+      <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-lg mb-8">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+          <h2 class="text-lg font-semibold tracking-tight">分类信息</h2>
+        </div>
         <div class="p-6">
-          <h2 class="text-lg font-medium text-gray-900 dark:text-white mb-4">分类信息</h2>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">分类名称</label>
               <n-input
                 v-model:value="category.name"
                 placeholder="请输入分类名称"
-                class="rounded-lg"
+                class="rounded-xl"
                 :bordered="true"
               />
             </div>
@@ -37,18 +34,18 @@
               <n-input
                 :value="category.id"
                 placeholder="分类ID"
-                class="rounded-lg"
+                class="rounded-xl"
                 :bordered="true"
                 disabled
               />
             </div>
           </div>
-          <div class="mt-4">
+          <div class="mt-6">
             <n-button
               type="primary"
               @click="updateCategory"
               :loading="updatingCategory"
-              class="rounded-lg"
+              class="rounded-full bg-blue-500 hover:bg-blue-600"
             >
               更新分类信息
             </n-button>
@@ -57,27 +54,28 @@
       </div>
 
       <!-- 文章排序卡片 -->
-      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm">
-        <div class="p-6">
-          <div class="flex justify-between items-center mb-6">
-            <h2 class="text-lg font-medium text-gray-900 dark:text-white">文章排序</h2>
+      <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-lg">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+          <div class="flex justify-between items-center">
+            <h2 class="text-lg font-semibold tracking-tight">文章排序</h2>
             <n-button
-              type="success"
+              type="primary"
               @click="updateArticleOrders"
               :loading="updatingArticles"
-              class="rounded-lg"
+              class="rounded-full bg-green-500 hover:bg-green-600"
             >
               保存文章顺序
             </n-button>
           </div>
-
+        </div>
+        <div class="p-6">
           <!-- 骨架加载 -->
           <div v-if="loadingArticles" class="space-y-4">
-            <div v-for="i in 5" :key="i" class="flex items-center p-4 bg-gray-50 dark:bg-gray-750 rounded-lg">
-              <div class="bg-gray-200 dark:bg-gray-700 p-2 rounded mr-4 w-8 h-8"></div>
+            <div v-for="i in 5" :key="i" class="flex items-center p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
+              <div class="bg-gray-100 dark:bg-gray-600 p-2 rounded mr-4 w-8 h-8"></div>
               <div class="flex-1">
-                <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
-                <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+                <div class="h-4 bg-gray-100 dark:bg-gray-600 rounded w-3/4 mb-2"></div>
+                <div class="h-3 bg-gray-100 dark:bg-gray-600 rounded w-1/2"></div>
               </div>
             </div>
           </div>
@@ -96,7 +94,7 @@
           >
             <template #item="{ element: article }">
               <div 
-                class="flex items-center p-4 bg-gray-50 dark:bg-gray-750 rounded-lg hover:shadow-md transition-all duration-200 cursor-move"
+                class="flex items-center p-4 bg-gray-50 dark:bg-gray-700 rounded-xl hover:shadow-md transition-all duration-200 cursor-move"
               >
                 <Icon 
                   icon="material-symbols:drag-indicator" 
@@ -121,9 +119,9 @@
           <!-- 空状态 -->
           <div
             v-if="articles.length === 0 && !loadingArticles"
-            class="py-12 flex flex-col items-center justify-center rounded-lg bg-gray-50 dark:bg-gray-750"
+            class="py-12 flex flex-col items-center justify-center rounded-xl bg-gray-50 dark:bg-gray-700"
           >
-            <div class="w-16 h-16 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-full mb-4">
+            <div class="w-16 h-16 flex items-center justify-center bg-gray-100 dark:bg-gray-600 rounded-full mb-4 border border-gray-200 dark:border-gray-500">
               <Icon icon="material-symbols:article-off" class="text-gray-400 dark:text-gray-500 w-7 h-7" />
             </div>
             <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-1">暂无文章</h3>
@@ -131,7 +129,7 @@
           </div>
         </div>
       </div>
-    </div>
+    </main>
   </div>
 </template>
 

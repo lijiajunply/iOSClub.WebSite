@@ -1,116 +1,118 @@
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
-    <!-- 顶部导航栏 -->
-    <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex items-center justify-between h-16">
+  <div class="min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-300">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <!-- 页面标题 -->
+      <div class="mb-8">
+        <div class="flex items-center justify-between">
           <div class="flex items-center">
-            <n-button text @click="goBack" class="mr-4">
-              <Icon icon="material-symbols:arrow-back" class="w-6 h-6 text-gray-600 dark:text-gray-300"/>
-            </n-button>
-            <h1 class="ml-2 text-lg font-semibold text-gray-900 dark:text-white">
+            <button @click="goBack" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200">
+              <Icon icon="material-symbols:arrow-back" class="w-5 h-5 text-gray-600 dark:text-gray-300"/>
+            </button>
+            <h1 class="ml-3 text-2xl font-semibold tracking-tight">
               {{ editingArticle ? '编辑文章' : '新建文章' }}
             </h1>
           </div>
           <div class="flex items-center space-x-3">
-            <n-button @click="saveArticle" type="primary" :loading="saving" class="rounded-full">
+            <n-button 
+              @click="saveArticle" 
+              type="primary" 
+              :loading="saving" 
+              class="rounded-full bg-blue-500 hover:bg-blue-600"
+            >
               保存文章
             </n-button>
           </div>
         </div>
       </div>
-    </div>
-
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      
+      <!-- 内容区域 -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <!-- 编辑区域 -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm">
-          <div class="p-4 border-b border-gray-200 dark:border-gray-700">
-            <h2 class="text-base font-medium text-gray-900 dark:text-white">编辑器</h2>
+        <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-300 hover:shadow-lg">
+          <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 class="text-lg font-semibold tracking-tight">编辑器</h2>
           </div>
-          <div class="p-4">
-            <n-form :model="editForm" ref="formRef" :rules="rules">
-              <div class="space-y-4">
-                <n-form-item label="文章路径 (Path)" path="path">
-                  <n-input
-                      v-model:value="editForm.path"
-                      :disabled="!!editingArticle"
-                      placeholder="请输入文章路径，如：About"
-                      class="rounded-lg"
-                      :bordered="false"
-                  />
-                  <template #feedback>
-                    <p class="text-xs mt-1 text-gray-500 dark:text-gray-400">
-                      路径将作为文章的唯一标识，创建后不可修改
-                    </p>
-                  </template>
-                </n-form-item>
+          <div class="p-6">
+            <n-form :model="editForm" ref="formRef" :rules="rules" class="space-y-6">
+              <n-form-item label="文章路径 (Path)" path="path">
+                <n-input
+                    v-model:value="editForm.path"
+                    :disabled="!!editingArticle"
+                    placeholder="请输入文章路径，如：About"
+                    class="rounded-xl"
+                    :bordered="true"
+                />
+                <template #feedback>
+                  <p class="text-xs mt-1 text-gray-500 dark:text-gray-400">
+                    路径将作为文章的唯一标识，创建后不可修改
+                  </p>
+                </template>
+              </n-form-item>
 
-                <n-form-item label="文章标题" path="title">
-                  <n-input
-                      v-model:value="editForm.title"
-                      placeholder="请输入文章标题"
-                      class="rounded-lg"
-                      :bordered="true"
-                  />
-                </n-form-item>
+              <n-form-item label="文章标题" path="title">
+                <n-input
+                    v-model:value="editForm.title"
+                    placeholder="请输入文章标题"
+                    class="rounded-xl"
+                    :bordered="true"
+                />
+              </n-form-item>
 
-                <n-form-item label="文章分类" path="categoryId">
-                  <n-select
-                      v-model:value="editForm.categoryName"
-                      :options="categoryOptions"
-                      placeholder="请选择文章分类"
-                      filterable
-                      clearable
-                      tag
-                      class="rounded-lg"
-                      :bordered="true"
-                      @update:value="handleCategoryChange"
-                  >
-                  </n-select>
-                  <template #feedback>
-                    <p class="text-xs mt-1 text-gray-500 dark:text-gray-400">
-                      分类用于左侧菜单分组显示，留空则显示在"其他"分类下
-                    </p>
-                  </template>
-                </n-form-item>
+              <n-form-item label="文章分类" path="categoryId">
+                <n-select
+                    v-model:value="editForm.categoryName"
+                    :options="categoryOptions"
+                    placeholder="请选择文章分类"
+                    filterable
+                    clearable
+                    tag
+                    class="rounded-xl"
+                    :bordered="true"
+                    @update:value="handleCategoryChange"
+                >
+                </n-select>
+                <template #feedback>
+                  <p class="text-xs mt-1 text-gray-500 dark:text-gray-400">
+                    分类用于左侧菜单分组显示，留空则显示在"其他"分类下
+                  </p>
+                </template>
+              </n-form-item>
 
-                <n-form-item label="访问权限" path="identity">
-                  <n-select
-                      v-model:value="editForm.identity"
-                      :options="identityOptions"
-                      placeholder="请选择可查看权限"
-                      class="rounded-lg"
-                      :bordered="true"
-                  />
-                </n-form-item>
+              <n-form-item label="访问权限" path="identity">
+                <n-select
+                    v-model:value="editForm.identity"
+                    :options="identityOptions"
+                    placeholder="请选择可查看权限"
+                    class="rounded-xl"
+                    :bordered="true"
+                />
+              </n-form-item>
 
-                <n-form-item label="文章内容" path="content">
-                  <n-input
-                      v-model:value="editForm.content"
-                      type="textarea"
-                      :autosize="{ minRows: 20 }"
-                      placeholder="请输入文章内容（支持Markdown语法）"
-                      class="rounded-lg font-mono text-sm"
-                      :bordered="true"
-                  />
-                </n-form-item>
-              </div>
+              <n-form-item label="文章内容" path="content">
+                <n-input
+                    v-model:value="editForm.content"
+                    type="textarea"
+                    :autosize="{ minRows: 20 }"
+                    placeholder="请输入文章内容（支持Markdown语法）"
+                    class="rounded-xl font-mono text-sm"
+                    :bordered="true"
+                />
+              </n-form-item>
             </n-form>
           </div>
         </div>
 
         <!-- 预览区域 -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm hidden md:block">
-          <div class="p-4 border-b border-gray-200 dark:border-gray-700">
-            <h2 class="text-base font-medium text-gray-900 dark:text-white">预览</h2>
+        <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-300 hover:shadow-lg hidden md:block">
+          <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 class="text-lg font-semibold tracking-tight">预览</h2>
           </div>
-          <div class="p-4 markdown-preview">
+          <div class="p-6 markdown-preview">
             <MarkdownComponent :content="previewContent" :show-nav="false"/>
           </div>
         </div>
       </div>
-    </div>
+    </main>
   </div>
 </template>
 
