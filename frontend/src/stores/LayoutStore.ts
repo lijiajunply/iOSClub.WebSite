@@ -8,6 +8,8 @@ export const useLayoutStore = defineStore('layout', {
         pageTitle: '', // 页面标题
         pageSubtitle: '', // 页面副标题
         showPageActions: false, // 是否显示页面操作栏
+        pageActionsContent: '', // 操作栏HTML内容
+        actionsComponent: null, // 操作栏组件
     }),
     actions: {
         toggleSidebar() {
@@ -30,10 +32,24 @@ export const useLayoutStore = defineStore('layout', {
         setShowPageActions(show: boolean) {
             this.showPageActions = show;
         },
+        setPageActionsContent(content: string) {
+            this.pageActionsContent = content;
+        },
+        clearPageActionsContent() {
+            this.pageActionsContent = '';
+        },
+        setActionsComponent(component: any) {
+            this.actionsComponent = component;
+        },
+        clearActionsComponent() {
+            this.actionsComponent = null;
+        },
         clearPageHeader() {
             this.pageTitle = '';
             this.pageSubtitle = '';
             this.showPageActions = false;
+            this.pageActionsContent = '';
+            this.actionsComponent = null;
         },
     },
 });

@@ -226,28 +226,21 @@
 
             <!-- 操作按钮 -->
             <div class="flex flex-col md:flex-row justify-center gap-4 pt-4">
-              <n-button
-                  type="primary"
+              <button
                   @click="handleSubmit"
-                  :loading="confirmLoading"
-                  size="large"
-                  class="w-full md:w-auto px-8 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-full shadow-sm transition-all"
+                  :disabled="confirmLoading"
+                  class="w-full md:w-auto px-8 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-full shadow-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <template #icon>
-                  <Icon icon="lucide:save" size="18"/>
-                </template>
-                保存修改
-              </n-button>
-              <n-button
+                <Icon icon="lucide:save" size="18"/>
+                <span>{{ confirmLoading ? '保存中...' : '保存修改' }}</span>
+              </button>
+              <button
                   @click="handlePasswordSubmit"
-                  size="large"
-                  class="w-full md:w-auto px-8 py-2.5 bg-purple-500 hover:bg-purple-600 text-white font-medium rounded-full shadow-sm transition-all"
+                  class="w-full md:w-auto px-8 py-2.5 bg-purple-500 hover:bg-purple-600 text-white font-medium rounded-full shadow-sm transition-all flex items-center justify-center gap-2"
               >
-                <template #icon>
-                  <Icon icon="lucide:lock" size="18"/>
-                </template>
-                修改密码
-              </n-button>
+                <Icon icon="lucide:lock" size="18"/>
+                <span>修改密码</span>
+              </button>
             </div>
           </n-form>
         </div>
@@ -306,7 +299,7 @@
 
 <script setup lang="ts">
 import {ref, reactive, onMounted, onBeforeUnmount} from 'vue';
-import {useMessage, NButton, NForm, NFormItem, NInput, NSelect, NModal} from 'naive-ui';
+import {useMessage, NForm, NFormItem, NInput, NSelect, NModal} from 'naive-ui';
 import {Icon} from '@iconify/vue';
 import SkeletonLoader from '../components/SkeletonLoader.vue';
 import {useAuthorizationStore} from '../stores/Authorization';

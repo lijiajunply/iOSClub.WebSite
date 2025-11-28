@@ -1,28 +1,15 @@
 <template>
   <div class="min-h-screen transition-colors duration-300 text-gray-900 dark:text-gray-100">
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- 页面操作栏 -->
-      <div class="flex items-center justify-end space-x-3 mb-8">
-        <n-button v-if="authorizationStore.isAdmin()" @click="showAddResourceModal"
-                  type="primary"
-                  class="rounded-full bg-blue-500 hover:bg-blue-600 text-white flex items-center gap-2">
-          <template #icon>
-            <Icon icon="ion:add" class="w-4 h-4"/>
-          </template>
-          添加资源
-        </n-button>
-      </div>
 
       <!-- Search -->
       <div class="mb-8">
         <div class="relative max-w-md">
-          <n-input v-model:value="searchTerm" placeholder="搜索资源..."
-                   :bordered="false"
-                   class="w-full rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm">
-            <template #prefix>
-              <Icon icon="ion:search" class="text-gray-400 w-5 h-5"/>
-            </template>
-          </n-input>
+          <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <Icon icon="ion:search" class="text-gray-400 w-5 h-5"/>
+          </div>
+          <input v-model="searchTerm" placeholder="搜索资源..."
+                   class="w-full pl-12 pr-4 py-3 rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
         </div>
       </div>
 
@@ -35,11 +22,10 @@
         <h3 class="text-2xl font-semibold mb-2">暂无资源</h3>
         <p class="text-gray-500 dark:text-gray-400 mb-8 max-w-md text-center px-4">
           社团现在还没有任何资源，请添加第一个资源</p>
-        <n-button v-if="authorizationStore.isAdmin()" @click="showAddResourceModal"
-                  type="primary"
+        <button v-if="authorizationStore.isAdmin()" @click="showAddResourceModal"
                   class="rounded-full px-6 py-2.5 text-base bg-blue-500 hover:bg-blue-600 text-white transition-colors">
           添加第一个资源
-        </n-button>
+        </button>
       </div>
 
       <!-- Resource Grid -->
@@ -119,7 +105,7 @@
               <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">资源标签</label>
               <div class="flex flex-wrap gap-2 mb-3">
                 <span v-for="(tag, index) in resourceTags" :key="index"
-                      class="rounded-full px-3 py-1.5 text-sm bg-gradient-to-r from-blue-500 to-indigo-500 text-white flex items-center shadow-sm">
+                      class="rounded-full px-3 py-1.5 text-sm bg-linear-to-r from-blue-500 to-indigo-500 text-white flex items-center shadow-sm">
                   {{ tag }}
                   <button @click="removeTag(index)" type="button"
                           class="ml-2 text-white hover:text-gray-200 focus:outline-none">
@@ -131,7 +117,7 @@
                 <input v-model="newTag" @keyup.enter="addTag" placeholder="输入标签后按回车"
                        class="flex-1 px-4 py-3 rounded-xl bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"/>
                 <button @click="addTag" type="button"
-                        class="px-5 py-3 rounded-xl bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-600 dark:to-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:from-gray-200 hover:to-gray-300 dark:hover:from-gray-500 dark:hover:to-gray-600 transition-all shadow-sm">
+                        class="px-5 py-3 rounded-xl bg-linear-to-r from-gray-100 to-gray-200 dark:from-gray-600 dark:to-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:from-gray-200 hover:to-gray-300 dark:hover:from-gray-500 dark:hover:to-gray-600 transition-all shadow-sm">
                   添加
                 </button>
               </div>
@@ -143,7 +129,7 @@
                 取消
               </button>
               <button type="submit" :disabled="saving"
-                      class="rounded-xl px-6 py-3 transition-all duration-300 font-medium shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white"
+                      class="rounded-xl px-6 py-3 transition-all duration-300 font-medium shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center bg-linear-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white"
                       :class="{ 'opacity-50 cursor-not-allowed': saving }">
                 <span v-if="saving" class="mr-2">
                   <Icon icon="ion:loading" class="w-5 h-5 animate-spin"/>
@@ -159,12 +145,12 @@
 </template>
 
 <script setup lang="ts">
-import {ref, computed, onMounted, onBeforeUnmount} from 'vue'
+import {ref, computed, onMounted, onBeforeUnmount, defineComponent, h} from 'vue'
 import {Icon} from '@iconify/vue'
 import SkeletonLoader from '../components/SkeletonLoader.vue'
 import {useAuthorizationStore} from '../stores/Authorization'
 import {ResourceService} from '../services/ResourceService'
-import {NButton, useDialog, NInput} from 'naive-ui'
+import {useDialog} from 'naive-ui'
 import type {ResourceModel} from '../models'
 import {useLayoutStore} from '../stores/LayoutStore'
 
@@ -347,11 +333,31 @@ onMounted(() => {
 
   // Show page actions
   layoutStore.setShowPageActions(true)
+
+  // 创建操作栏组件
+  const ActionsComponent = defineComponent({
+    setup() {
+      return () => h('div', { class: 'flex items-center justify-end space-x-3' }, [
+        // 添加资源按钮
+        h('button', {
+          class: 'rounded-full bg-blue-500 hover:bg-blue-600 text-white flex items-center gap-2 px-4 py-2 transition-colors',
+          onClick: showAddResourceModal
+        }, [
+          h(Icon, { icon: 'ion:add', class: 'w-4 h-4' }),
+          h('span', '添加资源')
+        ])
+      ])
+    }
+  })
+
+  // 注册操作栏组件到LayoutStore
+  layoutStore.setActionsComponent(ActionsComponent)
 })
 
 onBeforeUnmount(() => {
-  // Clear page header
+  // Clear page header and actions
   layoutStore.clearPageHeader()
+  layoutStore.setActionsComponent(null)
 })
 </script>
 

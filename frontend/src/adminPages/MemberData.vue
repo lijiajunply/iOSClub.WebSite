@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import {ref, computed, h, onMounted, onBeforeUnmount, nextTick} from 'vue'
+import {ref, computed, h, onMounted, onBeforeUnmount, nextTick, defineComponent} from 'vue'
 import {useDialog, useMessage} from 'naive-ui'
 // 导入所有需要的 NaiveUI 组件
 import {
   NButton,
-  NDropdown,
   NTabs,
   NTabPane,
   NSelect,
@@ -52,6 +51,9 @@ const fileInput = ref<HTMLInputElement>()
 const currentPage = ref(1)
 const pageSize = ref(10)
 const totalCount = ref(0)
+
+// 下拉菜单状态
+const dropdownOpen = ref(false)
 
 // 图表引用
 const yearChartRef = ref<HTMLDivElement | null>(null)
@@ -810,6 +812,69 @@ onMounted(() => {
   
   // Show page actions
   layoutStore.setShowPageActions(true)
+
+  // 创建操作栏组件
+  const ActionsComponent = defineComponent({
+    setup() {
+      return () => h('div', { class: 'flex items-center justify-end space-x-3' }, [
+        // 添加成员按钮
+        h('button', {
+          class: 'rounded-full bg-blue-500 hover:bg-blue-600 h-9 space-x-1 px-4 flex items-center justify-center text-gray-100 transition-colors duration-200',
+          onClick: showAddMemberModal
+        }, [
+          h(Icon, { icon: 'ion:person-add', class: 'w-4 h-4' }),
+          h('span', '添加成员')
+        ]),
+        // 导出数据下拉菜单
+        h('div', { class: 'relative' }, [
+          h('button', {
+            class: 'rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 h-9 space-x-1 px-4 flex items-center justify-center text-gray-700 dark:text-gray-300 transition-colors duration-200',
+            onClick: () => dropdownOpen.value = !dropdownOpen.value
+          }, [
+            h(Icon, { icon: 'ion:download', class: 'w-4 h-4' }),
+            h('span', '导出数据')
+          ]),
+          h('div', {
+            class: `absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-lg py-2 z-10 border border-gray-200 dark:border-gray-700 transition-all duration-200 ${dropdownOpen.value ? '' : 'hidden'}`
+          }, [
+            h('button', {
+              class: 'block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150',
+              onClick: () => {
+                dropdownOpen.value = false
+                handleDownloadSelect('csv')
+              }
+            }, '下载CSV文件'),
+            h('button', {
+              class: 'block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150',
+              onClick: () => {
+                dropdownOpen.value = false
+                handleDownloadSelect('json')
+              }
+            }, '下载JSON文件')
+          ])
+        ]),
+        // 上传数据按钮
+        h('button', {
+          class: 'rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 h-9 space-x-1 px-4 flex items-center justify-center text-gray-700 dark:text-gray-300 transition-colors duration-200',
+          onClick: triggerFileInput
+        }, [
+          h(Icon, { icon: 'lucide:arrow-big-up-dash', class: 'w-4 h-4' }),
+          h('span', '上传数据')
+        ]),
+        // 刷新按钮
+        h('button', {
+          class: 'rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 h-9 space-x-1 px-4 flex items-center justify-center text-gray-700 dark:text-gray-300 transition-colors duration-200',
+          onClick: fetchMembers
+        }, [
+          h(Icon, { icon: 'ion:refresh', class: 'w-4 h-4' }),
+          h('span', '刷新')
+        ])
+      ])
+    }
+  })
+
+  // 注册操作栏组件到LayoutStore
+  layoutStore.setActionsComponent(ActionsComponent)
 })
 
 onBeforeUnmount(() => {
@@ -822,35 +887,6 @@ onBeforeUnmount(() => {
 <template>
   <div class="min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-300">
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- 页面操作栏 -->
-      <div class="flex items-center justify-end space-x-3 mb-8">
-        <n-button type="primary" @click="showAddMemberModal" class="rounded-full bg-blue-500 hover:bg-blue-600">
-          <template #icon>
-            <Icon icon="ion:person-add" class="w-4 h-4"/>
-          </template>
-          添加成员
-        </n-button>
-        <n-dropdown trigger="hover" :options="downloadOptions" @select="handleDownloadSelect">
-          <n-button class="rounded-full">
-            <template #icon>
-              <Icon icon="ion:download" class="w-4 h-4"/>
-            </template>
-            导出数据
-          </n-button>
-        </n-dropdown>
-        <n-button class="rounded-full" @click="triggerFileInput">
-          <template #icon>
-            <Icon icon="lucide:arrow-big-up-dash" class="w-4 h-4"/>
-          </template>
-          上传数据
-        </n-button>
-        <n-button @click="fetchMembers" class="rounded-full">
-          <template #icon>
-            <Icon icon="ion:refresh" class="w-4 h-4"/>
-          </template>
-          刷新
-        </n-button>
-      </div>
       
       <input
           ref="fileInput"
@@ -865,9 +901,9 @@ onBeforeUnmount(() => {
         <n-tab-pane name="memberData" tab="成员数据">
           <div class="space-y-6">
             <!-- 搜索区域 -->
-            <div class="flex flex-col md:flex-row md:items-center gap-3 p-4 rounded-xl bg-white dark:bg-gray-800 transition-colors duration-200">
+            <div class="flex flex-col md:flex-row md:items-center gap-3 pt-4">
               <!-- 搜索类型选择 -->
-              <div class="w-full md:w-40 flex-shrink-0">
+              <div class="w-full md:w-40 shrink-0">
                 <n-select
                     v-model:value="searchItem"
                     :options="searchItems"
@@ -876,7 +912,7 @@ onBeforeUnmount(() => {
               </div>
 
               <!-- 搜索输入框 -->
-              <div class="flex-grow relative">
+              <div class="grow relative">
                 <n-input
                     v-model:value="searchTerm"
                     placeholder="请输入搜索项"
@@ -891,7 +927,7 @@ onBeforeUnmount(() => {
 
               <!-- 搜索结果数量 -->
               <div
-                  class="flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-lg px-4 py-2 min-w-[80px]">
+                  class="flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-lg px-4 py-2 min-w-20">
                 <span class="text-gray-500 dark:text-gray-300 mr-1">总计:</span>
                 <n-number-animation
                     ref="numberAnimationInstRef"

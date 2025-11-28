@@ -1,16 +1,6 @@
 <template>
   <div class="min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-300">
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- 页面操作栏 -->
-      <div class="flex flex-wrap gap-2 mb-8">
-        <button
-            @click="() => openDepartment()"
-            class="px-4 py-2 rounded-full bg-blue-500 hover:bg-blue-600 text-white transition-colors flex items-center"
-        >
-          <Icon icon="ion:add" class="mr-1"/>
-          添加部门
-        </button>
-      </div>
 
       <!-- 主内容区 -->
       <div
@@ -658,7 +648,7 @@
 </template>
 
 <script setup lang="ts">
-import {ref, onMounted, onBeforeUnmount, h, computed, nextTick, watch} from 'vue'
+import {ref, onMounted, onBeforeUnmount, h, computed, nextTick, watch, defineComponent} from 'vue'
 import {useRouter} from 'vue-router'
 import {
   useMessage,
@@ -671,7 +661,9 @@ import {
   NModal,
   NForm,
   NFormItem,
+  NEmpty
 } from 'naive-ui'
+import {DataTableColumns} from 'naive-ui'
 import {Icon} from '@iconify/vue'
 import SkeletonLoader from '../components/SkeletonLoader.vue'
 import {DepartmentService} from '../services/DepartmentService'
@@ -1358,6 +1350,25 @@ onMounted(() => {
 
   // Show page actions
   layoutStore.setShowPageActions(true)
+
+  // 创建操作栏组件
+  const ActionsComponent = defineComponent({
+    setup() {
+      return () => h('div', { class: 'flex flex-wrap gap-2' }, [
+        // 添加部门按钮
+        h('button', {
+          class: 'px-4 py-2 rounded-full bg-blue-500 hover:bg-blue-600 text-white transition-colors flex items-center',
+          onClick: () => openDepartment()
+        }, [
+          h(Icon, { icon: 'ion:add', class: 'mr-1' }),
+          h('span', '添加部门')
+        ])
+      ])
+    }
+  })
+
+  // 注册操作栏组件到LayoutStore
+  layoutStore.setActionsComponent(ActionsComponent);
 })
 
 onBeforeUnmount(() => {

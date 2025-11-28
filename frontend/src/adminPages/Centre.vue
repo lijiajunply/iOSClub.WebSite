@@ -23,17 +23,13 @@
                 </n-tag>
               </div>
               <div class="mt-4">
-                <n-button
-                    type="primary"
-                    size="small"
-                    class="rounded-full bg-blue-500 hover:bg-blue-600"
+                <button
                     @click="goToPersonalData"
+                    class="rounded-full bg-blue-500 hover:bg-blue-600 h-9 space-x-1 px-4 flex items-center justify-center text-gray-100 transition-colors duration-200"
                 >
-                  <template #icon>
-                    <Icon icon="material-symbols:person-outline" class="w-4 h-4"/>
-                  </template>
-                  编辑个人信息
-                </n-button>
+                  <Icon icon="material-symbols:person-outline" class="w-4 h-4"/>
+                  <span>编辑个人信息</span>
+                </button>
               </div>
             </div>
           </div>
@@ -333,7 +329,7 @@
 <script setup>
 import {ref, onMounted} from 'vue'
 import {useRouter} from 'vue-router'
-import {NTag, NButton, NEmpty} from 'naive-ui'
+import {NTag, NEmpty} from 'naive-ui'
 import {Icon} from '@iconify/vue'
 import SkeletonLoader from '../components/SkeletonLoader.vue'
 import {ToolService} from '../services/ToolService.ts'

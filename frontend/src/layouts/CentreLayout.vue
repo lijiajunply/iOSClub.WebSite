@@ -27,7 +27,10 @@
               <p v-if="pageSubtitle" class="text-xs text-gray-500 dark:text-gray-400">{{ pageSubtitle }}</p>
             </div>
             <div class="flex items-center space-x-2" v-if="showPageActions">
-              <slot name="actions"></slot>
+              <!-- 使用动态组件渲染操作栏内容 -->
+              <component :is="layoutStore.actionsComponent" v-if="layoutStore.actionsComponent" />
+              <!-- 回退：使用v-html渲染HTML内容 -->
+              <div v-else v-html="layoutStore.pageActionsContent" />
             </div>
           </div>
           
@@ -61,7 +64,10 @@
             <p v-if="pageSubtitle" class="text-xs text-gray-500 dark:text-gray-400">{{ pageSubtitle }}</p>
           </div>
           <div class="flex items-center space-x-2" v-if="showPageActions">
-            <slot name="actions"></slot>
+            <!-- 使用动态组件渲染操作栏内容 -->
+            <component :is="layoutStore.actionsComponent" v-if="layoutStore.actionsComponent" />
+            <!-- 回退：使用v-html渲染HTML内容 -->
+            <div v-else v-html="layoutStore.pageActionsContent" />
           </div>
         </div>
       </div>
@@ -91,6 +97,8 @@ const {isDark} = storeToRefs(themeStore)
 const {toggleTheme} = themeStore
 const layoutStore = useLayoutStore()
 const {isMobile, pageTitle, pageSubtitle, showPageActions} = storeToRefs(layoutStore)
+
+// 不再需要本地actionsComponent ref和watch，直接使用layoutStore.actionsComponent
 
 const toggleSidebar = () => {
   layoutStore.showSidebar = !layoutStore.showSidebar

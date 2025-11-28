@@ -42,18 +42,12 @@
                         class="drag-handle text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors cursor-grab active:cursor-grabbing mr-3"
                     />
                   </div>
-                  <n-button
-                      type="primary"
-                      size="small"
-                      quaternary
-                      circle
-                      class="h-8 w-8 p-0 rounded-full"
+                  <button
+                      class="h-8 w-8 p-0 rounded-full bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-200 dark:hover:bg-blue-800/40 flex items-center justify-center text-blue-600 dark:text-blue-400 transition-colors duration-200"
                       @click.stop="goToCategorySetting(category)"
                   >
-                    <template #icon>
-                      <Icon icon="material-symbols:settings" class="w-4 h-4"/>
-                    </template>
-                  </n-button>
+                    <Icon icon="material-symbols:settings" class="w-4 h-4"/>
+                  </button>
                 </div>
 
                 <h3 class="font-medium text-lg mb-2 text-gray-900 dark:text-white">{{ category.name }}</h3>
@@ -87,7 +81,7 @@
 <script setup lang="ts">
 import {ref, onMounted, onBeforeUnmount} from 'vue';
 import {useRouter} from 'vue-router';
-import {NButton, useMessage} from 'naive-ui';
+import {useMessage} from 'naive-ui';
 import {Icon} from '@iconify/vue';
 import draggable from 'vuedraggable';
 import {CategoryService} from '../services/CategoryService';

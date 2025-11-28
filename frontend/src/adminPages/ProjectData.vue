@@ -2,7 +2,7 @@
 import {ref, computed, onMounted, onBeforeUnmount} from 'vue'
 import {useRouter, useRoute} from 'vue-router'
 import {useMessage} from 'naive-ui'
-import {NDatePicker, NButton, NSelect, NModal} from 'naive-ui'
+import {NDatePicker, NSelect, NModal} from 'naive-ui'
 import {Icon} from '@iconify/vue'
 import {ProjectService} from '../services/ProjectService'
 import type {ProjectModel, StaffModel, TaskModel} from '../models'
@@ -198,15 +198,13 @@ const deleteTask = async (taskId: string) => {
 
       <!-- 返回按钮 -->
       <div class="mb-6">
-        <n-button
+        <button
             @click="router.push('/Centre/Admin')"
-            class="rounded-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center"
+            class="rounded-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-2 px-4 py-2"
         >
-          <template #icon>
-            <Icon icon="ion:arrow-back"/>
-          </template>
-          返回
-        </n-button>
+          <Icon icon="ion:arrow-back" class="w-4 h-4"/>
+          <span>返回</span>
+        </button>
       </div>
 
       <!-- 项目基本信息 -->
@@ -244,16 +242,13 @@ const deleteTask = async (taskId: string) => {
                 </div>
               </div>
             </div>
-            <n-button
+            <button
                 @click="router.push(`/Centre/ProjectEditor/${project.id}`)"
-                type="primary"
-                class="rounded-full bg-blue-500 hover:bg-blue-600 text-white transition-colors flex items-center"
+                class="rounded-full bg-blue-500 hover:bg-blue-600 text-white transition-colors flex items-center gap-2 px-4 py-2"
             >
-              <template #icon>
-                <Icon icon="ion:edit"/>
-              </template>
-              编辑
-            </n-button>
+              <Icon icon="ion:edit" class="w-4 h-4"/>
+              <span>编辑</span>
+            </button>
           </div>
         </div>
       </div>
@@ -307,16 +302,13 @@ const deleteTask = async (taskId: string) => {
               <h2 class="text-lg font-medium">项目任务</h2>
               <p class="text-sm text-gray-500 dark:text-gray-400">该项目下的任务列表</p>
             </div>
-            <n-button
+            <button
                 @click="openAddTaskDialog"
-                type="primary"
-                class="rounded-full bg-blue-500 hover:bg-blue-600 text-white text-sm transition-colors flex items-center"
+                class="rounded-full bg-blue-500 hover:bg-blue-600 text-white text-sm transition-colors flex items-center gap-2 px-4 py-2"
             >
-              <template #icon>
-                <Icon icon="ion:add"/>
-              </template>
-              添加任务
-            </n-button>
+              <Icon icon="ion:add" class="w-4 h-4"/>
+              <span>添加任务</span>
+            </button>
           </div>
           <div class="p-6">
             <div v-if="loadingTasks" class="space-y-3">
@@ -362,16 +354,12 @@ const deleteTask = async (taskId: string) => {
                   <span>{{ formatDate(task.startTime) }} - {{ formatDate(task.endTime) }}</span>
                   <div class="flex items-center space-x-2">
                     <span>{{ task.users?.length || 0 }} 人参与</span>
-                    <n-button
+                    <button
                         @click="deleteTask(task.id)"
-                        text
-                        type="error"
-                        size="small"
+                        class="text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 p-1 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                     >
-                      <template #icon>
-                        <Icon icon="ion:trash"/>
-                      </template>
-                    </n-button>
+                      <Icon icon="ion:trash" class="w-4 h-4"/>
+                    </button>
                   </div>
                 </div>
               </div>

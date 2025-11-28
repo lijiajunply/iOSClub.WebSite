@@ -1,19 +1,6 @@
 <template>
   <div class="min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-300">
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- 页面操作栏 -->
-      <div class="flex items-center justify-end gap-3 mb-8">
-        <button @click="showHelpGuide = true"
-                class="px-4 py-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors flex items-center justify-center">
-          <Icon icon="ion:help-circle-outline" class="mr-1" width="18" height="18"/>
-          帮助
-        </button>
-        <button @click="openCreateModal"
-                class="px-4 py-2 rounded-full bg-blue-500 hover:bg-blue-600 text-white transition-colors flex items-center justify-center">
-          <Icon icon="ion:add" class="mr-1" width="18" height="18"/>
-          创建客户端
-        </button>
-      </div>
 
       <!-- 搜索和筛选 -->
       <div class="mb-6">
@@ -669,7 +656,7 @@
 </template>
 
 <script setup lang="ts">
-import {ref, computed, onMounted, onBeforeUnmount} from 'vue';
+import {ref, computed, onMounted, onBeforeUnmount, defineComponent, h} from 'vue';
 import {useMessage, useDialog, NModal} from 'naive-ui';
 import {Icon} from '@iconify/vue';
 import HelpGuide from '../components/HelpGuide.vue';
@@ -930,6 +917,33 @@ onMounted(() => {
 
   // Show page actions
   layoutStore.setShowPageActions(true);
+
+  // 创建操作栏组件
+  const ActionsComponent = defineComponent({
+    setup() {
+      return () => h('div', { class: 'flex items-center justify-end gap-3' }, [
+        // 帮助按钮
+        h('button', {
+          class: 'px-4 py-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors flex items-center justify-center',
+          onClick: () => showHelpGuide.value = true
+        }, [
+          h(Icon, { icon: 'ion:help-circle-outline', class: 'mr-1', width: 18, height: 18 }),
+          h('span', '帮助')
+        ]),
+        // 创建客户端按钮
+        h('button', {
+          class: 'px-4 py-2 rounded-full bg-blue-500 hover:bg-blue-600 text-white transition-colors flex items-center justify-center',
+          onClick: openCreateModal
+        }, [
+          h(Icon, { icon: 'ion:add', class: 'mr-1', width: 18, height: 18 }),
+          h('span', '创建客户端')
+        ])
+      ])
+    }
+  })
+
+  // 注册操作栏组件到LayoutStore
+  layoutStore.setActionsComponent(ActionsComponent);
 });
 
 onBeforeUnmount(() => {

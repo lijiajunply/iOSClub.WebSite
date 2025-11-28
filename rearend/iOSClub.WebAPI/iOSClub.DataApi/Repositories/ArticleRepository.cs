@@ -25,12 +25,9 @@ public class ArticleRepository(IDbContextFactory<ClubContext> factory, ICategory
         {
             Path = x.Path,
             Title = x.Title,
-            Content = x.Content,
             LastWriteTime = x.LastWriteTime,
             Category = x.Category == null ? null : new CategoryModel() { Name = x.Category.Name },
-            ArticleOrder = x.ArticleOrder,
-            Identity = x.Identity,
-            CategoryId = x.CategoryId,
+            Identity = x.Identity
         }).ToListAsync();
         return articles;
     }

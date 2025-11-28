@@ -1,17 +1,6 @@
 <template>
   <div class="min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-300">
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- 页面操作栏 -->
-      <div class="flex items-center justify-end space-x-3 mb-8">
-        <n-button 
-          @click="saveArticle" 
-          type="primary" 
-          :loading="saving" 
-          class="rounded-full bg-blue-500 hover:bg-blue-600"
-        >
-          保存文章
-        </n-button>
-      </div>
       <!-- 返回按钮 -->
       <div class="mb-6">
         <button @click="goBack" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200">
@@ -111,7 +100,7 @@
 </template>
 
 <script setup lang="ts">
-import {ref, computed, onMounted, onBeforeUnmount} from 'vue'
+import {ref, computed, onMounted, onBeforeUnmount, defineComponent, h} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
 import {useMessage, NButton, NForm, NFormItem, NInput, NSelect} from 'naive-ui'
 import {Icon} from '@iconify/vue'
@@ -303,6 +292,25 @@ onMounted(async () => {
   // Show page actions
   layoutStore.setShowPageActions(true)
 
+  // 创建操作栏组件
+  const ActionsComponent = defineComponent({
+    setup() {
+      return () => h('div', { class: 'flex items-center justify-end space-x-3' }, [
+        // 保存文章按钮
+        h('button', {
+          class: 'rounded-full bg-blue-500 hover:bg-blue-600 h-9 space-x-1 px-4 flex items-center justify-center text-gray-100',
+          onClick: saveArticle,
+          disabled: saving.value
+        }, [
+          saving.value ? h('span', '保存中...') : h('span', '保存文章')
+        ])
+      ])
+    }
+  })
+
+  // 注册操作栏组件到LayoutStore
+  layoutStore.setActionsComponent(ActionsComponent)
+
   // 先获取分类选项
   await fetchCategoryOptions()
 
@@ -314,7 +322,7 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
-  // Clear page header
+  // Clear page header and actions
   layoutStore.clearPageHeader()
 })
 </script>

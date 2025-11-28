@@ -97,23 +97,11 @@
           </div>
 
           <!-- 操作按钮组 -->
-          <div class="flex items-end gap-2">
-            <n-button type="default" @click="resetFilters" class="flex-1">
-              重置过滤
-            </n-button>
-            <n-button type="primary" @click="refreshLogs" :loading="loading" class="flex-1">
-              <template #icon>
-                <Icon icon="material-symbols:refresh" class="w-4.5 h-4.5"/>
-              </template>
-              刷新日志
-            </n-button>
-            <n-button type="error" @click="showCleanupDialog = true" class="flex-1">
-              <template #icon>
-                <Icon icon="material-symbols:delete-outline" class="w-4.5 h-4.5"/>
-              </template>
-              清理日志
-            </n-button>
-          </div>
+        <div class="flex items-end gap-2">
+          <n-button type="default" @click="resetFilters" class="flex-1">
+            重置过滤
+          </n-button>
+        </div>
         </div>
 
         <!-- 高级过滤 (默认折叠) -->
@@ -329,7 +317,7 @@
 </template>
 
 <script setup lang="ts">
-import {ref, computed, onMounted, onBeforeUnmount} from 'vue'
+import {ref, computed, onMounted, onBeforeUnmount, defineComponent, h} from 'vue'
 import {
   NTag,
   NSelect,
@@ -615,8 +603,35 @@ onMounted(async (): Promise<void> => {
       '查看、过滤和分析系统运行日志'
   );
 
-  // Show page actions (none for this page)
-  layoutStore.setShowPageActions(false);
+  // Show page actions
+  layoutStore.setShowPageActions(true);
+
+  // 创建操作栏组件
+  const ActionsComponent = defineComponent({
+    setup() {
+      return () => h('div', { class: 'flex items-center justify-end space-x-3' }, [
+        // 刷新日志按钮
+        h('button', {
+          class: 'rounded-full bg-blue-500 hover:bg-blue-600 h-9 space-x-1 px-4 flex items-center justify-center text-gray-100 transition-colors duration-200',
+          onClick: refreshLogs
+        }, [
+          h(Icon, { icon: 'material-symbols:refresh', class: 'w-4.5 h-4.5' }),
+          h('span', '刷新日志')
+        ]),
+        // 清理日志按钮
+        h('button', {
+          class: 'rounded-full bg-red-500 hover:bg-red-600 h-9 space-x-1 px-4 flex items-center justify-center text-gray-100 transition-colors duration-200',
+          onClick: () => showCleanupDialog.value = true
+        }, [
+          h(Icon, { icon: 'material-symbols:delete-outline', class: 'w-4.5 h-4.5' }),
+          h('span', '清理日志')
+        ])
+      ])
+    }
+  })
+
+  // 注册操作栏组件到LayoutStore
+  layoutStore.setActionsComponent(ActionsComponent);
 
   // 加载日志数据
   await getLogs();

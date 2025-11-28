@@ -1,23 +1,6 @@
 <template>
   <div class="min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-300">
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- 页面操作栏 -->
-      <div class="flex items-center justify-end space-x-3 mb-8">
-        <button
-          @click="goToCategoryManager"
-          class="rounded-full bg-blue-500 hover:bg-blue-600 h-9 space-x-1 px-2 flex items-center justify-center text-gray-100"
-        >
-          <Icon icon="material-symbols:category" class="w-4 h-4"/>
-          <span>管理分类和文章排序</span>
-        </button>
-
-        <button
-            class="bg-blue-500 text-white w-9 h-9 rounded-full shadow-lg flex items-center justify-center hover:bg-blue-600 hover:scale-105 transition-all duration-200"
-            @click="openCreateModal"
-        >
-          <Icon icon="material-symbols:add" class="w-4 h-4"/>
-        </button>
-      </div>
       
       <!-- 主要内容区域 -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
@@ -141,7 +124,7 @@
 </template>
 
 <script setup lang="ts">
-import {ref, onMounted, onBeforeUnmount} from 'vue'
+import {ref, onMounted, onBeforeUnmount, defineComponent, h} from 'vue'
 import {useRouter} from 'vue-router'
 import {useDialog, useMessage, NButton, NTag} from 'naive-ui'
 import {Icon} from '@iconify/vue'
@@ -264,6 +247,33 @@ onMounted(() => {
 
   // Show page actions
   layoutStore.setShowPageActions(true)
+
+  // 创建操作栏组件
+  const ActionsComponent = defineComponent({
+    setup() {
+      return () => h('div', { class: 'flex items-center justify-end space-x-3' }, [
+        // 管理分类和文章排序按钮
+        h('button', {
+          class: 'rounded-full bg-blue-500 hover:bg-blue-600 h-9 space-x-1 px-2 flex items-center justify-center text-gray-100',
+          onClick: goToCategoryManager
+        }, [
+          h(Icon, { icon: 'material-symbols:category', class: 'w-4 h-4' }),
+          h('span', '管理分类和文章排序')
+        ]),
+
+        // 创建文章按钮
+        h('button', {
+          class: 'bg-blue-500 text-white w-9 h-9 rounded-full shadow-lg flex items-center justify-center hover:bg-blue-600 hover:scale-105 transition-all duration-200',
+          onClick: openCreateModal
+        }, [
+          h(Icon, { icon: 'material-symbols:add', class: 'w-4 h-4' })
+        ])
+      ])
+    }
+  })
+
+  // 注册操作栏组件到LayoutStore
+  layoutStore.setActionsComponent(ActionsComponent)
 
   fetchArticles()
 })

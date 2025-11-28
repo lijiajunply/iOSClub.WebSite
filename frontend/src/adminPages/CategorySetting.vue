@@ -38,14 +38,13 @@
             </div>
           </div>
           <div class="mt-6">
-            <n-button
-                type="primary"
+            <button
                 @click="updateCategory"
-                :loading="updatingCategory"
-                class="rounded-full bg-blue-500 hover:bg-blue-600"
+                :disabled="updatingCategory"
+                class="rounded-full bg-blue-500 hover:bg-blue-600 h-9 space-x-1 px-4 flex items-center justify-center text-gray-100 transition-colors duration-200"
             >
-              更新分类信息
-            </n-button>
+              {{ updatingCategory ? '更新中...' : '更新分类信息' }}
+            </button>
           </div>
         </div>
       </div>
@@ -56,14 +55,13 @@
         <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
           <div class="flex justify-between items-center">
             <h2 class="text-lg font-semibold tracking-tight">文章排序</h2>
-            <n-button
-                type="primary"
+            <button
                 @click="updateArticleOrders"
-                :loading="updatingArticles"
-                class="rounded-full bg-green-500 hover:bg-green-600"
+                :disabled="updatingArticles"
+                class="rounded-full bg-green-500 hover:bg-green-600 h-9 space-x-1 px-4 flex items-center justify-center text-gray-100 transition-colors duration-200"
             >
-              保存文章顺序
-            </n-button>
+              {{ updatingArticles ? '保存中...' : '保存文章顺序' }}
+            </button>
           </div>
         </div>
         <div class="p-6">
@@ -135,7 +133,7 @@
 <script setup lang="ts">
 import {ref, onMounted, onBeforeUnmount} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
-import {useMessage, NButton, NInput, NTag} from 'naive-ui';
+import {useMessage, NInput, NTag} from 'naive-ui';
 import {Icon} from '@iconify/vue';
 import draggable from 'vuedraggable';
 import {CategoryService} from '../services/CategoryService';

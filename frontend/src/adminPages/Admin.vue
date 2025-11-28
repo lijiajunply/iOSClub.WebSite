@@ -1,33 +1,6 @@
 <template>
   <div class="min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-300">
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- 页面操作栏 -->
-      <div class="flex items-center justify-end space-x-3 mb-8">
-        <button v-if="isAdmin" size="small" class="rounded-full bg-blue-500 hover:bg-blue-600 h-9 space-x-1 px-2 flex items-center justify-center text-gray-100"
-          @click="triggerFileInput">
-          <Icon icon="material-symbols:upload" class="w-4 h-4" />
-          <span>上传数据</span>
-        </button>
-
-        <div v-if="isAdmin" class="relative" ref="dropdownContainer">
-          <button @click="toggleDropdown"
-            class="h-9 w-9 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200">
-            <Icon icon="material-symbols:more-horiz" class="w-5 h-5 text-gray-600 dark:text-gray-400" />
-          </button>
-
-          <div v-if="dropdownOpen"
-            class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-lg py-2 z-10 border border-gray-200 dark:border-gray-700 transition-all duration-200">
-            <button @click="handleDropdownSelect('download')"
-              class="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150">
-              下载所有数据
-            </button>
-            <button @click="handleDropdownSelect('remove')"
-              class="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-150">
-              删除所有数据
-            </button>
-          </div>
-        </div>
-      </div>
 
       <!-- 加载状态 -->
       <div v-if="loading" class="space-y-8">
@@ -138,7 +111,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { ref, onMounted, onBeforeUnmount, nextTick, defineComponent, h } from 'vue'
 import { useMessage, useDialog, NButton } from 'naive-ui'
 import { Icon } from '@iconify/vue'
 import SkeletonLoader from '../components/SkeletonLoader.vue'
@@ -153,7 +126,6 @@ const layoutStore = useLayoutStore()
 
 // Refs
 const fileInput = ref<HTMLInputElement>()
-const dropdownContainer = ref<HTMLElement>()
 const dropdownOpen = ref(false)
 const loading = ref(false)
 
@@ -174,26 +146,17 @@ const triggerFileInput = () => {
   fileInput.value?.click()
 }
 
-// Dropdown methods
+// 下拉菜单处理
 const toggleDropdown = () => {
   dropdownOpen.value = !dropdownOpen.value
 }
 
-const handleDropdownSelect = (key: string) => {
-  dropdownOpen.value = false
-  switch (key) {
-    case 'download':
-      downloadAllData()
-      break
-    case 'remove':
-      removeAllData()
-      break
-  }
-}
-
-// Click outside to close dropdown
+// 点击外部关闭下拉菜单
 const handleClickOutside = (event: MouseEvent) => {
-  if (dropdownContainer.value && !dropdownContainer.value.contains(event.target as Node)) {
+  const clickedElement = event.target as HTMLElement
+  const isClickInsideDropdown = clickedElement.closest('.action-dropdown-container')
+  
+  if (!isClickInsideDropdown) {
     dropdownOpen.value = false
   }
 }
@@ -304,6 +267,8 @@ const fetchData = async () => {
   }
 }
 
+
+
 // Mount and unmount lifecycle
 onMounted(async () => {
   // Set page header
@@ -315,18 +280,93 @@ onMounted(async () => {
   // Show page actions
   layoutStore.setShowPageActions(true)
 
+  // 创建操作栏组件
+  const ActionsComponent = defineComponent({
+    setup() {
+      const localDropdownOpen = ref(false)
+      
+      const localToggleDropdown = () => {
+        localDropdownOpen.value = !localDropdownOpen.value
+      }
+      
+      const localHandleClickOutside = (event: MouseEvent) => {
+        const clickedElement = event.target as HTMLElement
+        const isClickInsideDropdown = clickedElement.closest('.action-dropdown-container')
+        
+        if (!isClickInsideDropdown) {
+          localDropdownOpen.value = false
+        }
+      }
+      
+      // 添加点击外部关闭下拉菜单的监听器
+      onMounted(() => {
+        document.addEventListener('click', localHandleClickOutside)
+      })
+      
+      onBeforeUnmount(() => {
+        document.removeEventListener('click', localHandleClickOutside)
+      })
+      
+      return () => h('div', { class: 'flex items-center justify-end space-x-3' }, [
+        // 上传数据按钮
+        h('button', {
+          size: 'small',
+          class: 'rounded-full bg-blue-500 hover:bg-blue-600 h-9 space-x-1 px-2 flex items-center justify-center text-gray-100',
+          onClick: triggerFileInput
+        }, [
+          h(Icon, { icon: 'material-symbols:upload', class: 'w-4 h-4' }),
+          h('span', '上传数据')
+        ]),
+        
+        // 下拉菜单
+        h('div', { class: 'relative action-dropdown-container' }, [
+          h('button', {
+            onClick: localToggleDropdown,
+            class: 'h-9 w-9 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200'
+          }, [
+            h(Icon, { icon: 'material-symbols:more-horiz', class: 'w-5 h-5 text-gray-600 dark:text-gray-400' })
+          ]),
+          
+          // 下拉菜单内容
+          h('div', {
+            class: `absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-lg py-2 z-10 border border-gray-200 dark:border-gray-700 transition-all duration-200 ${localDropdownOpen.value ? '' : 'hidden'}`
+          }, [
+            h('button', {
+              onClick: () => {
+                localDropdownOpen.value = false
+                downloadAllData()
+              },
+              class: 'block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150'
+            }, '下载所有数据'),
+            h('button', {
+              onClick: () => {
+                localDropdownOpen.value = false
+                removeAllData()
+              },
+              class: 'block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-150'
+            }, '删除所有数据')
+          ])
+        ])
+      ])
+    }
+  })
+
+  // 注册操作栏组件到LayoutStore
+  layoutStore.setActionsComponent(ActionsComponent)
+
+  // 添加点击外部关闭下拉菜单的监听器
+  document.addEventListener('click', handleClickOutside)
+
   isAdmin.value = authorizationStore.isAdmin()
   await fetchData()
   await nextTick()
-
-  // Add click outside listener
-  document.addEventListener('click', handleClickOutside)
 })
 
 onBeforeUnmount(() => {
-  // Clear page header
+  // Clear page header and actions
   layoutStore.clearPageHeader()
 
+  // 移除点击外部关闭下拉菜单的监听器
   document.removeEventListener('click', handleClickOutside)
 })
 </script>

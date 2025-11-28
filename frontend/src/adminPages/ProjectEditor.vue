@@ -6,15 +6,13 @@
 
       <!-- 返回按钮 -->
       <div class="mb-6">
-        <n-button
+        <button
             @click="handleCancel"
-            class="rounded-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center"
+            class="px-4 py-2.5 rounded-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center text-gray-700 dark:text-gray-200"
         >
-          <template #icon>
-            <Icon icon="ion:arrow-back"/>
-          </template>
+          <Icon icon="ion:arrow-back" class="mr-2"/>
           返回
-        </n-button>
+        </button>
       </div>
 
       <!-- 表单区域 -->
@@ -109,28 +107,23 @@
             <!-- 表单底部操作按钮 -->
             <div
                 class="flex flex-col sm:flex-row sm:justify-end gap-3 mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-              <n-button
+              <button
                   @click="handleCancel"
                   class="px-4 py-2.5 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 transition-colors flex-1 sm:flex-none flex items-center justify-center"
               >
-                <template #icon>
-                  <Icon icon="ion:close"/>
-                </template>
+                <Icon icon="ion:close" class="mr-2"/>
                 取消
-              </n-button>
-              <n-button
-                  type="primary"
+              </button>
+              <button
                   :disabled="showLoadingModal || !isFormValid"
                   class="px-6 py-2.5 rounded-full bg-blue-500 hover:bg-blue-600 text-white transition-colors flex-1 sm:flex-none flex items-center justify-center"
                   :class="{ 'opacity-70 cursor-not-allowed': showLoadingModal || !isFormValid }"
-                  native-type="submit"
+                  type="submit"
               >
-                <n-spin v-if="showLoadingModal" class="mr-2"/>
-                <template v-if="!showLoadingModal" #icon>
-                  <Icon icon="ion:checkmark"/>
-                </template>
+                <div v-if="showLoadingModal" class="mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <Icon v-if="!showLoadingModal" icon="ion:checkmark" class="mr-2"/>
                 {{ isEditing ? '更新项目' : '创建项目' }}
-              </n-button>
+              </button>
             </div>
           </form>
         </div>
@@ -156,7 +149,7 @@ import {ref, computed, onMounted, onBeforeUnmount} from 'vue'
 import {useRouter, useRoute} from 'vue-router'
 import {useMessage} from 'naive-ui'
 import {Icon} from '@iconify/vue'
-import {NDatePicker, NSelect, NModal, NSpin} from 'naive-ui'
+import {NDatePicker, NSelect, NModal} from 'naive-ui'
 import {ProjectService} from '../services/ProjectService'
 import type {ProjectModel} from '../models'
 import {useLayoutStore} from '../stores/LayoutStore'
