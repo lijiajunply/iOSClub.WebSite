@@ -302,7 +302,7 @@ public class LogsController(ILogger<LogsController> logger)
             // 清理指定天数前的日志
             await using var connection = new SQLiteConnection($"Data Source={sqlPath}");
             await connection.OpenAsync();
-            await using var command =
+            await using var command = 
                 new SQLiteCommand("DELETE FROM Logs WHERE Timestamp < @cutoffDate", connection);
             command.Parameters.AddWithValue("@cutoffDate", DateTime.Now.AddDays(-days));
             var rowsAffected = await command.ExecuteNonQueryAsync();
@@ -315,6 +315,114 @@ public class LogsController(ILogger<LogsController> logger)
         {
             logger.LogError(ex, "手动清理旧日志时出错");
             return StatusCode(500, new { Error = "清理旧日志时出错", Details = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// 获取日志分布数据，用于图表展示
+    /// </summary>
+    /// <param name="timeRange">时间范围过滤："today"表示当天，或正整数表示最近几天</param>
+    /// <returns>按时间分布的日志数据</returns>
+    [HttpGet("distribution")]
+    public async Task<IActionResult> GetLogDistribution(string? timeRange = "today")
+    {
+        try
+        {
+            var distributions = new List<LogDistribution>();
+
+            await using (var connection = new SqliteConnection(ConnectionString))
+            {
+                await connection.OpenAsync();
+
+                // 时间范围验证和处理
+                if (!string.IsNullOrEmpty(timeRange))
+                {
+                    timeRange = timeRange.Trim();
+                    // 如果不是"today"，则验证是否为有效的天数
+                    if (!timeRange.Equals("today", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // 尝试解析为天数，如果解析失败或天数小于等于0，则设为"today"
+                        if (!int.TryParse(timeRange, out int days) || days <= 0)
+                        {
+                            timeRange = "today";
+                        }
+                    }
+                }
+                else
+                {
+                    timeRange = "today";
+                }
+
+                // 构建时间过滤条件
+                string timeFilter = string.Empty;
+                if (timeRange.Equals("today", StringComparison.OrdinalIgnoreCase))
+                {
+                    timeFilter = "Timestamp >= @TodayStart";
+                }
+                else if (int.TryParse(timeRange, out int days))
+                {
+                    timeFilter = "Timestamp >= @DateThreshold";
+                }
+
+                // 根据时间范围选择不同的分组粒度
+                string groupByFormat = "";
+                if (timeRange.Equals("today", StringComparison.OrdinalIgnoreCase))
+                {
+                    // 当天数据按小时分组
+                    groupByFormat = "strftime('%H:00', Timestamp)";
+                }
+                else
+                {
+                    // 多天数据按天分组
+                    groupByFormat = "strftime('%Y-%m-%d', Timestamp)";
+                }
+
+                // 构建查询
+                var query = $@"
+                    SELECT 
+                        {groupByFormat} as TimePoint,
+                        COUNT(*) as TotalCount,
+                        SUM(CASE WHEN Level = 'Error' OR Level = 'Critical' THEN 1 ELSE 0 END) as ErrorCount,
+                        SUM(CASE WHEN Level = 'Information' THEN 1 ELSE 0 END) as InfoCount,
+                        SUM(CASE WHEN Level = 'Warning' THEN 1 ELSE 0 END) as WarningCount
+                    FROM Logs
+                    WHERE {timeFilter}
+                    GROUP BY TimePoint
+                    ORDER BY TimePoint;
+                ";
+
+                await using var command = new SqliteCommand(query, connection);
+
+                // 设置参数
+                if (timeRange.Equals("today", StringComparison.OrdinalIgnoreCase))
+                {
+                    command.Parameters.AddWithValue("@TodayStart", DateTime.Today);
+                }
+                else if (int.TryParse(timeRange, out int days))
+                {
+                    command.Parameters.AddWithValue("@DateThreshold", DateTime.Now.AddDays(-days));
+                }
+
+                await using var reader = await command.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    distributions.Add(new LogDistribution
+                    {
+                        TimePoint = reader.GetString(0),
+                        TotalCount = reader.GetInt32(1),
+                        ErrorCount = reader.GetInt32(2),
+                        InfoCount = reader.GetInt32(3),
+                        WarningCount = reader.GetInt32(4)
+                    });
+                }
+            }
+
+            return Ok(distributions);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "获取日志分布数据时发生错误，时间范围：{TimeRange}", timeRange ?? "null");
+            return StatusCode(500, new { Error = "获取日志分布数据时发生错误", Details = ex.Message });
         }
     }
 }
@@ -366,6 +474,38 @@ public class PaginatedResponse<T>
     /// 总页数
     /// </summary>
     public int TotalPages { get; set; }
+}
+
+/// <summary>
+/// 日志分布数据模型，用于表示按时间分布的日志数量
+/// </summary>
+[Serializable]
+public class LogDistribution
+{
+    /// <summary>
+    /// 时间点，格式为"HH:00"或"YYYY-MM-DD"
+    /// </summary>
+    public string TimePoint { get; set; } = "";
+
+    /// <summary>
+    /// 该时间点的日志总数
+    /// </summary>
+    public int TotalCount { get; set; }
+
+    /// <summary>
+    /// 该时间点的错误日志数量
+    /// </summary>
+    public int ErrorCount { get; set; }
+
+    /// <summary>
+    /// 该时间点的信息日志数量
+    /// </summary>
+    public int InfoCount { get; set; }
+
+    /// <summary>
+    /// 该时间点的警告日志数量
+    /// </summary>
+    public int WarningCount { get; set; }
 }
 
 /// <summary>

@@ -29,6 +29,36 @@ export interface LogStatistics {
 }
 
 /**
+ * 日志分布数据接口，用于表示按时间分布的日志数量
+ */
+export interface LogDistribution {
+  /**
+   * 时间点，格式为"HH:00"或"YYYY-MM-DD"
+   */
+  timePoint: string;
+  
+  /**
+   * 该时间点的日志总数
+   */
+  totalCount: number;
+  
+  /**
+   * 该时间点的错误日志数量
+   */
+  errorCount: number;
+  
+  /**
+   * 该时间点的信息日志数量
+   */
+  infoCount: number;
+  
+  /**
+   * 该时间点的警告日志数量
+   */
+  warningCount: number;
+}
+
+/**
  * 日志条目接口，用于表示单条日志记录
  */
 export interface LogEntry {
@@ -200,6 +230,53 @@ export class LogsService {
       return await response.json();
     } catch (error) {
       console.error('获取日志统计信息时发生错误:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 获取日志分布数据，用于图表展示
+   * @param timeRange 时间范围过滤："today"表示当天，或正整数表示最近几天
+   * @returns Promise<LogDistribution[]> 按时间分布的日志数据
+   */
+  static async getLogDistribution(timeRange: string = 'today'): Promise<LogDistribution[]> {
+    try {
+      // 获取token（假设查看日志需要认证）
+      const token = AuthService.getToken();
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json'
+      };
+
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      // 构建查询参数
+      const params = new URLSearchParams();
+      params.append('timeRange', timeRange);
+
+      const response = await fetch(`${url}/Logs/distribution?${params.toString()}`, {
+        method: 'GET',
+        headers
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          AuthService.clearToken();
+          throw new Error('登录已过期，请重新登录');
+        }
+        if (response.status === 403) {
+          throw new Error('权限不足，无法查看日志分布数据');
+        }
+        
+        // 尝试获取详细错误信息
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.Error || `获取日志分布数据失败: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('获取日志分布数据时发生错误:', error);
       throw error;
     }
   }

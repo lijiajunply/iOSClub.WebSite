@@ -181,7 +181,6 @@ const columns = [
     title: '操作',
     key: 'actions',
     width: 180,
-    fixed: 'right',
     render(row: MemberModel) {
       // Using standard HTML/Tailwind buttons via h function for cleaner look instead of NButton
       const btnClass = "px-3 py-1 text-xs font-medium rounded-full transition-colors duration-200 mx-1";

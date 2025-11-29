@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useMessage } from 'naive-ui'
-import { NDatePicker, NSelect, NModal, NInput, NButton } from 'naive-ui'
+import { NDatePicker, NSelect, NModal, NInput } from 'naive-ui'
 import { Icon } from '@iconify/vue'
 import { ProjectService } from '../services/ProjectService'
 import type { ProjectModel, StaffModel, TaskModel } from '../models'
@@ -173,26 +173,6 @@ const deleteTask = async (taskId: string) => {
 <template>
   <div class="page-container min-h-screen transition-colors duration-500">
     <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-
-      <!-- 顶部导航栏 -->
-      <nav class="flex items-center justify-between mb-8 sm:mb-12 fade-in">
-        <button
-            @click="router.push('/Centre/Admin')"
-            class="nav-button group flex items-center gap-2 px-4 py-2 rounded-full transition-all active:scale-95"
-        >
-          <Icon icon="ion:chevron-back" class="w-5 h-5 text-gray-500 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white transition-colors" />
-          <span class="font-medium text-gray-600 group-hover:text-gray-900 dark:text-gray-300 dark:group-hover:text-white transition-colors">返回列表</span>
-        </button>
-
-        <div class="hidden sm:flex gap-3">
-          <button class="action-icon-btn" title="分享">
-            <Icon icon="ion:share-outline" class="w-5 h-5" />
-          </button>
-          <button class="action-icon-btn" title="更多">
-            <Icon icon="ion:ellipsis-horizontal" class="w-5 h-5" />
-          </button>
-        </div>
-      </nav>
 
       <!-- 加载态骨架屏 -->
       <div v-if="loading" class="animate-pulse space-y-8">
