@@ -199,12 +199,12 @@ public class ArticleController(
             return StatusCode(500, "服务器内部错误");
         }
     }
-
+    
     /// <summary>
-    /// 搜索文章（公开访问）
+    /// 搜索文章并返回高亮片段（公开访问）
     /// </summary>
-    [HttpGet("search")]
-    public async Task<ActionResult<IEnumerable<ArticleModel>>> SearchArticles([FromQuery] string keyword)
+    [HttpGet("search/highlights")]
+    public async Task<ActionResult<IEnumerable<ArticleSearchResult>>> SearchArticlesWithHighlights([FromQuery] string keyword)
     {
         if (string.IsNullOrWhiteSpace(keyword))
         {
@@ -213,14 +213,12 @@ public class ArticleController(
 
         try
         {
-            var articles = await articleRepository.GetAll();
-            var filteredArticles = articles
-                .Where(a => a.Title.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
-                            a.Content.Contains(keyword, StringComparison.OrdinalIgnoreCase))
-                .OrderByDescending(a => a.LastWriteTime)
-                .ToList();
-
-            return Ok(filteredArticles);
+            var userIdentity = "";
+            var userJwt = HttpContext.User.GetUser();
+            if (userJwt != null) userIdentity = userJwt.Identity;
+            
+            var articles = await articleRepository.SearchArticlesWithHighlights(keyword, userIdentity);
+            return Ok(articles.OrderByDescending(a => a.LastWriteTime));
         }
         catch (Exception ex)
         {

@@ -33,44 +33,87 @@
         <nav class="hidden md:flex items-center space-x-1">
 
           <!-- Nav Item: 社团简介 (Dropdown) -->
-          <n-dropdown
-              trigger="hover"
-              :options="aboutUsOptions"
-              @select="handleSelect"
-              placement="bottom"
-              class="apple-dropdown"
-          >
+          <div class="relative group">
             <button class="nav-link">
               关于我们
-              <Icon icon="material-symbols:keyboard-arrow-down-rounded" class="text-gray-400" width="16" />
+              <Icon icon="material-symbols:keyboard-arrow-down-rounded" class="text-gray-400" width="16"/>
             </button>
-          </n-dropdown>
+            <!-- Custom Dropdown Menu -->
+            <div
+                class="absolute left-0 mt-2 w-48 bg-white dark:bg-[#1c1c1e] rounded-xl shadow-lg border border-gray-200 dark:border-white/20 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 ease-out">
+              <div class="py-2">
+                <button
+                    v-for="item in aboutUsOptions"
+                    :key="item.key"
+                    @click="handleSelect(item.key)"
+                    class="block w-full text-left px-4 py-2 text-sm font-medium transition-colors duration-150"
+                    :class="[
+                      'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10'
+                    ]"
+                >
+                  {{ item.label }}
+                </button>
+              </div>
+            </div>
+          </div>
 
           <!-- Nav Item: 社团动态 (Dropdown) -->
-          <n-dropdown
-              trigger="hover"
-              :options="communityOptions"
-              @select="handleSelect"
-              placement="bottom"
-              class="apple-dropdown"
-          >
+          <div class="relative group">
             <button class="nav-link">
               社团动态
-              <Icon icon="material-symbols:keyboard-arrow-down-rounded" class="text-gray-400" width="16" />
+              <Icon icon="material-symbols:keyboard-arrow-down-rounded" class="text-gray-400" width="16"/>
             </button>
-          </n-dropdown>
+            <!-- Custom Dropdown Menu -->
+            <div
+                class="absolute left-0 mt-2 w-48 bg-white dark:bg-[#1c1c1e] rounded-xl shadow-lg border border-gray-200 dark:border-white/20 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 ease-out">
+              <div class="py-2">
+                <button
+                    v-for="item in communityOptions"
+                    :key="item.key"
+                    @click="handleSelect(item.key)"
+                    class="block w-full text-left px-4 py-2 text-sm font-medium transition-colors duration-150"
+                    :class="[
+                      'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10'
+                    ]"
+                >
+                  {{ item.label }}
+                </button>
+              </div>
+            </div>
+          </div>
 
           <!-- Divider -->
           <div class="h-4 w-[1px] bg-gray-300 dark:bg-white/20 mx-3"></div>
 
-          <!-- Theme Toggle -->
-          <button
-              @click="mainToggleTheme"
-              class="icon-btn"
-              title="切换主题"
-          >
-            <Icon :icon="isDark ? 'solar:moon-stars-bold' : 'solar:sun-2-bold'" class="w-4 h-4" />
-          </button>
+          <!-- Theme Toggle Dropdown -->
+          <div class="relative group">
+            <button
+                class="icon-btn"
+                title="切换主题"
+            >
+              <Icon :icon="isDark ? 'solar:moon-stars-bold' : 'solar:sun-2-bold'" class="w-4 h-4"/>
+            </button>
+            <!-- Custom Dropdown Menu -->
+            <div
+                class="absolute right-0 mt-2 w-48 bg-white dark:bg-[#1c1c1e] rounded-xl shadow-lg border border-gray-200 dark:border-white/20 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 ease-out">
+              <div class="py-2">
+                <button
+                    v-for="option in themeOptions"
+                    :key="option.key"
+                    @click="handleThemeSelect(option.key)"
+                    class=" w-full text-left px-4 py-2 text-sm font-medium transition-colors duration-150 flex items-center gap-2"
+                    :class="[
+                      userPreference === option.key
+                        ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                        : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10'
+                    ]"
+                >
+                  <Icon :icon="option.icon" class="w-4 h-4"/>
+                  <span>{{ option.label }}</span>
+                </button>
+              </div>
+            </div>
+          </div>
 
           <!-- Auth Button (Apple ID Style) -->
           <button
@@ -153,20 +196,33 @@
               退出登录
             </button>
 
-            <button
-                @click="mainToggleTheme"
-                class="w-full py-3 bg-gray-100 dark:bg-[#1c1c1e] text-gray-900 dark:text-white font-medium rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-transform"
-            >
-              <Icon :icon="isDark ? 'solar:moon-stars-bold' : 'solar:sun-2-bold'" />
-              {{ isDark ? '切换至浅色模式' : '切换至深色模式' }}
-            </button>
+            <!-- Theme Selection -->
+            <div class="w-full space-y-2">
+              <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">主题</div>
+              <div class="flex space-x-2">
+                <button
+                    v-for="option in themeOptions"
+                    :key="option.key"
+                    @click="handleThemeSelect(option.key)"
+                    class="flex-1 py-3 px-4 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2"
+                    :class="[
+                      userPreference === option.key
+                        ? 'bg-[#0071e3] text-white'
+                        : 'bg-gray-100 dark:bg-[#1c1c1e] text-gray-900 dark:text-white opacity-70 hover:opacity-90'
+                    ]"
+                >
+                  <Icon :icon="option.icon" class="w-4 h-4"/>
+                  <span>{{ option.label }}</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </transition>
 
     <!-- Main Content -->
-    <main class="flex-1 w-full">
+    <main class="flex-1 w-full bg-[#fbfbfd] dark:bg-[#1c1c1e]/70">
       <router-view>
       </router-view>
     </main>
@@ -175,17 +231,28 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuthorizationStore } from '../stores/Authorization'
-import { NDropdown } from 'naive-ui' // Only import necessary components
-import { Icon } from '@iconify/vue'
-import { useThemeStore } from '../stores/theme'
-import { storeToRefs } from 'pinia'
+import {ref, onMounted, onUnmounted, computed} from 'vue'
+import {useRouter} from 'vue-router'
+import {useAuthorizationStore} from '../stores/Authorization'
+import {Icon} from '@iconify/vue'
+import {useThemeStore} from '../stores/theme'
+import {storeToRefs} from 'pinia'
 
 const themeStore = useThemeStore()
-const { isDark } = storeToRefs(themeStore)
-const { toggleTheme } = themeStore
+const {isDark, userPreference} = storeToRefs(themeStore)
+const {setThemePreference} = themeStore
+
+// 主题选项配置
+const themeOptions = [
+  {key: 'light', label: '浅色', icon: 'solar:sun-2-bold'},
+  {key: 'dark', label: '深色', icon: 'solar:moon-stars-bold'},
+  {key: 'system', label: '跟随系统', icon: 'basil:desktop-outline'}
+]
+
+// 主题选择处理函数
+const handleThemeSelect = (key: string) => {
+  setThemePreference(key as 'light' | 'dark' | 'system')
+}
 
 const router = useRouter()
 const authorizationStore = useAuthorizationStore()
@@ -193,10 +260,6 @@ const drawerVisible = ref(false)
 const isScrolled = ref(false)
 
 const isCentreRoute = computed(() => authorizationStore.isAuthenticated)
-
-const mainToggleTheme = () => {
-  toggleTheme()
-}
 
 const handleScroll = () => {
   // Apple style: Trigger background change immediately after scroll starts
@@ -230,18 +293,18 @@ onUnmounted(() => {
 
 // Data structure optimized for clean template rendering
 const aboutUsOptions = [
-  { label: '社团简介', key: '/About' },
-  { label: '结构架构', key: '/Structure' },
-  { label: '合作组织', key: '/OtherOrg' },
-  { label: '竞赛资源', key: '/Article/Competitions' },
-  { label: '发展历史', key: '/History' }
+  {label: '社团简介', key: '/About'},
+  {label: '结构架构', key: '/Structure'},
+  {label: '合作组织', key: '/OtherOrg'},
+  {label: '竞赛资源', key: '/Article/Competitions'},
+  {label: '发展历史', key: '/History'}
 ]
 
 const communityOptions = [
-  { label: '近期活动', key: '/Event' },
-  { label: '技术博客', key: '/Blog' },
-  { label: 'iOS App', key: '/Tools' },
-  { label: '开源项目', key: '/Projects' }
+  {label: '近期活动', key: '/Event'},
+  {label: '技术博客', key: '/Blog'},
+  {label: 'iOS App', key: '/Tools'},
+  {label: '开源项目', key: '/Projects'}
 ]
 </script>
 
@@ -257,7 +320,7 @@ const communityOptions = [
 
 /* Dark Mode Override */
 .dark .app-container {
-  background-color: #000000;
+  background-color: #1c1c1e;
   color: #f5f5f7;
 }
 
@@ -311,6 +374,7 @@ const communityOptions = [
 .icon-btn:hover {
   background-color: rgba(0, 0, 0, 0.05);
 }
+
 .dark .icon-btn:hover {
   background-color: rgba(255, 255, 255, 0.1);
 }
@@ -345,6 +409,7 @@ const communityOptions = [
   background: rgba(255, 255, 255, 0.8);
   margin-bottom: 8px;
 }
+
 .dark .mobile-link {
   color: #f5f5f7;
   background: #1c1c1e; /* Apple dark gray card color */
@@ -379,7 +444,13 @@ const communityOptions = [
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>

@@ -20,7 +20,7 @@
       </n-layout-sider>
 
       <!-- Main Content Area -->
-      <n-layout-content class="bg-transparent" :class="{ 'p-0': isMobile, 'p-4': !isMobile }">
+      <n-layout-content class="bg-transparent">
         <div class="content-card w-full h-full flex flex-col overflow-hidden bg-white dark:bg-[#1e1e1e]">
 
           <!-- Breadcrumb / Mobile Header Toolbar -->
@@ -97,7 +97,7 @@
 
   </div>
   <!-- Search Modal -->
-  <n-modal v-model:show="searchModalVisible" :show-icon="false" :show-header="false" :close-on-esc="true"
+  <n-modal v-model:show="searchModalVisible" preset="card" :show-icon="false" :show-header="false" :close-on-esc="true"
     :close-on-click-outside="true" :mask-opacity="0.3" :style="{ width: '90%', maxWidth: '560px' }"
     class="ios-search-modal">
     <div class="ios-search-container">
@@ -137,10 +137,9 @@
           <div v-for="article in searchResults" :key="article.path" class="ios-result-item"
             @click="handleResultClick(article.path)">
             <div class="ios-result-content">
-              <div class="ios-result-title">{{ article.title }}</div>
+              <div class="ios-result-title" v-html="article.highlightedTitle || article.title"></div>
+              <div class="ios-result-preview" v-html="article.highlightedContent || ''"></div>
               <div class="ios-result-meta">
-                <span class="ios-result-category">{{ article.category?.name || '未分类' }}</span>
-                <span class="ios-result-divider">•</span>
                 <span class="ios-result-date">{{ new Date(article.lastWriteTime).toLocaleDateString() }}</span>
               </div>
             </div>
@@ -167,6 +166,7 @@ import MenuContent from '../components/MenuContent.vue'
 import { ArticleService } from '../services/ArticleService'
 import { useAuthorizationStore } from '../stores/Authorization'
 import type { ArticleModel } from '../models'
+import type { ArticleSearchResult } from '../models/ArticleModel'
 
 const router = useRouter()
 const route = useRoute()
@@ -201,7 +201,7 @@ const dropdownOptions = computed(() => {
 // Search related state
 const searchModalVisible = ref(false)
 const searchKeyword = ref('')
-const searchResults = ref<ArticleModel[]>([])
+const searchResults = ref<ArticleSearchResult[]>([])
 const isSearching = ref(false)
 const searchError = ref('')
 
@@ -291,7 +291,7 @@ const handleEdit = () => {
   const path = route.path
   if (path.startsWith('/Article/')) {
     const articlePath = path.replace('/Article/', '')
-    router.push(`/Edit/${articlePath}`)
+    router.push(`/Centre/Article/edit/${articlePath}`)
   }
 }
 
@@ -492,7 +492,24 @@ onBeforeUnmount(() => {
   margin-bottom: 4px;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+}
+
+.ios-result-preview {
+  font-size: 13px;
+  color: #6e6e73;
+  line-height: 18px;
+  margin-bottom: 6px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* 高亮样式 */
+.ios-result-title :deep(b),
+.ios-result-preview :deep(b) {
+  color: #007aff;
+  font-weight: 600;
 }
 
 .dark .ios-result-title {
@@ -620,7 +637,6 @@ onBeforeUnmount(() => {
 /* The Main "Card" area */
 .content-card {
   /* Only round corners on Desktop */
-  border-radius: 12px;
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05),
     0 4px 12px 0 rgba(0, 0, 0, 0.02);
 

@@ -1,7 +1,7 @@
 import {url} from './Url';
 import {AuthService} from './AuthService';
 import type {ArticleModel, ArticleCreateDto, ArticleUpdateDto} from "../models";
-import type {CategoryModel} from '../models/ArticleModel'
+import type {CategoryModel, ArticleSearchResult} from '../models/ArticleModel'
 
 /**
  * 文章服务类 - 处理文章相关的API调用
@@ -162,8 +162,8 @@ export class ArticleService {
         return response.ok;
     }
 
-    static async searchArticles(keyword: string): Promise<ArticleModel[]> {
-        const response = await fetch(`${url}/Article/search?keyword=${encodeURIComponent(keyword)}`, {
+    static async searchArticles(keyword: string): Promise<ArticleSearchResult[]> {
+        const response = await fetch(`${url}/Article/search/highlights?keyword=${encodeURIComponent(keyword)}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -185,20 +185,7 @@ export class ArticleService {
         return this.getArticleByPath(path);
     }
 
-    static async getAllCategories(): Promise<CategoryModel[]> {
-        const response = await fetch(`${url}/Category/all`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        });
 
-        if (!response.ok) {
-            throw new Error('获取分类列表失败');
-        }
-
-        return await response.json();
-    }
 
     /**
      * 获取所有分类的文章（公开访问）

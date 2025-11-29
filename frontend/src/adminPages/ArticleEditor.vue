@@ -295,11 +295,6 @@ const saveArticle = async () => {
 
 // --- Lifecycle ---
 onMounted(async () => {
-  // Header Setup
-  layoutStore.setPageHeader(
-      editingArticle.value ? '编辑文章' : '新建文章',
-      ''
-  )
   layoutStore.setShowPageActions(true)
 
   // Custom Actions Component (Apple Style Buttons)
@@ -336,6 +331,11 @@ onMounted(async () => {
   if (articlePath) {
     await fetchArticle(articlePath)
   }
+  // Header Setup
+  layoutStore.setPageHeader(
+      editingArticle.value ? '编辑文章' : '新建文章',
+      ''
+  )
 })
 
 onBeforeUnmount(() => {

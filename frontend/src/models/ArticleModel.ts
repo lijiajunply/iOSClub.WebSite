@@ -37,3 +37,18 @@ export interface ArticleUpdateDto{
   articleOrder?: number;
   category?: string;
 }
+
+// 文章搜索结果接口
+export interface ArticleSearchResult {
+  path: string;
+  title: string;
+  content: string;
+  lastWriteTime: string;
+  identity?: string;
+  categoryId?: string;
+  category?: CategoryModel;
+  articleOrder?: number;
+  highlight?: string;
+  highlightedTitle?: string;
+  highlightedContent?: string;
+}

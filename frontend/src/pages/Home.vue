@@ -261,7 +261,7 @@ const scrollToAbout = (): void => {
 
 /* Dark Mode Overrides */
 .dark .page-wrapper {
-  background-color: #000000;
+  background-color: transparent;
   color: #F5F5F7;
 }
 

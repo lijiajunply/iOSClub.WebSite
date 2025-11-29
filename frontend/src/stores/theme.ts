@@ -39,7 +39,14 @@ export const useThemeStore = defineStore('theme', () => {
     }
 
     function toggleTheme() {
-        isDark.value = !isDark.value
+        // 循环切换主题模式：light → dark → system → light
+        if (userPreference.value === 'light') {
+            setThemePreference('dark')
+        } else if (userPreference.value === 'dark') {
+            setThemePreference('system')
+        } else {
+            setThemePreference('light')
+        }
     }
 
     // 初始化

@@ -10,9 +10,17 @@ public interface IArticleRepository
     public Task<ArticleModel?> GetFromPath(string path, string identity = "");
     public Task<bool> CreateOrUpdate(ArticleModel model);
     public Task<bool> Delete(string key);
-    public Task<IEnumerable<ArticleModel>> GetCategoryArticles(string category);
     public Task<Dictionary<string, IEnumerable<ArticleModel>>> GetAllCategoryArticles(string identity);
     public Task<bool> UpdateArticleOrders(Dictionary<string, int> articleOrders);
+    public Task<IEnumerable<ArticleSearchResult>> SearchArticlesWithHighlights(string keyword, string identity = "");
+}
+
+// 添加一个用于搜索结果的模型
+[Serializable]
+public class ArticleSearchResult : ArticleModel
+{
+    public string HighlightedTitle { get; set; } = "";
+    public string HighlightedContent { get; set; } = "";
 }
 
 public class ArticleRepository(IDbContextFactory<ClubContext> factory, ICategoryRepository repository)
@@ -103,19 +111,6 @@ public class ArticleRepository(IDbContextFactory<ClubContext> factory, ICategory
         if (article == null) return false;
         context.Articles.Remove(article);
         return await context.SaveChangesAsync() > 0;
-    }
-
-    /// <summary>
-    /// 获取分类下的文章
-    /// </summary>
-    /// <param name="category">分类名</param>
-    /// <returns></returns>
-    public async Task<IEnumerable<ArticleModel>> GetCategoryArticles(string category)
-    {
-        await using var context = await factory.CreateDbContextAsync();
-        return await context.Articles.Include(x => x.Category)
-            .Where(x => x.Category != null)
-            .Where(x => x.Category!.Name == category).ToListAsync();
     }
 
     private static readonly Dictionary<string, int> IdentityLevels = new()
@@ -243,5 +238,48 @@ public class ArticleRepository(IDbContextFactory<ClubContext> factory, ICategory
             await transaction.RollbackAsync();
             throw;
         }
+    }
+
+    public async Task<IEnumerable<ArticleSearchResult>> SearchArticlesWithHighlights(string keyword,
+        string identity = "")
+    {
+        await using var context = await factory.CreateDbContextAsync();
+
+        // 使用zhparser进行中文全文搜索并生成高亮片段
+        var sql = @"
+            SELECT ""Path"", ""Title"", ""Content"", ""LastWriteTime"", ""Identity"", ""CategoryId"", ""ArticleOrder"",
+                   ts_headline('zhcfg', ""Title"", plainto_tsquery('zhcfg', @keyword)) as highlighted_title,
+                   ts_headline('zhcfg', LEFT(""Content"", 500), plainto_tsquery('zhcfg', @keyword)) as highlighted_content
+            FROM ""Articles"" 
+            WHERE to_tsvector('zhcfg', ""Title"" || ' ' || ""Content"") @@ plainto_tsquery('zhcfg', @keyword)
+            ORDER BY ""LastWriteTime"" DESC";
+
+        await using var command = context.Database.GetDbConnection().CreateCommand();
+        command.CommandText = sql;
+        var parameter = command.CreateParameter();
+        parameter.ParameterName = "@keyword";
+        parameter.Value = keyword;
+        command.Parameters.Add(parameter);
+
+        await context.Database.OpenConnectionAsync();
+        await using var reader = await command.ExecuteReaderAsync();
+
+        var tempResults = new List<ArticleSearchResult>();
+        while (await reader.ReadAsync())
+        {
+            var article = new ArticleSearchResult
+            {
+                Path = reader["Path"].ToString() ?? "",
+                Title = reader["Title"].ToString() ?? "",
+                LastWriteTime = (DateTime)reader["LastWriteTime"],
+                Identity = reader["Identity"].ToString(),
+                HighlightedTitle = reader["highlighted_title"].ToString() ?? reader["Title"].ToString() ?? "",
+                HighlightedContent = reader["highlighted_content"].ToString() ?? reader["Content"].ToString() ?? ""
+            };
+
+            tempResults.Add(article);
+        }
+
+        return tempResults;
     }
 }
