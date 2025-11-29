@@ -242,6 +242,7 @@ import { ProjectService } from '../services/ProjectService'
 import { DataCentreService } from "../services/DataCentreService"
 import IconFont from "../components/IconFont.vue"
 import * as echarts from 'echarts'
+import '//at.alicdn.com/t/c/font_4612528_md4hjwjgcb.js';
 
 const router = useRouter()
 

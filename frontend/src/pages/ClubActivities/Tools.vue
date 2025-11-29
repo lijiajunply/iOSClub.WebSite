@@ -40,31 +40,33 @@
             :style="{ animationDelay: `${index * 50}ms` }"
         >
           <!-- 卡片背景与高光 (CSS处理) -->
-          <div class="card-bg absolute inset-0 rounded-[20px] transition-all duration-300"></div>
+          <div class="card-bg absolute -z-10 inset-0 rounded-[20px] transition-all duration-300"></div>
 
           <!-- 图标区域：仿 iOS App 图标容器 -->
           <div
               class="relative flex-shrink-0 w-[52px] h-[52px] sm:w-[60px] sm:h-[60px] mr-4 flex items-center justify-center bg-white dark:bg-[#2c2c2e] rounded-[14px] shadow-sm border border-black/5 dark:border-white/10 overflow-hidden group-hover:scale-105 transition-transform duration-300 ease-apple">
 
             <!-- 情况1: IconFont 图标 (如果 link.icon 是字符串且不含http) -->
-            <IconFont
-                v-if="link.icon && !link.icon.startsWith('http') && !link.icon.includes('/')"
-                class="w-7 h-7 sm:w-8 sm:h-8 dark:text-gray-100"
-                :type="link.icon"/>
+            <template v-if="link.icon && !link.icon.startsWith('http') && !link.icon.includes('/')">
+              <IconFont
+                  className="w-7 h-7 sm:w-8 sm:h-8 dark:text-gray-100"
+                  :type="link.icon"/>
+            </template>
 
             <!-- 情况2: 图片 URL -->
-            <img
-                v-else
-                :src="fixImageUrl(link)"
-                class="w-full h-full object-cover"
-                :alt="link.name"
-                @error="(e) => handleImageError(e)"
-                loading="lazy"
-            />
+            <template v-else>
+              <img
+                  :src="fixImageUrl(link)"
+                  class="w-full h-full object-cover"
+                  :alt="link.name"
+                  @error="(e) => handleImageError(e)"
+                  loading="lazy"
+              />
+            </template>
           </div>
 
           <!-- 文字内容 -->
-          <div class="flex-1 min-w-0 py-1">
+          <div class="flex-1 py-1">
             <div class="flex items-center justify-between">
               <h3 class="text-[17px] font-medium text-gray-900 dark:text-white leading-tight truncate group-hover:text-[#0066CC] dark:group-hover:text-[#0A84FF] transition-colors">
                 {{ link.name }}
@@ -103,6 +105,7 @@ import {ToolService} from "../../services/ToolService";
 import type {LinkModel} from "../../models";
 import toolsImage from '/assets/Centre/AppleLogo.png';
 import IconFont from "../../components/IconFont.vue";
+import '//at.alicdn.com/t/c/font_4612528_md4hjwjgcb.js';
 
 // 状态定义
 const models = ref<LinkModel[]>([]);
@@ -161,9 +164,7 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-@import url('//at.alicdn.com/t/c/font_4612528_md4hjwjgcb.css');
-
-/*
+/*<script src=""></script>
    原生 CSS 区域
    遵循 .dark .class 规范
 */
