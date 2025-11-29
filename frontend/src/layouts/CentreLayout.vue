@@ -47,7 +47,7 @@
               <div v-else v-html="layoutStore.pageActionsContent"/>
             </div>
 
-            <div class="h-4 w-[1px] bg-gray-300 dark:bg-gray-700 mx-1 hidden sm:block"></div>
+            <div class="h-4 w-px bg-gray-300 dark:bg-gray-700 mx-1 hidden sm:block"></div>
 
             <!-- Theme Toggle Dropdown -->
             <div class="relative group">
@@ -76,7 +76,7 @@
                       v-for="option in themeOptions"
                       :key="option.key"
                       @click="handleThemeSelect(option.key)"
-                      class="block w-full text-left px-4 py-2 text-sm font-medium transition-colors duration-150 rounded-md flex items-center gap-2"
+                      class="w-full text-left px-4 py-2 text-sm font-medium transition-colors duration-150 rounded-md flex items-center gap-2"
                       :class="[
                         userPreference === option.key
                           ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'

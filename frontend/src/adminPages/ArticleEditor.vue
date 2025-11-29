@@ -16,7 +16,7 @@
           <n-input
               v-model:value="editForm.title"
               placeholder="请输入文章标题..."
-              class="text-2xl font-bold !bg-transparent"
+              class="text-2xl font-bold bg-transparent!"
               type="textarea"
               :autosize="{ minRows: 1, maxRows: 3 }"
               :bordered="false"
@@ -40,7 +40,7 @@
                   v-model:value="editForm.path"
                   :disabled="!!editingArticle"
                   placeholder="Unique Path"
-                  class="text-right !bg-transparent ios-input-reset"
+                  class="text-right bg-transparent! ios-input-reset"
                   :bordered="false"
               />
             </div>
@@ -104,12 +104,12 @@
           </div>
 
           <n-form ref="formRef" :model="editForm" :rules="rules" class="flex-1">
-            <n-form-item path="content" :show-label="false" class="h-full !mb-0" content-class="h-full" feedback-class="hidden">
+            <n-form-item path="content" :show-label="false" class="h-full mb-0!" content-class="h-full" feedback-class="hidden">
               <n-input
                   v-model:value="editForm.content"
                   type="textarea"
                   placeholder="# 开始你的创作..."
-                  class="!bg-transparent font-mono text-[15px] leading-relaxed p-4 !h-full"
+                  class="bg-transparent! font-mono text-[15px] leading-relaxed p-4 h-full!"
                   :bordered="false"
                   :autosize="{
                      minRows: 3,
@@ -155,9 +155,10 @@ import { useRoute, useRouter } from 'vue-router'
 import { useMessage, NForm, NFormItem, NInput, NSelect } from 'naive-ui'
 import { Icon } from '@iconify/vue'
 import { ArticleService } from '../services/ArticleService'
-import type { ArticleModel, ArticleCreateDto, ArticleUpdateDto } from '../models'
+import type { ArticleModel, ArticleCreateDto, ArticleUpdateDto, CategoryModel } from '../models'
 import MarkdownComponent from '../components/MarkdownComponent.vue'
 import { useLayoutStore } from '../stores/LayoutStore'
+import { CategoryService } from 'src/services/CategoryService'
 
 // --- Types ---
 interface EditFormType {
@@ -216,8 +217,8 @@ const rules = {
 // --- Methods ---
 const fetchCategoryOptions = async () => {
   try {
-    const categories = await ArticleService.getAllCategories()
-    categoryOptions.value = categories.map(category => ({
+    const categories = await CategoryService.getAllCategories()
+    categoryOptions.value = categories.map((category: CategoryModel) => ({
       label: category.name,
       value: category.name
     }))

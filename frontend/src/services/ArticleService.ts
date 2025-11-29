@@ -1,7 +1,7 @@
 import {url} from './Url';
 import {AuthService} from './AuthService';
 import type {ArticleModel, ArticleCreateDto, ArticleUpdateDto} from "../models";
-import type {CategoryModel, ArticleSearchResult} from '../models/ArticleModel'
+import type {ArticleSearchResult} from '../models/ArticleModel'
 
 /**
  * 文章服务类 - 处理文章相关的API调用

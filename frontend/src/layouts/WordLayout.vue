@@ -165,7 +165,6 @@ import { Icon } from '@iconify/vue'
 import MenuContent from '../components/MenuContent.vue'
 import { ArticleService } from '../services/ArticleService'
 import { useAuthorizationStore } from '../stores/Authorization'
-import type { ArticleModel } from '../models'
 import type { ArticleSearchResult } from '../models/ArticleModel'
 
 const router = useRouter()
@@ -278,10 +277,22 @@ const handleDropdownSelect = (key: string) => {
 // Handle URL sharing
 const handleShareUrl = async () => {
   try {
-    await navigator.clipboard.writeText(window.location.href)
-    // You could add a notification here if needed
+    if (isMobile.value && navigator.share) {
+      // 手机端调用分享API
+      await navigator.share({
+        title: document.title,
+        text: document.title,
+        url: window.location.href,
+      })
+    } else {
+      // 电脑端复制特定文案
+      const shareText = `${document.title} - ${window.location.href}`
+      await navigator.clipboard.writeText(shareText)
+      // 显示复制成功的通知
+      alert('分享文案已复制到剪贴板')
+    }
   } catch (err) {
-    console.error('Failed to copy URL:', err)
+    console.error('分享失败:', err)
   }
 }
 
@@ -501,7 +512,7 @@ onBeforeUnmount(() => {
   margin-bottom: 6px;
   overflow: hidden;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
 }
 

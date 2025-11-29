@@ -83,7 +83,7 @@
           </div>
 
           <!-- Divider -->
-          <div class="h-4 w-[1px] bg-gray-300 dark:bg-white/20 mx-3"></div>
+          <div class="h-4 w-px bg-gray-300 dark:bg-white/20 mx-3"></div>
 
           <!-- Theme Toggle Dropdown -->
           <div class="relative group">

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {nextTick, ref, watch, computed, onMounted, withDefaults} from "vue";
+import {nextTick, ref, watch, computed, onMounted} from "vue";
 import {Icon} from "@iconify/vue";
 
 import MarkdownIt from 'markdown-it'
