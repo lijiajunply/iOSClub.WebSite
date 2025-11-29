@@ -235,7 +235,7 @@ public class ArticleRepository(IDbContextFactory<ClubContext> factory, ICategory
             await transaction.CommitAsync();
 
             // 返回是否所有请求的文章都被更新
-            return result == articles.Count;
+            return result > 0;
         }
         catch
         {

@@ -125,4 +125,22 @@ public class CategoryRepository(IDbContextFactory<ClubContext> factory) : ICateg
             throw;
         }
     }
+
+    public async Task<CategoryModel?> GetById(string id)
+    {
+        await using var context = await factory.CreateDbContextAsync();
+        return await context.Categories.FirstOrDefaultAsync(c => c.Id == id);
+    }
+
+    public async Task<ArticleModel[]> GetArticlesById(string id)
+    {
+        await using var context = await factory.CreateDbContextAsync();
+        return await context.Articles.Where(x => x.CategoryId == id).Select(x => new ArticleModel()
+            {
+                Path = x.Path,
+                Title = x.Title,
+                ArticleOrder = x.ArticleOrder
+            })
+            .ToArrayAsync();
+    }
 }

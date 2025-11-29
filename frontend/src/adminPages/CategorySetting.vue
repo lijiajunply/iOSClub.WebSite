@@ -187,10 +187,10 @@ const getIdentityType = (identity: string | null | undefined): 'success' | 'info
 // API逻辑
 const loadCategory = async () => {
   try {
-    const categories = await CategoryService.getAllCategories();
-    const foundCategory = categories.find(c => c.id === categoryId.value);
+    const foundCategory = await CategoryService.getCategoryById(categoryId.value);
     if (foundCategory) {
       category.value = foundCategory;
+      articles.value = await CategoryService.getCategoryArticles(categoryId.value);
     } else {
       message.error('分类不存在');
       goBack();
@@ -199,21 +199,6 @@ const loadCategory = async () => {
     console.error('加载分类失败:', error);
     message.error('加载分类失败');
     goBack();
-  }
-};
-
-const loadArticles = async () => {
-  try {
-    loadingArticles.value = true;
-    const allArticles = await ArticleService.getAllArticles();
-    articles.value = allArticles
-        .filter(article => article.category?.id === categoryId.value)
-        .sort((a, b) => (a.articleOrder || 0) - (b.articleOrder || 0));
-  } catch (error) {
-    console.error('加载文章失败:', error);
-    message.error('加载文章失败');
-  } finally {
-    loadingArticles.value = false;
   }
 };
 
@@ -263,7 +248,6 @@ const goBack = () => {
 // 生命周期
 onMounted(async () => {
   await loadCategory();
-  await loadArticles();
 
   // 因为我们自定义了页面 Header，这里可以隐藏全局 Header 或者保持一致
   // 如果你的 layout store 支持隐藏原有的 header 最好

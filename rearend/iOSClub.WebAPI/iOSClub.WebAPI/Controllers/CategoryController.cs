@@ -57,6 +57,41 @@ public class CategoryController(ICategoryRepository categoryRepository, ILogger<
         }
     }
 
+    [HttpGet("byId/{id}")]
+    public async Task<ActionResult<CategoryModel>> GetCategoryById(string id)
+    {
+        try
+        {
+            var category = await categoryRepository.GetById(id);
+            if (category == null)
+            {
+                return NotFound($"未找到ID为 '{id}' 的分类");
+            }
+
+            return category;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "获取分类时发生错误，ID: {Id}", id);
+            return StatusCode(500, "服务器内部错误");
+        }
+    }
+    
+    [HttpGet("articles/{id}")]
+    public async Task<ActionResult<IEnumerable<ArticleModel>>> GetArticles(string id)
+    {
+        try
+        {
+            var articles = await categoryRepository.GetArticlesById(id);
+            return Ok(articles);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "获取分类下的文章时发生错误，ID: {Id}", id);
+            return StatusCode(500, "服务器内部错误");
+        }
+    }
+
     /// <summary>
     /// 创建或更新分类（需要管理员身份）
     /// </summary>
@@ -151,7 +186,7 @@ public class CategoryController(ICategoryRepository categoryRepository, ILogger<
     /// </summary>
     [Authorize(Roles = "Founder, President")]
     [HttpPost("UpdateOrders")]
-    public async Task<IActionResult> UpdateCategoryOrders([FromBody] Dictionary<string, int> categoryOrders)
+    public async Task<IActionResult> UpdateCategoryOrders([FromBody] Dictionary<string, int>? categoryOrders)
     {
         if (categoryOrders == null || categoryOrders.Count == 0)
         {
