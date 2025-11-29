@@ -22,7 +22,7 @@
           <img
               src="/assets/iOS_Club_LOGO.png"
               alt="iOS Club"
-              class="w-6 h-6 opacity-90 group-hover:opacity-100 transition-opacity"
+              class="w-7 h-7 opacity-90 group-hover:opacity-100 transition-opacity rounded-sm"
           />
           <span class="font-semibold text-xl tracking-tight text-gray-900 dark:text-[#f5f5f7]">
             iOS Club of XAUAT

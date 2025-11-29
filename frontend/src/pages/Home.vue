@@ -90,34 +90,36 @@
         </div>
 
         <!-- Bento Grid Layout -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div
               v-for="(card, index) in cards"
               :key="index"
               class="apple-bento-card group"
-              :class="{'col-span-1 md:col-span-2 lg:col-span-1': index === 0 || index === 3}"
+              :class="{
+                'md:col-span-2 lg:col-span-2': index === 0 || index === 4,
+                'md:col-span-1 lg:col-span-1': index === 1 || index === 2 || index === 3 || index === 5,
+              }"
               @click="card.url ? router.push(card.url) : null"
           >
-            <div class="relative z-10 h-full flex flex-col justify-between">
-              <div class="mb-6">
-                <div
-                    class="w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-transform duration-300 group-hover:scale-110"
-                    :style="{ backgroundColor: card.bgColor, color: card.color }"
-                >
-                  <Icon :icon="card.iconName" class="text-2xl"/>
-                </div>
-                <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2 pr-4">
+            <div class="relative z-10 h-full flex flex-col justify-between p-6">
+              <!-- Decorative Icon in Bottom Right -->
+              <div class="absolute bottom-6 right-6 opacity-10 group-hover:opacity-15 transition-opacity duration-300">
+                <Icon :icon="card.iconName" class="text-6xl sm:text-7xl md:text-8xl lg:text-9xl transition-all" :style="{ color: card.color }"/>
+              </div>
+              
+              <div>
+                <h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-3 pr-4">
                   {{ card.title }}
                 </h3>
-                <p class="text-sm md:text-base text-slate-600 dark:text-slate-300 leading-relaxed opacity-90">
+                <p class="text-base md:text-lg text-slate-600 dark:text-slate-300 leading-relaxed opacity-90">
                   {{ card.content }}
                 </p>
               </div>
 
-              <div class="flex items-center text-sm font-semibold transition-all duration-300 group-hover:translate-x-1"
+              <div class="mt-8 flex items-center text-base font-semibold transition-all duration-300 group-hover:translate-x-1"
                    :style="{ color: card.color }">
                 <span v-if="card.url">了解更多</span>
-                <Icon v-if="card.url" icon="fluent:arrow-right-20-filled" class="ml-1"/>
+                <Icon v-if="card.url" icon="fluent:arrow-right-20-filled" class="ml-2"/>
               </div>
             </div>
 
@@ -144,7 +146,7 @@
         class="relative z-10 border-t border-slate-200 dark:border-white/10 bg-white/50 dark:bg-black/20 backdrop-blur-xl">
       <div class="max-w-7xl mx-auto px-6 py-12 flex flex-col md:flex-row justify-between items-center gap-6">
         <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">
-          Copyright © {{ new Date().getFullYear() }} XAUAT iOS Club. All rights reserved.
+          Copyright © 2023 - {{ new Date().getFullYear() }} iOS Club of XAUAT. All rights reserved.
         </p>
 
         <div class="flex items-center gap-6 text-xs font-medium text-slate-600 dark:text-slate-300">
@@ -216,11 +218,12 @@ const cards: Card[] = [
     content: '定期的 WWDC 观影、技术沙龙、Swift 编程挑战赛以及 Apple 官方专家讲座。',
     color: '#FF375F', // Apple Pink
     bgColor: getBgColor('#FF375F'),
+    url: '/Event'
   },
   {
     iconName: 'fluent:code-circle-20-filled',
     title: '项目孵化',
-    content: '寻找志同道合的 iMember，从 0 到 1 开发上架 App Store 的应用。',
+    content: '寻找志同道合的 iMember，从 0 到 1 ，构建新的世界。',
     color: '#AF52DE', // Apple Purple
     bgColor: getBgColor('#AF52DE'),
   },
@@ -238,7 +241,7 @@ const scrollToAbout = (): void => {
   if (element) {
     const headerOffset = 80
     const elementPosition = element.getBoundingClientRect().top
-    const offsetPosition = elementPosition + window.pageYOffset - headerOffset
+    const offsetPosition = elementPosition + window.scrollY - headerOffset
     window.scrollTo({top: offsetPosition, behavior: 'smooth'})
   }
 }
@@ -282,18 +285,19 @@ const scrollToAbout = (): void => {
 .apple-bento-card {
   position: relative;
   background: #FFFFFF;
-  border-radius: 24px;
-  padding: 2rem;
+  border-radius: 28px;
   overflow: hidden;
   cursor: pointer;
-  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   border: 1px solid rgba(0, 0, 0, 0.05);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  min-height: 240px;
 }
 
 .apple-bento-card:hover {
-  transform: translateY(-4px) scale(1.01);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.08);
 }
 
 .dark .apple-bento-card {
@@ -304,7 +308,8 @@ const scrollToAbout = (): void => {
 
 .dark .apple-bento-card:hover {
   background: #2C2C2E;
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
 }
 
 /* Buttons */
@@ -456,7 +461,7 @@ const scrollToAbout = (): void => {
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 0px; /* Hide scrollbar for cleaner look on macOS */
+  width: 0; /* Hide scrollbar for cleaner look on macOS */
   background: transparent;
 }
 </style>
