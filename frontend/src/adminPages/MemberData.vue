@@ -2,7 +2,6 @@
 import {ref, computed, h, onMounted, onBeforeUnmount, nextTick, defineComponent} from 'vue'
 import {useDialog, useMessage} from 'naive-ui'
 import {
-  NButton,
   NSelect,
   NInput,
   NDataTable,
@@ -16,7 +15,6 @@ import {
   NTag
 } from 'naive-ui'
 import {Icon} from '@iconify/vue'
-import SkeletonLoader from '../components/SkeletonLoader.vue'
 import {MemberQueryService} from '../services/MemberQueryService'
 import {MemberManagementService} from '../services/MemberManagementService'
 import {
@@ -32,6 +30,7 @@ import type {
 } from '../services/DataCentreService'
 import * as echarts from 'echarts'
 import {useLayoutStore} from '../stores/LayoutStore';
+import {TableColumn} from "naive-ui/es/data-table/src/interface";
 
 // --- Types & Interfaces ---
 
@@ -107,11 +106,11 @@ const currentMember = ref<MemberModel>({
   identity: '',
   userName: '',
   userId: '',
-  academy: null,
+  academy: '',
   className: '',
   phoneNum: '',
-  politicalLandscape: null,
-  gender: null,
+  politicalLandscape: '',
+  gender: '',
   joinTime: '',
   passwordHash: '',
   eMail: null
@@ -203,7 +202,7 @@ const columns = [
       ]
     }
   }
-]
+] as TableColumn<MemberModel>[]
 
 const paginationConfig = computed(() => ({
   page: currentPage.value,
@@ -428,8 +427,8 @@ const handleTabChange = (val: string) => {
 // --- CRUD Operations ---
 const showAddMemberModal = () => {
   currentMember.value = {
-    identity: '', userName: '', userId: '', academy: null, className: '',
-    phoneNum: '', politicalLandscape: null, gender: null,
+    identity: '', userName: '', userId: '', academy: '', className: '',
+    phoneNum: '', politicalLandscape: '', gender: '',
     joinTime: new Date().toISOString(), passwordHash: '', eMail: null
   } as MemberModel
   showModal.value = true
@@ -472,9 +471,9 @@ const saveMember = async () => {
           if (index !== -1) members.value[index] = {...currentMember.value}
           message.success('已更新')
         } else {
-          await MemberManagementService.addMember(currentMember.value) // Assuming addMember exists or using mock logic
+          await MemberManagementService.updateMember(currentMember.value) // Assuming addMember exists or using mock logic
           message.success('已添加')
-          fetchMembers() // Refresh for ID generation if real backend
+          await fetchMembers() // Refresh for ID generation if real backend
         }
         showModal.value = false
       } catch (error: any) {

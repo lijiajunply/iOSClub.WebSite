@@ -24,7 +24,6 @@
 
           <div class="flex flex-col gap-4 max-w-2xl mx-auto lg:mx-0">
             <p class="text-lg md:text-xl text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
-              我们是受 Apple 公司支持的创新创业类社团。<br class="hidden md:block"/>
               <span class="opacity-75 font-normal">Stay hungry, stay foolish.</span>
             </p>
           </div>

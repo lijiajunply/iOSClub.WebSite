@@ -163,15 +163,9 @@ export class ArticleService {
     }
 
     static async searchArticles(keyword: string): Promise<ArticleModel[]> {
-        const token = AuthService.getToken();
-        if (!token) {
-            throw new Error('未登录');
-        }
-
         const response = await fetch(`${url}/Article/search?keyword=${encodeURIComponent(keyword)}`, {
             method: 'GET',
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json',
             },
         });
