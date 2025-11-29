@@ -149,12 +149,12 @@
     <transition name="mobile-menu">
       <div
           v-if="drawerVisible"
-          class="fixed inset-0 z-40 bg-[#fbfbfd] dark:bg-black pt-20 px-6 md:hidden flex flex-col"
+          class="fixed inset-0 z-40 bg-[#fbfbfd] dark:bg-black pt-16 px-4 md:hidden flex flex-col"
       >
-        <div class="flex flex-col space-y-6 animate-fade-in">
+        <div class="flex flex-col space-y-4 animate-fade-in">
           <!-- Mobile Links Group -->
           <div class="space-y-1">
-            <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">关于</div>
+            <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1 px-2">关于</div>
             <router-link
                 v-for="item in aboutUsOptions"
                 :key="item.key"
@@ -167,7 +167,7 @@
           </div>
 
           <div class="space-y-1">
-            <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">探索</div>
+            <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1 px-2">探索</div>
             <router-link
                 v-for="item in communityOptions"
                 :key="item.key"
@@ -180,38 +180,38 @@
           </div>
 
           <!-- Mobile Auth & Theme -->
-          <div class="pt-6 mt-auto border-t border-gray-200 dark:border-white/10">
+          <div class="pt-4 mt-auto border-t border-gray-200 dark:border-white/10">
             <button
                 v-if="!isCentreRoute"
-                class="w-full py-3 bg-[#0071e3] text-white font-medium rounded-xl mb-4 active:scale-95 transition-transform"
+                class="w-full py-2 bg-[#0071e3] text-white font-medium rounded-xl mb-3 active:scale-95 transition-transform"
                 @click="() => { router.push('/login'); drawerVisible = false }"
             >
               登录 / 注册
             </button>
             <button
                 v-else
-                class="w-full py-3 bg-[#0071e3] text-white font-medium rounded-xl mb-4 active:scale-95 transition-transform"
+                class="w-full py-2 bg-[#0071e3] text-white font-medium rounded-xl mb-3 active:scale-95 transition-transform"
                 @click="logout"
             >
               退出登录
             </button>
 
             <!-- Theme Selection -->
-            <div class="w-full space-y-2">
-              <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">主题</div>
-              <div class="flex space-x-2">
+            <div class="w-full space-y-1">
+              <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1 px-2">主题</div>
+              <div class="flex space-x-1">
                 <button
                     v-for="option in themeOptions"
                     :key="option.key"
                     @click="handleThemeSelect(option.key)"
-                    class="flex-1 py-3 px-4 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2"
+                    class="flex-1 py-2 px-3 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2 text-sm"
                     :class="[
                       userPreference === option.key
                         ? 'bg-[#0071e3] text-white'
                         : 'bg-gray-100 dark:bg-[#1c1c1e] text-gray-900 dark:text-white opacity-70 hover:opacity-90'
                     ]"
                 >
-                  <Icon :icon="option.icon" class="w-4 h-4"/>
+                  <Icon :icon="option.icon" class="w-3 h-3"/>
                   <span>{{ option.label }}</span>
                 </button>
               </div>
@@ -401,13 +401,13 @@ const communityOptions = [
 /* Mobile Menu Link */
 .mobile-link {
   display: block;
-  padding: 12px 16px;
-  font-size: 19px; /* iOS Human Interface Guidelines standard size */
+  padding: 8px 12px;
+  font-size: 16px; /* iOS Human Interface Guidelines standard size */
   font-weight: 400;
   color: #1d1d1f;
-  border-radius: 12px;
+  border-radius: 10px;
   background: rgba(255, 255, 255, 0.8);
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .dark .mobile-link {
