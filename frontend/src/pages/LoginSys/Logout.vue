@@ -25,7 +25,7 @@
 <script setup lang="ts">
 import {NButton} from 'naive-ui'
 import {useRouter} from 'vue-router'
-import {useAuthorizationStore} from "../stores/Authorization.js"
+import {useAuthorizationStore} from "../../stores/Authorization"
 
 const router = useRouter()
 const authorizationStore = useAuthorizationStore()

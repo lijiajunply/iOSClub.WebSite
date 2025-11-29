@@ -4,9 +4,9 @@ import { useRouter, useRoute } from 'vue-router'
 import { useMessage } from 'naive-ui'
 import { NDatePicker, NSelect, NModal, NInput } from 'naive-ui'
 import { Icon } from '@iconify/vue'
-import { ProjectService } from '../services/ProjectService'
-import type { ProjectModel, StaffModel, TaskModel } from '../models'
-import { useLayoutStore } from '../stores/LayoutStore'
+import { ProjectService } from '../../services/ProjectService'
+import type { ProjectModel, StaffModel, TaskModel } from '../../models'
+import { useLayoutStore } from '../../stores/LayoutStore'
 
 const router = useRouter()
 const route = useRoute()

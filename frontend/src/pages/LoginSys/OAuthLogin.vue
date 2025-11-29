@@ -157,10 +157,10 @@ import {onMounted, ref} from 'vue'
 import {useRoute} from 'vue-router'
 import {NCheckbox, NForm, NFormItem, NInput} from 'naive-ui'
 import {Icon} from '@iconify/vue'
-import {useAuthorizationStore} from "../stores/Authorization.js";
-import {OAuthService} from '../services/OAuthService';
-import {AuthService} from '../services/AuthService';
-import {url} from '../services/Url';
+import {useAuthorizationStore} from "../../stores/Authorization";
+import {OAuthService} from '../../services/OAuthService';
+import {AuthService} from '../../services/AuthService';
+import {url} from '../../services/Url';
 
 const authorizationStore = useAuthorizationStore()
 const route = useRoute()

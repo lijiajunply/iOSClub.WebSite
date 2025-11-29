@@ -127,7 +127,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { NInput, NCheckbox, NForm, NFormItem } from 'naive-ui'
 import { Icon } from '@iconify/vue'
-import { useAuthorizationStore } from "../stores/Authorization"
+import { useAuthorizationStore } from "../../stores/Authorization"
 
 const authorizationStore = useAuthorizationStore()
 const router = useRouter()

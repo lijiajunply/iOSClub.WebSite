@@ -1,230 +1,359 @@
 <template>
-  <div class="layout-container">
-    <n-layout class="h-[calc(100vh-64px)] bg-ios transition-colors duration-300" has-sider>
-      <n-layout-sider v-if="!isMobile" collapse-mode="width" :collapsed-width="0" :width="280" :native-scrollbar="false"
-        bordered class="glass-sidebar">
-        <div class="flex flex-col h-full">
-          <!-- Sidebar Header / Search placeholder -->
-          <div class="px-5 py-4">
-            <div class="flex items-center space-x-2 text-gray-500 dark:text-gray-400">
-              <Icon icon="lucide:layout-grid" class="w-5 h-5" />
-              <span class="text-sm font-semibold tracking-wide uppercase opacity-70">Blog</span>
-            </div>
-          </div>
+  <!-- App Container: 高度改为 h-[calc(100vh-64px)] -->
+  <div
+      class="flex h-[calc(100vh-64px)] w-full overflow-hidden bg-[#f2f2f7] text-slate-900 dark:bg-black dark:text-slate-100 transition-colors duration-300">
 
-          <!-- Menu Content Wrapper -->
-          <n-scrollbar class="flex-1 -mr-2 pr-2">
-            <MenuContent @menu-item-click="handleMenuClick" />
-          </n-scrollbar>
+    <!-- Sidebar (Desktop) -->
+    <!-- 左侧菜单: 磨砂质感，调整了宽度和头部设计 -->
+    <aside
+        v-if="!isMobile"
+        class="flex w-[260px] flex-col border-r border-black/5 bg-zinc-50/80 backdrop-blur-xl dark:border-white/10 dark:bg-[#1e1e1e]/80 transition-all"
+    >
+      <!-- Sidebar Header -->
+      <!-- 这里的样式更接近 macOS 侧边栏标题 -->
+      <div class="flex h-14 shrink-0 items-center px-5 pt-2">
+        <span class="text-sm font-bold text-zinc-500 dark:text-zinc-400 select-none">
+          社团文章
+        </span>
+      </div>
+
+      <!-- Sidebar Menu -->
+      <n-scrollbar class="flex-1 px-3 pb-4">
+        <!-- MenuContent 组件容器 -->
+        <div class="space-y-1">
+          <MenuContent @menu-item-click="handleMenuClick"/>
         </div>
-      </n-layout-sider>
+      </n-scrollbar>
+    </aside>
 
-      <!-- Main Content Area -->
-      <n-layout-content class="bg-transparent">
-        <div class="content-card w-full h-full flex flex-col overflow-hidden bg-white dark:bg-[#1e1e1e]">
+    <!-- Main Content Area "Paper" -->
+    <main class="relative flex flex-1 flex-col overflow-hidden focus:outline-none">
 
-          <!-- Breadcrumb / Mobile Header Toolbar -->
-          <div
-            class="h-14 px-6 flex items-center justify-between border-b border-gray-100 dark:border-white/5 shrink-0 glass-header z-10">
-            <!-- Mobile Toggle -->
-            <button v-if="isMobile" @click="mobileMenuOpen = true"
-              class="p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 transition-colors">
-              <Icon icon="lucide:menu" class="w-6 h-6 text-gray-600 dark:text-gray-300" />
+      <!-- 主内容区域: 桌面端悬浮圆角，移动端全屏 -->
+      <div
+          class="flex flex-1 flex-col overflow-hidden bg-white shadow-sm transition-all dark:bg-[#1c1c1e] md:border md:border-black/5 md:dark:border-white/10">
+
+        <!-- Header / Toolbar -->
+        <header
+            class="z-20 flex h-14 shrink-0 items-center justify-between border-b border-zinc-100 bg-white/80 px-4 backdrop-blur-md dark:border-white/5 dark:bg-[#1c1c1e]/80 transition-colors">
+
+          <!-- 左侧: 面包屑 & 移动端菜单开关 -->
+          <div class="flex items-center gap-2 overflow-hidden">
+            <button
+                v-if="isMobile"
+                @click="mobileMenuOpen = true"
+                class="rounded-full p-2 text-zinc-500 hover:bg-zinc-100 active:scale-95 dark:text-zinc-400 dark:hover:bg-white/10 transition-all"
+            >
+              <Icon icon="lucide:panel-left" class="h-5 w-5"/>
             </button>
 
-            <!-- Title / Breadcrumb placeholder -->
-            <div class="flex items-center space-x-2 text-sm font-medium text-gray-500 dark:text-gray-400">
-              <span>Documents</span>
-              <!-- Dynamic Paths -->
-              <template v-for="(crumb, index) in breadcrumbs" :key="index">
-                <Icon icon="lucide:chevron-right" class="w-4 h-4 mx-1 text-gray-300 dark:text-gray-600 shrink-0" />
-                <Icon :icon="index === breadcrumbs.length - 1 ? 'lucide:file-text' : 'lucide:folder'"
-                  class="w-4 h-4 mx-1 shrink-0" :class="index === breadcrumbs.length - 1
-                    ? 'font-semibold text-gray-800 dark:text-gray-100'
-                    : 'text-gray-500 dark:text-gray-400'" />
-                <span class="truncate" :class="index === breadcrumbs.length - 1
-                  ? 'font-semibold text-gray-800 dark:text-gray-100'
-                  : 'text-gray-500 dark:text-gray-400'">
-                  {{ crumb }}
-                </span>
-              </template>
-            </div>
-
-            <!-- Right Actions -->
-            <div class="flex items-center space-x-3">
-              <Icon icon="lucide:search"
-                class="w-5 h-5 text-gray-400 cursor-pointer hover:text-gray-600 dark:hover:text-gray-200"
-                @click="handleSearchClick" />
-
-
-              <n-dropdown trigger="click" placement="bottom-end" :options="dropdownOptions" @select="handleDropdownSelect">
-                <button><Icon icon="lucide:more-horizontal"
-                    class="w-5 h-5 text-gray-400 cursor-pointer hover:text-gray-600 dark:hover:text-gray-200" /></button>
-              </n-dropdown>
-            </div>
+            <!-- 面包屑导航 -->
+            <nav class="flex items-center text-sm">
+              <div class="flex items-center gap-1 text-zinc-500 dark:text-zinc-400">
+                <!-- 根节点中文 -->
+                <span class="cursor-default hover:text-zinc-800 dark:hover:text-zinc-200 transition-colors">文档</span>
+                <template v-for="(crumb, index) in breadcrumbs" :key="index">
+                  <Icon icon="lucide:chevron-right" class="h-3.5 w-3.5 text-zinc-300 dark:text-zinc-600"/>
+                  <div class="flex items-center gap-1.5">
+                    <!-- 最后一个节点高亮 -->
+                    <Icon
+                        :icon="index === breadcrumbs.length - 1 ? 'lucide:file-text' : 'lucide:folder'"
+                        class="h-3.5 w-3.5"
+                        :class="index === breadcrumbs.length - 1 ? 'text-blue-500 dark:text-blue-400' : ''"
+                    />
+                    <span
+                        class="truncate max-w-[120px]"
+                        :class="index === breadcrumbs.length - 1 ? 'font-bold text-slate-800 dark:text-slate-100' : ''"
+                    >
+                      {{ crumb }}
+                    </span>
+                  </div>
+                </template>
+              </div>
+            </nav>
           </div>
 
-          <!-- Router View Container -->
-          <div class="flex-1 overflow-auto relative scroll-smooth">
-            <div class="min-h-full">
-              <router-view v-slot="{ Component }">
-                <transition name="fade-scale" mode="out-in">
-                  <component :is="Component" />
-                </transition>
-              </router-view>
-            </div>
+          <!-- 右侧: 操作按钮 -->
+          <div class="flex items-center gap-1">
+            <button
+                @click="handleSearchClick"
+                class="group flex items-center justify-center rounded-md p-2 transition-colors hover:bg-zinc-100 dark:hover:bg-white/10"
+                title="搜索 (Cmd+K)"
+            >
+              <Icon icon="lucide:search"
+                    class="h-4.5 w-4.5 text-zinc-400 transition-colors group-hover:text-zinc-600 dark:group-hover:text-zinc-200"/>
+            </button>
+
+            <div class="h-4 w-[1px] bg-zinc-200 dark:bg-white/10 mx-1"></div>
+
+            <n-dropdown
+                trigger="click"
+                placement="bottom-end"
+                :options="dropdownOptions"
+                @select="handleDropdownSelect"
+                class-name="ios-dropdown"
+            >
+              <button
+                  class="group flex items-center justify-center rounded-md p-2 transition-colors hover:bg-zinc-100 dark:hover:bg-white/10">
+                <Icon icon="lucide:more-horizontal"
+                      class="h-4.5 w-4.5 text-zinc-400 transition-colors group-hover:text-zinc-600 dark:group-hover:text-zinc-200"/>
+              </button>
+            </n-dropdown>
+          </div>
+        </header>
+
+        <!-- 路由视图容器 -->
+        <div class="relative flex-1 overflow-y-auto scroll-smooth">
+          <div class="min-h-full p-4 md:p-8 max-w-5xl mx-auto">
+            <router-view v-slot="{ Component }">
+              <transition name="fade-blur" mode="out-in">
+                <component :is="Component"/>
+              </transition>
+            </router-view>
           </div>
         </div>
-      </n-layout-content>
-    </n-layout>
 
-    <!-- Mobile Sheet/Drawer (iOS Style) -->
-    <n-drawer v-model:show="mobileMenuOpen" placement="bottom" height="60vh" class="ios-drawer rounded-t-2xl"
-      :trap-focus="false" :block-scroll="false">
-      <n-drawer-content body-content-style="padding: 0;" class="bg-gray-50 dark:bg-[#1c1c1e]">
-        <template #header>
-          <div class="w-full flex justify-center pt-2 pb-4 cursor-grab">
-            <div class="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
-          </div>
-        </template>
+      </div>
+    </main>
 
-        <div class="px-6 pb-10 h-full overflow-y-auto">
-          <h3 class="text-2xl font-bold mb-6 text-gray-900 dark:text-white tracking-tight">Navigation</h3>
-          <MenuContent @menu-item-click="handleMenuClick" />
+    <!-- 移动端抽屉 (iOS Sheet 风格) -->
+    <n-drawer
+        v-model:show="mobileMenuOpen"
+        placement="bottom"
+        height="85vh"
+        class="!bg-zinc-50 dark:!bg-[#1c1c1e] rounded-t-[20px]"
+        :trap-focus="false"
+        :block-scroll="true"
+    >
+      <n-drawer-content body-content-style="padding: 0; display: flex; flex-direction: column;">
+        <!-- 拖拽手柄 -->
+        <div class="flex w-full justify-center pt-3 pb-1 cursor-grab active:cursor-grabbing">
+          <div class="h-1.5 w-12 rounded-full bg-zinc-300 dark:bg-zinc-600/50"></div>
+        </div>
+
+        <div class="flex-1 px-6 py-6 overflow-y-auto">
+          <h2 class="mb-6 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">导航</h2>
+          <MenuContent @menu-item-click="handleMenuClick"/>
+        </div>
+
+        <div
+            class="shrink-0 px-6 pb-8 pt-4 border-t border-zinc-200 dark:border-white/5 bg-zinc-50/50 dark:bg-[#1c1c1e]/50 backdrop-blur-sm">
+          <button
+              @click="mobileMenuOpen = false"
+              class="w-full py-3.5 rounded-xl bg-white dark:bg-zinc-800 font-medium text-slate-900 dark:text-white shadow-sm border border-zinc-200 dark:border-zinc-700 active:scale-98 transition-transform"
+          >
+            关闭
+          </button>
         </div>
       </n-drawer-content>
     </n-drawer>
 
-  </div>
-  <!-- Search Modal -->
-  <n-modal v-model:show="searchModalVisible" preset="card" :show-icon="false" :show-header="false" :close-on-esc="true"
-    :close-on-click-outside="true" :mask-opacity="0.3" :style="{ width: '90%', maxWidth: '560px' }"
-    class="ios-search-modal">
-    <div class="ios-search-container">
-      <!-- Search Input Section -->
-      <div class="ios-search-header">
-        <div class="ios-search-input-wrapper">
-          <Icon icon="lucide:search" class="ios-search-icon" />
-          <n-input v-model:value="searchKeyword" placeholder="搜索文章" size="large" autofocus @keyup.enter="handleSearch"
-            class="ios-search-input" :bordered="false" />
-          <n-button v-if="searchKeyword.trim()" size="small" type="default" :bordered="false"
-            @click="searchKeyword = ''" class="ios-search-clear">
-            <Icon icon="lucide:x" class="w-4 h-4" />
-          </n-button>
-        </div>
-        <n-button type="default" size="large" :bordered="false" @click="handleSearch" :disabled="isSearching"
-          class="ios-search-button">
-          <n-spin v-if="isSearching" size="small" class="ios-search-spinner" />
-          <span v-else>搜索</span>
-        </n-button>
-      </div>
-
-      <!-- Search Results Section -->
-      <div class="ios-search-results-container">
-        <!-- Loading State -->
-        <div v-if="isSearching" class="ios-loading-state">
-          <n-spin size="large" class="ios-spinner" />
-        </div>
-
-        <!-- Error State -->
-        <div v-else-if="searchError" class="ios-error-state">
-          <Icon icon="lucide:alert-circle" class="ios-error-icon" />
-          <p class="ios-error-text">{{ searchError }}</p>
-        </div>
-
-        <!-- Results List -->
-        <div v-else-if="searchResults.length > 0" class="ios-results-list">
-          <div v-for="article in searchResults" :key="article.path" class="ios-result-item"
-            @click="handleResultClick(article.path)">
-            <div class="ios-result-content">
-              <div class="ios-result-title" v-html="article.highlightedTitle || article.title"></div>
-              <div class="ios-result-preview" v-html="article.highlightedContent || ''"></div>
-              <div class="ios-result-meta">
-                <span class="ios-result-date">{{ new Date(article.lastWriteTime).toLocaleDateString() }}</span>
+    <!-- 搜索弹窗 (Spotlight 风格) -->
+    <n-modal
+        v-model:show="searchModalVisible"
+        :show-icon="false"
+        :show-header="false"
+        transform-origin="center"
+        class="!bg-transparent !shadow-none box-border"
+    >
+      <div
+          class="spotlight-container w-[90vw] max-w-[600px] overflow-hidden rounded-2xl bg-white/90 shadow-2xl backdrop-blur-2xl ring-1 ring-black/5 dark:bg-[#2c2c2e]/90 dark:ring-white/10">
+        <!-- 搜索输入框 -->
+        <div class="flex items-center gap-3 border-b border-zinc-200/50 px-4 py-4 dark:border-white/5">
+          <Icon icon="lucide:search" class="h-5 w-5 text-zinc-400"/>
+          <n-input
+              v-model:value="searchKeyword"
+              placeholder="搜索文章..."
+              size="large"
+              autofocus
+              :bordered="false"
+              @keyup.enter="handleSearch"
+              class="flex-1 !bg-transparent text-lg !p-0"
+          >
+            <template #suffix>
+              <div v-if="isSearching" class="flex items-center">
+                <n-spin size="small"/>
               </div>
+              <button v-else-if="searchKeyword" @click="searchKeyword = ''"
+                      class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200">
+                <Icon icon="lucide:x-circle" class="w-4 h-4"/>
+              </button>
+            </template>
+          </n-input>
+          <button
+              class="hidden text-xs font-medium text-zinc-400 sm:block rounded border border-zinc-200 px-1.5 py-0.5 dark:border-zinc-700"
+              @click="searchModalVisible = false"
+          >
+            ESC
+          </button>
+        </div>
+
+        <!-- 结果区域 -->
+        <div class="max-h-[60vh] overflow-y-auto p-2">
+          <!-- 初始状态 -->
+          <div v-if="!searchKeyword && !searchResults.length" class="py-12 text-center">
+            <div
+                class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-zinc-100 dark:bg-zinc-800">
+              <Icon icon="lucide:command" class="h-6 w-6 text-zinc-400"/>
             </div>
-            <Icon icon="lucide:chevron-right" class="ios-result-arrow" />
+            <p class="text-sm text-zinc-500 dark:text-zinc-400">输入关键词开始搜索文档...</p>
+          </div>
+
+          <!-- 错误提示 -->
+          <div v-else-if="searchError" class="py-8 text-center text-red-500">
+            <p>{{ searchError }}</p>
+          </div>
+
+          <!-- 搜索结果 -->
+          <div v-else-if="searchResults.length > 0" class="flex flex-col gap-1">
+            <div
+                v-for="article in searchResults"
+                :key="article.path"
+                @click="handleResultClick(article.path)"
+                class="group flex cursor-pointer flex-col gap-1 rounded-xl p-3 transition-colors hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600"
+            >
+              <div class="flex items-center justify-between">
+                <h4 class="font-medium text-slate-900 group-hover:text-white dark:text-slate-100 text-sm"
+                    v-html="article.highlightedTitle || article.title"></h4>
+                <span class="text-xs text-zinc-400 group-hover:text-blue-100">{{
+                    new Date(article.lastWriteTime).toLocaleDateString()
+                  }}</span>
+              </div>
+              <p class="line-clamp-2 text-xs text-zinc-500 group-hover:text-blue-100 dark:text-zinc-400"
+                 v-html="article.highlightedContent || ''"></p>
+            </div>
+          </div>
+
+          <!-- 无结果 -->
+          <div v-else-if="searchKeyword && !isSearching" class="py-8 text-center">
+            <p class="text-zinc-500">未找到与 "{{ searchKeyword }}" 相关的文章</p>
           </div>
         </div>
 
-        <!-- Empty State -->
-        <div v-else-if="searchKeyword.trim()" class="ios-empty-state">
-          <Icon icon="lucide:file-text" class="ios-empty-icon" />
-          <p class="ios-empty-text">没有找到匹配的文章</p>
+        <!-- 底部提示 -->
+        <div
+            class="border-t border-zinc-100 bg-zinc-50/50 px-4 py-2 text-[10px] text-zinc-400 dark:border-white/5 dark:bg-white/5 flex justify-between items-center">
+          <span>本地搜索支持</span>
+          <span class="font-mono">回车键确认搜索</span>
         </div>
       </div>
-    </div>
-  </n-modal>
+    </n-modal>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import { NDrawer, NDrawerContent, NLayout, NLayoutContent, NLayoutSider, NScrollbar, NModal, NInput, NButton, NSpin, NDropdown } from 'naive-ui'
-import { Icon } from '@iconify/vue'
+import {computed, onBeforeUnmount, onMounted, ref} from 'vue'
+import {useRouter, useRoute} from 'vue-router'
+import {
+  NDrawer,
+  NDrawerContent,
+  NScrollbar,
+  NModal,
+  NInput,
+  NSpin,
+  NDropdown,
+  useMessage
+} from 'naive-ui'
+import {Icon} from '@iconify/vue'
 import MenuContent from '../components/MenuContent.vue'
-import { ArticleService } from '../services/ArticleService'
-import { useAuthorizationStore } from '../stores/Authorization'
-import type { ArticleSearchResult } from '../models/ArticleModel'
+import {ArticleService} from '../services/ArticleService'
+import {useAuthorizationStore} from '../stores/Authorization'
+import type {ArticleSearchResult} from '../models'
 
+// --- 配置与状态 ---
 const router = useRouter()
 const route = useRoute()
-const mobileMenuOpen = ref(false)
-const windowWidth = ref(window.innerWidth)
+const message = useMessage()
 
-// Authorization store for user login status and permissions
+const mobileMenuOpen = ref<boolean>(false)
+const windowWidth = ref<number>(typeof window !== 'undefined' ? window.innerWidth : 1024)
+const MOBILE_BREAKPOINT = 768
+const isMobile = computed<boolean>(() => windowWidth.value < MOBILE_BREAKPOINT)
+
+// --- 鉴权 ---
 const authStore = useAuthorizationStore()
 const isLoggedIn = computed(() => authStore.isAuthenticated)
 const isAdmin = computed(() => authStore.isAdmin())
 
-// Dropdown menu options
-const dropdownOptions = computed(() => {
+// --- 下拉菜单逻辑 ---
+type DropdownOption = {
+  label: string;
+  key: string;
+  icon?: () => any;
+}
+
+// 汉化下拉菜单
+const dropdownOptions = computed<DropdownOption[]>(() => {
   const options = [
-    {
-      label: '分享当前URL',
-      key: 'share'
-    }
+    {label: '分享此页面', key: 'share'}
   ]
-  
-  // Add edit option only if user is logged in and has admin permissions
   if (isLoggedIn.value && isAdmin.value) {
-    options.push({
-      label: '编辑',
-      key: 'edit'
-    })
+    options.push({label: '编辑内容', key: 'edit'})
   }
-  
   return options
 })
 
-// Search related state
+const handleDropdownSelect = (key: string) => {
+  if (key === 'share') handleShareUrl()
+  if (key === 'edit') handleEdit()
+}
+
+const handleShareUrl = async () => {
+  try {
+    if (navigator.share && isMobile.value) {
+      await navigator.share({title: document.title, url: window.location.href})
+    } else {
+      await navigator.clipboard.writeText(`${document.title} - ${window.location.href}`)
+      message.success('链接已复制到剪贴板')
+    }
+  } catch (err) {
+    console.error('分享失败:', err)
+  }
+}
+
+const handleEdit = () => {
+  const path = route.path
+  if (!path.startsWith('OtherOrg')) {
+    const articlePath = path.replace('/Article', '')
+    router.push(`/Centre/Article/edit${articlePath}`)
+  }
+}
+
+// --- 导航与面包屑 ---
+const breadcrumbs = computed<string[]>(() => {
+  const path = route.path
+  if (!path) return []
+  return decodeURIComponent(path)
+      .split('/')
+      .filter(segment => segment && segment !== 'Article')
+})
+
+const handleMenuClick = (key: string) => {
+  if (isMobile.value) mobileMenuOpen.value = false
+  router.push(key)
+}
+
+// --- 搜索系统 ---
 const searchModalVisible = ref(false)
 const searchKeyword = ref('')
 const searchResults = ref<ArticleSearchResult[]>([])
 const isSearching = ref(false)
 const searchError = ref('')
 
-// Breakpoint for mobile view (iPad Mini portrait and below)
-const MOBILE_BREAKPOINT = 768
-const isMobile = computed(() => windowWidth.value < MOBILE_BREAKPOINT)
-
-const handleResize = () => {
-  windowWidth.value = window.innerWidth
-  if (!isMobile.value) {
-    mobileMenuOpen.value = false
-  }
-}
-
-const handleMenuClick = (key: string) => {
-  if (isMobile.value) {
-    mobileMenuOpen.value = false
-  }
-  router.push(key)
-}
-
-// Search handlers
 const handleSearchClick = () => {
   searchModalVisible.value = true
+  setTimeout(() => {
+    const input = document.querySelector('.spotlight-container input') as HTMLInputElement
+    if (input) input.focus()
+  }, 100)
+}
+
+/* 快捷键监听 (Cmd/Ctrl + K) */
+const handleKeydown = (e: KeyboardEvent) => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    e.preventDefault()
+    handleSearchClick()
+  }
 }
 
 const handleSearch = async () => {
@@ -232,13 +361,12 @@ const handleSearch = async () => {
     searchResults.value = []
     return
   }
-
   isSearching.value = true
   searchError.value = ''
   try {
     searchResults.value = await ArticleService.searchArticles(searchKeyword.value)
   } catch (error: any) {
-    searchError.value = error.message || '搜索失败'
+    searchError.value = error.message || '搜索请求失败'
   } finally {
     isSearching.value = false
   }
@@ -249,445 +377,30 @@ const handleResultClick = (path: string) => {
   router.push(`/Article/${path}`)
 }
 
-const breadcrumbs = computed(() => {
-  const path = route.path
-  if (!path) return []
-
-  return decodeURIComponent(path)
-    .split('/')
-    .filter(segment => segment && segment !== 'Article')
-})
+// 监听窗口调整
+const handleResize = () => {
+  windowWidth.value = window.innerWidth
+  if (!isMobile.value) mobileMenuOpen.value = false
+}
 
 onMounted(() => {
   window.addEventListener('resize', handleResize)
+  window.addEventListener('keydown', handleKeydown)
 })
-
-// Handle dropdown menu selection
-const handleDropdownSelect = (key: string) => {
-  switch (key) {
-    case 'share':
-      handleShareUrl()
-      break
-    case 'edit':
-      handleEdit()
-      break
-  }
-}
-
-// Handle URL sharing
-const handleShareUrl = async () => {
-  try {
-    if (isMobile.value && navigator.share) {
-      // 手机端调用分享API
-      await navigator.share({
-        title: document.title,
-        text: document.title,
-        url: window.location.href,
-      })
-    } else {
-      // 电脑端复制特定文案
-      const shareText = `${document.title} - ${window.location.href}`
-      await navigator.clipboard.writeText(shareText)
-      // 显示复制成功的通知
-      alert('分享文案已复制到剪贴板')
-    }
-  } catch (err) {
-    console.error('分享失败:', err)
-  }
-}
-
-// Handle edit action
-const handleEdit = () => {
-  // Get the current article path from route
-  const path = route.path
-  if (path.startsWith('/Article/')) {
-    const articlePath = path.replace('/Article/', '')
-    router.push(`/Centre/Article/edit/${articlePath}`)
-  }
-}
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', handleResize)
+  window.removeEventListener('keydown', handleKeydown)
 })
 </script>
 
 <style scoped>
-/* iOS Style Search Modal */
-.ios-search-modal :deep(.n-modal-content) {
-  border-radius: 16px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  overflow: hidden;
-  background-color: #ffffff;
-}
+/* 原生 CSS 用于自定义滚动条和必须的覆盖样式 */
 
-.dark .ios-search-modal :deep(.n-modal-content) {
-  background-color: #2c2c2e;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
-}
-
-/* Search Container */
-.ios-search-container {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-/* Search Header */
-.ios-search-header {
-  display: flex;
-  align-items: center;
-  padding: 16px;
-  border-bottom: 1px solid #e5e5ea;
-}
-
-.dark .ios-search-header {
-  border-bottom-color: #3a3a3c;
-}
-
-.ios-search-input-wrapper {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  background-color: #f2f2f7;
-  border-radius: 12px;
-  padding: 0 12px;
-  margin-right: 12px;
-  transition: background-color 0.2s ease;
-}
-
-.dark .ios-search-input-wrapper {
-  background-color: #3a3a3c;
-}
-
-.ios-search-icon {
-  width: 18px;
-  height: 18px;
-  color: #8e8e93;
-  margin-right: 8px;
-}
-
-.dark .ios-search-icon {
-  color: #8e8e93;
-}
-
-.ios-search-input {
-  flex: 1;
-  font-size: 17px;
-  font-weight: 400;
-  line-height: 22px;
-}
-
-.ios-search-input :deep(.n-input-input) {
-  padding: 10px 0;
-  color: #000000;
-}
-
-.dark .ios-search-input :deep(.n-input-input) {
-  color: #ffffff;
-}
-
-.ios-search-clear {
-  padding: 4px;
-  color: #8e8e93;
-}
-
-.dark .ios-search-clear {
-  color: #8e8e93;
-}
-
-.ios-search-button {
-  font-size: 17px;
-  font-weight: 600;
-  color: #007aff;
-  padding: 8px 12px;
-}
-
-.dark .ios-search-button {
-  color: #0a84ff;
-}
-
-.ios-search-spinner {
-  color: #007aff;
-}
-
-.dark .ios-search-spinner {
-  color: #0a84ff;
-}
-
-/* Search Results Container */
-.ios-search-results-container {
-  flex: 1;
-  overflow-y: auto;
-  max-height: 400px;
-}
-
-/* Loading State */
-.ios-loading-state {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 48px 20px;
-}
-
-.ios-spinner {
-  color: #007aff;
-}
-
-.dark .ios-spinner {
-  color: #0a84ff;
-}
-
-/* Error State */
-.ios-error-state {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  padding: 48px 20px;
-  text-align: center;
-}
-
-.ios-error-icon {
-  width: 48px;
-  height: 48px;
-  color: #ff3b30;
-  margin-bottom: 12px;
-}
-
-.dark .ios-error-icon {
-  color: #ff453a;
-}
-
-.ios-error-text {
-  font-size: 14px;
-  color: #8e8e93;
-  margin: 0;
-}
-
-.dark .ios-error-text {
-  color: #8e8e93;
-}
-
-/* Results List */
-.ios-results-list {
-  padding: 8px 0;
-}
-
-.ios-result-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  transition: background-color 0.2s ease;
-  cursor: pointer;
-}
-
-.ios-result-item:hover {
-  background-color: #f2f2f7;
-}
-
-.dark .ios-result-item:hover {
-  background-color: #3a3a3c;
-}
-
-.ios-result-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.ios-result-title {
-  font-size: 16px;
-  font-weight: 400;
-  color: #000000;
-  line-height: 20px;
-  margin-bottom: 4px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.ios-result-preview {
-  font-size: 13px;
-  color: #6e6e73;
-  line-height: 18px;
-  margin-bottom: 6px;
-  overflow: hidden;
-  display: -webkit-box;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-}
-
-/* 高亮样式 */
-.ios-result-title :deep(b),
-.ios-result-preview :deep(b) {
-  color: #007aff;
-  font-weight: 600;
-}
-
-.dark .ios-result-title {
-  color: #ffffff;
-}
-
-.ios-result-meta {
-  display: flex;
-  align-items: center;
-  font-size: 12px;
-  color: #8e8e93;
-  line-height: 16px;
-}
-
-.dark .ios-result-meta {
-  color: #8e8e93;
-}
-
-.ios-result-category {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.ios-result-divider {
-  margin: 0 4px;
-}
-
-.ios-result-date {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.ios-result-arrow {
-  width: 16px;
-  height: 16px;
-  color: #c7c7cc;
-  margin-left: 8px;
-}
-
-.dark .ios-result-arrow {
-  color: #636366;
-}
-
-/* Empty State */
-.ios-empty-state {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  padding: 48px 20px;
-  text-align: center;
-}
-
-.ios-empty-icon {
-  width: 48px;
-  height: 48px;
-  color: #c7c7cc;
-  margin-bottom: 12px;
-}
-
-.dark .ios-empty-icon {
-  color: #636366;
-}
-
-.ios-empty-text {
-  font-size: 14px;
-  color: #8e8e93;
-  margin: 0;
-}
-
-.dark .ios-empty-text {
-  color: #8e8e93;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .ios-search-modal :deep(.n-modal-content) {
-    border-radius: 0;
-    margin: 0;
-    height: 100vh;
-  }
-
-  .ios-search-results-container {
-    max-height: calc(100vh - 80px);
-  }
-}
-
-.layout-container {
-  /* Set base font stack similar to Apple System */
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-}
-
-/* Light Mode Sidebar Background (Apple Sidebar Grey) */
-.bg-ios :deep(.n-layout-sider) {
-  background-color: #fbfbfd;
-}
-
-/* Dark Mode Sidebar Background (Apple Dark Grey) */
-.dark .bg-ios :deep(.n-layout-sider) {
-  background-color: #2d2d2d;
-  /* Slightly lighter than pure black */
-}
-
-/* Sidebar Styling */
-.glass-sidebar :deep(.n-layout-sider-scroll-container) {
-  /* Ensure content doesn't get cut off */
-  min-height: 100%;
-}
-
-/* Apply backdrop blur if supported for that frosted glass look */
-@supports (backdrop-filter: blur(20px)) {
-  .glass-sidebar {
-    background-color: rgba(249, 249, 251, 0.8) !important;
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-  }
-
-  .dark .bg-ios .glass-sidebar {
-    background-color: rgba(45, 45, 45, 0.8) !important;
-  }
-}
-
-/* The Main "Card" area */
-.content-card {
-  /* Only round corners on Desktop */
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05),
-    0 4px 12px 0 rgba(0, 0, 0, 0.02);
-
-  /* Subtle border for definition */
-  border: 1px solid rgba(0, 0, 0, 0.06);
-}
-
-.bg-ios-dark .content-card {
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.2);
-}
-
-/* Mobile specific adjustments */
-@media (max-width: 768px) {
-  .content-card {
-    border-radius: 0;
-    border: none;
-  }
-}
-
-/* Animations */
-.fade-scale-enter-active,
-.fade-scale-leave-active {
-  transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.2, 0.0, 0.2, 1);
-}
-
-.fade-scale-enter-from {
-  opacity: 0;
-  transform: scale(0.98) translateY(10px);
-}
-
-.fade-scale-leave-to {
-  opacity: 0;
-  transform: translateY(-10px);
-}
-
-/* Scrollbar Customization to look like macOS native */
+/* 自定义滚动条 (Webkit) - 极简 & 不显眼 */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -695,28 +408,51 @@ onBeforeUnmount(() => {
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.2);
-  border-radius: 10px;
-  border: 2px solid transparent;
-  /* Creates padding effect */
-  background-clip: content-box;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 100vh;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.2);
 }
 
+/* 深色模式滚动条 */
 .dark ::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .dark ::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.3);
 }
 
-/* Drawer Styling */
-:deep(.n-drawer.ios-drawer) {
-  border-top-left-radius: 16px;
-  border-top-right-radius: 16px;
+/* 路由切换动画: 模糊+位移 */
+.fade-blur-enter-active,
+.fade-blur-leave-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fade-blur-enter-from {
+  opacity: 0;
+  filter: blur(4px);
+  transform: translateY(10px);
+}
+
+.fade-blur-leave-to {
+  opacity: 0;
+  filter: blur(4px);
+  transform: translateY(-10px);
+}
+
+/* Naive Input 样式覆盖: 用于 Spotlight 搜索框 */
+:deep(.n-input.n-input--stateful) {
+  --n-border: none !important;
+  --n-border-hover: none !important;
+  --n-border-focus: none !important;
+  --n-box-shadow-focus: none !important;
+  background-color: transparent !important;
+}
+
+:deep(.n-input .n-input__input-el) {
+  height: 2.5rem;
 }
 </style>

@@ -147,9 +147,9 @@ import { useRouter, useRoute } from 'vue-router'
 import { useMessage, NInput, NDatePicker, NSelect, NModal, NSpin } from 'naive-ui'
 import { Icon } from '@iconify/vue'
 // 假设这些引入路径是正确的，基于你提供的代码
-import { ProjectService } from '../services/ProjectService'
-import type { ProjectModel } from '../models'
-import { useLayoutStore } from '../stores/LayoutStore'
+import { ProjectService } from '../../services/ProjectService'
+import type { ProjectModel } from '../../models'
+import { useLayoutStore } from '../../stores/LayoutStore'
 
 const router = useRouter()
 const route = useRoute()

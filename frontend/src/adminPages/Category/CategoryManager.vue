@@ -103,9 +103,9 @@ import { useRouter } from 'vue-router';
 import { useMessage } from 'naive-ui';
 import { Icon } from '@iconify/vue';
 import draggable from 'vuedraggable';
-import { CategoryService } from '../services/CategoryService';
-import type { CategoryModel } from '../models';
-import { useLayoutStore } from '../stores/LayoutStore';
+import { CategoryService } from '../../services/CategoryService';
+import type { CategoryModel } from '../../models';
+import { useLayoutStore } from '../../stores/LayoutStore';
 
 const message = useMessage();
 const router = useRouter();

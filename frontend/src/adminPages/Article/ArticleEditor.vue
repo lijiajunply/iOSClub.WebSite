@@ -154,11 +154,11 @@ import { ref, computed, onMounted, onBeforeUnmount, defineComponent, h } from 'v
 import { useRoute, useRouter } from 'vue-router'
 import { useMessage, NForm, NFormItem, NInput, NSelect } from 'naive-ui'
 import { Icon } from '@iconify/vue'
-import { ArticleService } from '../services/ArticleService'
-import type { ArticleModel, ArticleCreateDto, ArticleUpdateDto, CategoryModel } from '../models'
-import MarkdownComponent from '../components/MarkdownComponent.vue'
-import { useLayoutStore } from '../stores/LayoutStore'
-import { CategoryService } from 'src/services/CategoryService'
+import { ArticleService } from '../../services/ArticleService'
+import type { ArticleModel, ArticleCreateDto, ArticleUpdateDto, CategoryModel } from '../../models'
+import MarkdownComponent from '../../components/MarkdownComponent.vue'
+import { useLayoutStore } from '../../stores/LayoutStore'
+import { CategoryService } from '../../services/CategoryService'
 
 // --- Types ---
 interface EditFormType {

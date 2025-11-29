@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import {nextTick, ref, watch, computed, onMounted} from "vue";
-import {Icon} from "@iconify/vue";
+import { nextTick, ref, watch, computed, onBeforeUnmount } from "vue";
+import { useRoute } from "vue-router";
+import { Icon } from "@iconify/vue";
 
+// Markdown Libraries
 import MarkdownIt from 'markdown-it'
 import markdownitFootnote from 'markdown-it-footnote'
 import markdownitTaskList from 'markdown-it-task-lists'
@@ -12,10 +14,8 @@ import mdSub from 'markdown-it-sub'
 import mdMark from 'markdown-it-mark'
 import markdownItAnchor from 'markdown-it-anchor'
 import markdownItContainer from 'markdown-it-container'
-
 import markdownItMermaid from '@jsonlee_12138/markdown-it-mermaid';
 import Prism from "prismjs"
-import {useRoute} from "vue-router";
 
 interface Content {
   title: string
@@ -32,157 +32,121 @@ const props = withDefaults(defineProps<{
 })
 
 const route = useRoute();
+const activeHeadingId = ref<string>('');
 
-// 存储标题结构
-const headings = ref<Array<{ id: string; text: string; level: number; href: string; children: any[] }>>([])
-
-// 创建 markdown-it 实例
+// --- Markdown Configuration ---
 const md = new MarkdownIt({
   html: true,
   linkify: true,
   typographer: true
 })
 
-// 使用 anchor 插件
+// Anchor Config: Add scroll-margin-top class to handle sticky headers
 md.use(markdownItAnchor, {
-  permalink: markdownItAnchor.permalink.ariaHidden({
+  permalink: markdownItAnchor.permalink.linkInsideHeader({
+    symbol: '', // No symbol, make the whole header clickable or just invisible
     placement: 'before',
-    space: true,
-    class: 'apple-link-no-icon',
+    class: 'absolute -ml-6 opacity-0 hover:opacity-100 text-blue-500 w-6 h-full flex items-center justify-center',
     renderHref: (href: string) => `${route.path}#${href}`,
-  })
+  }),
+  // 重要：slugify 函数确保中文标题也能生成合法的 ID
+  slugify: (s: string) => s.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^\w\u4e00-\u9fa5-]/g, '')
 })
+
+// ... Other Plugins (Footnote, tasklist, etc - kept same)
 md.use(markdownitFootnote)
-md.use(markdownitTaskList, {label: false, labelAfter: false})
-md.use(markdownitAttrs, {
-  allowedAttributes: ['id', 'class', 'target', 'src']
-})
+md.use(markdownitTaskList, { label: false, labelAfter: false })
+md.use(markdownitAttrs)
+md.use(mdExpandTabs).use(mdSup).use(mdSub).use(mdMark)
+// Mermaid might need CSS adjustment in dark mode contexts, relying on plugin defaults for now
+md.use(markdownItMermaid({ delay: 200 }))
 
-md.use(mdExpandTabs)
-    .use(mdSup)
-    .use(mdSub)
-    .use(mdMark)
-    .use(markdownItMermaid({delay: 100}))
-
-// 配置自定义容器
+// Custom Containers (Alerts) - MacOS Style
 const containerOptions = [
-  {
-    name: 'warning',
-    className: 'warning'
-  },
-  {
-    name: 'danger',
-    className: 'danger'
-  },
-  {
-    name: 'tip',
-    className: 'tip'
-  }
+  { name: 'warning', icon: 'lucide:alert-triangle', color: 'text-amber-500', bg: 'bg-amber-50 dark:bg-amber-500/10', border: 'border-amber-200 dark:border-amber-500/20' },
+  { name: 'danger', icon: 'lucide:x-circle', color: 'text-red-500', bg: 'bg-red-50 dark:bg-red-500/10', border: 'border-red-200 dark:border-red-500/20' },
+  { name: 'tip', icon: 'lucide:lightbulb', color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-500/10', border: 'border-blue-200 dark:border-blue-500/20' }
 ]
 
-containerOptions.forEach(({name, className}) => {
-  md.use(markdownItContainer, name, {
-    validate: (params: string) => {
-      return params.trim().match(new RegExp(`^${name}\\s+(.*)$`))
-    },
+containerOptions.forEach(opt => {
+  md.use(markdownItContainer, opt.name, {
+    validate: (params: string) => params.trim().match(new RegExp(`^${opt.name}\\s+(.*)$`)),
     render: (tokens: any[], idx: number) => {
-      const m = tokens[idx].info.trim().match(new RegExp(`^${name}\\s+(.*)$`))
+      const m = tokens[idx].info.trim().match(new RegExp(`^${opt.name}\\s+(.*)$`))
       if (tokens[idx].nesting === 1) {
-        return `<div class="${className} custom-block"><p class="custom-block-title">${md.utils.escapeHtml(m[1])}</p>\n`
+        // Use Tailwind utility classes directly in the rendered HTML
+        return `<div class="${opt.bg} ${opt.border} border rounded-xl p-4 my-6 flex gap-3 shadow-sm">
+                  <div class="min-w-0 flex-1">
+                    <p class="font-semibold text-sm ${opt.color} mb-1 opacity-90">${md.utils.escapeHtml(m[1] || opt.name.toUpperCase())}</p>
+                    <div class="text-sm opacity-90 leading-relaxed">`
       } else {
-        return '</div>\n'
+        return '</div></div></div>\n'
       }
     }
   })
 })
 
-// 解析标题生成导航数据
+// --- Logic: Headings Extraction ---
+// Keep headings reactive
+const headings = ref<Array<{ id: string; text: string; level: number; children: any[] }>>([])
+
 const extractHeadings = (markdown: string) => {
+  // Use a temporary renderer to parse without applying side effects if needed,
+  // currently parsing same doc is fine.
   const tokens = md.parse(markdown, {})
-  const extractedHeadings = []
+  const result = []
+
+  // Custom slugify logic to match markdown-it-anchor
+  const slugify = (s: string) => s.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^\w\u4e00-\u9fa5-]/g, '')
 
   for (let i = 0; i < tokens.length; i++) {
-    const token = tokens[i]
+    if (tokens[i].type === 'heading_open') {
+      const level = parseInt(tokens[i].tag.slice(1))
+      // Support h2 and h3 for TOC (h1 is usually title)
+      if (level > 3 || level < 2) continue;
 
-    if (token.type === 'heading_open') {
-      const level = parseInt(token.tag.slice(1)) // h1 -> 1, h2 -> 2
-      const nextToken = tokens[i + 1]
-
-      if (nextToken && nextToken.type === 'inline') {
-        const text = nextToken.content
-        // 生成 ID（与 markdown-it-anchor 保持一致）
-        const id = text.toLowerCase()
-            .replace(/[^\w\u4e00-\u9fa5]+/g, '-')
-            .replace(/^-+|-+$/g, '')
-
-        extractedHeadings.push({
-          id,
-          text,
-          level,
-          href: `#${id}`,
-          children: []
-        })
+      const inline = tokens[i + 1]
+      if (inline && inline.type === 'inline') {
+        const text = inline.content
+        const id = slugify(text)
+        result.push({ id, text, level, children: [] })
       }
     }
   }
-
-  return extractedHeadings
+  return result
 }
 
-// 构建层级结构的标题树
-const buildHeadingTree = (flatHeadings: Array<{ id: string; text: string; level: number; href: string }>) => {
-  const tree: Array<{ id: string; text: string; level: number; href: string; children: any[] }> = []
-  const stack: Array<{ id: string; text: string; level: number; href: string; children: any[] }> = []
+// Flat list for TOC (Since we just want indentation visually)
+// Alternatively, build a tree if we want collapsible
+const flatHeadings = computed(() => headings.value)
 
-  flatHeadings.forEach(heading => {
-    const item = {...heading, children: []}
-
-    // 找到合适的父级
-    while (stack.length > 0 && stack[stack.length - 1].level >= heading.level) {
-      stack.pop()
-    }
-
-    if (stack.length === 0) {
-      tree.push(item)
-    } else {
-      stack[stack.length - 1].children.push(item)
-    }
-
-    stack.push(item)
-  })
-
-  return tree
-}
-
-// 渲染 markdown 的函数
-const render = async (markdown: string) => {
-  // 提取标题
-  const extractedHeadings = extractHeadings(markdown)
-  headings.value = buildHeadingTree(extractedHeadings)
-
-  const html = md.render(markdown)
-
-  // 等待 DOM 更新
-  await nextTick()
-
-  // 初始化图表
-  setTimeout(() => {
-    // 代码高亮
-    Prism.highlightAll()
-  }, 50)
-
-  return html
-}
-
-// 使用 computed 代替 ref + watch
+// --- Rendering ---
 const html = ref('')
 
-watch(() => props.content, async (newValue) => {
-      if (!md || !newValue) return '';
-      html.value = await render(newValue.content);
-    }, {immediate: true}
-)
+watch(() => props.content, async (newVal) => {
+  if (!newVal) {
+    html.value = ''
+    return
+  }
 
+  // Extract Headings first
+  headings.value = extractHeadings(newVal.content)
+
+  // Render HTML
+  let rendered = md.render(newVal.content)
+
+  // Post-process: Add scroll-mt to headings for sticky header offset
+  // Using a regex replacement for simplicity, though manipulating tokens is cleaner
+  // This ensures that when we click a hash link, it doesn't go under the header
+  rendered = rendered.replace(/<(h[1-6])/g, '<$1 class="scroll-mt-20 group relative"')
+
+  html.value = rendered
+
+  await nextTick()
+  Prism.highlightAll()
+}, { immediate: true })
+
+// --- Metadata Formatting ---
 const formattedDate = computed(() => {
   if (!props.content?.date) return '';
   return new Date(props.content.date).toLocaleDateString('zh-CN', {
@@ -193,451 +157,238 @@ const formattedDate = computed(() => {
 });
 
 const identityInfo = computed(() => {
-  const map: Record<string, { label: string; colorClass: string }> = {
-    'Department': {label: '部员', colorClass: 'tag-cyan'},
-    'Minister': {label: '部长', colorClass: 'tag-orange'},
-    'President': {label: '社长', colorClass: 'tag-red'},
-    'Founder': {label: '创始人', colorClass: 'tag-purple'},
+  const map: Record<string, { label: string; bg: string; text: string }> = {
+    'Department': { label: '部员', bg: 'bg-cyan-100 dark:bg-cyan-500/20', text: 'text-cyan-700 dark:text-cyan-300' },
+    'Minister': { label: '部长', bg: 'bg-orange-100 dark:bg-orange-500/20', text: 'text-orange-700 dark:text-orange-300' },
+    'President': { label: '社长', bg: 'bg-red-100 dark:bg-red-500/20', text: 'text-red-700 dark:text-red-300' },
+    'Founder': { label: '创始人', bg: 'bg-purple-100 dark:bg-purple-500/20', text: 'text-purple-700 dark:text-purple-300' },
   };
-  // 默认 fallback
   return map[props.content?.identity || ''] || null;
 });
 
-// 递归渲染导航链接
-const renderAnchorLinks = (items: Array<{
-  id: string;
-  text: string;
-  level: number;
-  href: string;
-  children: any[]
-}>, depth = 0): Array<{ title: string; href: string; children?: Array<{ title: string; href: string }> }> => {
-  return items.map((item: any) => ({
-    title: item.text,
-    href: item.href,
-    children: item.children?.length > 0 ? renderAnchorLinks(item.children, depth + 1) : undefined
-  }))
-}
-
-// 计算导航数据
-const anchorLinks = computed(() => renderAnchorLinks(headings.value))
-const date = computed(() => props.content?.date ? new Date(props.content.date).toLocaleDateString('zh-CN') : '')
-
-// 添加处理锚点点击的方法
-const handleAnchorClick = (event: Event, href: string) => {
-  event.preventDefault();
-  const targetId = href.substring(1).toLowerCase(); // 移除 # 前缀
-
-  // 对 targetId 进行 URL 编码
-  const encodedTargetId = encodeURIComponent(targetId);
-
-  console.log(targetId)
-
-  // 如果仍然找不到，尝试通过属性选择器查找
-  const targetElement = document.querySelector(`[id="${encodedTargetId}"]`);
-
-  if (targetElement) {
-    // 平滑滚动到目标元素
-    targetElement.scrollIntoView({behavior: 'smooth'});
+// --- TOC Interaction ---
+const handleAnchorClick = (e: Event, id: string) => {
+  e.preventDefault();
+  const el = document.getElementById(id);
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth' });
+    history.replaceState(null, '', `${route.path}#${id}`);
+    activeHeadingId.value = id;
   }
 };
 
-onMounted(() => {
-  // 添加滚动监听器以高亮当前活动的锚点
-  const handleScroll = () => {
-    const headings = document.querySelectorAll('h1, h2, h3, h4, h5, h6')
-    let activeHeadingId = ''
+// Scroll Spy
+let observer: IntersectionObserver | null = null;
+const setupObserver = () => {
+  if (observer) observer.disconnect();
 
-    for (let i = headings.length - 1; i >= 0; i--) {
-      const heading = headings[i]
-      const rect = heading.getBoundingClientRect()
-      if (rect.top <= 100) {
-        activeHeadingId = heading.id
-        break
+  observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        activeHeadingId.value = entry.target.id;
       }
-    }
+    });
+  }, { rootMargin: '-100px 0px -60% 0px' }); // Trigger when element is near top
 
-    // 移除所有活动类
-    document.querySelectorAll('.toc-link').forEach(link => {
-      link.classList.remove('active')
-    })
+  document.querySelectorAll('h2, h3').forEach(h => {
+    observer?.observe(h);
+  });
+};
 
-    // 为当前活动标题添加活动类
-    if (activeHeadingId) {
-      const activeLink = document.querySelector(`.toc-link[href="#${activeHeadingId}"]`)
-      if (activeLink) {
-        activeLink.classList.add('active')
-      }
-    }
-  }
+watch(html, () => {
+  nextTick(() => setTimeout(setupObserver, 200));
+});
 
-  window.addEventListener('scroll', handleScroll)
-})
+onBeforeUnmount(() => observer?.disconnect());
 </script>
 
 <template>
-  <div v-if="content" class="flex flex-col md:flex-row">
-    <!-- 文章内容区 -->
-    <div class="w-full lg:pr-8" :class="[showNav && headings.length > 0 ? 'lg:w-4/5' : 'lg:w-full']">
-      <article class="prose prose-gray max-w-none dark:prose-invert">
-        <!-- 文章头部 -->
-        <header class="backdrop-blur-sm">
-          <!-- 身份与日期行 -->
-          <h1 class="mb-2 text-3xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">
-            {{ content.title }}
-          </h1>
-          <div
-              class="flex items-center gap-4 text-sm text-gray-400 mb-8 border-b border-gray-100 dark:border-gray-800 pb-4">
-                     <span class="flex items-center gap-1">
-                        <Icon icon="solar:calendar-date-bold"/>
-                        {{ formattedDate }}
-                     </span>
-            <span v-if="identityInfo"
-                  class="px-2.5 py-0.5 rounded-full text-xs border transition-colors"
-                  :class="identityInfo.colorClass">
-                  {{ identityInfo.label }}
-                </span>
+  <div v-if="content" class="relative flex w-full flex-col lg:flex-row lg:gap-12">
+
+    <!-- Left: Main Content -->
+    <article class="min-w-0 flex-1 pb-20">
+
+      <!-- Article Header -->
+      <header class="mb-8 border-b border-zinc-100 pb-8 dark:border-zinc-800">
+        <h1 class="mb-4 text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-white sm:text-4xl">
+          {{ content.title }}
+        </h1>
+
+        <div class="flex flex-wrap items-center gap-3 text-sm">
+          <!-- Date Pill -->
+          <div class="flex items-center gap-1.5 rounded-full bg-zinc-100 px-3 py-1 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+            <Icon icon="lucide:calendar" class="h-3.5 w-3.5" />
+            <time>{{ formattedDate }}</time>
           </div>
-        </header>
 
-        <!-- 文章内容 -->
-        <div class="markdown-content">
-          <div v-html="html"></div>
+          <!-- Identity Pill -->
+          <div v-if="identityInfo"
+               class="flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold"
+               :class="[identityInfo.bg, identityInfo.text]">
+            {{ identityInfo.label }}
+          </div>
         </div>
-      </article>
-    </div>
+      </header>
 
-    <!-- 目录导航 -->
-    <div v-if="showNav && headings.length > 0" class="hidden lg:block w-1/5 sticky top-8 h-fit self-start p-4">
-      <nav class="toc-nav bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
-        <h3 class="text-sm font-semibold mb-3 text-gray-900 dark:text-white">
-          目录
-        </h3>
-        <ul class="space-y-1">
-          <li
-              v-for="link in anchorLinks"
-              :key="link.href"
-              class="toc-item"
-          >
-            <div
-                @click="handleAnchorClick($event, link.href)"
-                class="toc-link block py-1 text-sm link"
-            >
-              {{ link.title }}
-            </div>
+      <!-- Formatting Content Wrapper -->
+      <!--
+         prose-zinc: Neutral gray typographic scale
+         max-w-none: Allow full width of container
+         prose-headings: scroll-mt-20 included via renderer but styling here
+      -->
+      <div
+          class="prose prose-zinc max-w-none dark:prose-invert
+          prose-headings:font-bold prose-headings:tracking-tight
+          prose-h1:text-3xl prose-h2:text-2xl prose-h3:text-xl
+          prose-code:text-xs prose-code:font-mono prose-code:before:content-none prose-code:after:content-none
+          prose-code:bg-zinc-100 prose-code:dark:bg-zinc-800 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md
+          prose-pre:bg-[#1e1e20] prose-pre:rounded-xl prose-pre:text-sm prose-pre:leading-relaxed
+          prose-img:rounded-xl prose-img:shadow-sm"
+          v-html="html"
+      ></div>
+    </article>
 
-            <!-- 子目录 -->
-            <ul v-if="link.children && link.children.length > 0" class="ml-3 mt-1 space-y-1">
-              <li
-                  v-for="subLink in link.children"
-                  :key="subLink.href"
+    <!-- Right: Table of Contents (Desktop Only) -->
+    <!-- Apple Developer Documentation Style: Right thin rail -->
+    <aside v-if="showNav && flatHeadings.length > 0" class="hidden lg:block lg:w-64 lg:shrink-0">
+      <div class="sticky top-4 overflow-y-auto max-h-[calc(100vh-120px)] pt-2 pr-2">
+        <div class="mb-4 text-xs font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+          本页目录
+        </div>
+
+        <nav class="relative">
+          <!-- Decorative Line -->
+          <div class="absolute left-0 top-0 bottom-0 w-[1px] bg-zinc-200 dark:bg-zinc-800 pointer-events-none"></div>
+
+          <ul class="space-y-0.5 text-sm">
+            <li v-for="heading in flatHeadings" :key="heading.id">
+              <a
+                  :href="`${route.path}#${heading.id}`"
+                  @click="handleAnchorClick($event, heading.id)"
+                  class="group flex items-start py-1.5 pl-4 transition-colors border-l-2 -ml-[1px]"
+                  :class="[
+                  activeHeadingId === heading.id
+                    ? 'border-blue-500 text-blue-600 dark:text-blue-400 font-medium'
+                    : 'border-transparent text-zinc-500 hover:text-zinc-900 dark:text-zinc-500 dark:hover:text-zinc-300 hover:border-zinc-300 dark:hover:border-zinc-600'
+                ]"
               >
-                <div
-                    @click="handleAnchorClick($event, subLink.href)"
-                    class="toc-link block py-1 text-xs text-blue-500"
-                >
-                  {{ subLink.title }}
-                </div>
-              </li>
-            </ul>
-          </li>
-        </ul>
-      </nav>
-    </div>
+               <span :class="heading.level === 3 ? 'pl-3' : ''" class="truncate block">
+                 {{ heading.text }}
+               </span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </aside>
+
   </div>
 
-  <!-- 空状态 -->
-  <div v-else class="flex flex-col items-center justify-center h-full p-8 text-center">
-    <div
-        class="bg-gray-200 dark:bg-gray-700 border-2 border-dashed rounded-xl w-16 h-16 flex items-center justify-center mb-4">
-      <Icon icon="mdi:file-document-outline" width="32" height="32" class="text-gray-500 dark:text-gray-400"/>
+  <!-- Empty State -->
+  <div v-else class="flex h-[60vh] flex-col items-center justify-center text-center">
+    <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-zinc-100 dark:bg-zinc-800">
+      <Icon icon="lucide:book-open" class="h-8 w-8 text-zinc-400" />
     </div>
-    <p class="text-gray-500 dark:text-gray-400 text-lg">
-      请选择一篇文章阅读
-    </p>
+    <h3 class="text-lg font-medium text-zinc-900 dark:text-white">暂无内容</h3>
+    <p class="mt-1 text-zinc-500 dark:text-zinc-400">请从左侧菜单选择要阅读的文档</p>
   </div>
 </template>
 
 <style scoped>
-@reference 'tailwindcss';
-@import "prismjs/themes/prism-tomorrow.min.css";
+/* Prism Theme Override for Minimalist Look */
+@import "prismjs/themes/prism-tomorrow.min.css"; /* Using tomorrow night as base for dark code blocks */
 
-.tag-blue {
-  background-color: #E1F3FF;
-  color: #007AFF;
-  border-color: rgba(0, 122, 255, 0.2);
+/* Customize scroll behavior */
+:deep(*):focus {
+  outline: none;
 }
 
-.tag-cyan {
-  background-color: #E0F8F2;
-  color: #00A3FF;
-  border-color: rgba(0, 163, 255, 0.2);
+/* Enhancing code block visuals inside typography */
+:deep(pre) {
+  margin-top: 1.5em;
+  margin-bottom: 1.5em;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
-.tag-orange {
-  background-color: #FFF4E5;
-  color: #FF9500;
-  border-color: rgba(255, 149, 0, 0.2);
+/* Style for blockquotes to match Apple Notes */
+:deep(blockquote) {
+  font-style: normal;
+  border-left-width: 3px;
+  border-color: #e4e4e7; /* zinc-200 */
+  color: #71717a; /* zinc-500 */
+  background: transparent;
+  padding-left: 1rem;
 }
 
-.tag-red {
-  background-color: #FFEAE9;
-  color: #FF3B30;
-  border-color: rgba(255, 59, 48, 0.2);
+.dark :deep(blockquote) {
+  border-color: #3f3f46; /* zinc-700 */
+  color: #a1a1aa; /* zinc-400 */
 }
 
-.tag-purple {
-  background-color: #F3E8FF;
-  color: #AF52DE;
-  border-color: rgba(175, 82, 222, 0.2);
+/* Table Styling */
+:deep(table) {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 8px;
+  border: 1px solid #e4e4e7;
+  overflow: hidden;
+  font-size: 0.875rem;
+}
+.dark :deep(table) {
+  border-color: #3f3f46;
 }
 
-/* Dark Mode Tags */
-.dark .tag-blue {
-  background-color: rgba(0, 122, 255, 0.15);
-  color: #64D2FF;
-  border-color: rgba(100, 210, 255, 0.2);
+:deep(thead tr) {
+  background-color: #f4f4f5; /* zinc-100 */
+}
+.dark :deep(thead tr) {
+  background-color: #27272a; /* zinc-800 */
 }
 
-.dark .tag-cyan {
-  background-color: rgba(100, 210, 255, 0.15);
-  color: #70D7FF;
-  border-color: rgba(112, 215, 255, 0.2);
+:deep(th), :deep(td) {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e4e4e7;
+  text-align: left;
+}
+.dark :deep(th), .dark :deep(td) {
+  border-bottom-color: #3f3f46;
 }
 
-.dark .tag-orange {
-  background-color: rgba(255, 149, 0, 0.15);
-  color: #FFD60A;
-  border-color: rgba(255, 214, 10, 0.2);
+:deep(th) {
+  font-weight: 600;
+  color: #18181b;
+}
+.dark :deep(th) {
+  color: #f4f4f5;
 }
 
-.dark .tag-red {
-  background-color: rgba(255, 69, 58, 0.15);
-  color: #FF9F0A;
-  border-color: rgba(255, 159, 10, 0.2);
+:deep(tr:last-child td) {
+  border-bottom: none;
 }
 
-.dark .tag-purple {
-  background-color: rgba(191, 90, 242, 0.15);
-  color: #DA8FFF;
-  border-color: rgba(218, 143, 255, 0.2);
+/* Links */
+:deep(.prose a) {
+  text-decoration-line: none;
+  font-weight: 500;
+  color: #3b82f6;
+  transition: color 0.15s;
+}
+:deep(.prose a:hover) {
+  color: #2563eb;
+  text-decoration-line: underline;
 }
 
-/* 自定义块样式 */
-:deep(.custom-block) {
-  @apply rounded-lg p-4 my-4;
+/* Mermaid Diagram Sizing */
+:deep(.mermaid) {
+  display: flex;
+  justify-content: center;
+  margin: 2rem 0;
+  background-color: #f9fafb;
+  padding: 1rem;
+  border-radius: 0.5rem;
 }
-
-:deep(.custom-block-title) {
-  @apply font-bold text-base mb-2;
-}
-
-.markdown-content :deep(.warning) {
-  @apply bg-amber-100 ;
-}
-
-.dark .markdown-content :deep(.warning) {
-  @apply bg-amber-900;
-}
-
-.markdown-content :deep(.danger) {
-  @apply bg-red-100 ;
-}
-
-.dark .markdown-content :deep( .danger) {
-  @apply bg-red-900;
-}
-
-.markdown-content :deep(.tip) {
-  @apply bg-blue-50;
-}
-
-.dark .markdown-content :deep(.tip) {
-  @apply bg-blue-900;
-}
-
-.toc-link {
-  @apply text-sky-700 cursor-pointer;
-}
-
-.toc-link:hover {
-  @apply text-cyan-800;
-}
-
-.dark .toc-link {
-  @apply text-sky-300;
-}
-
-.dark .toc-link:hover {
-  @apply text-cyan-400;
-}
-
-/* Markdown 内容样式 */
-.markdown-content :deep(h1),
-.markdown-content :deep(h2),
-.markdown-content :deep(h3),
-.markdown-content :deep(h4),
-.markdown-content :deep(h5),
-.markdown-content :deep(h6) {
-  @apply font-semibold;
-}
-
-.markdown-content :deep(h1) {
-  @apply text-3xl mt-8 mb-4;
-}
-
-.markdown-content :deep(h2) {
-  @apply text-2xl mt-6 mb-3;
-}
-
-.markdown-content :deep(h3) {
-  @apply text-xl mt-4 mb-2;
-}
-
-.markdown-content :deep(p) {
-  @apply mb-4 leading-relaxed;
-}
-
-.markdown-content :deep(h1),
-.markdown-content :deep(h2),
-.markdown-content :deep(h3),
-.markdown-content :deep(h4),
-.markdown-content :deep(h5),
-.markdown-content :deep(h6),
-.markdown-content :deep(p) {
-  @apply text-gray-900;
-}
-
-.dark .markdown-content :deep(h1),
-.dark .markdown-content :deep(h2),
-.dark .markdown-content :deep(h3),
-.dark .markdown-content :deep(h4),
-.dark .markdown-content :deep(h5),
-.dark .markdown-content :deep(h6),
-.dark .markdown-content :deep(p) {
-  @apply text-white;
-}
-
-.markdown-content :deep(a) {
-  @apply underline;
-}
-
-.markdown-content :deep(a) {
-  @apply text-blue-600 hover:text-blue-800;
-}
-
-.dark .markdown-content :deep(a) {
-  @apply text-blue-400 hover:text-blue-300;
-}
-
-.markdown-content :deep(strong) {
-  @apply font-semibold;
-}
-
-.markdown-content :deep(em) {
-  @apply italic;
-}
-
-.markdown-content :deep(ul),
-.markdown-content :deep(ol) {
-  @apply pl-6 mb-4;
-}
-
-.markdown-content :deep(li) {
-  @apply mb-1;
-}
-
-.markdown-content :deep(ul li) {
-  @apply list-disc;
-}
-
-.markdown-content :deep(ol li) {
-  @apply list-decimal;
-}
-
-.markdown-content :deep(blockquote) {
-  @apply border-l-4 pl-4 ml-2 py-1 my-4;
-}
-
-.markdown-content :deep(blockquote) {
-  @apply border-gray-300 text-gray-600;
-}
-
-.dark .markdown-content :deep(blockquote) {
-  @apply border-gray-600 text-gray-400;
-}
-
-.markdown-content :deep(code) {
-  @apply px-1.5 py-0.5 rounded text-sm font-mono;
-}
-
-.markdown-content :deep(code) {
-  @apply bg-gray-100;
-}
-
-.dark .markdown-content :deep(code) {
-  @apply bg-gray-800;
-}
-
-.markdown-content :deep(pre) {
-  @apply rounded-lg p-4 my-4 overflow-x-auto;
-}
-
-.markdown-content :deep(pre) {
-  @apply bg-gray-800;
-}
-
-.dark .markdown-content :deep(pre) {
-  @apply bg-gray-900;
-}
-
-.markdown-content :deep(pre code) {
-  @apply bg-transparent p-0 rounded-none;
-}
-
-.markdown-content :deep(table) {
-  @apply min-w-full border-collapse my-4;
-}
-
-.markdown-content :deep(th),
-.markdown-content :deep(td) {
-  @apply px-4 py-2;
-}
-
-.markdown-content :deep(th),
-.markdown-content :deep(td) {
-  @apply border border-gray-300;
-}
-
-.dark .markdown-content :deep(th),
-.dark .markdown-content :deep(td) {
-  @apply border border-gray-700;
-}
-
-.markdown-content :deep(th) {
-  @apply font-semibold;
-}
-
-.markdown-content :deep(th) {
-  @apply bg-gray-100;
-}
-
-.dark .markdown-content :deep(th) {
-  @apply bg-gray-800;
-}
-
-.markdown-content :deep(img) {
-  @apply rounded-lg mx-auto my-4;
-}
-
-.markdown-content :deep(hr) {
-  @apply my-8;
-}
-
-.markdown-content :deep(hr) {
-  @apply border-gray-300;
-}
-
-.dark .markdown-content :deep(hr) {
-  @apply border-gray-700;
+.dark :deep(.mermaid) {
+  background-color: #1a1a1a;
 }
 </style>

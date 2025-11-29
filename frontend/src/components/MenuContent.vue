@@ -1,32 +1,62 @@
 <template>
-  <n-menu
-      v-if="!loading"
-      :value="activeKey"
-      :options="menuOptions"
-      :root-indent="24"
-      :indent="36"
-      @update:value="handleSelect"
-      class="apple-menu"
-  />
-  <div v-else class="p-6">
-    <div class="flex items-center justify-center">
-      <n-skeleton width="200" height="20" class="mb-2"/>
+  <div class="menu-container pb-10">
+    <!-- Loading State -->
+    <div v-if="loading" class="space-y-6 px-4 pt-2">
+      <div v-for="i in 3" :key="i" class="space-y-3">
+        <n-skeleton text width="40%" class="opacity-50"/>
+        <div class="space-y-2 pl-2">
+          <n-skeleton text :repeat="3"/>
+        </div>
+      </div>
     </div>
-    <div class="space-y-2 mt-4">
-      <n-skeleton width="160" height="32" class="ml-8"/>
-      <n-skeleton width="160" height="32" class="ml-8"/>
-      <n-skeleton width="160" height="32" class="ml-8"/>
-      <n-skeleton width="200" height="20" class="mt-6"/>
-      <n-skeleton width="160" height="32" class="ml-8"/>
-      <n-skeleton width="160" height="32" class="ml-8"/>
-    </div>
+
+    <!-- Menu Content -->
+    <nav v-else class="space-y-6">
+      <div v-for="(group, index) in menuOptions" :key="index" class="menu-group">
+        <!-- Group Title (Like macOS Finder Sidebar Headers) -->
+        <h3
+            v-if="group.label"
+            class="mb-2 px-3 text-[11px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 select-none group-title"
+        >
+          {{ group.label }}
+        </h3>
+
+        <!-- Group Items -->
+        <ul class="space-y-0.5" v-if="group.children && group.children.length">
+          <li v-for="item in group.children" :key="item.key">
+            <button
+                @click="handleSelect(item.key)"
+                class="group relative flex w-full items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm transition-colors duration-200 outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                :class="[
+                isActive(item.key)
+                  ? 'bg-blue-500/10 text-blue-600 font-semibold dark:bg-blue-500/20 dark:text-blue-400'
+                  : 'text-zinc-600 hover:bg-zinc-200/50 dark:text-zinc-400 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-zinc-200 font-medium'
+              ]"
+            >
+              <!-- Optional: Add generic icon if item doesn't specify one -->
+              <Icon
+                  :icon="isActive(item.key) ? 'lucide:file-text' : 'lucide:file'"
+                  class="shrink-0 w-4 h-4 transition-colors"
+                  :class="isActive(item.key) ? 'text-blue-500 dark:text-blue-400' : 'text-zinc-400 group-hover:text-zinc-600 dark:text-zinc-600 dark:group-hover:text-zinc-400'"
+              />
+
+              <span class="truncate">{{ item.label }}</span>
+
+              <!-- Active Indicator (Subtle dot on right, optional) -->
+              <!-- <div v-if="isActive(item.key)" class="ml-auto w-1.5 h-1.5 rounded-full bg-blue-500"></div> -->
+            </button>
+          </li>
+        </ul>
+      </div>
+    </nav>
   </div>
 </template>
 
 <script setup lang="ts">
-import {computed, onMounted, ref} from 'vue'
+import {onMounted, ref} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
-import {NMenu, NSkeleton} from 'naive-ui'
+import {NSkeleton} from 'naive-ui'
+import {Icon} from '@iconify/vue'
 import {ArticleService} from '../services/ArticleService'
 import type {ArticleModel} from '../models'
 
@@ -34,86 +64,94 @@ const emit = defineEmits(['menu-item-click'])
 const route = useRoute()
 const router = useRouter()
 
-const activeKey = computed(() => route.path)
 const loading = ref(true)
 const menuOptions = ref<any[]>([])
 
-// 用于跟踪是否正在刷新当前页面
-const isReloading = ref(false)
+// Check active state
+// Handles both exact matches and potential sub-paths if needed
+const isActive = (key: string) => {
+  return route.path === key || decodeURIComponent(route.path) === key
+}
 
-// 从后端获取分类文章并生成菜单
+// Fetch Data
 const fetchCategoryArticles = async () => {
-  // 定义默认菜单
-  const defaultMenu = [
-    {
-      type: 'group',
-      label: '社团简介',
-      key: 'about-group',
-      children: [
-        {
-          label: '关于我们',
-          key: '/About'
-        },
-        {
-          label: '社团结构',
-          key: '/Structure'
-        },
-        {
-          label: '其他组织',
-          key: '/OtherOrg'
-        }
-      ]
-    }
-  ]
-
-  const l = ['About', 'Structure']
+  // 默认结构：确保 "社团简介" 始终存在
+  const specialPagesText = ['关于我们', '社团结构', '其他组织']
 
   try {
     loading.value = true
     const categoryArticles = await ArticleService.getAllCategoryArticles()
 
-    // 转换为菜单选项格式
-    // 合并菜单：默认菜单 + 过滤后的API菜单
-    menuOptions.value = Object.entries(categoryArticles).map(([category, articles]) => {
-      const c = articles.map((article: ArticleModel) => ({
-        label: article.title || '无标题',
-        key: l.includes(article.path) ? `/${article.path}` : `/Article/${article.path}`
-      }));
+    // 构建菜单树
+    const newOptions: any[] = []
 
+    // 1. 处理从 API 获取的分类
+    Object.entries(categoryArticles).forEach(([category, articles]) => {
+      // 过滤掉特殊页面，防止重复（如果后端也返回了这些）
+      const docItems = (articles as ArticleModel[])
+          .filter(a => !specialPagesText.includes(a.title))
+          .map(article => ({
+            label: article.title || '未命名文档',
+            key: `/Article/${article.path}`
+          }))
+
+      // 如果是社团简介分类，手动注入特殊页面
       if (category === '社团简介') {
-         c.push({
-           label: '其他组织',
-           key: '/OtherOrg'
-         })
+        // 按照特定顺序插入
+        const predefinedItems = [
+          {label: '关于我们', key: '/About'},
+          {label: '社团结构', key: '/Structure'},
+          {label: '其他组织', key: '/OtherOrg'}
+        ]
+        // 合并：预定义在前，API获取的在后（如果有的话）
+        docItems.unshift(...predefinedItems)
       }
 
-      return {
-        type: 'group',
+      newOptions.push({
         label: category,
-        key: `${category}-group`,
-        children: c
-      }
+        children: docItems
+      })
     })
+
+    // 处理 API 可能没返回 "社团简介" 的情况（例如该分类下没有普通文章）
+    const hasIntroGroup = newOptions.find(g => g.label === '社团简介')
+    if (!hasIntroGroup) {
+      newOptions.unshift({
+        label: '社团简介',
+        children: [
+          {label: '关于我们', key: '/About'},
+          {label: '社团结构', key: '/Structure'},
+          {label: '其他组织', key: '/OtherOrg'}
+        ]
+      })
+    }
+
+    menuOptions.value = newOptions
+
   } catch (error) {
-    console.error('获取分类文章失败:', error)
-    // 失败时使用默认菜单
-    menuOptions.value = defaultMenu
+    console.error('Failed to load menu:', error)
+    // Fallback menu
+    menuOptions.value = [{
+      label: '社团简介',
+      children: [
+        {label: '关于我们', key: '/About'},
+        {label: '社团结构', key: '/Structure'},
+        {label: '其他组织', key: '/OtherOrg'}
+      ]
+    }]
   } finally {
     loading.value = false
   }
 }
 
 const handleSelect = (key: string) => {
-  emit('menu-item-click', key)
-  // 如果当前路由与点击的路由相同，则刷新页面
   if (route.path === key) {
-    // 设置刷新状态并强制刷新当前页面
-    isReloading.value = true
-    window.location.reload()
+    // 如果已经在当前页，可以选择不做任何事，或者滚动到顶部
+    window.scrollTo({top: 0, behavior: 'smooth'})
   } else {
-    // 跳转到新页面
     router.push(key)
   }
+  emit('menu-item-click', key)
 }
 
 onMounted(() => {
@@ -121,51 +159,18 @@ onMounted(() => {
 })
 </script>
 
-<style>
-@reference 'tailwindcss';
-
-/* 苹果风格的菜单样式 */
-.apple-menu {
-  background: transparent !important;
+<style scoped>
+/*
+  Custom styles to ensure smooth rendering and text rendering matches Apple system fonts
+  The component mainly relies on Tailwind, but these helpers ensure consistency.
+*/
+.menu-container {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-.apple-menu .n-menu-item-group-title {
-  font-size: 20px;
-  font-weight: 600;
-  color: #86868b;
-  text-transform: uppercase;
-  letter-spacing: 0.01em;
-  margin: 12px 24px 4px;
-  padding-left: 0 !important;
-  @apply border-b-1  border-b-gray-200 dark:border-b-gray-600 ;
-}
-
-.apple-menu .n-menu-item {
-  font-size: 15px;
-  font-weight: 400;
-  color: #1d1d1f;
-  border-radius: 8px;
-  margin: 2px 12px;
-  transition: all 0.2s ease;
-}
-
-.apple-menu .n-menu-item-content {
-  padding: 10px 16px !important;
-}
-
-/* 动画效果 */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.apple-menu {
-  animation: fadeIn 0.3s ease-in;
+/* 可以在这里添加暗黑模式下的细微调整 */
+.dark .group-title {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 </style>
