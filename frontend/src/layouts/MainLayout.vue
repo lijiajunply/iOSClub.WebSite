@@ -149,9 +149,9 @@
     <transition name="mobile-menu">
       <div
           v-if="drawerVisible"
-          class="fixed inset-0 z-40 bg-[#fbfbfd] dark:bg-black pt-16 px-4 md:hidden flex flex-col"
+          class="fixed inset-0 z-40 bg-[#fbfbfd] dark:bg-black pt-14 px-4 md:hidden flex flex-col"
       >
-        <div class="flex flex-col space-y-4 animate-fade-in">
+        <div class="flex flex-col space-y-3 animate-fade-in">
           <!-- Mobile Links Group -->
           <div class="space-y-1">
             <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1 px-2">关于</div>
@@ -180,17 +180,17 @@
           </div>
 
           <!-- Mobile Auth & Theme -->
-          <div class="pt-4 mt-auto border-t border-gray-200 dark:border-white/10">
+          <div class="pt-3 mt-auto border-t border-gray-200 dark:border-white/10">
             <button
                 v-if="!isCentreRoute"
-                class="w-full py-2 bg-[#0071e3] text-white font-medium rounded-xl mb-3 active:scale-95 transition-transform"
+                class="w-full py-2 bg-[#0071e3] text-white font-medium rounded-lg mb-3 active:scale-95 transition-transform"
                 @click="() => { router.push('/login'); drawerVisible = false }"
             >
               登录 / 注册
             </button>
             <button
                 v-else
-                class="w-full py-2 bg-[#0071e3] text-white font-medium rounded-xl mb-3 active:scale-95 transition-transform"
+                class="w-full py-2 bg-[#0071e3] text-white font-medium rounded-lg mb-3 active:scale-95 transition-transform"
                 @click="logout"
             >
               退出登录
@@ -204,7 +204,7 @@
                     v-for="option in themeOptions"
                     :key="option.key"
                     @click="handleThemeSelect(option.key)"
-                    class="flex-1 py-2 px-3 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2 text-sm"
+                    class="flex-1 py-1.5 px-2 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-1.5 text-xs"
                     :class="[
                       userPreference === option.key
                         ? 'bg-[#0071e3] text-white'
@@ -401,18 +401,29 @@ const communityOptions = [
 /* Mobile Menu Link */
 .mobile-link {
   display: block;
-  padding: 8px 12px;
-  font-size: 16px; /* iOS Human Interface Guidelines standard size */
+  padding: 6px 10px;
+  font-size: 15px; /* iOS Human Interface Guidelines standard size */
   font-weight: 400;
   color: #1d1d1f;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.8);
-  margin-bottom: 6px;
+  border-radius: 8px;
+  margin-bottom: 4px;
+  transition: all 0.2s ease;
+  letter-spacing: -0.01em;
+}
+
+.mobile-link:hover {
+  background: #f5f5f7;
+  color: #0071e3;
 }
 
 .dark .mobile-link {
   color: #f5f5f7;
   background: #1c1c1e; /* Apple dark gray card color */
+}
+
+.dark .mobile-link:hover {
+  background: #2c2c2e;
+  color: #0077ed;
 }
 
 /* Mobile Menu Transition */
