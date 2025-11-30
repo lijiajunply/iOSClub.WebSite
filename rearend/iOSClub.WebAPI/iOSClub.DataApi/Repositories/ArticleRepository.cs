@@ -1,3 +1,5 @@
+using System.Data;
+using System.Data.Common;
 using iOSClub.Data;
 using iOSClub.Data.DataModels;
 using Microsoft.EntityFrameworkCore;
@@ -12,7 +14,10 @@ public interface IArticleRepository
     public Task<bool> Delete(string key);
     public Task<Dictionary<string, IEnumerable<ArticleModel>>> GetAllCategoryArticles(string identity);
     public Task<bool> UpdateArticleOrders(Dictionary<string, int> articleOrders);
-    public Task<IEnumerable<ArticleSearchResult>> SearchArticlesWithHighlights(string keyword, string identity = "");
+
+    public Task<IEnumerable<ArticleSearchResult>> SearchArticlesWithHighlights(string keyword, string identity = "",
+        int pageSize = 20,
+        int pageNumber = 1);
 }
 
 // 添加一个用于搜索结果的模型
@@ -21,6 +26,7 @@ public class ArticleSearchResult : ArticleModel
 {
     public string HighlightedTitle { get; set; } = "";
     public string HighlightedContent { get; set; } = "";
+    public float Rank { get; set; }
 }
 
 public class ArticleRepository(IDbContextFactory<ClubContext> factory, ICategoryRepository repository)
@@ -258,46 +264,91 @@ public class ArticleRepository(IDbContextFactory<ClubContext> factory, ICategory
         }
     }
 
-    public async Task<IEnumerable<ArticleSearchResult>> SearchArticlesWithHighlights(string keyword,
-        string identity = "")
+    public async Task<IEnumerable<ArticleSearchResult>> SearchArticlesWithHighlights(
+        string keyword,
+        string identity = "",
+        int pageSize = 20,
+        int pageNumber = 1)
     {
         await using var context = await factory.CreateDbContextAsync();
 
-        // 使用zhparser进行中文全文搜索并生成高亮片段
-        var sql = @"
-            SELECT ""Path"", ""Title"", ""Content"", ""LastWriteTime"", ""Identity"", ""CategoryId"", ""ArticleOrder"",
-                   ts_headline('zhcfg', ""Title"", plainto_tsquery('zhcfg', @keyword)) as highlighted_title,
-                   ts_headline('zhcfg', LEFT(""Content"", 500), plainto_tsquery('zhcfg', @keyword)) as highlighted_content
-            FROM ""Articles"" 
-            WHERE to_tsvector('zhcfg', ""Title"" || ' ' || ""Content"") @@ plainto_tsquery('zhcfg', @keyword)
-            ORDER BY ""LastWriteTime"" DESC";
+        const string sql = @"  
+            WITH ranked_articles AS (  
+                SELECT   
+                    ""Path"", ""Title"", ""Content"", ""LastWriteTime"",   
+                    ""Identity"", ""CategoryId"", ""ArticleOrder"",  
+                    ts_headline('zhcfg', ""Title"", query) as highlighted_title,  
+                    ts_headline('zhcfg', ""Content"", query, 'StartSel=<b>, StopSel=</b>, MaxWords=50, MinWords=15, ShortWord=3') as highlighted_content,  
+        
+                    -- 评分逻辑：如果 Title 直接 LIKE 命中，给极高的权重(比如 10)，否则用 standard rank
+                    CASE 
+                        WHEN ""Title"" LIKE '%' || @keyword || '%' THEN 10.0 
+                        ELSE ts_rank(to_tsvector('zhcfg', coalesce(""Title"", '')), query) * 2 
+                    END + 
+                    ts_rank(to_tsvector('zhcfg', coalesce(""Content"", '')), query) as rank  
+
+                FROM ""Articles"",  
+                    plainto_tsquery('zhcfg', @keyword) as query  
+    
+                WHERE 
+                    -- 条件 1：全文检索命中 (处理长文本、语义搜索)
+                    (to_tsvector('zhcfg', coalesce(""Title"", '')) || to_tsvector('zhcfg', coalesce(""Content"", ''))) @@ query
+                    OR 
+                    -- 条件 2：标题简单模糊匹配 (处理停用词、短语、完全匹配)
+                    ""Title"" LIKE '%' || @keyword || '%'
+            )  
+            SELECT * FROM ranked_articles  
+            -- 过滤掉 rank 0 的情况（防止 query 为空时 LIKE 也未命中显示无关数据，视情况可加）
+            WHERE rank > 0 
+            ORDER BY rank DESC, ""LastWriteTime"" DESC   
+            OFFSET @offset ROWS  
+            FETCH NEXT @pageSize ROWS ONLY";
 
         await using var command = context.Database.GetDbConnection().CreateCommand();
         command.CommandText = sql;
-        var parameter = command.CreateParameter();
-        parameter.ParameterName = "@keyword";
-        parameter.Value = keyword;
-        command.Parameters.Add(parameter);
+
+        AddParameter(command, "@keyword", keyword);
+        AddParameter(command, "@offset", (pageNumber - 1) * pageSize);
+        AddParameter(command, "@pageSize", pageSize);
 
         await context.Database.OpenConnectionAsync();
         await using var reader = await command.ExecuteReaderAsync();
 
-        var tempResults = new List<ArticleSearchResult>();
+        var results = new List<ArticleSearchResult>();
+        if (string.IsNullOrEmpty(identity)) identity = "Member";
         while (await reader.ReadAsync())
         {
-            var article = new ArticleSearchResult
-            {
-                Path = reader["Path"].ToString() ?? "",
-                Title = reader["Title"].ToString() ?? "",
-                LastWriteTime = (DateTime)reader["LastWriteTime"],
-                Identity = reader["Identity"].ToString(),
-                HighlightedTitle = reader["highlighted_title"].ToString() ?? reader["Title"].ToString() ?? "",
-                HighlightedContent = reader["highlighted_content"].ToString() ?? reader["Content"].ToString() ?? ""
-            };
-
-            tempResults.Add(article);
+            var res = MapToArticleSearchResult(reader, identity);
+            if (res != null) results.Add(res);
         }
 
-        return tempResults;
+        return results;
+    }
+
+    private static void AddParameter(DbCommand command, string name, object value)
+    {
+        var parameter = command.CreateParameter();
+        parameter.ParameterName = name;
+        parameter.Value = value;
+        command.Parameters.Add(parameter);
+    }
+
+    private static ArticleSearchResult? MapToArticleSearchResult(DbDataReader reader, string identity)
+    {
+        var allowedIdentities = GetAllowedIdentities(identity);
+
+        if (!allowedIdentities.Contains(reader.GetString("Identity")))
+            return null;
+
+        return new ArticleSearchResult
+        {
+            Path = reader.GetString("Path"),
+            Title = reader.GetString("Title"),
+            LastWriteTime = reader.GetDateTime("LastWriteTime"),
+            Identity = reader.GetString("Identity"),
+            HighlightedTitle = reader.GetString("highlighted_title"),
+            HighlightedContent = reader.GetString("highlighted_content"),
+            Rank = reader.GetFloat("rank")
+        };
     }
 }
