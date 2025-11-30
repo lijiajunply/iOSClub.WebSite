@@ -8,7 +8,7 @@ defineProps([
 </script>
 
 <template>
-  <div class="min-h-screen grid grid-cols-1 content-around gap-4">
+  <div class="min-h-[calc(100vh-64px)] grid grid-cols-1 content-around gap-4">
     <div class="text-center mb-20">
       <!-- Logo 区域 -->
       <div class="mb-8 animate-fade-in">

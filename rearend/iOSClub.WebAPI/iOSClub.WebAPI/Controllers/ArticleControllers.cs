@@ -1,10 +1,9 @@
-﻿using iOSClub.Data.DataModels;
+using iOSClub.Data.DataModels;
 using iOSClub.DataApi.Repositories;
 using iOSClub.WebAPI.IdentityModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
-using iOSClub.DataApi.Services;
 
 namespace iOSClub.WebAPI.Controllers;
 
@@ -12,9 +11,7 @@ namespace iOSClub.WebAPI.Controllers;
 [Route("[controller]")] // 使用C#推荐的API路径格式
 public class ArticleController(
     IArticleRepository articleRepository,
-    IStaffRepository staffRepository,
-    ILogger<ArticleController> logger,
-    ILoginService loginService)
+    ILogger<ArticleController> logger)
     : ControllerBase
 {
     /// <summary>
@@ -26,7 +23,7 @@ public class ArticleController(
         try
         {
             var articles = await articleRepository.GetAll();
-            return Ok(articles.OrderBy(x => x.LastWriteTime));
+            return Ok(articles.OrderByDescending(x => x.LastWriteTime));
         }
         catch (Exception ex)
         {
@@ -48,13 +45,17 @@ public class ArticleController(
 
         try
         {
-            var article = await articleRepository.GetFromPath(path);
+            var userIdentity = "";
+            var userJwt = HttpContext.User.GetUser();
+            if (userJwt != null) userIdentity = userJwt.Identity;
+
+            var article = await articleRepository.GetFromPath(path, userIdentity);
             if (article == null)
             {
                 return NotFound($"未找到路径为 '{path}' 的文章");
             }
 
-            return Ok(article);
+            return article;
         }
         catch (Exception ex)
         {
@@ -67,17 +68,11 @@ public class ArticleController(
     /// 创建新文章（需要社团成员身份）
     /// </summary>
     [Authorize]
-    [TokenActionFilter]
     [HttpPost]
     public async Task<ActionResult<ArticleModel>> CreateArticle([FromBody] ArticleCreateDto createDto)
     {
         try
         {
-            // 身份验证和权限检查
-            var validationResult = await ValidateUserAccess(["Founder", "President", "Minister", "Department"]);
-            if (!validationResult.isValid)
-                return validationResult.errorResult!;
-
             // 数据验证
             var validationResults = new List<ValidationResult>();
             if (!Validator.TryValidateObject(createDto, new ValidationContext(createDto), validationResults, true))
@@ -98,6 +93,10 @@ public class ArticleController(
                 Title = createDto.Title,
                 Content = createDto.Content,
                 Identity = createDto.Identity,
+                Category = string.IsNullOrEmpty(createDto.Category)
+                    ? null
+                    : new CategoryModel() { Name = createDto.Category },
+                ArticleOrder = createDto.ArticleOrder,
                 LastWriteTime = DateTime.UtcNow
             };
 
@@ -121,17 +120,11 @@ public class ArticleController(
     /// 更新文章（需要社团成员身份）- 使用POST更安全
     /// </summary>
     [Authorize]
-    [TokenActionFilter]
     [HttpPost("update/{path}")]
     public async Task<ActionResult> UpdateArticle(string path, [FromBody] ArticleUpdateDto updateDto)
     {
         try
         {
-            // 身份验证和权限检查
-            var validationResult = await ValidateUserAccess(["Founder", "President", "Minister", "Department"]);
-            if (!validationResult.isValid)
-                return validationResult.errorResult!;
-
             if (string.IsNullOrWhiteSpace(path))
             {
                 return BadRequest("路径不能为空");
@@ -155,6 +148,10 @@ public class ArticleController(
             existingArticle.Title = updateDto.Title;
             existingArticle.Content = updateDto.Content;
             existingArticle.Identity = updateDto.Identity;
+            existingArticle.Category = string.IsNullOrEmpty(updateDto.Category)
+                ? null
+                : new CategoryModel() { Name = updateDto.Category };
+            existingArticle.ArticleOrder = updateDto.ArticleOrder;
             existingArticle.LastWriteTime = DateTime.UtcNow;
 
             var success = await articleRepository.CreateOrUpdate(existingArticle);
@@ -171,17 +168,11 @@ public class ArticleController(
     /// 删除文章（需要管理员身份）
     /// </summary>
     [Authorize]
-    [TokenActionFilter]
     [HttpPost("delete/{path}")]
     public async Task<ActionResult> DeleteArticle(string path)
     {
         try
         {
-            // 身份验证和权限检查（管理员权限）
-            var validationResult = await ValidateUserAccess(["Founder", "President", "Minister"]);
-            if (!validationResult.isValid)
-                return validationResult.errorResult!;
-
             if (string.IsNullOrWhiteSpace(path))
             {
                 return BadRequest("路径不能为空");
@@ -208,12 +199,12 @@ public class ArticleController(
             return StatusCode(500, "服务器内部错误");
         }
     }
-
+    
     /// <summary>
-    /// 搜索文章（公开访问）
+    /// 搜索文章并返回高亮片段（公开访问）
     /// </summary>
-    [HttpGet("search")]
-    public async Task<ActionResult<IEnumerable<ArticleModel>>> SearchArticles([FromQuery] string keyword)
+    [HttpGet("search/highlights")]
+    public async Task<ActionResult<IEnumerable<ArticleSearchResult>>> SearchArticlesWithHighlights([FromQuery] string keyword)
     {
         if (string.IsNullOrWhiteSpace(keyword))
         {
@@ -222,14 +213,12 @@ public class ArticleController(
 
         try
         {
-            var articles = await articleRepository.GetAll();
-            var filteredArticles = articles
-                .Where(a => a.Title.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
-                            a.Content.Contains(keyword, StringComparison.OrdinalIgnoreCase))
-                .OrderByDescending(a => a.LastWriteTime)
-                .ToList();
-
-            return Ok(filteredArticles);
+            var userIdentity = "";
+            var userJwt = HttpContext.User.GetUser();
+            if (userJwt != null) userIdentity = userJwt.Identity;
+            
+            var articles = await articleRepository.SearchArticlesWithHighlights(keyword, userIdentity);
+            return Ok(articles.OrderByDescending(a => a.LastWriteTime));
         }
         catch (Exception ex)
         {
@@ -239,24 +228,54 @@ public class ArticleController(
     }
 
     /// <summary>
-    /// 验证用户访问权限
+    /// 获取文章分类列表
     /// </summary>
-    private async Task<(bool isValid, ActionResult? errorResult)> ValidateUserAccess(string[] allowedIdentities)
+    [HttpGet("category")]
+    public async Task<IActionResult> GetAllCategoryArticles()
     {
-        var userJwt = HttpContext.User.GetUser();
-        if (userJwt == null)
-            return (false, Unauthorized("用户未认证"));
+        try
+        {
+            var userIdentity = "";
+            var userJwt = HttpContext.User.GetUser();
+            if (userJwt != null) userIdentity = userJwt.Identity;
 
-        var jwt = HttpContext.GetJwt();
-        if (jwt == null || !await loginService.ValidateToken(userJwt.UserId, jwt))
-            return (false, Unauthorized("用户未认证"));
+            var articles = await articleRepository.GetAllCategoryArticles(userIdentity);
+            return Ok(articles);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "获取文章分类列表时发生错误");
+            return StatusCode(500, "服务器内部错误");
+        }
+    }
 
-        var user = await staffRepository.GetStaffByIdWithoutOtherData(userJwt.UserId);
+    /// <summary>
+    /// 批量更新文章顺序（需要社团成员身份）
+    /// </summary>
+    [Authorize]
+    [HttpPost("update-orders")]
+    public async Task<ActionResult> UpdateArticleOrders([FromBody] Dictionary<string, int>? articleOrders)
+    {
+        try
+        {
+            if (articleOrders == null || articleOrders.Count == 0)
+            {
+                return BadRequest("文章顺序字典不能为空");
+            }
 
-        if (user == null)
-            return (false, Unauthorized("用户不存在"));
+            var success = await articleRepository.UpdateArticleOrders(articleOrders);
+            if (success)
+            {
+                return Ok("文章顺序更新成功");
+            }
 
-        return !allowedIdentities.Contains(user.Identity) ? (false, Forbid("权限不足")) : (true, null);
+            return StatusCode(500, "文章顺序更新失败");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "批量更新文章顺序时发生错误");
+            return StatusCode(500, "服务器内部错误");
+        }
     }
 }
 
@@ -279,6 +298,12 @@ public class ArticleCreateDto(string? identity)
 
     [StringLength(20, ErrorMessage = "身份标识长度不能超过20个字符")]
     public string? Identity { get; set; } = identity;
+
+    [StringLength(128, ErrorMessage = "分类长度不能超过128个字符")]
+    public string? Category { get; set; }
+
+    [Range(0, 1000, ErrorMessage = "文章排序值必须在0-1000之间")]
+    public int ArticleOrder { get; set; } = 0;
 }
 
 // 更新文章的DTO
@@ -295,4 +320,10 @@ public class ArticleUpdateDto
 
     [StringLength(20, ErrorMessage = "身份标识长度不能超过20个字符")]
     public string? Identity { get; set; }
+
+    [StringLength(128, ErrorMessage = "分类长度不能超过128个字符")]
+    public string? Category { get; set; }
+
+    [Range(0, 1000, ErrorMessage = "文章排序值必须在0-1000之间")]
+    public int ArticleOrder { get; set; } = 0;
 }

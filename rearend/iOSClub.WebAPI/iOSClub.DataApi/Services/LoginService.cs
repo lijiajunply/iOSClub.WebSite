@@ -3,10 +3,11 @@ using iOSClub.DataApi.Repositories;
 using StackExchange.Redis;
 using System.Text.Json;
 using iOSClub.Data;
+using Microsoft.Extensions.Logging;
 
 namespace iOSClub.DataApi.Services;
 
-public interface IJwtHelper
+public interface ITokenGenerator
 {
     public string GetMemberToken(MemberModel model, bool rememberMe = false, string scope = "", string clientId = "");
 }
@@ -91,10 +92,11 @@ public interface ILoginService
 public class LoginService(
     IStudentRepository studentRepository,
     IStaffRepository staffRepository,
-    IJwtHelper jwtHelper,
+    ITokenGenerator tokenGenerator,
     IConnectionMultiplexer redis,
     IEmailService emailService,
-    IClientApplicationRepository clientApplicationRepository)
+    IClientApplicationRepository clientApplicationRepository,
+    ILogger<LoginService> logger)
     : ILoginService
 {
     private readonly IDatabase _db = redis.GetDatabase();
@@ -108,17 +110,15 @@ public class LoginService(
 
         var staff = await staffRepository.GetStaffByIdWithoutOtherData(model.UserId);
         var identity = "Member";
-        string name;
         if (staff != null)
         {
             identity = staff.Identity;
-            name = staff.Name;
         }
-        else
-        {
-            var stu = await studentRepository.GetByIdAsync(model.UserId);
-            name = stu?.UserName ?? "";
-        }
+
+        var stu = await studentRepository.GetByIdAsync(model.UserId);
+        if (stu == null) return "";
+        var name = stu.UserName;
+        var isNotHasEMail = string.IsNullOrEmpty(stu.EMail);
 
         // 关于查询身份信息的，需要完成 StaffRepository 之后，在这里进行查询，我先随便给个值
         var memberModel = new MemberModel()
@@ -136,6 +136,11 @@ public class LoginService(
             var app = await clientApplicationRepository.GetByClientIdAsync(clientId);
             if (app != null)
             {
+                if (app.IsNeedEMail && isNotHasEMail)
+                {
+                    return "";
+                }
+
                 s = $"client_id:{app.ClientSecret}";
             }
         }
@@ -147,7 +152,7 @@ public class LoginService(
             return storedToken.ToString();
         }
 
-        var token = jwtHelper.GetMemberToken(memberModel, model.RememberMe, scope, clientId);
+        var token = tokenGenerator.GetMemberToken(memberModel, model.RememberMe, scope, clientId);
 
         // 将token存储到Redis中，设置过期时间
         await _db.StringSetAsync(redisKey, token, TimeSpan.FromHours(TokenExpiryHours * (model.RememberMe ? 24 : 2)));
@@ -164,12 +169,14 @@ public class LoginService(
     {
         if (!await ValidateToken(userId, jwt))
         {
+            logger.LogError("Invalid JWT token");
             return "";
         }
 
         var app = await clientApplicationRepository.GetByClientIdAsync(clientId);
         if (app == null)
         {
+            logger.LogError("Invalid client ID");
             return "";
         }
 
@@ -179,6 +186,7 @@ public class LoginService(
         var storedToken = await _db.StringGetAsync(redisKey);
         if (storedToken.HasValue && !string.IsNullOrEmpty(storedToken))
         {
+            logger.LogInformation("Token already exists, get the token");
             return storedToken.ToString();
         }
 
@@ -205,7 +213,7 @@ public class LoginService(
             };
         }
 
-        var token = jwtHelper.GetMemberToken(memberModel, scope: scope, clientId: clientId);
+        var token = tokenGenerator.GetMemberToken(memberModel, scope: scope, clientId: clientId);
 
         // 将token存储到Redis中，设置过期时间
         await _db.StringSetAsync(redisKey, token, TimeSpan.FromHours(TokenExpiryHours * 2));
@@ -304,7 +312,7 @@ public class LoginService(
             Identity = staff.Identity
         };
 
-        var token = jwtHelper.GetMemberToken(memberModel, model.RememberMe, scope, clientId: clientId);
+        var token = tokenGenerator.GetMemberToken(memberModel, model.RememberMe, scope, clientId: clientId);
 
         var s = "";
 
@@ -438,10 +446,7 @@ public class LoginService(
             background-color: #f8f8f8;
         }}
         .container {{
-            background-color: white;
             padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }}
         .header {{
             text-align: center;

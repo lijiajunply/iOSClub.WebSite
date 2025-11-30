@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using System.Text;
 using iOSClub.Data;
 using iOSClub.Data.DataModels;
@@ -6,6 +7,7 @@ using iOSClub.DataApi.Services;
 using iOSClub.WebAPI.IdentityModels;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.IdentityModel.Tokens;
@@ -46,7 +48,7 @@ builder.Services.AddAuthentication(options =>
             IssuerSigningKey =
                 new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
             ValidateLifetime = true,
-            ClockSkew = TimeSpan.FromSeconds(30),
+            ClockSkew = TimeSpan.FromMinutes(10),
             RequireExpirationTime = true,
         };
     })
@@ -141,9 +143,18 @@ if (!string.IsNullOrEmpty(redis))
 
 #region 日志设置
 
+// 定义日志数据库路径
+
 if (builder.Environment.IsProduction())
 {
     var sqlPath = Environment.CurrentDirectory + "/logs/log.db";
+
+    // 确保日志目录存在
+    var logDir = Path.GetDirectoryName(sqlPath);
+    if (!string.IsNullOrEmpty(logDir) && !Directory.Exists(logDir))
+    {
+        Directory.CreateDirectory(logDir);
+    }
 
     // 日志 注册
     var logger = new LoggerConfiguration()
@@ -170,10 +181,10 @@ if (builder.Environment.IsProduction())
 builder.Services.AddHttpClient();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<GlobalAuthorizationFilter>();
-builder.Services.AddScoped<TokenActionFilter>();
-builder.Services.AddScoped<IJwtHelper, JwtHelper>();
+builder.Services.AddScoped<ITokenGenerator, JwtGenerator>();
 
 builder.Services.AddScoped<IArticleRepository, ArticleRepository>();
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<IDepartmentRepository, DepartmentRepository>();
 builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
 builder.Services.AddScoped<IResourceRepository, ResourceRepository>();
@@ -188,6 +199,23 @@ builder.Services.AddScoped<ILoginService, LoginService>();
 
 #endregion
 
+#region 压缩
+
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.Providers.Add<BrotliCompressionProvider>();
+    options.Providers.Add<GzipCompressionProvider>();
+});
+
+builder.Services.Configure<BrotliCompressionProviderOptions>(options =>
+{
+    options.Level = CompressionLevel.Fastest; // 或 CompressionLevel.Optimal
+});
+
+builder.Services.Configure<GzipCompressionProviderOptions>(options => { options.Level = CompressionLevel.Fastest; });
+
+#endregion
 
 var app = builder.Build();
 
@@ -236,13 +264,19 @@ using (var scope = app.Services.CreateScope())
         context.Staffs.Add(model);
     }
 
-    if (context.Departments.Any())
+    // if (context.Departments.Any())
+    // {
+    //     var departments = await context.Departments.Where(x => string.IsNullOrEmpty(x.Key)).ToListAsync();
+    //     foreach (var department in departments)
+    //     {
+    //         department.Key = department.GetHashKey();
+    //     }
+    // }
+    
+    if (context.Categories.Any())
     {
-        var departments = await context.Departments.Where(x => string.IsNullOrEmpty(x.Key)).ToListAsync();
-        foreach (var department in departments)
-        {
-            department.Key = department.GetHashKey();
-        }
+        var categories = await context.Categories.Where(x => string.IsNullOrEmpty(x.Id)).ToListAsync();
+        context.Categories.RemoveRange(categories);
     }
 
     await context.SaveChangesAsync();

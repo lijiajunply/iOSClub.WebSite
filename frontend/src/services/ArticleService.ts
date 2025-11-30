@@ -1,15 +1,12 @@
 import {url} from './Url';
 import {AuthService} from './AuthService';
 import type {ArticleModel, ArticleCreateDto, ArticleUpdateDto} from "../models";
+import type {ArticleSearchResult} from '../models/ArticleModel'
 
 /**
  * 文章服务类 - 处理文章相关的API调用
  */
 export class ArticleService {
-    /**
-     * 获取所有文章（公开访问）
-     * @returns Promise<ArticleModel[]> 文章列表
-     */
     static async getAllArticles(): Promise<ArticleModel[]> {
         const response = await fetch(`${url}/Article`, {
             method: 'GET',
@@ -165,16 +162,10 @@ export class ArticleService {
         return response.ok;
     }
 
-    static async searchArticles(keyword: string): Promise<ArticleModel[]> {
-        const token = AuthService.getToken();
-        if (!token) {
-            throw new Error('未登录');
-        }
-
-        const response = await fetch(`${url}/Article/search?keyword=${encodeURIComponent(keyword)}`, {
+    static async searchArticles(keyword: string): Promise<ArticleSearchResult[]> {
+        const response = await fetch(`${url}/Article/search/highlights?keyword=${encodeURIComponent(keyword)}`, {
             method: 'GET',
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json',
             },
         });
@@ -192,5 +183,66 @@ export class ArticleService {
 
     static async getArticle(path: string): Promise<ArticleModel> {
         return this.getArticleByPath(path);
+    }
+
+
+
+    /**
+     * 获取所有分类的文章（公开访问）
+     * @returns Promise<Dictionary<string, ArticleModel[]>> 分类文章列表
+     */
+    static async getAllCategoryArticles(): Promise<Record<string, ArticleModel[]>> {
+        const token = AuthService.getToken();
+
+        const headers: Record<string, string> = {
+            'Content-Type': 'application/json',
+        };
+
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        const response = await fetch(`${url}/Article/category`, {
+            method: 'GET',
+            headers: headers
+        });
+
+        if (!response.ok) {
+            throw new Error('获取分类文章失败');
+        }
+
+        return await response.json();
+    }
+
+    /**
+     * 批量更新文章顺序
+     * @param articleOrders 文章路径和对应顺序的字典
+     * @returns Promise<void>
+     */
+    static async updateArticleOrders(articleOrders: Record<string, number>): Promise<void> {
+        const token = AuthService.getToken();
+        if (!token) {
+            throw new Error('未登录');
+        }
+
+        const response = await fetch(`${url}/Article/update-orders`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(articleOrders),
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                AuthService.clearToken();
+                throw new Error('登录已过期，请重新登录');
+            }
+            if (response.status === 403) {
+                throw new Error('权限不足，需要管理员身份');
+            }
+            throw new Error('批量更新文章顺序失败');
+        }
     }
 }

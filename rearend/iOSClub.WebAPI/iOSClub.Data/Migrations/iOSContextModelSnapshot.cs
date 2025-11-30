@@ -17,7 +17,7 @@ namespace iOSClub.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.10")
+                .HasAnnotation("ProductVersion", "10.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -58,6 +58,13 @@ namespace iOSClub.Data.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");
 
+                    b.Property<int>("ArticleOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("CategoryId")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
                     b.Property<string>("Content")
                         .IsRequired()
                         .HasColumnType("text");
@@ -76,7 +83,32 @@ namespace iOSClub.Data.Migrations
 
                     b.HasKey("Path");
 
+                    b.HasIndex("CategoryId");
+
                     b.ToTable("Articles");
+                });
+
+            modelBuilder.Entity("iOSClub.Data.DataModels.CategoryModel", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Categories");
                 });
 
             modelBuilder.Entity("iOSClub.Data.DataModels.ClientApplication", b =>
@@ -109,6 +141,9 @@ namespace iOSClub.Data.Migrations
                         .HasColumnType("character varying(200)");
 
                     b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsNeedEMail")
                         .HasColumnType("boolean");
 
                     b.Property<string>("LogoUrl")
@@ -403,6 +438,16 @@ namespace iOSClub.Data.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("iOSClub.Data.DataModels.ArticleModel", b =>
+                {
+                    b.HasOne("iOSClub.Data.DataModels.CategoryModel", "Category")
+                        .WithMany("Articles")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Category");
+                });
+
             modelBuilder.Entity("iOSClub.Data.DataModels.ProjectModel", b =>
                 {
                     b.HasOne("iOSClub.Data.DataModels.DepartmentModel", "Department")
@@ -441,6 +486,11 @@ namespace iOSClub.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Student");
+                });
+
+            modelBuilder.Entity("iOSClub.Data.DataModels.CategoryModel", b =>
+                {
+                    b.Navigation("Articles");
                 });
 
             modelBuilder.Entity("iOSClub.Data.DataModels.DepartmentModel", b =>

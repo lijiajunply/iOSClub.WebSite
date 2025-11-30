@@ -71,6 +71,11 @@ public class ClientApplication
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     /// <summary>
+    /// 是否需要邮箱验证
+    /// </summary>
+    public bool IsNeedEMail { get; set; }
+
+    /// <summary>
     /// 验证回调URL是否在白名单中
     /// </summary>
     /// <param name="redirectUri">要验证的回调URL</param>

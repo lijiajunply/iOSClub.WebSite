@@ -1,220 +1,257 @@
 <template>
-  <div class="min-h-screen bg-white dark:bg-black transition-colors duration-300">
-    <n-layout>
-      <!-- Header with apple-style -->
-      <n-layout-header
-        class="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-black/80 backdrop-blur-xl border-b border-gray-200 dark:border-gray-800"
-        :class="{ 'shadow-md': isScrolled }"
-      >
-        <div class="mx-auto px-4 sm:px-6 lg:px-8">
-          <div class="flex items-center justify-between h-16">
-            <!-- Logo and Title -->
-            <router-link to="/" class="flex items-center gap-3 group">
-              <img
-                src="/assets/iOS_Club_LOGO.png"
-                alt="iOS Club Logo"
-                class="w-8 h-8 transition-transform group-hover:scale-105"
-              />
-              <div class="text-lg font-semibold text-gray-900 dark:text-gray-100 hidden sm:block">
-                iOS Club of XAUAT
-              </div>
-            </router-link>
+  <div class="app-container min-h-screen flex flex-col transition-colors duration-500 ease-out">
 
-            <!-- Desktop Menu -->
-            <nav class="hidden md:flex items-center space-x-1">
-              <!-- 关于我们 Dropdown -->
-              <n-dropdown
-                trigger="hover"
-                :options="aboutUsOptions"
-                @select="handleSelect"
-                placement="bottom"
-              >
-                <button
-                  class="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center"
-                >
-                  关于我们
-                  <Icon icon="material-symbols:arrow-drop-down" class="ml-1" />
-                </button>
-              </n-dropdown>
+    <!--
+      Header: Apple 风格导航栏
+      - sticky 定位
+      - 强毛玻璃效果 (backdrop-blur-2xl)
+      - 底部极细边框
+    -->
+    <header
+        class="sticky top-0 z-50 w-full transition-all duration-300 border-b text-lg"
+        :class="[
+        isScrolled
+          ? 'bg-white/75 dark:bg-[#161617]/75 border-gray-200/50 dark:border-white/10 backdrop-blur-2xl'
+          : 'bg-white/0 dark:bg-black/0 border-transparent backdrop-blur-sm'
+      ]"
+    >
+      <div class="px-4 sm:px-6 h-14 flex items-center justify-between">
 
-              <!-- 社团动态 Dropdown -->
-              <n-dropdown
-                trigger="hover"
-                :options="communityOptions"
-                @select="handleSelect"
-                placement="bottom"
-              >
-                <button
-                  class="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center"
-                >
-                  社团动态
-                  <Icon icon="material-symbols:arrow-drop-down" class="ml-1" />
-                </button>
-              </n-dropdown>
+        <!-- Logo Area -->
+        <router-link to="/" class="flex items-center gap-2 group z-50">
+          <img
+              src="/assets/iOS_Club_LOGO.png"
+              alt="iOS Club"
+              class="w-7 h-7 opacity-90 group-hover:opacity-100 transition-opacity rounded-sm"
+          />
+          <span class="font-semibold text-xl tracking-tight text-gray-900 dark:text-[#f5f5f7]">
+            iOS Club of XAUAT
+          </span>
+        </router-link>
 
-              <!-- Login/Register or Logout Button -->
-              <button
-                v-if="!isCentreRoute"
-                class="ml-4 px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-full hover:bg-blue-600 transition-colors"
-                @click="() => router.push('/login')"
-              >
-                登录/注册
-              </button>
-              <button
-                v-else
-                class="ml-4 px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-full hover:bg-blue-600 transition-colors"
-                @click="toCentre"
-              >
-                进入中心
-              </button>
+        <!-- Desktop Navigation (Hidden on Mobile) -->
+        <nav class="hidden md:flex items-center space-x-1">
 
-              <!-- Theme Toggle -->
-              <button
-                @click="mainToggleTheme"
-                class="ml-2 w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                aria-label="切换暗夜模式"
-              >
-                <Icon
-                  v-if="!isDark"
-                  icon="material-symbols:light-mode"
-                  class="h-5 w-5 text-yellow-500"
-                />
-                <Icon v-else icon="material-symbols:dark-mode" class="h-5 w-5 text-blue-400" />
-              </button>
-            </nav>
-
-            <!-- Mobile Menu Button -->
-            <button
-              class="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-              @click="drawerVisible = !drawerVisible"
-            >
-              <Icon
-                v-if="!drawerVisible"
-                icon="material-symbols:menu"
-                class="text-gray-900 dark:text-gray-100"
-                width="20"
-                height="20"
-              />
-              <Icon
-                v-else
-                icon="material-symbols:close"
-                class="text-gray-900 dark:text-gray-100"
-                width="20"
-                height="20"
-              />
+          <!-- Nav Item: 社团简介 (Dropdown) -->
+          <div class="relative group">
+            <button class="nav-link">
+              关于我们
+              <Icon icon="material-symbols:keyboard-arrow-down-rounded" class="text-gray-400" width="16"/>
             </button>
-          </div>
-        </div>
-      </n-layout-header>
-
-      <!-- Main Content -->
-      <n-layout-content class="pt-16">
-        <!-- Mobile Drawer Menu -->
-        <transition name="slide-down">
-          <div
-            v-if="drawerVisible"
-            class="fixed inset-0 z-40 bg-white dark:bg-black pt-16"
-          >
-            <div class="px-4 py-1 space-y-0.5">
-              <router-link
-                to="/"
-                class="block px-4 py-2.5 text-base font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
-                @click="drawerVisible = false"
-              >
-                首页
-              </router-link>
-
-              <!-- About Section -->
-              <div class="pt-1.5 pb-0.5">
-                <div class="px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  关于我们
-                </div>
-                <router-link
-                  v-for="item in aboutUsOptions"
-                  :key="item.key"
-                  :to="item.key"
-                  class="block px-4 py-2.5 text-base font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
-                  @click="drawerVisible = false"
+            <!-- Custom Dropdown Menu -->
+            <div
+                class="absolute left-0 mt-2 w-48 bg-white dark:bg-[#1c1c1e] rounded-xl shadow-lg border border-gray-200 dark:border-white/20 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 ease-out">
+              <div class="py-2">
+                <button
+                    v-for="item in aboutUsOptions"
+                    :key="item.key"
+                    @click="handleSelect(item.key)"
+                    class="block w-full text-left px-4 py-2 text-sm font-medium transition-colors duration-150"
+                    :class="[
+                      'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10'
+                    ]"
                 >
                   {{ item.label }}
-                </router-link>
-              </div>
-
-              <!-- Community Section -->
-              <div class="pt-1.5 pb-1.5">
-                <div class="px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  社团动态
-                </div>
-                <router-link
-                  v-for="item in communityOptions"
-                  :key="item.key"
-                  :to="item.key"
-                  class="block px-4 py-2.5 text-base font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
-                  @click="drawerVisible = false"
-                >
-                  {{ item.label }}
-                </router-link>
-              </div>
-
-              <div class="pt-1.5 border-t border-gray-200 dark:border-gray-800">
-                <button
-                  v-if="!isCentreRoute"
-                  class="w-full px-4 py-2.5 bg-blue-500 text-white text-base font-medium rounded-lg hover:bg-blue-600 transition-colors"
-                  @click="() => { router.push('/login'); drawerVisible = false }"
-                >
-                  登录/注册
-                </button>
-                <button
-                  v-else
-                  class="w-full px-4 py-2.5 bg-blue-500 text-white text-base font-medium rounded-lg hover:bg-blue-600 transition-colors"
-                  @click="logout"
-                >
-                  退出登录
-                </button>
-
-                <button
-                  @click="mainToggleTheme"
-                  class="mt-1.5 w-full px-4 py-2.5 flex items-center justify-center gap-2 text-base font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                >
-                  <Icon
-                    v-if="!isDark"
-                    icon="material-symbols:light-mode"
-                    class="h-5 w-5 text-yellow-500"
-                  />
-                  <Icon v-else icon="material-symbols:dark-mode" class="h-5 w-5 text-blue-400" />
-                  {{ isDark ? '浅色模式' : '深色模式' }}
                 </button>
               </div>
             </div>
           </div>
-        </transition>
 
-        <!-- Page Content -->
-        <div class="flex-1">
-          <router-view />
+          <!-- Nav Item: 社团动态 (Dropdown) -->
+          <div class="relative group">
+            <button class="nav-link">
+              社团动态
+              <Icon icon="material-symbols:keyboard-arrow-down-rounded" class="text-gray-400" width="16"/>
+            </button>
+            <!-- Custom Dropdown Menu -->
+            <div
+                class="absolute left-0 mt-2 w-48 bg-white dark:bg-[#1c1c1e] rounded-xl shadow-lg border border-gray-200 dark:border-white/20 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 ease-out">
+              <div class="py-2">
+                <button
+                    v-for="item in communityOptions"
+                    :key="item.key"
+                    @click="handleSelect(item.key)"
+                    class="block w-full text-left px-4 py-2 text-sm font-medium transition-colors duration-150"
+                    :class="[
+                      'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10'
+                    ]"
+                >
+                  {{ item.label }}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Divider -->
+          <div class="h-4 w-px bg-gray-300 dark:bg-white/20 mx-3"></div>
+
+          <!-- Theme Toggle Dropdown -->
+          <div class="relative group">
+            <button
+                class="icon-btn"
+                title="切换主题"
+            >
+              <Icon :icon="isDark ? 'solar:moon-stars-bold' : 'solar:sun-2-bold'" class="w-4 h-4"/>
+            </button>
+            <!-- Custom Dropdown Menu -->
+            <div
+                class="absolute right-0 mt-2 w-48 bg-white dark:bg-[#1c1c1e] rounded-xl shadow-lg border border-gray-200 dark:border-white/20 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 ease-out">
+              <div class="py-2">
+                <button
+                    v-for="option in themeOptions"
+                    :key="option.key"
+                    @click="handleThemeSelect(option.key)"
+                    class=" w-full text-left px-4 py-2 text-sm font-medium transition-colors duration-150 flex items-center gap-2"
+                    :class="[
+                      userPreference === option.key
+                        ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                        : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10'
+                    ]"
+                >
+                  <Icon :icon="option.icon" class="w-4 h-4"/>
+                  <span>{{ option.label }}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Auth Button (Apple ID Style) -->
+          <button
+              v-if="!isCentreRoute"
+              class="auth-btn ml-3"
+              @click="() => router.push('/login')"
+          >
+            登录
+          </button>
+          <button
+              v-else
+              class="auth-btn ml-3"
+              @click="toCentre"
+          >
+            个人中心
+          </button>
+        </nav>
+
+        <!-- Mobile Menu Toggle -->
+        <button
+            class="md:hidden z-50 p-2 -mr-2 text-gray-800 dark:text-white"
+            @click="drawerVisible = !drawerVisible"
+        >
+          <Icon
+              :icon="drawerVisible ? 'material-symbols:close-rounded' : 'material-symbols:menu-rounded'"
+              width="24"
+          />
+        </button>
+      </div>
+    </header>
+
+    <!-- Mobile Dropdown Menu (Full Screen Overlay style) -->
+    <transition name="mobile-menu">
+      <div
+          v-if="drawerVisible"
+          class="fixed inset-0 z-40 bg-[#fbfbfd] dark:bg-black pt-14 px-4 md:hidden flex flex-col"
+      >
+        <div class="flex flex-col space-y-3 animate-fade-in">
+          <!-- Mobile Links Group -->
+          <div class="space-y-1">
+            <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1 px-2">关于</div>
+            <router-link
+                v-for="item in aboutUsOptions"
+                :key="item.key"
+                :to="item.key"
+                class="mobile-link"
+                @click="drawerVisible = false"
+            >
+              {{ item.label }}
+            </router-link>
+          </div>
+
+          <div class="space-y-1">
+            <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1 px-2">探索</div>
+            <router-link
+                v-for="item in communityOptions"
+                :key="item.key"
+                :to="item.key"
+                class="mobile-link"
+                @click="drawerVisible = false"
+            >
+              {{ item.label }}
+            </router-link>
+          </div>
+
+          <!-- Mobile Auth & Theme -->
+          <div class="pt-3 mt-auto border-t border-gray-200 dark:border-white/10">
+            <button
+                v-if="!isCentreRoute"
+                class="w-full py-2 bg-[#0071e3] text-white font-medium rounded-lg mb-3 active:scale-95 transition-transform"
+                @click="() => { router.push('/login'); drawerVisible = false }"
+            >
+              登录 / 注册
+            </button>
+            <button
+                v-else
+                class="w-full py-2 bg-[#0071e3] text-white font-medium rounded-lg mb-3 active:scale-95 transition-transform"
+                @click="logout"
+            >
+              退出登录
+            </button>
+
+            <!-- Theme Selection -->
+            <div class="w-full space-y-1">
+              <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1 px-2">主题</div>
+              <div class="flex space-x-1">
+                <button
+                    v-for="option in themeOptions"
+                    :key="option.key"
+                    @click="handleThemeSelect(option.key)"
+                    class="flex-1 py-1.5 px-2 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-1.5 text-xs"
+                    :class="[
+                      userPreference === option.key
+                        ? 'bg-[#0071e3] text-white'
+                        : 'bg-gray-100 dark:bg-[#1c1c1e] text-gray-900 dark:text-white opacity-70 hover:opacity-90'
+                    ]"
+                >
+                  <Icon :icon="option.icon" class="w-3 h-3"/>
+                  <span>{{ option.label }}</span>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
-      </n-layout-content>
-    </n-layout>
+      </div>
+    </transition>
+
+    <!-- Main Content -->
+    <main class="flex-1 w-full bg-[#fbfbfd] dark:bg-[#1c1c1e]/70">
+      <router-view>
+      </router-view>
+    </main>
+
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuthorizationStore } from '../stores/Authorization'
-import { NLayout, NLayoutHeader, NLayoutContent, NDropdown } from 'naive-ui'
-import { Icon } from '@iconify/vue'
-import { useThemeStore } from '../stores/theme'
-import { storeToRefs } from 'pinia'
+import {ref, onMounted, onUnmounted, computed} from 'vue'
+import {useRouter} from 'vue-router'
+import {useAuthorizationStore} from '../stores/Authorization'
+import {Icon} from '@iconify/vue'
+import {useThemeStore} from '../stores/theme'
+import {storeToRefs} from 'pinia'
 
 const themeStore = useThemeStore()
-const { isDark } = storeToRefs(themeStore)
-// 解构方法
-const { toggleTheme } = themeStore
+const {isDark, userPreference} = storeToRefs(themeStore)
+const {setThemePreference} = themeStore
 
-// 切换主题
-const mainToggleTheme = () => {
-  toggleTheme()
+// 主题选项配置
+const themeOptions = [
+  {key: 'light', label: '浅色', icon: 'solar:sun-2-bold'},
+  {key: 'dark', label: '深色', icon: 'solar:moon-stars-bold'},
+  {key: 'system', label: '跟随系统', icon: 'basil:desktop-outline'}
+]
+
+// 主题选择处理函数
+const handleThemeSelect = (key: string) => {
+  setThemePreference(key as 'light' | 'dark' | 'system')
 }
 
 const router = useRouter()
@@ -222,28 +259,28 @@ const authorizationStore = useAuthorizationStore()
 const drawerVisible = ref(false)
 const isScrolled = ref(false)
 
-// 判断当前是否在Centre路由下
-const isCentreRoute = computed(() => {
-  return authorizationStore.isAuthenticated
-})
+const isCentreRoute = computed(() => authorizationStore.isAuthenticated)
 
-// Handle scroll effect
 const handleScroll = () => {
-  isScrolled.value = window.scrollY > 10
+  // Apple style: Trigger background change immediately after scroll starts
+  isScrolled.value = window.scrollY > 5
 }
 
 const toCentre = () => {
   router.push('/Centre')
 }
 
-// 退出登录功能
 const logout = () => {
   authorizationStore.logout()
   drawerVisible.value = false
-  // 如果当前在Centre相关页面，跳转到首页
   if (isCentreRoute.value) {
     router.push('/')
   }
+}
+
+const handleSelect = (key: string) => {
+  router.push(key)
+  drawerVisible.value = false
 }
 
 onMounted(() => {
@@ -254,69 +291,177 @@ onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll)
 })
 
-// Dropdown options for desktop menu
+// Data structure optimized for clean template rendering
 const aboutUsOptions = [
-  {
-    label: '社团简介',
-    key: '/About'
-  },
-  {
-    label: '社团结构',
-    key: '/Structure'
-  },
-  {
-    label: '其他组织',
-    key: '/OtherOrg'
-  },
-  {
-    label: '竞赛资源',
-    key: '/Article/Competitions'
-  },
-  {
-    label: '社团历史',
-    key: '/History'
-  }
+  {label: '社团简介', key: '/About'},
+  {label: '结构架构', key: '/Structure'},
+  {label: '合作组织', key: '/OtherOrg'},
+  {label: '竞赛资源', key: '/Article/Competitions'},
+  {label: '发展历史', key: '/History'}
 ]
 
 const communityOptions = [
-  {
-    label: '社团活动',
-    key: '/Event'
-  },
-  {
-    label: '技术博客',
-    key: '/Blog'
-  },
-  {
-    label: 'iOS App',
-    key: '/Tools'
-  },
-  {
-    label: '精品项目',
-    key: '/Projects'
-  }
+  {label: '近期活动', key: '/Event'},
+  {label: '技术博客', key: '/Blog'},
+  {label: 'iOS App', key: '/Tools'},
+  {label: '开源项目', key: '/Projects'}
 ]
-
-// Handle dropdown selection
-const handleSelect = (key: string) => {
-  router.push(key)
-}
 </script>
 
 <style scoped>
-/* Animations */
-.slide-down-enter-active,
-.slide-down-leave-active {
-  transition: all 0.3s ease;
+/* Native CSS Configuration */
+
+/* Background Colors */
+.app-container {
+  /* fallback */
+  background-color: #fbfbfd;
+  color: #1d1d1f;
 }
 
-.slide-down-enter-from {
-  opacity: 0;
-  transform: translateY(-10px);
+/* Dark Mode Override */
+.dark .app-container {
+  background-color: #1c1c1e;
+  color: #f5f5f7;
 }
 
-.slide-down-leave-to {
+/*
+   Apple-style Navigation Link
+   Using Tailwind @apply is avoided as requested for styling blocks
+*/
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  font-size: 15px;
+  font-weight: 400;
+  color: #424245;
+  border-radius: 9999px; /* Pill shape */
+  transition: all 0.2s ease;
+  letter-spacing: -0.01em;
+}
+
+.dark .nav-link {
+  color: #e8e8ed;
+}
+
+.nav-link:hover {
+  color: #1d1d1f;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+.dark .nav-link:hover {
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Icon Button */
+.icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: #424245;
+  transition: background-color 0.2s;
+}
+
+.dark .icon-btn {
+  color: #e8e8ed;
+}
+
+.icon-btn:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.dark .icon-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Apple Primary Button (Blue) */
+.auth-btn {
+  padding: 4px 16px;
+  background-color: #0071e3; /* Apple Blue */
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 9999px;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.auth-btn:hover {
+  background-color: #0077ed;
+}
+
+.auth-btn:active {
+  transform: scale(0.98);
+}
+
+/* Mobile Menu Link */
+.mobile-link {
+  display: block;
+  padding: 6px 10px;
+  font-size: 15px; /* iOS Human Interface Guidelines standard size */
+  font-weight: 400;
+  color: #1d1d1f;
+  border-radius: 8px;
+  margin-bottom: 4px;
+  transition: all 0.2s ease;
+  letter-spacing: -0.01em;
+}
+
+.mobile-link:hover {
+  background: #f5f5f7;
+  color: #0071e3;
+}
+
+.dark .mobile-link {
+  color: #f5f5f7;
+  background: #1c1c1e; /* Apple dark gray card color */
+}
+
+.dark .mobile-link:hover {
+  background: #2c2c2e;
+  color: #0077ed;
+}
+
+/* Mobile Menu Transition */
+.mobile-menu-enter-active,
+.mobile-menu-leave-active {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+}
+
+.mobile-menu-enter-from,
+.mobile-menu-leave-to {
+  transform: translateY(-100%);
   opacity: 0;
-  transform: translateY(-10px);
+}
+
+/* Route Transitions */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* Animation helper for mobile content */
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>

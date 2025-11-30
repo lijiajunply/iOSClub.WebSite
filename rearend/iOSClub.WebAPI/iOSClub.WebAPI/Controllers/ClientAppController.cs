@@ -58,7 +58,9 @@ public class ClientAppController(IClientApplicationRepository clientAppRepositor
             HomepageUrl = clientAppModel.HomepageUrl,
             RedirectUris = string.Join(";", clientAppModel.RedirectUris),
             LogoUrl = clientAppModel.LogoUrl,
-            IsActive = true
+            IsActive = true,
+            IsNeedEMail = clientAppModel.IsNeedEMail,
+            SupportsPkce = clientAppModel.SupportsPkce
         };
 
         // 保存原始密钥用于返回给客户端
@@ -79,7 +81,9 @@ public class ClientAppController(IClientApplicationRepository clientAppRepositor
             HomepageUrl = clientApp.HomepageUrl,
             RedirectUris = clientApp.RedirectUris.Split(';').ToList(),
             LogoUrl = clientApp.LogoUrl,
-            IsActive = clientApp.IsActive
+            IsActive = clientApp.IsActive,
+            IsNeedEMail = clientApp.IsNeedEMail,
+            SupportsPkce = clientApp.SupportsPkce
         };
 
         return CreatedAtAction(nameof(GetClientApplication), new { clientId = clientApp.ClientId }, resultModel);
@@ -105,6 +109,8 @@ public class ClientAppController(IClientApplicationRepository clientAppRepositor
         existingClientApp.LogoUrl = clientAppModel.LogoUrl;
         existingClientApp.IsActive = clientAppModel.IsActive;
         existingClientApp.UpdatedAt = DateTime.UtcNow;
+        existingClientApp.IsNeedEMail = clientAppModel.IsNeedEMail;
+        existingClientApp.SupportsPkce = clientAppModel.SupportsPkce;
 
         var result = await clientAppRepository.UpdateAsync(existingClientApp);
         if (!result)
@@ -207,6 +213,16 @@ public class CreateClientAppModel
     /// 应用图标URL
     /// </summary>
     public string LogoUrl { get; set; } = "";
+
+    /// <summary>
+    /// 是否需要邮箱验证
+    /// </summary>
+    public bool IsNeedEMail { get; set; }
+
+    /// <summary>
+    /// 是否支持PKCE
+    /// </summary>
+    public bool SupportsPkce { get; set; }
 }
 
 /// <summary>
@@ -244,6 +260,16 @@ public class UpdateClientAppModel
     /// 是否启用
     /// </summary>
     public bool IsActive { get; set; } = true;
+
+    /// <summary>
+    /// 是否需要邮箱验证
+    /// </summary>
+    public bool IsNeedEMail { get; set; }
+    
+    /// <summary>
+    /// 是否支持PKCE
+    /// </summary>
+    public bool SupportsPkce { get; set; }
 }
 
 /// <summary>
@@ -291,6 +317,16 @@ public class ClientAppResultModel
     /// 是否启用
     /// </summary>
     public bool IsActive { get; set; } = true;
+
+    /// <summary>
+    /// 是否需要邮箱验证
+    /// </summary>
+    public bool IsNeedEMail { get; set; }
+
+    /// <summary>
+    /// 是否支持PKCE
+    /// </summary>
+    public bool SupportsPkce { get; set; }
 }
 
 /// <summary>

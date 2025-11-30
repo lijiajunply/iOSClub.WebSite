@@ -1,5 +1,6 @@
 <template>
-  <div :style="style">
+
+  <div>
     <svg :class="className" aria-hidden="true">
       <use :href="str"></use>
     </svg>
@@ -14,7 +15,6 @@ const props = defineProps({
     type: String,
     required: true
   },
-  style: String,
   className: String,
 })
 

@@ -21,7 +21,6 @@ public class UserController(
     /// 获取当前用户的详细信息
     /// </summary>
     /// <returns>用户信息对象</returns>
-    [TokenActionFilter]
     [Authorize]
     [HttpGet("data")]
     public async Task<ActionResult<MemberModel>> GetData()
@@ -44,7 +43,6 @@ public class UserController(
     /// 获取当前用户的所有待办事项
     /// </summary>
     /// <returns>待办事项列表</returns>
-    [TokenActionFilter]
     [Authorize]
     [HttpGet("todos")]
     public async Task<ActionResult<List<TodoModel>>> GetTodos()
@@ -64,7 +62,6 @@ public class UserController(
     /// </summary>
     /// <param name="todoModel">待办事项模型</param>
     /// <returns>添加后的待办事项</returns>
-    [TokenActionFilter]
     [Authorize]
     [HttpPost("todos")]
     public async Task<ActionResult<TodoModel>> AddTodo(TodoModel todoModel)
@@ -91,7 +88,6 @@ public class UserController(
     /// </summary>
     /// <param name="id">待办事项ID</param>
     /// <returns>操作结果</returns>
-    [TokenActionFilter]
     [Authorize]
     [HttpDelete("todos/{id}")]
     public async Task<IActionResult> DeleteTodo(string id)
@@ -136,7 +132,6 @@ public class UserController(
     /// </summary>
     /// <param name="todoModel">更新后的待办事项模型</param>
     /// <returns>操作结果</returns>
-    [TokenActionFilter]
     [Authorize]
     [HttpPut("todos")]
     public async Task<IActionResult> UpdateTodo(TodoModel todoModel)
@@ -160,7 +155,6 @@ public class UserController(
     /// </summary>
     /// <param name="memberModel">更新后的用户资料模型</param>
     /// <returns>操作结果</returns>
-    [TokenActionFilter]
     [Authorize]
     [HttpPut("profile")]
     public async Task<IActionResult> UpdateProfile(StudentModel memberModel)

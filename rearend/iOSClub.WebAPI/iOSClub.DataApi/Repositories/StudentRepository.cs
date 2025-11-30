@@ -87,8 +87,16 @@ public class StudentRepository(ClubContext context) : IStudentRepository
     public async Task<bool> UpdateAsync(StudentModel model)
     {
         var stu = await GetByIdAsync(model.UserId);
-        if (stu == null) return false;
-        stu.Update(model);
+        if (stu == null)
+        {
+            model.Standardization();
+            await context.Students.AddAsync(model);
+        }
+        else
+        {
+            stu.Update(model);
+        }
+
         return await context.SaveChangesAsync() > 0;
     }
 

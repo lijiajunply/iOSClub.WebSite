@@ -13,7 +13,7 @@ namespace iOSClub.WebAPI.Controllers;
 public class AuthController(
     IStudentRepository studentRepository,
     ILoginService loginService,
-    IJwtHelper jwtHelper)
+    ITokenGenerator tokenGenerator)
     : ControllerBase
 {
     /// <summary>
@@ -31,7 +31,7 @@ public class AuthController(
             return Conflict();
         }
 
-        return jwtHelper.GetMemberToken(MemberModel.AutoCopy<StudentModel, MemberModel>(createdStudent));
+        return tokenGenerator.GetMemberToken(MemberModel.AutoCopy<StudentModel, MemberModel>(createdStudent));
     }
 
     /// <summary>

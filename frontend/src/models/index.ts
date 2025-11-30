@@ -7,4 +7,5 @@ export * from './InfoModel';
 export * from './MemberQueryModel';
 export * from './ProjectModel';
 export * from './TodoModel';
-export * from './ToolModel';
+// 重命名 ToolModel 中的 CategoryModel 以避免与 ArticleModel 中的冲突
+export { CategoryModel as ToolCategoryModel, LinkModel } from './ToolModel';

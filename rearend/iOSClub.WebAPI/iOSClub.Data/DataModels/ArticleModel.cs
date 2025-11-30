@@ -35,4 +35,20 @@ public class ArticleModel
     /// </summary>
     [MaxLength(20)]
     public string? Identity { get; set; }
+
+    /// <summary>
+    /// 分类ID
+    /// </summary>
+    [MaxLength(128)]
+    public string? CategoryId { get; set; }
+
+    /// <summary>
+    /// 分类
+    /// </summary>
+    public CategoryModel? Category { get; set; }
+
+    /// <summary>
+    /// 文章排序（用于自定义分类内文章顺序）
+    /// </summary>
+    public int ArticleOrder { get; set; }
 }

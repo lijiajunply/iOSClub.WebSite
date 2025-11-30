@@ -11,7 +11,6 @@ namespace iOSClub.WebAPI.Controllers;
 /// 成员查询控制器 - 负责成员数据的查询功能
 /// </summary>
 [Authorize(Roles = "Founder, President, Minister")]
-[TokenActionFilter]
 [ApiController]
 [Route("[controller]")]
 public class MemberQueryController(IStudentRepository studentRepository) : ControllerBase
