@@ -264,13 +264,19 @@ using (var scope = app.Services.CreateScope())
         context.Staffs.Add(model);
     }
 
-    if (context.Departments.Any())
+    // if (context.Departments.Any())
+    // {
+    //     var departments = await context.Departments.Where(x => string.IsNullOrEmpty(x.Key)).ToListAsync();
+    //     foreach (var department in departments)
+    //     {
+    //         department.Key = department.GetHashKey();
+    //     }
+    // }
+    
+    if (context.Categories.Any())
     {
-        var departments = await context.Departments.Where(x => string.IsNullOrEmpty(x.Key)).ToListAsync();
-        foreach (var department in departments)
-        {
-            department.Key = department.GetHashKey();
-        }
+        var categories = await context.Categories.Where(x => string.IsNullOrEmpty(x.Id)).ToListAsync();
+        context.Categories.RemoveRange(categories);
     }
 
     await context.SaveChangesAsync();

@@ -74,6 +74,24 @@ public class ArticleRepository(IDbContextFactory<ClubContext> factory, ICategory
         if (article == null)
         {
             model.LastWriteTime = DateTime.UtcNow;
+            if (string.IsNullOrEmpty(model.Category?.Name))
+            {
+                model.CategoryId = null;
+            }
+            else
+            {
+                var category = await repository.GetByName(model.Category.Name);
+                if (category == null)
+                {
+                    await repository.CreateOrUpdate(new CategoryModel() { Name = model.Category.Name });
+                    category = await repository.GetByName(model.Category.Name);
+                }
+
+                model.CategoryId = category?.Id;
+            }
+
+            model.Category = null;
+
             context.Articles.Add(model);
         }
         else

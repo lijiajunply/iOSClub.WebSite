@@ -15,7 +15,14 @@ import mdMark from 'markdown-it-mark'
 import markdownItAnchor from 'markdown-it-anchor'
 import markdownItContainer from 'markdown-it-container'
 import markdownItMermaid from '@jsonlee_12138/markdown-it-mermaid';
+import markdownItKatex from 'markdown-it-katex';
+
+// KaTeX CSS
+import 'katex/dist/katex.min.css';
 import Prism from "prismjs"
+import "prismjs/plugins/line-numbers/prism-line-numbers.css"
+import "prismjs/plugins/line-numbers/prism-line-numbers"
+import "prismjs/plugins/copy-to-clipboard/prism-copy-to-clipboard"
 
 interface Content {
   title: string
@@ -35,7 +42,7 @@ const route = useRoute();
 const activeHeadingId = ref<string>('');
 
 // --- Markdown Configuration ---
-const md = new MarkdownIt({
+const md = new (MarkdownIt as any)({
   html: true,
   linkify: true,
   typographer: true
@@ -58,8 +65,15 @@ md.use(markdownitFootnote)
 md.use(markdownitTaskList, { label: false, labelAfter: false })
 md.use(markdownitAttrs)
 md.use(mdExpandTabs).use(mdSup).use(mdSub).use(mdMark)
+// Image size support
 // Mermaid might need CSS adjustment in dark mode contexts, relying on plugin defaults for now
 md.use(markdownItMermaid({ delay: 200 }))
+
+// KaTeX support for mathematical formulas
+md.use(markdownItKatex, {
+  throwOnError: false,
+  errorColor: '#cc0000'
+});
 
 // Custom Containers (Alerts) - MacOS Style
 const containerOptions = [
@@ -84,6 +98,23 @@ containerOptions.forEach(opt => {
       }
     }
   })
+})
+
+// Details Container for collapsible content
+md.use(markdownItContainer, 'details', {
+  validate: (params: string) => params.trim().match(/^details\\s+(.*)$/),
+  render: (tokens: any[], idx: number) => {
+    const m = tokens[idx].info.trim().match(/^details\\s+(.*)$/)
+    if (tokens[idx].nesting === 1) {
+      return `<details class="my-6 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 overflow-hidden">
+                <summary class="px-4 py-3 cursor-pointer text-sm font-medium text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+                  ${md.utils.escapeHtml(m[1] || 'Details')}
+                </summary>
+                <div class="px-4 py-3 pt-0 text-sm text-zinc-700 dark:text-zinc-300">`
+    } else {
+      return '</div></details>\n'
+    }
+  }
 })
 
 // --- Logic: Headings Extraction ---
@@ -129,11 +160,14 @@ watch(() => props.content, async (newVal) => {
     return
   }
 
+  // Determine content string
+  const contentStr = typeof newVal === 'string' ? newVal : newVal.content
+
   // Extract Headings first
-  headings.value = extractHeadings(newVal.content)
+  headings.value = extractHeadings(contentStr)
 
   // Render HTML
-  let rendered = md.render(newVal.content)
+  let rendered = md.render(contentStr)
 
   // Post-process: Add scroll-mt to headings for sticky header offset
   // Using a regex replacement for simplicity, though manipulating tokens is cleaner
@@ -143,6 +177,18 @@ watch(() => props.content, async (newVal) => {
   html.value = rendered
 
   await nextTick()
+  // Add line numbers and copy button to code blocks
+  document.querySelectorAll('pre code').forEach((block) => {
+    block.parentElement?.classList.add('line-numbers', 'copy-to-clipboard');
+  });
+  
+  // Add lazy loading to images
+  document.querySelectorAll('img').forEach((img) => {
+    img.setAttribute('loading', 'lazy');
+    // Add zoom capability
+    img.classList.add('cursor-zoom-in', 'transition-transform', 'duration-300', 'hover:scale-[1.02]');
+  });
+  
   Prism.highlightAll()
 }, { immediate: true })
 
@@ -390,5 +436,15 @@ onBeforeUnmount(() => observer?.disconnect());
 }
 .dark :deep(.mermaid) {
   background-color: #1a1a1a;
+}
+
+/* Image zoom effect */
+:deep(.prose img) {
+  cursor: zoom-in;
+  transition: transform 0.3s ease;
+}
+
+:deep(.prose img:hover) {
+  transform: scale(1.02);
 }
 </style>

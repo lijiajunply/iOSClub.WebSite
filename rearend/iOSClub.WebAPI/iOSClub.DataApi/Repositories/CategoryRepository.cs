@@ -36,6 +36,8 @@ public class CategoryRepository(IDbContextFactory<ClubContext> factory) : ICateg
                 model.Id = Guid.NewGuid().ToString();
             }
 
+            model.Order = context.Categories.Count() + 1;
+
             context.Categories.Add(model);
         }
         else
