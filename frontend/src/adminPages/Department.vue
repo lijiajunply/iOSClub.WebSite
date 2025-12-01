@@ -1,6 +1,6 @@
 <template>
   <div class="apple-container min-h-screen max-sm:p-0 p-6 md:p-8 transition-colors duration-300">
-    <div class="apple-card p-2 md:rounded-3xl">
+    <div class="p-4">
       <n-tabs
           type="segment"
           animated
@@ -232,7 +232,7 @@
                   </div>
                 </div>
 
-                <div class="apple-sub-card p-6 bg-gradient-to-br from-blue-500 to-indigo-600 text-white border-none">
+                <div class="apple-sub-card p-6 bg-linear-to-br from-blue-500 to-indigo-600 text-white border-none">
                   <h3 class="text-white/90 font-medium mb-1">项目统计</h3>
                   <div class="text-3xl font-bold mb-4">{{ department.projects?.length || 0 }}</div>
                   <button @click="addProject"
@@ -1035,9 +1035,13 @@ onBeforeUnmount(() => {
 /* Table overrides */
 :deep(.apple-table .n-data-table-th) {
   background-color: transparent;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid #f0f0f0 !important;
   font-weight: 600;
   color: #86868b;
+}
+
+.dark :deep(.apple-table .n-data-table-th) {
+  border-bottom: 1px solid #38383A !important;
 }
 
 :deep(.apple-table .n-data-table-td) {
@@ -1149,5 +1153,13 @@ onBeforeUnmount(() => {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+:deep(.n-tabs .n-tabs-capsule) {
+  border-radius: 12px !important;
+}
+
+:deep(.n-tabs .n-tabs-rail) {
+  border-radius: 16px !important;
 }
 </style>
