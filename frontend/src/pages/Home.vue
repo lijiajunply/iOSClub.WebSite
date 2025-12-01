@@ -145,7 +145,7 @@
     <footer
         class="relative z-10 border-t border-slate-200 dark:border-white/10 bg-white/50 dark:bg-black/20 backdrop-blur-xl">
       <div class="max-w-7xl mx-auto px-6 py-12 flex flex-col md:flex-row justify-between items-center gap-6">
-        <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">
+        <p class="text-[10px] md:text-xs text-slate-500 dark:text-slate-400 font-medium">
           Copyright © 2023 - {{ new Date().getFullYear() }} iOS Club of XAUAT. All rights reserved.
         </p>
 

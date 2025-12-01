@@ -105,6 +105,7 @@ import {ToolService} from "../../services/ToolService";
 import type {LinkModel} from "../../models";
 import toolsImage from '/assets/Centre/AppleLogo.png';
 import IconFont from "../../components/IconFont.vue";
+// @ts-ignore
 import '//at.alicdn.com/t/c/font_4612528_md4hjwjgcb.js';
 
 // 状态定义

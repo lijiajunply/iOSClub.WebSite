@@ -1,92 +1,143 @@
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-neutral-900 transition-colors duration-300">
-    <n-grid :x-gap="12" :y-gap="12" cols="24" item-responsive justify="center">
-      <n-gi
-          span="0 800:7 1000:8"
-      ></n-gi>
-      <n-gi
-          span="24 800:10 1000:8"
-      >
-        <n-card
-            class="login-form w-full"
-            :bordered="false"
-        >
-          <div class="flex gap-4">
+  <!-- 背景容器：适配深色模式，增加苹果标志性的模糊背景感 -->
+  <div class="min-h-[calc(100vh-64px)] flex items-center justify-center p-4 sm:p-6 bg-[#f5f5f7] dark:bg-[#000000] transition-colors duration-500">
+    
+    <!-- 主卡片：模拟 macOS 窗口/iOS 小组件风格 -->
+    <div class="relative w-full max-w-md group perspective-1000">
+      
+      <!-- 核心内容区：毛玻璃 + 柔和阴影 -->
+      <div class="
+        relative overflow-hidden
+        bg-white/80 dark:bg-[#1c1c1e]/90
+        backdrop-blur-2xl 
+        rounded-3xl
+        shadow-[0_20px_40px_-12px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_40px_-12px_rgba(0,0,0,0.5)]
+        border border-white/20 dark:border-white/10
+        transition-all duration-500 ease-out
+        hover:shadow-[0_30px_60px_-12px_rgba(0,0,0,0.15)] dark:hover:shadow-[0_30px_60px_-12px_rgba(0,0,0,0.6)]
+        hover:-translate-y-1
+        z-10
+      ">
+        
+        <!-- 头部区域：参考 iCloud 账户页眉 -->
+        <div class="px-8 pt-10 pb-6 text-center">
+          <div class="mx-auto w-24 h-24 mb-6 relative group/icon cursor-pointer" @click="handleTitleClick">
+             <!-- 图标加一层微妙的光晕 -->
+            <div class="absolute inset-0 bg-blue-500/20 rounded-app blur-xl opacity-0 group-hover/icon:opacity-100 transition-opacity duration-500"></div>
             <n-image
-                src="/assets/iOS_Club_LOGO.png"
-                :preview-disabled="true"
-                class="w-[70px] h-[70px]"
-                object-fit="cover"
+              src="/assets/iOS_Club_LOGO.png"
+              preview-disabled
+              class="w-full h-full rounded-app relative z-10 shadow-sm"
+              object-fit="cover"
             />
-            <div class="flex-1 p-[5px] max-w-[calc(100%-70px)]">
-              <div
-                  class="title-btn inline-block transition-all duration-200 cursor-pointer overflow-hidden whitespace-nowrap text-ellipsis w-full text-[21px] font-medium text-[#1c1f23] hover:scale-[1.02]"
-                  @click="handleTitleClick"
-              >
-                iOS Club of XAUAT 2025
-              </div>
-              <p class="mt-2 flex items-center gap-2">
-                群号: 952954710
-                <Icon
-                    icon="ion:copy-outline"
-                    size="18"
-                    class="cursor-pointer hover:text-primary"
-                    @click="handleCopyClick"
-                />
-              </p>
-            </div>
           </div>
+          
+          <h1 
+            class="text-2xl font-semibold text-[#1d1d1f] dark:text-[#f5f5f7] tracking-tight cursor-pointer hover:opacity-70 transition-opacity"
+            @click="handleTitleClick"
+          >
+            iOS Club of XAUAT 2025
+          </h1>
+          <p class="text-[#86868b] dark:text-[#86868b] text-sm mt-2 font-medium">
+            加入我们的开发者社区
+          </p>
+        </div>
 
-          <n-divider/>
-
+        <!-- 二维码区域：类似 Wallet 应用的卡片感 -->
+        <div class="mx-6 mb-6 p-4 bg-white dark:bg-[#2c2c2e] rounded-2xl shadow-inner border border-gray-100 dark:border-white/5 flex justify-center items-center">
           <img
-              alt="二维码"
-              src="../../../public/assets/other/qrcord.jpg"
-              class="w-full"
+            alt="二维码"
+            src="/assets/other/qrcord.png"
+            class="w-64 h-64 object-contain mix-blend-darken dark:mix-blend-normal rounded-lg"
           />
+        </div>
 
-          <div class="phone-desktop text-center mt-[18px]">
-            <p>扫一扫二维码，加入群聊</p>
+        <!-- 操作区域：类似设置菜单的列表 -->
+        <div class="px-6 pb-8 space-y-3">
+          <!-- 群号信息条 -->
+          <div class="
+            flex items-center justify-between 
+            p-4 
+            bg-[#f5f5f7] dark:bg-[#2c2c2e] 
+            rounded-xl 
+            active:scale-[0.98] transition-transform
+          ">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-full bg-[#007aff] flex items-center justify-center text-white">
+                 <Icon icon="ion:chatbubbles-outline" width="18" />
+              </div>
+              <div class="flex flex-col">
+                <span class="text-xs text-[#86868b] font-medium">QQ 群号</span>
+                <span class="text-sm font-semibold text-[#1d1d1f] dark:text-white select-all">952954710</span>
+              </div>
+            </div>
+             <n-button
+                quaternary
+                circle
+                size="small"
+                @click="handleCopyClick"
+                class="text-[#007aff] hover:bg-[#007aff]/10"
+            >
+              <template #icon>
+                <Icon icon="ion:copy-outline" />
+              </template>
+            </n-button>
           </div>
-        </n-card>
-      </n-gi>
-    </n-grid>
+
+           <!-- 扫码提示 -->
+          <div class="flex items-center justify-center gap-2 text-[#86868b] text-xs mt-4">
+            <Icon icon="ion:scan-outline" />
+            <span>使用 QQ 扫一扫加入群聊</span>
+          </div>
+        </div>
+
+      </div>
+      
+      <!-- 底部光晕装饰 -->
+      <div class="absolute -inset-4 bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-pink-500/20 rounded-[3rem] blur-3xl -z-10 opacity-50 dark:opacity-30"></div>
+
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import {onMounted} from 'vue'
-import {useMessage, NGrid, NGi, NCard, NImage, NDivider} from 'naive-ui'
+import { h, onMounted } from 'vue'
+import { useMessage, NImage, NButton } from 'naive-ui'
 import { Icon } from '@iconify/vue'
+import { NavigateTo } from '../../lib/site'
+import { ios } from '../../services/AuthService'
 
 const message = useMessage()
 
-// 导航到外部链接
 const handleTitleClick = () => {
-  // 替换为您的实际链接
-  // window.open(SignRecord.ios.qqApi, '_blank')
-  // 或者使用您的自定义导航方法
-  navigateTo('您的QQ群链接', 'https')
+  NavigateTo(ios.url1, ios.url2)
 }
 
-// 复制群号到剪贴板
 const handleCopyClick = async () => {
+  const textToCopy = '952954710'
   try {
-    await navigator.clipboard.writeText('952954710')
-    message.success('复制成功')
+    await navigator.clipboard.writeText(textToCopy)
+    message.success('群号已复制', {
+        icon: () => h(Icon, { icon: 'ion:checkmark-circle', class: 'text-[#007aff]' }),
+        closable: true
+    }) 
   } catch (error) {
-    // 降级方案
-    const result = copyTextFallback('952954710')
-    message.info(`复制${result ? '成功' : '失败'}`)
+    const result = copyTextFallback(textToCopy)
+    if (result) {
+        message.success('群号已复制')
+    } else {
+        message.error('复制失败，请手动选择')
+    }
   }
 }
 
-// 降级的复制方法
 const copyTextFallback = (text: string): boolean => {
   const textArea = document.createElement('textarea')
   textArea.value = text
+  // 避免页面滚动
   textArea.style.position = 'fixed'
-  textArea.style.opacity = '0'
+  textArea.style.left = '-9999px'
+  textArea.style.top = '0'
   document.body.appendChild(textArea)
   textArea.focus()
   textArea.select()
@@ -101,37 +152,29 @@ const copyTextFallback = (text: string): boolean => {
   }
 }
 
-// 自定义导航方法（如果需要）
-const navigateTo = (url: string, protocol: string = 'https') => {
-  if (!url.startsWith('http')) {
-    url = `${protocol}://${url}`
-  }
-  window.open(url, '_blank')
-}
-
-// 组件挂载后显示提示
 onMounted(() => {
-  message.info('如果微信提示无法跳转，请复制群号')
+  // 使用更柔和的初始提示
+  console.log('Page Loaded: iOS Club QR Code')
 })
 </script>
 
 <style scoped>
 @reference 'tailwindcss';
 
-.login-form {
-  @apply rounded-[10px] backdrop-blur-[20px] shadow-lg mt-[30px] mb-[30px] p-[15px] max-w-[100vw];
-  box-shadow: 0 0 10px #c8c8c8;
+/* Apple App Icon shape curve inspired border-radius */
+.rounded-app {
+  border-radius: 22.5%; 
 }
 
-@media screen and (max-width: 768px) {
-  .login-form {
-    @apply mt-5 shadow-none;
-  }
+/* 确保透视效果 */
+.perspective-1000 {
+  perspective: 1000px;
+}
 
-  .title-btn:hover {
-    transform: scale(1) !important;
-  }
-
-  /* 如果需要隐藏 header 和 footer，在父组件或全局样式中处理 */
+/* 字体优化，模仿 San Francisco 字体栈 */
+div {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 </style>

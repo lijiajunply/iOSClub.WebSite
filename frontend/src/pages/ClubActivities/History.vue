@@ -3,7 +3,7 @@
   <div class="page-container min-h-[calc(100vh-64px)] transition-colors duration-500">
 
     <!-- 内容限制宽度的居中容器 -->
-    <div class="mx-auto max-w-[1024px] px-6 py-12 sm:px-8 sm:py-20">
+    <div class="mx-auto max-w-5xl px-6 py-12 sm:px-8 sm:py-20">
 
       <!-- 头部：复用 PageStart 或重构为简约标题 -->
       <PageStart
