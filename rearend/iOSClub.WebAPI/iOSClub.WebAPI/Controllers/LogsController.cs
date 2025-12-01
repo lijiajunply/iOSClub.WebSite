@@ -307,8 +307,6 @@ public class LogsController(ILogger<LogsController> logger)
             command.Parameters.AddWithValue("@cutoffDate", DateTime.Now.AddDays(-days));
             var rowsAffected = await command.ExecuteNonQueryAsync();
 
-            logger.LogInformation("手动清理了 {RowsAffected} 条 {Days} 天前的日志", rowsAffected, days);
-
             return Ok(new { Message = $"成功清理了 {rowsAffected} 条 {days} 天前的日志" });
         }
         catch (Exception ex)

@@ -186,7 +186,7 @@ public class LoginService(
         var storedToken = await _db.StringGetAsync(redisKey);
         if (storedToken.HasValue && !string.IsNullOrEmpty(storedToken))
         {
-            logger.LogInformation("Token already exists, get the token");
+            // logger.LogInformation("Token already exists, get the token");
             return storedToken.ToString();
         }
 

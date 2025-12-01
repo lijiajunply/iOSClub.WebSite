@@ -84,7 +84,7 @@ md.use(markdownItKatex, {
   errorColor: '#cc0000'
 });
 
-// Custom Containers (Alerts) - MacOS Style
+// Custom Containers (Alerts) - macOS Style
 const containerOptions = [
   { name: 'warning', icon: 'lucide:alert-triangle', color: 'text-amber-500', bg: 'bg-amber-50 dark:bg-amber-500/10', border: 'border-amber-200 dark:border-amber-500/20' },
   { name: 'danger', icon: 'lucide:x-circle', color: 'text-red-500', bg: 'bg-red-50 dark:bg-red-500/10', border: 'border-red-200 dark:border-red-500/20' },
@@ -183,11 +183,11 @@ md.core.ruler.before('linkify', 'callout_detection', function(state: any) {
 });
 
 // Override blockquote rendering
-const defaultRender = md.renderer.rules.blockquote_open || function(tokens: any[], idx: number, options: any, env: any, self: any) {
+const defaultRender = md.renderer.rules.blockquote_open || function(tokens: any[], idx: number, options: any, _: any, self: any) {
   return self.renderToken(tokens, idx, options);
 };
 
-const defaultCloseRender = md.renderer.rules.blockquote_close || function(tokens: any[], idx: number, options: any, env: any, self: any) {
+const defaultCloseRender = md.renderer.rules.blockquote_close || function(tokens: any[], idx: number, options: any, _: any, self: any) {
   return self.renderToken(tokens, idx, options);
 };
 
@@ -267,7 +267,7 @@ watch(() => props.content, async (newVal) => {
   }
 
   // Determine content string
-  const contentStr = typeof newVal === 'string' ? newVal : newVal.content
+  const contentStr = newVal.content
 
   // Extract Headings first
   headings.value = extractHeadings(contentStr)
@@ -368,7 +368,7 @@ const closeImageModal = () => {
   document.body.style.overflow = 'auto';
 };
 
-const handleImageClick = (e: MouseEvent) => {
+const handleImageClick = (_: MouseEvent) => {
   // Click on image itself closes modal
   closeImageModal();
 };

@@ -296,7 +296,7 @@ onMounted(async () => {
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
   z-index: 50;
   transform: scale(1.02);
-  border-radius: 0px;
+  border-radius: 0;
 }
 
 /* 深色模式下的拖拽样式 */

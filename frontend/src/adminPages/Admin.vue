@@ -20,7 +20,7 @@
       <!-- 数据概览卡片网格 -->
       <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <div
-            v-for="(item, index) in statItems"
+            v-for="item in statItems"
             :key="item.key"
             class="apple-card group relative overflow-hidden p-6 flex flex-col justify-between transition-all duration-300 select-none"
         >
@@ -37,29 +37,31 @@
             </div>
 
             <!-- 图标容器 (类似 iOS App 图标) -->
-            <div :class="['w-10 h-10 rounded-xl flex items-center justify-center shadow-sm transition-transform group-hover:scale-110', item.bgClass]">
-              <Icon :icon="item.icon" :class="['w-6 h-6', item.textClass]" />
+            <div
+                :class="['w-10 h-10 rounded-xl flex items-center justify-center shadow-sm transition-transform group-hover:scale-110', item.bgClass]">
+              <Icon :icon="item.icon" :class="['w-6 h-6', item.textClass]"/>
             </div>
           </div>
 
           <!-- 装饰性背景光晕 (仅 Hover 时强化) -->
-          <div :class="['absolute -bottom-4 -right-4 w-24 h-24 rounded-full blur-2xl opacity-0 group-hover:opacity-10 transition-opacity duration-500 pointer-events-none', item.bgClass]"></div>
+          <div
+              :class="['absolute -bottom-4 -right-4 w-24 h-24 rounded-full blur-2xl opacity-0 group-hover:opacity-10 transition-opacity duration-500 pointer-events-none', item.bgClass]"></div>
         </div>
       </div>
 
       <!-- 隐藏的文件输入 -->
-      <input ref="fileInput" type="file" accept=".json" multiple @change="uploadFiles" style="display: none" />
+      <input ref="fileInput" type="file" accept=".json" multiple @change="uploadFiles" style="display: none"/>
     </main>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount, nextTick, defineComponent, h } from 'vue'
-import { useMessage, useDialog } from 'naive-ui'
-import { Icon } from '@iconify/vue'
-import { DataCentreService } from '../services/DataCentreService'
-import { useAuthorizationStore } from '../stores/Authorization'
-import { useLayoutStore } from '../stores/LayoutStore'
+import {ref, computed, onMounted, onBeforeUnmount, defineComponent, h} from 'vue'
+import {useMessage, useDialog} from 'naive-ui'
+import {Icon} from '@iconify/vue'
+import {DataCentreService} from '../services/DataCentreService'
+import {useAuthorizationStore} from '../stores/Authorization'
+import {useLayoutStore} from '../stores/LayoutStore'
 
 // Types
 interface StatItemConfig {
@@ -151,7 +153,7 @@ const formatNumber = (num: number) => {
 
 // Helper: Format Date
 const formatDate = (date: Date) => {
-  return new Intl.DateTimeFormat('zh-CN', { dateStyle: 'full' }).format(date)
+  return new Intl.DateTimeFormat('zh-CN', {dateStyle: 'full'}).format(date)
 }
 
 // --- Logic Actions ---
@@ -198,7 +200,10 @@ const downloadAllData = async () => {
     a.download = `backup-${new Date().toISOString().split('T')[0]}.json`
     document.body.appendChild(a)
     a.click()
-    setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url) }, 100)
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url)
+    }, 100)
     message.success('备份已导出')
   } catch (e) {
     message.error('导出失败')
@@ -221,7 +226,7 @@ const removeAllData = () => {
 
         const res = await fetch('https://www.xauat.site/api/Admin/RemoveAllData', {
           method: 'DELETE',
-          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+          headers: {'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json'}
         })
 
         if (res.ok) {
@@ -271,43 +276,52 @@ onMounted(async () => {
         })
       })
 
-      return () => h('div', { class: 'flex items-center gap-3' }, [
+      return () => h('div', {class: 'flex items-center gap-3'}, [
         // Upload Button - iOS Pill Style
         h('button', {
           class: 'flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors shadow-sm active:scale-95 duration-200',
           onClick: triggerFileInput
         }, [
-          h(Icon, { icon: 'ion:cloud-upload', class: 'w-4 h-4' }),
+          h(Icon, {icon: 'ion:cloud-upload', class: 'w-4 h-4'}),
           h('span', '导入数据')
         ]),
 
         // More Options Button & Dropdown
-        h('div', { class: 'relative ios-dropdown-trigger' }, [
+        h('div', {class: 'relative ios-dropdown-trigger'}, [
           h('button', {
-            onClick: (e) => { e.stopPropagation(); isOpen.value = !isOpen.value },
+            onClick: (e) => {
+              e.stopPropagation();
+              isOpen.value = !isOpen.value
+            },
             class: `w-8 h-8 rounded-full flex items-center justify-center transition-colors duration-200 ${isOpen.value ? 'bg-gray-200 dark:bg-gray-700' : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'}`
           }, [
-            h(Icon, { icon: 'ion:ellipsis-horizontal', class: 'text-gray-600 dark:text-gray-300' })
+            h(Icon, {icon: 'ion:ellipsis-horizontal', class: 'text-gray-600 dark:text-gray-300'})
           ]),
 
           // Dropdown Menu (Glassmorphism look handled by CSS classes below)
           h('div', {
             class: `absolute right-0 mt-3 w-48 py-1 rounded-xl apple-dropdown origin-top-right transition-all duration-200 ${isOpen.value ? 'opacity-100 scale-100 visible' : 'opacity-0 scale-95 invisible'}`
           }, [
-            h('div', { class: 'px-1 py-1' }, [
+            h('div', {class: 'px-1 py-1'}, [
               h('button', {
-                onClick: () => { isOpen.value = false; downloadAllData() },
+                onClick: () => {
+                  isOpen.value = false;
+                  downloadAllData()
+                },
                 class: 'w-full text-left px-3 py-2 text-sm rounded-lg text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-600 transition-colors flex items-center gap-2'
               }, [
-                h(Icon, { icon: 'ion:download-outline', class: 'w-4 h-4' }),
+                h(Icon, {icon: 'ion:download-outline', class: 'w-4 h-4'}),
                 h('span', '导出备份')
               ]),
-              h('div', { class: 'h-px bg-gray-100 dark:bg-gray-700 my-1 mx-2' }), // Divider
+              h('div', {class: 'h-px bg-gray-100 dark:bg-gray-700 my-1 mx-2'}), // Divider
               h('button', {
-                onClick: () => { isOpen.value = false; removeAllData() },
+                onClick: () => {
+                  isOpen.value = false;
+                  removeAllData()
+                },
                 class: 'w-full text-left px-3 py-2 text-sm rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center gap-2'
               }, [
-                h(Icon, { icon: 'ion:trash-outline', class: 'w-4 h-4' }),
+                h(Icon, {icon: 'ion:trash-outline', class: 'w-4 h-4'}),
                 h('span', '清空数据')
               ])
             ])

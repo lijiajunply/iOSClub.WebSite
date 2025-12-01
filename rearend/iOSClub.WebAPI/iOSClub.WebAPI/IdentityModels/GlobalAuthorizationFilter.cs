@@ -26,7 +26,7 @@ public class GlobalAuthorizationFilter(
             var jwtParts = bearer.Split(' ', 2);
             if (jwtParts.Length != 2)
             {
-                logger.LogInformation("Invalid bearer token format.");
+                // logger.LogInformation("Invalid bearer token format.");
                 return;
             }
 
@@ -57,7 +57,7 @@ public class GlobalAuthorizationFilter(
             var jwtToken = (JwtSecurityToken)validatedToken;
             if (jwtToken.ValidTo < DateTime.UtcNow)
             {
-                logger.LogInformation("Token has expired.");
+                // logger.LogInformation("Token has expired.");
                 return;
             }
 
@@ -65,13 +65,13 @@ public class GlobalAuthorizationFilter(
             var userId = claimsPrincipal.FindFirst(JwtRegisteredClaimNames.Sub)?.Value ??
                          claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var clientId = claimsPrincipal.FindFirst("client_id")?.Value ?? "";
-            logger.LogInformation("Validating token for user {userId} and client {clientId}", userId, clientId);
+            // logger.LogInformation("Validating token for user {userId} and client {clientId}", userId, clientId);
             if (!string.IsNullOrEmpty(userId))
             {
                 var isValid = loginService.ValidateToken(userId, token, clientId).Result;
                 if (!isValid)
                 {
-                    logger.LogInformation("Token is not valid.");
+                    // logger.LogInformation("Token is not valid.");
                     return;
                 }
             }

@@ -336,12 +336,10 @@ import {useAuthorizationStore} from '../stores/Authorization';
 import {UserService} from '../services/UserService';
 import {AuthService} from '../services/AuthService';
 import type {MemberModel} from '../models';
-import {useRouter} from 'vue-router';
 import {useLayoutStore} from '../stores/LayoutStore';
 
 const message = useMessage();
 const authorizationStore = useAuthorizationStore();
-const router = useRouter();
 const layoutStore = useLayoutStore();
 
 const loading = ref(false);
@@ -421,7 +419,7 @@ const fetchUserInfo = async () => {
     Object.assign(userInfo, data);
   } catch (error: any) {
     message.error(error.message || '获取失败');
-    if (error.message?.includes('认证')) authorizationStore.logout();
+    if (error.message?.includes('认证')) await authorizationStore.logout();
   } finally {
     loading.value = false;
   }
@@ -493,12 +491,6 @@ onBeforeUnmount(() => {
   align-items: center;
 }
 
-@media (min-width: 640px) {
-  .group-row {
-
-  }
-}
-
 /* 标签样式 */
 .row-label {
   font-size: 1rem;
@@ -547,12 +539,6 @@ onBeforeUnmount(() => {
 
 .separator:last-child {
   display: none;
-}
-
-@media (min-width: 640px) {
-  .separator {
-
-  }
 }
 
 /* 定制 Naive UI Input 以适应 iOS 风格 */

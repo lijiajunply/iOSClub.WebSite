@@ -300,7 +300,7 @@ const deleteResource = (resource: Resource) => {
 
 const saveResource = async () => {
   if (!editingResource.value.name.trim()) {
-    return // Form required handled by browser mostly
+    return // Form required to be handled by browser mostly
   }
 
   saving.value = true

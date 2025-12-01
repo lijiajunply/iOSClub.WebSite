@@ -242,6 +242,7 @@ import { ProjectService } from '../services/ProjectService'
 import { DataCentreService } from "../services/DataCentreService"
 import IconFont from "../components/IconFont.vue"
 import * as echarts from 'echarts'
+// @ts-ignore
 import '//at.alicdn.com/t/c/font_4612528_md4hjwjgcb.js';
 
 const router = useRouter()
@@ -337,15 +338,6 @@ const formatDateSimple = (dateStr: string) => {
   if (!dateStr) return ''
   const date = new Date(dateStr)
   return `${date.getMonth() + 1}月${date.getDate()}日`
-}
-
-const getUserAvatar = () => {
-  // 假设这里是图片逻辑，实际需根据项目路径调整
-  if (userInfo.value.gender === '男') {
-    return new URL('/assets/Centre/男生.png', import.meta.url).href
-  } else {
-    return new URL('/assets/Centre/女生.png', import.meta.url).href
-  }
 }
 
 const fixImageUrl = (tool: Tool) => {
@@ -475,7 +467,7 @@ const fetchStatistics = async () => {
     } finally {
         loading.value.statistics = false
         // 数据加载完后初始化图表
-        nextTick(() => initChart())
+        await nextTick(() => initChart())
     }
 }
 

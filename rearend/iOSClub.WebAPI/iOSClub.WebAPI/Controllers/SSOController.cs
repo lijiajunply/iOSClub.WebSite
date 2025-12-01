@@ -104,7 +104,7 @@ public class SSOController(
             (rsaKey.Rsa ?? throw new InvalidOperationException("RSA key not found"))
             .ExportParameters(false); // false = 只导出公钥
 
-        logger.LogInformation("JWKS request received");
+        // logger.LogInformation("JWKS request received");
 
         if (rsaParameters.Modulus == null || rsaParameters.Exponent == null)
         {
@@ -166,7 +166,7 @@ public class SSOController(
         [FromQuery(Name = "scope")] string? scope = null,
         [FromQuery(Name = "nonce")] string? nonce = null)
     {
-        logger.LogInformation("OAuth authorization request received for client {ClientId}", clientId);
+        // logger.LogInformation("OAuth authorization request received for client {ClientId}", clientId);
 
         // 验证clientId是否有效
         var clientApp = await clientAppRepository.GetByClientIdAsync(clientId);
@@ -260,7 +260,7 @@ public class SSOController(
             clientAppUrl = config["ClientAppUrl"] ?? "http://localhost:5173";
         }
 
-        logger.LogInformation("Redirecting to OAuth login page for client {ClientId}", clientId);
+        // logger.LogInformation("Redirecting to OAuth login page for client {ClientId}", clientId);
 
         // 重定向到我们自己的OAuth登录页面
         return Redirect(
@@ -275,7 +275,7 @@ public class SSOController(
     [HttpGet("callback")]
     public async Task<IActionResult> Callback([FromQuery] string state)
     {
-        logger.LogInformation("OAuth callback received with state parameter");
+        // logger.LogInformation("OAuth callback received with state parameter");
 
         // 从Redis中获取用户信息（这应该在OAuthLogin页面成功登录后设置）
         var userId = "";
@@ -389,8 +389,8 @@ public class SSOController(
                 System.Text.Json.JsonSerializer.Serialize(authCodeInfo),
                 TimeSpan.FromMinutes(5));
 
-            logger.LogInformation("Authorization code {AuthCode} generated for user {UserId} and client {ClientId}",
-                authCode, userId, authState.ClientId);
+            // logger.LogInformation("Authorization code {AuthCode} generated for user {UserId} and client {ClientId}",
+            //     authCode, userId, authState.ClientId);
 
             // 重定向到第三方应用的回调地址
             var redirectUrl =
@@ -400,8 +400,8 @@ public class SSOController(
 
         if (authState.ResponseType == "token")
         {
-            logger.LogInformation("Direct token response for user {UserId} and client {ClientId}", userId,
-                authState.ClientId);
+            // logger.LogInformation("Direct token response for user {UserId} and client {ClientId}", userId,
+            //     authState.ClientId);
 
             // 直接返回访问令牌
             var redirectUrl =
@@ -429,8 +429,8 @@ public class SSOController(
                 return BadRequest("ID token生成失败");
             }
 
-            logger.LogInformation("ID token generated for user {UserId} and client {ClientId}", userId,
-                authState.ClientId);
+            // logger.LogInformation("ID token generated for user {UserId} and client {ClientId}", userId,
+            //     authState.ClientId);
 
             // 根据responseType决定返回方式
             if (authState.ResponseType == "id_token")
@@ -716,8 +716,8 @@ public class SSOController(
             // 删除已使用的授权码（一次性使用）
             await _redisDb.KeyDeleteAsync(codeKey);
 
-            logger.LogInformation("Token exchange successful for user {UserId} with client {ClientId}",
-                authCodeInfo.UserId, request.ClientId);
+            // logger.LogInformation("Token exchange successful for user {UserId} with client {ClientId}",
+            //     authCodeInfo.UserId, request.ClientId);
 
             // 返回令牌信息，包括scope
             var response = new Dictionary<string, object>
@@ -731,7 +731,7 @@ public class SSOController(
             // 如果生成了ID token，则添加到响应中
             if (string.IsNullOrEmpty(idToken)) return Ok(response);
             response["id_token"] = idToken;
-            logger.LogInformation("id token is {idToken}", idToken);
+            // logger.LogInformation("id token is {idToken}", idToken);
 
             return Ok(response);
         }
@@ -782,7 +782,7 @@ public class SSOController(
 
             // 使用loginService来验证令牌
             var isValid = await loginService.ValidateToken(userId, token, clientId);
-            logger.LogInformation("Token validation result for user {UserId}: {IsValid}", userId, isValid);
+            // logger.LogInformation("Token validation result for user {UserId}: {IsValid}", userId, isValid);
             return isValid;
         }
         catch (Exception ex)
@@ -880,7 +880,7 @@ public class SSOController(
     [HttpGet("userinfo")]
     public async Task<IActionResult> UserInfo([FromQuery(Name = "access_token")] string? accessToken = "")
     {
-        logger.LogInformation("User info request received");
+        // logger.LogInformation("User info request received");
 
         var token = HttpContext.GetJwt();
 
@@ -941,7 +941,7 @@ public class SSOController(
             return Unauthorized();
         }
 
-        logger.LogInformation("User info request successful for user {UserId}", userId);
+        // logger.LogInformation("User info request successful for user {UserId}", userId);
 
         var identity = "Member";
         var staff = await staffRepository.GetStaffByIdWithoutOtherData(userId);
@@ -1026,7 +1026,7 @@ public class SSOController(
     [Authorize]
     public async Task<IActionResult> StoreSession([FromBody] StoreSessionRequest request)
     {
-        logger.LogInformation("Store session request received");
+        // logger.LogInformation("Store session request received");
 
         try
         {
@@ -1044,8 +1044,8 @@ public class SSOController(
 
             if (string.IsNullOrEmpty(request.State))
             {
-                logger.LogInformation("Session stored successfully for user {UserId} without Redis storage",
-                    user.UserId);
+                // logger.LogInformation("Session stored successfully for user {UserId} without Redis storage",
+                //     user.UserId);
                 return Ok(new { success = true, message = "会话存储成功" });
             }
 
@@ -1070,8 +1070,8 @@ public class SSOController(
                     System.Text.Json.JsonSerializer.Serialize(userInfo),
                     TimeSpan.FromMinutes(5));
 
-                logger.LogInformation("Session stored successfully for user {UserId} with Redis key {RedisKey}",
-                    user.UserId, redisKey);
+                // logger.LogInformation("Session stored successfully for user {UserId} with Redis key {RedisKey}",
+                //     user.UserId, redisKey);
             }
             catch (Exception ex)
             {
@@ -1104,7 +1104,7 @@ public class SSOController(
     [HttpGet("client-info")]
     public async Task<IActionResult> GetClientInfo(string clientId)
     {
-        logger.LogInformation("Client info request received for client {ClientId}", clientId);
+        // logger.LogInformation("Client info request received for client {ClientId}", clientId);
 
         if (string.IsNullOrEmpty(clientId))
         {
@@ -1119,7 +1119,7 @@ public class SSOController(
             return NotFound("客户端应用不存在或已禁用");
         }
 
-        logger.LogInformation("Client info request successful for client {ClientId}", clientId);
+        // logger.LogInformation("Client info request successful for client {ClientId}", clientId);
 
         return Ok(new
         {
@@ -1154,8 +1154,8 @@ public class SSOController(
             return Unauthorized("用户未认证");
         }
 
-        logger.LogInformation("From main JWT request received for user {UserId} and client {ClientId}", user.UserId,
-            clientId);
+        // logger.LogInformation("From main JWT request received for user {UserId} and client {ClientId}", user.UserId,
+        //     clientId);
 
         var token = await loginService.LoginThirdPartyFromMainJwt(user.UserId, clientId, jwt, scope);
 

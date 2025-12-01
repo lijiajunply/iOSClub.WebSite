@@ -162,7 +162,7 @@ interface FormStep1State {
 
 interface FormStep2State {
   studentId: string
-  verificationCode: string // 改为 string 类型更符合 Naive UI OTP 默认行为
+  verificationCode: string[] // 改为 string 类型更符合 Naive UI OTP 默认行为
   newPassword: string
   confirmPassword: string
 }
@@ -173,7 +173,7 @@ const formStep1 = reactive<FormStep1State>({
 
 const formStep2 = reactive<FormStep2State>({
   studentId: '',
-  verificationCode: '',
+  verificationCode: ['', '', '', '', '', ''], // 初始化为包含6个空字符串的数组
   newPassword: '',
   confirmPassword: ''
 })
@@ -192,8 +192,9 @@ const rulesStep2 = {
     required: true,
     message: '请输入完整验证码',
     trigger: ['input', 'blur'],
-    validator: (_: any, value: string) => {
-      return value && value.length === 6
+    validator: (_: any, value: string[]) => {
+      if (value && value.length === 6 && value.every(v => v !== '')) return true
+      return new Error('请输入完整验证码')
     }
   },
   newPassword: {
@@ -231,7 +232,7 @@ const handleSubmit = () => {
 
           // 迁移数据并切换步骤
           formStep2.studentId = formStep1.studentId
-          formStep2.verificationCode = ''
+          formStep2.verificationCode = []
 
           setTimeout(() => {
             step.value = 2
@@ -249,11 +250,12 @@ const handleSubmit = () => {
       if (!errors) {
         loading.value = true
         try {
-          // 这里的 API 调用需要根据 verificationCode 是 string 还是 array 进行适配
-          // 假设 AuthService 接受的是 string
+          // Join the verificationCode array into a string for the API call
+          const verificationCodeString = formStep2.verificationCode.join('')
+          
           await AuthService.resetPassword(
               formStep2.studentId,
-              formStep2.verificationCode,
+              verificationCodeString,
               formStep2.newPassword
           );
 
