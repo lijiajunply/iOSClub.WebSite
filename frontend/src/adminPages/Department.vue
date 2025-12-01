@@ -1032,24 +1032,6 @@ onBeforeUnmount(() => {
   letter-spacing: -0.01em;
 }
 
-/* Table overrides */
-:deep(.apple-table .n-data-table-th) {
-  background-color: transparent;
-  border-bottom: 1px solid #f0f0f0 !important;
-  font-weight: 600;
-  color: #86868b;
-}
-
-.dark :deep(.apple-table .n-data-table-th) {
-  border-bottom: 1px solid #38383A !important;
-}
-
-:deep(.apple-table .n-data-table-td) {
-  background-color: transparent;
-  border-bottom: 1px solid #f5f5f7;
-  padding: 16px 12px;
-}
-
 :deep(.apple-table .n-data-table-tr:last-child .n-data-table-td) {
   border-bottom: none;
 }
