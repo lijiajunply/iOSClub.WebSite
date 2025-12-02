@@ -154,7 +154,7 @@
         :show-icon="false"
         :show-header="false"
         transform-origin="center"
-        class="bg-black/10 dark:bg-black/70 box-border"
+        class="backdrop-blur-sm bg-black/10 dark:bg-black/70 box-border"
     >
       <div
           class="spotlight-container w-[90vw] max-w-[600px] overflow-hidden rounded-2xl bg-white shadow-xl dark:bg-[#1c1c1e]">
