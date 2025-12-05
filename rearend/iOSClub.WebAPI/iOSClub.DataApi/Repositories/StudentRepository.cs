@@ -5,27 +5,113 @@ using Microsoft.EntityFrameworkCore;
 
 namespace iOSClub.DataApi.Repositories;
 
+/// <summary>
+/// 学生仓库接口，提供学生数据的CRUD操作和查询功能
+/// </summary>
 public interface IStudentRepository
 {
+    /// <summary>
+    /// 获取所有学生
+    /// </summary>
+    /// <returns>学生列表</returns>
     public Task<List<StudentModel>> GetAll();
+    
+    /// <summary>
+    /// 根据ID获取学生
+    /// </summary>
+    /// <param name="id">学生ID</param>
+    /// <returns>学生模型，如果找不到则返回null</returns>
     public Task<StudentModel?> Get(string id);
+    
+    /// <summary>
+    /// 创建学生
+    /// </summary>
+    /// <param name="model">学生模型</param>
+    /// <returns>创建的学生模型，如果创建失败则返回null</returns>
+    /// <exception cref="ArgumentException">当输入参数无效时抛出</exception>
     public Task<StudentModel?> Create(StudentModel model);
+    
+    /// <summary>
+    /// 更新学生
+    /// </summary>
+    /// <param name="model">学生模型</param>
+    /// <returns>是否更新成功</returns>
     public Task<bool> Update(StudentModel model);
+    
+    /// <summary>
+    /// 删除学生
+    /// </summary>
+    /// <param name="id">学生ID</param>
+    /// <returns>是否删除成功</returns>
     public Task<bool> Delete(string id);
+    
+    /// <summary>
+    /// 学生登录验证
+    /// </summary>
+    /// <param name="userId">学生ID</param>
+    /// <param name="password">密码</param>
+    /// <returns>是否登录成功</returns>
     public Task<bool> Login(string userId, string password);
 
-    // 新增方法
+    /// <summary>
+    /// 根据ID异步获取学生
+    /// </summary>
+    /// <param name="id">学生ID</param>
+    /// <returns>学生模型，如果找不到则返回null</returns>
     public Task<StudentModel?> GetByIdAsync(string id);
+    
+    /// <summary>
+    /// 异步更新学生
+    /// </summary>
+    /// <param name="model">学生模型</param>
+    /// <returns>是否更新成功</returns>
     public Task<bool> UpdateAsync(StudentModel model);
+    
+    /// <summary>
+    /// 异步删除学生
+    /// </summary>
+    /// <param name="id">学生ID</param>
+    /// <returns>是否删除成功</returns>
     public Task<bool> DeleteAsync(string id);
+    
+    /// <summary>
+    /// 异步批量更新学生
+    /// </summary>
+    /// <param name="list">学生列表</param>
+    /// <returns>是否更新成功</returns>
     public Task<bool> UpdateManyAsync(List<StudentModel> list);
+    
+    /// <summary>
+    /// 异步获取所有成员
+    /// </summary>
+    /// <returns>成员列表</returns>
     public Task<List<MemberModel>> GetAllMembersAsync();
+    
+    /// <summary>
+    /// 异步分页获取成员
+    /// </summary>
+    /// <param name="pageNum">页码</param>
+    /// <param name="pageSize">每页大小</param>
+    /// <returns>成员列表和总记录数</returns>
     public Task<(List<MemberModel>, int)> GetMembersPagedAsync(int pageNum, int pageSize);
 
-    // 带搜索功能的分页方法
+    /// <summary>
+    /// 带搜索功能的异步分页获取成员
+    /// </summary>
+    /// <param name="pageNum">页码</param>
+    /// <param name="pageSize">每页大小</param>
+    /// <param name="searchTerm">搜索词</param>
+    /// <param name="searchCondition">搜索条件</param>
+    /// <returns>成员列表和总记录数</returns>
     public Task<(List<MemberModel>, int)> GetMembersPagedAsync(int pageNum, int pageSize, string? searchTerm,
         string? searchCondition);
 
+    /// <summary>
+    /// 搜索学生
+    /// </summary>
+    /// <param name="searchTerm">搜索词</param>
+    /// <param name="searchCondition">搜索条件</param>
+    /// <returns>学生列表</returns>
     public Task<List<StudentModel>> Search(string searchTerm, string searchCondition);
 }
 

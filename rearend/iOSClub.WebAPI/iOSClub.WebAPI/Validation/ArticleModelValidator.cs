@@ -20,11 +20,6 @@ public class ArticleModelValidator : AbstractValidator<ArticleModel>
             .NotEmpty().WithMessage("文章内容不能为空")
             .MinimumLength(10).WithMessage("文章内容不能少于10个字符");
 
-        RuleFor(x => x.Identity)
-            .MaximumLength(20).WithMessage("身份标识长度不能超过20个字符")
-            .Must(x => string.IsNullOrEmpty(x) || new[] { "Founder", "President", "Minister", "Department" }.Contains(x)).WithMessage("身份标识必须是Founder、President、Minister或Department")
-            .When(x => x.Identity != null);
-
         RuleFor(x => x.CategoryId)
             .MaximumLength(128).WithMessage("分类ID长度不能超过128个字符")
             .When(x => x.CategoryId != null);

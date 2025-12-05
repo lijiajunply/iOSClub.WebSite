@@ -4,17 +4,76 @@ using Microsoft.EntityFrameworkCore;
 
 namespace iOSClub.DataApi.Repositories;
 
+/// <summary>
+/// 资源仓库接口，提供资源数据的CRUD操作和查询功能
+/// </summary>
 public interface IResourceRepository
 {
+    /// <summary>
+    /// 获取所有资源
+    /// </summary>
+    /// <returns>资源列表</returns>
     Task<List<ResourceModel>> GetAllResourcesAsync();
+    
+    /// <summary>
+    /// 根据ID获取资源
+    /// </summary>
+    /// <param name="id">资源ID</param>
+    /// <returns>资源模型，如果找不到则返回null</returns>
     Task<ResourceModel?> GetResourceByIdAsync(string id);
+    
+    /// <summary>
+    /// 根据标签获取资源
+    /// </summary>
+    /// <param name="tag">资源标签</param>
+    /// <returns>资源列表</returns>
     Task<List<ResourceModel>> GetResourcesByTagAsync(string tag);
+    
+    /// <summary>
+    /// 根据名称搜索资源
+    /// </summary>
+    /// <param name="name">资源名称搜索词</param>
+    /// <returns>资源列表</returns>
     Task<List<ResourceModel>> SearchResourcesByNameAsync(string name);
+    
+    /// <summary>
+    /// 添加资源
+    /// </summary>
+    /// <param name="resource">资源模型</param>
+    /// <returns>是否添加成功</returns>
     Task<bool> AddResourceAsync(ResourceModel resource);
+    
+    /// <summary>
+    /// 更新资源
+    /// </summary>
+    /// <param name="resource">资源模型</param>
+    /// <returns>是否更新成功</returns>
     Task<bool> UpdateResourceAsync(ResourceModel resource);
+    
+    /// <summary>
+    /// 删除资源
+    /// </summary>
+    /// <param name="id">资源ID</param>
+    /// <returns>是否删除成功</returns>
     Task<bool> DeleteResourceAsync(string id);
+    
+    /// <summary>
+    /// 获取所有标签
+    /// </summary>
+    /// <returns>标签列表</returns>
     Task<List<string>> GetAllTagsAsync();
+    
+    /// <summary>
+    /// 获取资源数量
+    /// </summary>
+    /// <returns>资源数量</returns>
     Task<int> GetResourceCountAsync();
+    
+    /// <summary>
+    /// 检查资源是否存在
+    /// </summary>
+    /// <param name="id">资源ID</param>
+    /// <returns>资源是否存在</returns>
     Task<bool> ResourceExistsAsync(string id);
 }
 

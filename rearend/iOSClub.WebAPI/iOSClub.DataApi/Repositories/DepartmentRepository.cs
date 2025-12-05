@@ -4,18 +4,85 @@ using Microsoft.EntityFrameworkCore;
 
 namespace iOSClub.DataApi.Repositories;
 
+/// <summary>
+/// 部门仓库接口，提供部门数据的CRUD操作和查询功能
+/// </summary>
 public interface IDepartmentRepository
 {
+    /// <summary>
+    /// 获取所有部门
+    /// </summary>
+    /// <returns>部门列表</returns>
     Task<List<DepartmentModel>> GetAllDepartmentsAsync();
+    
+    /// <summary>
+    /// 根据名称获取部门
+    /// </summary>
+    /// <param name="name">部门名称</param>
+    /// <returns>部门模型，如果找不到则返回null</returns>
     Task<DepartmentModel?> GetDepartmentByNameAsync(string name);
+    
+    /// <summary>
+    /// 根据Key获取部门
+    /// </summary>
+    /// <param name="key">部门Key</param>
+    /// <returns>部门模型，如果找不到则返回null</returns>
     Task<DepartmentModel?> GetDepartmentByKeyAsync(string key);
+    
+    /// <summary>
+    /// 添加部门
+    /// </summary>
+    /// <param name="department">部门模型</param>
+    /// <returns>是否添加成功</returns>
     Task<bool> AddDepartmentAsync(DepartmentModel department);
+    
+    /// <summary>
+    /// 更新部门
+    /// </summary>
+    /// <param name="department">部门模型</param>
+    /// <returns>是否更新成功</returns>
     Task<bool> UpdateDepartmentAsync(DepartmentModel department);
+    
+    /// <summary>
+    /// 删除部门
+    /// </summary>
+    /// <param name="name">部门名称</param>
+    /// <returns>是否删除成功</returns>
     Task<bool> DeleteDepartmentAsync(string name);
+    
+    /// <summary>
+    /// 检查部门是否存在
+    /// </summary>
+    /// <param name="name">部门名称</param>
+    /// <returns>部门是否存在</returns>
     Task<bool> DepartmentExistsAsync(string name);
+    
+    /// <summary>
+    /// 获取部门成员数量
+    /// </summary>
+    /// <param name="departmentName">部门名称</param>
+    /// <returns>成员数量</returns>
     Task<int> GetStaffCountAsync(string departmentName);
+    
+    /// <summary>
+    /// 获取部门项目数量
+    /// </summary>
+    /// <param name="departmentName">部门名称</param>
+    /// <returns>项目数量</returns>
     Task<int> GetProjectCountAsync(string departmentName);
+    
+    /// <summary>
+    /// 获取部门成员列表
+    /// </summary>
+    /// <param name="departmentName">部门名称</param>
+    /// <returns>成员列表</returns>
     Task<List<StaffModel>> GetDepartmentStaffsAsync(string departmentName);
+    
+    /// <summary>
+    /// 获取部门项目列表
+    /// </summary>
+    /// <param name="departmentName">部门名称</param>
+    /// <returns>项目列表</returns>
     Task<List<ProjectModel>> GetDepartmentProjectsAsync(string departmentName);
 }
 

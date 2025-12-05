@@ -4,28 +4,125 @@ using Microsoft.EntityFrameworkCore;
 
 namespace iOSClub.DataApi.Repositories;
 
+/// <summary>
+/// 项目仓库接口，提供项目数据的CRUD操作和查询功能
+/// </summary>
 public interface IProjectRepository
 {
+    /// <summary>
+    /// 获取所有项目
+    /// </summary>
+    /// <returns>项目列表</returns>
     Task<List<ProjectModel>> GetAllProjectsAsync();
+    
+    /// <summary>
+    /// 根据ID获取项目
+    /// </summary>
+    /// <param name="id">项目ID</param>
+    /// <returns>项目模型，如果找不到则返回null</returns>
     Task<ProjectModel?> GetProjectByIdAsync(string id);
+    
+    /// <summary>
+    /// 根据标题获取项目
+    /// </summary>
+    /// <param name="title">项目标题</param>
+    /// <returns>项目模型，如果找不到则返回null</returns>
     Task<ProjectModel?> GetProjectByTitleAsync(string title);
+    
+    /// <summary>
+    /// 根据部门获取项目
+    /// </summary>
+    /// <param name="departmentName">部门名称</param>
+    /// <returns>项目列表</returns>
     Task<List<ProjectModel>> GetProjectsByDepartmentAsync(string departmentName);
+    
+    /// <summary>
+    /// 根据成员获取项目
+    /// </summary>
+    /// <param name="userId">成员ID</param>
+    /// <returns>项目列表</returns>
     Task<List<ProjectModel>> GetProjectsByStaffAsync(string userId);
+    
+    /// <summary>
+    /// 创建项目
+    /// </summary>
+    /// <param name="project">项目模型</param>
+    /// <param name="creator">创建者</param>
+    /// <returns>创建的项目模型，如果创建失败则返回null</returns>
     Task<ProjectModel?> CreateProjectAsync(ProjectModel project, StaffModel creator);
+    
+    /// <summary>
+    /// 更新项目
+    /// </summary>
+    /// <param name="project">项目模型</param>
+    /// <returns>是否更新成功</returns>
     Task<bool> UpdateProjectAsync(ProjectModel project);
+    
+    /// <summary>
+    /// 删除项目
+    /// </summary>
+    /// <param name="id">项目ID</param>
+    /// <returns>是否删除成功</returns>
     Task<bool> DeleteProjectAsync(string id);
+    
+    /// <summary>
+    /// 检查项目是否存在
+    /// </summary>
+    /// <param name="id">项目ID</param>
+    /// <returns>项目是否存在</returns>
     Task<bool> ProjectExistsAsync(string id);
+    
+    /// <summary>
+    /// 添加成员到项目
+    /// </summary>
+    /// <param name="projectId">项目ID</param>
+    /// <param name="userId">成员ID</param>
+    /// <returns>是否添加成功</returns>
     Task<bool> AddStaffToProjectAsync(string projectId, string userId);
+    
+    /// <summary>
+    /// 从项目中移除成员
+    /// </summary>
+    /// <param name="projectId">项目ID</param>
+    /// <param name="userId">成员ID</param>
+    /// <returns>是否移除成功</returns>
     Task<bool> RemoveStaffFromProjectAsync(string projectId, string userId);
-
+    
+    /// <summary>
+    /// 获取项目成员列表
+    /// </summary>
+    /// <param name="projectId">项目ID</param>
+    /// <returns>成员列表</returns>
     Task<List<StaffModel>> GetProjectStaffsAsync(string projectId);
-
+    
+    /// <summary>
+    /// 获取项目任务列表
+    /// </summary>
+    /// <param name="projectId">项目ID</param>
+    /// <returns>任务列表</returns>
     Task<List<TaskModel>> GetProjectTasksAsync(string projectId);
-
+    
+    /// <summary>
+    /// 检查用户是否有项目管理权限
+    /// </summary>
+    /// <param name="userId">用户ID</param>
+    /// <param name="projectId">项目ID</param>
+    /// <returns>是否有权限</returns>
     Task<bool> HasProjectManagementPermissionAsync(string userId, string projectId);
-
+    
+    /// <summary>
+    /// 根据时间范围获取项目
+    /// </summary>
+    /// <param name="startTime">开始时间</param>
+    /// <param name="endTime">结束时间</param>
+    /// <returns>项目列表</returns>
     Task<List<ProjectModel>> GetProjectsByTimeRangeAsync(string? startTime, string? endTime);
-
+    
+    /// <summary>
+    /// 搜索项目
+    /// </summary>
+    /// <param name="searchTerm">搜索词</param>
+    /// <returns>项目列表</returns>
     Task<List<ProjectModel>> SearchProjectsAsync(string searchTerm);
 }
 

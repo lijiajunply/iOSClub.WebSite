@@ -7,8 +7,19 @@ using Microsoft.Extensions.Logging;
 
 namespace iOSClub.DataApi.Services;
 
+/// <summary>
+/// 令牌生成器接口，提供生成访问令牌和刷新令牌的功能
+/// </summary>
 public interface ITokenGenerator
 {
+    /// <summary>
+    /// 生成成员令牌
+    /// </summary>
+    /// <param name="model">成员模型</param>
+    /// <param name="rememberMe">是否记住我</param>
+    /// <param name="scope">权限范围</param>
+    /// <param name="clientId">客户端ID</param>
+    /// <returns>访问令牌和刷新令牌的元组</returns>
     public (string AccessToken, string RefreshToken) GetMemberToken(MemberModel model, bool rememberMe = false,
         string scope = "", string clientId = "");
 }

@@ -5,18 +5,85 @@ using Microsoft.EntityFrameworkCore;
 
 namespace iOSClub.DataApi.Repositories;
 
+/// <summary>
+/// 员工仓库接口，提供员工数据的CRUD操作和查询功能
+/// </summary>
 public interface IStaffRepository
 {
+    /// <summary>
+    /// 获取所有员工
+    /// </summary>
+    /// <returns>员工列表</returns>
     Task<IEnumerable<StaffModel>> GetAllStaffAsync();
+    
+    /// <summary>
+    /// 获取所有员工并转换为成员模型
+    /// </summary>
+    /// <returns>成员模型列表</returns>
     Task<IEnumerable<MemberModel>> GetAllStaffToMembers();
+    
+    /// <summary>
+    /// 根据ID获取员工
+    /// </summary>
+    /// <param name="userId">员工ID</param>
+    /// <returns>员工模型，如果找不到则返回null</returns>
     Task<StaffModel?> GetStaffByIdAsync(string userId);
+    
+    /// <summary>
+    /// 根据ID获取员工，不包含关联数据
+    /// </summary>
+    /// <param name="userId">员工ID</param>
+    /// <returns>员工模型，如果找不到则返回null</returns>
     Task<StaffModel?> GetStaffByIdWithoutOtherData(string userId);
+    
+    /// <summary>
+    /// 创建员工
+    /// </summary>
+    /// <param name="staff">员工模型</param>
+    /// <returns>是否创建成功</returns>
+    /// <exception cref="ArgumentException">当员工身份和部门不匹配时抛出</exception>
     Task<bool> CreateStaffAsync(StaffModel staff);
+    
+    /// <summary>
+    /// 更新员工
+    /// </summary>
+    /// <param name="staff">员工模型</param>
+    /// <returns>是否更新成功</returns>
     Task<bool> UpdateStaffAsync(StaffModel staff);
+    
+    /// <summary>
+    /// 删除员工
+    /// </summary>
+    /// <param name="userId">员工ID</param>
+    /// <returns>是否删除成功</returns>
     Task<bool> DeleteStaffAsync(string userId);
+    
+    /// <summary>
+    /// 检查员工是否存在
+    /// </summary>
+    /// <param name="userId">员工ID</param>
+    /// <returns>员工是否存在</returns>
     Task<bool> StaffExistsAsync(string userId);
+    
+    /// <summary>
+    /// 根据身份获取员工
+    /// </summary>
+    /// <param name="identities">身份列表</param>
+    /// <returns>员工列表</returns>
     Task<IEnumerable<StaffModel>> GetStaffsByIdentitiesAsync(params string[] identities);
+    
+    /// <summary>
+    /// 更改员工部门
+    /// </summary>
+    /// <param name="userId">员工ID</param>
+    /// <param name="departmentName">部门名称，可为null表示移除部门</param>
+    /// <returns>是否更改成功</returns>
     Task<bool> ChangeStaffDepartmentAsync(string userId, string? departmentName);
+    
+    /// <summary>
+    /// 获取所有员工及其身份
+    /// </summary>
+    /// <returns>成员模型列表，包含身份信息</returns>
     Task<IEnumerable<MemberModel>> GetAllStaffIdentity();
 }
 

@@ -3,28 +3,63 @@ using Microsoft.EntityFrameworkCore;
 
 namespace iOSClub.DataApi.Services;
 
+/// <summary>
+/// 数据中心服务接口，提供各种统计数据的查询功能
+/// </summary>
 public interface IDataCentreService
 {
+    /// <summary>
+    /// 获取按学年统计的数据
+    /// </summary>
+    /// <returns>学年统计数据列表</returns>
     public Task<List<YearCount>> GetYearDataAsync();
+    
+    /// <summary>
+    /// 获取按学院统计的数据
+    /// </summary>
+    /// <returns>学院统计数据列表</returns>
     public Task<List<AcademyCount>> GetCollegeDataAsync();
+    
+    /// <summary>
+    /// 获取按年级统计的数据
+    /// </summary>
+    /// <returns>年级统计数据列表</returns>
     public Task<List<GradeCount>> GetGradeDataAsync();
+    
+    /// <summary>
+    /// 获取按政治面貌统计的数据
+    /// </summary>
+    /// <returns>政治面貌统计数据列表</returns>
     public Task<List<LandscapeCount>> GetLandscapeDataAsync();
+    
+    /// <summary>
+    /// 获取按性别统计的数据
+    /// </summary>
+    /// <returns>性别统计数据列表</returns>
     public Task<List<GenderCount>> GetGenderDataAsync();
 }
 
-// 用于存储年度统计数据的记录类型
+/// <summary>
+/// 用于存储年度统计数据的记录类型
+/// </summary>
 [Serializable]
 public record YearCount(string Year, int Value);
 
-// 用于存储年级统计数据的记录类型
+/// <summary>
+/// 用于存储年级统计数据的记录类型
+/// </summary>
 [Serializable]
 public record GradeCount(string Grade, int Value);
 
-// 用于存储政治面貌统计数据的记录类型
+/// <summary>
+/// 用于存储政治面貌统计数据的记录类型
+/// </summary>
 [Serializable]
-public record LandscapeCount(string Type, int Sales);
+public record LandscapeCount(string Type, int Value);
 
-// 用于存储性别统计数据的记录类型
+/// <summary>
+/// 用于存储性别统计数据的记录类型
+/// </summary>
 [Serializable]
 public record GenderCount(string Type, int Value);
 

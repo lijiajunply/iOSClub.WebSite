@@ -7,11 +7,6 @@ public class StudentModelValidator : AbstractValidator<StudentModel>
 {
     public StudentModelValidator()
     {
-        RuleFor(x => x.UserName)
-            .NotEmpty().WithMessage("用户名不能为空")
-            .MaximumLength(50).WithMessage("用户名长度不能超过50个字符")
-            .Matches("^[a-zA-Z0-9\\u4e00-\\u9fa5]+$").WithMessage("用户名只能包含字母、数字和中文");
-
         RuleFor(x => x.UserId)
             .NotEmpty().WithMessage("学号不能为空")
             .Length(10).WithMessage("学号必须为10位")
@@ -44,10 +39,5 @@ public class StudentModelValidator : AbstractValidator<StudentModel>
             .EmailAddress().WithMessage("邮箱格式不正确")
             .MaximumLength(256).WithMessage("邮箱长度不能超过256个字符")
             .When(x => !string.IsNullOrEmpty(x.EMail));
-
-        RuleFor(x => x.PasswordHash)
-            .NotEmpty().WithMessage("密码不能为空")
-            .MinimumLength(6).WithMessage("密码长度不能少于6个字符")
-            .MaximumLength(256).WithMessage("密码长度不能超过256个字符");
     }
 }

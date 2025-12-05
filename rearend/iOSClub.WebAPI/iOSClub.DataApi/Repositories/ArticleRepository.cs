@@ -6,15 +6,61 @@ using Microsoft.EntityFrameworkCore;
 
 namespace iOSClub.DataApi.Repositories;
 
+/// <summary>
+/// 文章仓库接口，提供文章数据的CRUD操作和查询功能
+/// </summary>
 public interface IArticleRepository
 {
+    /// <summary>
+    /// 获取所有文章
+    /// </summary>
+    /// <returns>文章列表</returns>
     public Task<IEnumerable<ArticleModel>> GetAll();
+    
+    /// <summary>
+    /// 根据路径获取文章
+    /// </summary>
+    /// <param name="path">文章路径</param>
+    /// <param name="identity">用户身份</param>
+    /// <returns>文章模型，如果找不到或没有权限则返回null</returns>
     public Task<ArticleModel?> GetFromPath(string path, string identity = "");
+    
+    /// <summary>
+    /// 创建或更新文章
+    /// </summary>
+    /// <param name="model">文章模型</param>
+    /// <returns>是否操作成功</returns>
     public Task<bool> CreateOrUpdate(ArticleModel model);
+    
+    /// <summary>
+    /// 删除文章
+    /// </summary>
+    /// <param name="key">文章路径</param>
+    /// <returns>是否删除成功</returns>
     public Task<bool> Delete(string key);
+    
+    /// <summary>
+    /// 获取所有分类文章
+    /// </summary>
+    /// <param name="identity">用户身份</param>
+    /// <returns>按分类分组的文章字典</returns>
     public Task<Dictionary<string, IEnumerable<ArticleModel>>> GetAllCategoryArticles(string identity);
-    public Task<bool> UpdateArticleOrders(Dictionary<string, int> articleOrders);
-
+    
+    /// <summary>
+    /// 更新文章顺序
+    /// </summary>
+    /// <param name="articleOrders">文章路径和顺序的字典，可为null</param>
+    /// <returns>是否更新成功</returns>
+    public Task<bool> UpdateArticleOrders(Dictionary<string, int>? articleOrders);
+    
+    /// <summary>
+    /// 搜索文章并返回高亮结果
+    /// </summary>
+    /// <param name="keyword">搜索关键词</param>
+    /// <param name="identity">用户身份</param>
+    /// <param name="pageSize">每页大小</param>
+    /// <param name="pageNumber">页码</param>
+    /// <returns>高亮的文章搜索结果</returns>
     public Task<IEnumerable<ArticleSearchResult>> SearchArticlesWithHighlights(string keyword, string identity = "",
         int pageSize = 20,
         int pageNumber = 1);

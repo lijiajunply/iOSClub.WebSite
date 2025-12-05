@@ -147,9 +147,9 @@ public class DataCentreServiceTests
         Assert.NotNull(result);
         Assert.NotEmpty(result);
         Assert.Equal(3, result.Count);
-        Assert.Contains(result, lc => lc.Type == "共青团员" && lc.Sales == 3);
-        Assert.Contains(result, lc => lc.Type == "中共党员" && lc.Sales == 1);
-        Assert.Contains(result, lc => lc.Type == "群众" && lc.Sales == 1);
+        Assert.Contains(result, lc => lc.Type == "共青团员" && lc.Value == 3);
+        Assert.Contains(result, lc => lc.Type == "中共党员" && lc.Value == 1);
+        Assert.Contains(result, lc => lc.Type == "群众" && lc.Value == 1);
     }
 
     [Fact]
