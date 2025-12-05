@@ -139,6 +139,6 @@ public static class DataTool
 
 public abstract class DataModel
 {
-    public override string ToString() => $"{GetType()} : {DataTool.GetProperties(this)}; Guid: {Guid.Empty}";
+    public override string ToString() => $"{GetType()} : {DataTool.GetProperties(this)}; Guid: {Guid.NewGuid():N}";
     public string GetHashKey() => DataTool.StringToHash(ToString());
 }

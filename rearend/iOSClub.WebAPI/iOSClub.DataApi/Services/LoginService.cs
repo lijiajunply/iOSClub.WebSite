@@ -128,7 +128,6 @@ public class LoginService(
     : ILoginService
 {
     private readonly IDatabase _db = redis.GetDatabase();
-    private readonly ILogger<LoginService> _logger = logger;
 
     private const string TokenPrefix = "token:";
     private const string RefreshTokenPrefix = "refresh:";
@@ -207,14 +206,14 @@ public class LoginService(
     {
         if (!await ValidateToken(userId, jwt))
         {
-            _logger.LogError("Invalid JWT token");
+            logger.LogError("Invalid JWT token");
             return "";
         }
 
         var app = await clientApplicationRepository.GetByClientIdAsync(clientId);
         if (app == null)
         {
-            _logger.LogError("Invalid client ID");
+            logger.LogError("Invalid client ID");
             return "";
         }
 
@@ -274,7 +273,7 @@ public class LoginService(
     {
         try
         {
-            _logger.LogInformation("用户登出，开始清理令牌，用户ID：{UserId}", userId);
+            logger.LogInformation("用户登出，开始清理令牌，用户ID：{UserId}", userId);
 
             var s = "";
 
@@ -294,12 +293,12 @@ public class LoginService(
                 $"{RefreshTokenPrefix}{userId}{s}"
             ]);
 
-            _logger.LogInformation("用户登出，令牌清理成功，用户ID：{UserId}", userId);
+            logger.LogInformation("用户登出，令牌清理成功，用户ID：{UserId}", userId);
             return true;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "用户登出，令牌清理失败，用户ID：{UserId}", userId);
+            logger.LogError(ex, "用户登出，令牌清理失败，用户ID：{UserId}", userId);
             return false;
         }
     }
@@ -334,7 +333,7 @@ public class LoginService(
     {
         try
         {
-            _logger.LogInformation("开始使用刷新令牌生成新的访问令牌，用户ID：{UserId}", userId);
+            logger.LogInformation("开始使用刷新令牌生成新的访问令牌，用户ID：{UserId}", userId);
 
             var s = "";
 
@@ -343,7 +342,7 @@ public class LoginService(
                 var app = await clientApplicationRepository.GetByClientIdAsync(clientId);
                 if (app == null)
                 {
-                    _logger.LogWarning("无效的客户端ID，无法使用刷新令牌，用户ID：{UserId}", userId);
+                    logger.LogWarning("无效的客户端ID，无法使用刷新令牌，用户ID：{UserId}", userId);
                     return "";
                 }
 
@@ -357,7 +356,7 @@ public class LoginService(
             if (!storedRefreshToken.HasValue || string.IsNullOrEmpty(storedRefreshToken) ||
                 storedRefreshToken != refreshToken)
             {
-                _logger.LogWarning("无效的刷新令牌，用户ID：{UserId}", userId);
+                logger.LogWarning("无效的刷新令牌，用户ID：{UserId}", userId);
                 return "";
             }
 
@@ -365,7 +364,7 @@ public class LoginService(
             var isBlacklisted = await IsRefreshTokenBlacklisted(refreshToken);
             if (isBlacklisted)
             {
-                _logger.LogWarning("刷新令牌已被列入黑名单，用户ID：{UserId}", userId);
+                logger.LogWarning("刷新令牌已被列入黑名单，用户ID：{UserId}", userId);
                 return "";
             }
 
@@ -374,14 +373,14 @@ public class LoginService(
             var userInfoJson = await _db.StringGetAsync(userInfoKey);
             if (!userInfoJson.HasValue || string.IsNullOrEmpty(userInfoJson))
             {
-                _logger.LogWarning("无法获取用户信息，用户ID：{UserId}", userId);
+                logger.LogWarning("无法获取用户信息，用户ID：{UserId}", userId);
                 return "";
             }
 
             var memberModel = JsonSerializer.Deserialize<MemberModel>(userInfoJson.ToString());
             if (memberModel == null)
             {
-                _logger.LogWarning("无法解析用户信息，用户ID：{UserId}", userId);
+                logger.LogWarning("无法解析用户信息，用户ID：{UserId}", userId);
                 return "";
             }
 
@@ -398,15 +397,15 @@ public class LoginService(
 
             if (!isAdded)
             {
-                _logger.LogWarning("将旧的刷新令牌加入黑名单失败，用户ID：{UserId}", userId);
+                logger.LogWarning("将旧的刷新令牌加入黑名单失败，用户ID：{UserId}", userId);
             }
 
-            _logger.LogInformation("使用刷新令牌生成新的访问令牌成功，用户ID：{UserId}", userId);
+            logger.LogInformation("使用刷新令牌生成新的访问令牌成功，用户ID：{UserId}", userId);
             return newAccessToken;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "使用刷新令牌生成新的访问令牌失败，用户ID：{UserId}", userId);
+            logger.LogError(ex, "使用刷新令牌生成新的访问令牌失败，用户ID：{UserId}", userId);
             return "";
         }
     }
@@ -426,7 +425,7 @@ public class LoginService(
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "检查刷新令牌黑名单状态失败");
+            logger.LogError(ex, "检查刷新令牌黑名单状态失败");
             // 发生错误时，默认认为令牌无效，返回true
             return true;
         }
@@ -448,7 +447,7 @@ public class LoginService(
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "将刷新令牌加入黑名单失败");
+            logger.LogError(ex, "将刷新令牌加入黑名单失败");
             return false;
         }
     }
@@ -463,7 +462,7 @@ public class LoginService(
     {
         try
         {
-            _logger.LogInformation("开始获取刷新令牌，用户ID：{UserId}", userId);
+            logger.LogInformation("开始获取刷新令牌，用户ID：{UserId}", userId);
 
             var s = "";
 
@@ -482,16 +481,16 @@ public class LoginService(
 
             if (!storedRefreshToken.HasValue || string.IsNullOrEmpty(storedRefreshToken))
             {
-                _logger.LogWarning("未找到刷新令牌，用户ID：{UserId}", userId);
+                logger.LogWarning("未找到刷新令牌，用户ID：{UserId}", userId);
                 return "";
             }
 
-            _logger.LogInformation("获取刷新令牌成功，用户ID：{UserId}", userId);
+            logger.LogInformation("获取刷新令牌成功，用户ID：{UserId}", userId);
             return storedRefreshToken.ToString();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "获取刷新令牌失败，用户ID：{UserId}", userId);
+            logger.LogError(ex, "获取刷新令牌失败，用户ID：{UserId}", userId);
             return "";
         }
     }

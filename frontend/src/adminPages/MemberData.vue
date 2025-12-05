@@ -245,7 +245,7 @@ const loadChartData = async () => {
     collegeData.value = collegeResult
     gradeData.value = gradeResult.map(item => ({grade: item.grade, value: item.value}))
     genderData.value = genderResult
-    politicalData.value = landscapeResult.map(item => ({type: item.type, sales: item.sales}))
+    politicalData.value = landscapeResult.map(item => ({type: item.type, value: item.value}))
 
     if (activeTab.value !== 'memberData') handleTabChange(activeTab.value)
   } catch (error: any) {
@@ -388,7 +388,7 @@ const renderPoliticalChart = () => {
     xAxis: {type: 'category', data: politicalData.value.map(item => item.type), axisLabel: {color: textColor}},
     yAxis: {type: 'value', show: false},
     series: [{
-      data: politicalData.value.map(item => item.sales),
+      data: politicalData.value.map(item => item.value),
       type: 'bar',
       barWidth: '40%',
       itemStyle: {color: '#AF52DE', borderRadius: [4, 4, 0, 0]},

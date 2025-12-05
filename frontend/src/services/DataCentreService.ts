@@ -26,7 +26,7 @@ export interface GenderCount {
 // 政治面貌数据可能需要的额外类型
 export interface PoliticalCount {
     type: string;
-    sales: number;
+    value: number;
 }
 
 // 数据中心服务

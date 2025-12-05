@@ -21,7 +21,7 @@ public interface IStudentRepository
     /// </summary>
     /// <param name="id">学生ID</param>
     /// <returns>学生模型，如果找不到则返回null</returns>
-    public Task<StudentModel?> Get(string id);
+    public Task<StudentModel?> Get(string id) => GetByIdAsync(id);
     
     /// <summary>
     /// 创建学生
@@ -43,7 +43,7 @@ public interface IStudentRepository
     /// </summary>
     /// <param name="id">学生ID</param>
     /// <returns>是否删除成功</returns>
-    public Task<bool> Delete(string id);
+    public Task<bool> Delete(string id) => DeleteAsync(id);
     
     /// <summary>
     /// 学生登录验证
@@ -136,12 +136,6 @@ public class StudentRepository(IDbContextFactory<ClubContext> factory) : IStuden
         return students;
     }
 
-    public async Task<StudentModel?> Get(string id)
-    {
-        await using var context = await factory.CreateDbContextAsync();
-        return await GetStudentByIdQuery(context, id);
-    }
-
     public async Task<StudentModel?> GetByIdAsync(string id)
     {
         await using var context = await factory.CreateDbContextAsync();
@@ -223,27 +217,6 @@ public class StudentRepository(IDbContextFactory<ClubContext> factory) : IStuden
         var result = await context.SaveChangesAsync();
 
         return result == 1 ? model : null;
-    }
-
-    public async Task<bool> Delete(string id)
-    {
-        // 输入验证
-        if (string.IsNullOrWhiteSpace(id))
-        {
-            return false;
-        }
-
-        await using var context = await factory.CreateDbContextAsync();
-        var stu = await context.Students.FirstOrDefaultAsync(x => x.UserId == id);
-        if (stu == null)
-        {
-            return false;
-        }
-
-        context.Students.Remove(stu);
-        var result = await context.SaveChangesAsync();
-
-        return result == 1;
     }
 
     public async Task<bool> Login(string userId, string password)

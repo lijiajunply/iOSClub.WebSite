@@ -10,6 +10,7 @@ using StackExchange.Redis;
 using System.Security.Cryptography;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using iOSClub.WebAPI.Common.Security;
 
 namespace iOSClub.WebAPI.Controllers;
 
@@ -23,7 +24,8 @@ public class SSOController(
     IClientApplicationRepository clientAppRepository,
     IConnectionMultiplexer redis,
     IConfiguration config,
-    ILogger<SSOController> logger)
+    ILogger<SSOController> logger,
+    JwtService jwtService)
     : ControllerBase
 {
     private readonly IDatabase _redisDb = redis.GetDatabase();
@@ -928,24 +930,22 @@ public class SSOController(
 
         try
         {
-            // 使用JwtHelper中的配置来验证令牌
-            var handler = new JwtSecurityTokenHandler();
-            var jsonToken = handler.ReadJwtToken(token);
-
-            // 检查令牌是否过期
-            if (jsonToken.ValidTo < DateTime.UtcNow)
+            // 1. 使用JwtService验证令牌的基本有效性（签名、发行者、受众、过期时间等）
+            var validationResult = jwtService.ValidateAccessToken(token);
+            if (!validationResult.IsValid)
             {
                 if (logger.IsEnabled(LogLevel.Warning))
                 {
-                    logger.LogWarning("Token validation failed: token expired at {ExpiryTime}", jsonToken.ValidTo);
+                    logger.LogWarning("Token validation failed: JWT service validation failed");
                 }
 
                 return false;
             }
 
-            // 从令牌中提取用户ID
-            var userId = jsonToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
+            // 2. 从令牌中提取用户ID
+            var userIdClaim = validationResult.Claims.FirstOrDefault(c =>
+                c.Type == ClaimTypes.NameIdentifier || c.Type == JwtRegisteredClaimNames.Sub);
+            if (userIdClaim == null || string.IsNullOrEmpty(userIdClaim.Value))
             {
                 if (logger.IsEnabled(LogLevel.Warning))
                 {
@@ -955,19 +955,26 @@ public class SSOController(
                 return false;
             }
 
-            // 使用loginService来验证令牌
+            var userId = userIdClaim.Value;
+
+            // 3. 使用LoginService验证令牌在Redis中的有效性（是否被撤销）
             var isValid = await loginService.ValidateToken(userId, token, clientId);
-            // logger.LogInformation("Token validation result for user {UserId}: {IsValid}", userId, isValid);
+
+            if (logger.IsEnabled(LogLevel.Debug))
+            {
+                logger.LogDebug("Token validation result for user {UserId}: {IsValid}", userId, isValid);
+            }
+
             return isValid;
         }
         catch (Exception ex)
         {
             if (logger.IsEnabled(LogLevel.Error))
             {
-                logger.LogInformation(ex, "Token validation failed with exception");
+                logger.LogError(ex, "Token validation failed with exception");
             }
 
-            // 如果解析令牌时出现任何异常，认为令牌无效
+            // 如果验证过程中出现任何异常，认为令牌无效
             return false;
         }
     }
