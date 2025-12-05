@@ -2,7 +2,6 @@ using iOSClub.Data;
 using iOSClub.DataApi.Repositories;
 using iOSClub.Data.DataModels;
 using Microsoft.EntityFrameworkCore;
-using Xunit;
 
 namespace iOSClub.Tests;
 

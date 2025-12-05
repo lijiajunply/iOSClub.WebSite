@@ -1,7 +1,6 @@
 using iOSClub.DataApi.Services;
 using Microsoft.Extensions.Configuration;
 using Moq;
-using Xunit;
 
 namespace iOSClub.Tests;
 
