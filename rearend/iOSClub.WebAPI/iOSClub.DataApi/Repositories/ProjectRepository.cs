@@ -180,7 +180,7 @@ public class ProjectRepository(IDbContextFactory<ClubContext> factory) : IProjec
         await using var context = await factory.CreateDbContextAsync();
         try
         {
-            var project = await GetProjectByIdAsync(id);
+            var project = await context.Projects.FirstOrDefaultAsync(p => p.Id == id);
             if (project == null)
                 return false;
 
