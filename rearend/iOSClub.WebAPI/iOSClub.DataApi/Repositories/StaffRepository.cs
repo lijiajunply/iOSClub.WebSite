@@ -115,11 +115,14 @@ public class StaffRepository(IDbContextFactory<ClubContext> factory) : IStaffRep
             return false;
 
         if (staff.Identity == "Member" ||
-            ((staff.Identity != "Founder" || staff.Identity != "President" || staff.Identity != "Minister") &&
+            (!(staff.Identity == "Founder" || staff.Identity == "President" || staff.Identity == "Minister") &&
              staff.Department == null))
             throw new ArgumentException("会员必须指定部门");
 
-        staff.Department = await context.Departments.FirstOrDefaultAsync(d => d.Name == staff.Department!.Name);
+        if (staff.Department != null)
+        {
+            staff.Department = await context.Departments.FirstOrDefaultAsync(d => d.Name == staff.Department.Name);
+        }
 
         context.Staffs.Add(staff);
         return await context.SaveChangesAsync() > 0;
