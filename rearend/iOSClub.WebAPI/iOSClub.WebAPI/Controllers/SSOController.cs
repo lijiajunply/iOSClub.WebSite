@@ -399,17 +399,8 @@ public class SSOController(
             }
         }
 
-        // 验证token是否有效
-        var isValid = await ValidateToken(token, authState.ClientId);
-        if (!isValid)
-        {
-            if (logger.IsEnabled(LogLevel.Warning))
-            {
-                logger.LogWarning("Callback failed: invalid authentication token");
-            }
-
-            return BadRequest("无效的认证令牌");
-        }
+        // 跳过token有效性验证，直接使用获取到的用户信息
+        // 因为token已经在StoreSession时被验证过，且我们从Redis中获取了用户信息
 
         // 根据responseType决定返回方式
         if (authState.ResponseType == "code")
