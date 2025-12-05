@@ -75,8 +75,20 @@ builder.Services.AddSession(options =>
     options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest; // 根据请求类型决定是否使用安全Cookie
 });
 
-// 添加内存缓存支持，解决会话存储需要IDistributedCache的问题
-builder.Services.AddDistributedMemoryCache();
+// 使用Redis分布式缓存替代内存缓存
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    var redis = Environment.GetEnvironmentVariable("REDIS", EnvironmentVariableTarget.Process);
+    if (string.IsNullOrEmpty(redis) && builder.Environment.IsDevelopment())
+    {
+        redis = builder.Configuration["Redis"];
+    }
+    
+    if (!string.IsNullOrEmpty(redis))
+    {
+        options.Configuration = redis;
+    }
+});
 
 #endregion
 
