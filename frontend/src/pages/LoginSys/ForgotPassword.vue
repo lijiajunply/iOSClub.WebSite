@@ -201,7 +201,13 @@ const rulesStep2 = {
     required: true,
     message: '请输入新密码',
     trigger: ['input', 'blur'],
-    min: 6, // 假设密码至少6位
+    validator: (_: any, value: string) => {
+      if (!value) return new Error('请输入新密码')
+      // 密码至少8个字符，包含一个大写字母和一个数字
+      const passwordReg = /^(?=.*[A-Z])(?=.*\d).{8,}$/
+      if (passwordReg.test(value)) return true
+      return new Error('密码至少8个字符，包含一个大写字母和一个数字')
+    }
   },
   confirmPassword: {
     required: true,

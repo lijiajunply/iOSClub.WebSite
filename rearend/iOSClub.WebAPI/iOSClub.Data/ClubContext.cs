@@ -53,7 +53,7 @@ public sealed class ClubContext(DbContextOptions<ClubContext> options) : DbConte
             .IsRequired(false);
 
         // 为频繁用于查询条件的字段添加索引，提高查询效率
-        
+
         // StudentModel 索引
         modelBuilder.Entity<StudentModel>()
             .HasIndex(s => s.UserId) // 主键索引，通常自动创建，但显式指定更清晰
@@ -70,14 +70,14 @@ public sealed class ClubContext(DbContextOptions<ClubContext> options) : DbConte
             .HasIndex(s => s.PhoneNum); // 用于电话号码搜索
         modelBuilder.Entity<StudentModel>()
             .HasIndex(s => s.PoliticalLandscape); // 用于政治面貌统计
-        
+
         // StaffModel 索引
         modelBuilder.Entity<StaffModel>()
             .HasIndex(s => s.UserId) // 主键索引，同时用于与StudentModel的连接查询
             .IsUnique();
         modelBuilder.Entity<StaffModel>()
             .HasIndex(s => s.Identity); // 用于身份过滤
-        
+
         // ArticleModel 索引
         modelBuilder.Entity<ArticleModel>()
             .HasIndex(a => a.CategoryId); // 用于按分类查询
@@ -130,10 +130,15 @@ public static class DataTool
 
         return builder.ToString();
     }
+
+    public static bool IsValidHash(string modelPasswordHash)
+    {
+        return modelPasswordHash.Length >= 32;
+    }
 }
 
 public abstract class DataModel
 {
-    public override string ToString() => $"{GetType()} : {DataTool.GetProperties(this)}";
+    public override string ToString() => $"{GetType()} : {DataTool.GetProperties(this)}; Guid: {Guid.Empty}";
     public string GetHashKey() => DataTool.StringToHash(ToString());
 }

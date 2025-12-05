@@ -64,51 +64,152 @@ public class StudentRepository(IDbContextFactory<ClubContext> factory) : IStuden
 
     public async Task<bool> Update(StudentModel model)
     {
+        // 输入验证
+        if (string.IsNullOrWhiteSpace(model.UserId))
+        {
+            return false;
+        }
+
+        // 验证手机号格式
+        if (!string.IsNullOrWhiteSpace(model.PhoneNum) && !ValidationTool.IsValidPhoneNumber(model.PhoneNum))
+        {
+            return false;
+        }
+
+        // 验证邮箱格式
+        if (!string.IsNullOrEmpty(model.EMail) && !ValidationTool.IsValidEmail(model.EMail))
+        {
+            return false;
+        }
+
         await using var context = await factory.CreateDbContextAsync();
         var stu = await context.Students.FirstOrDefaultAsync(x => x.UserId == model.UserId);
-        if (stu == null) return false;
+        if (stu == null)
+        {
+            return false;
+        }
+
         stu.Update(model);
-        return await context.SaveChangesAsync() == 1;
+        var result = await context.SaveChangesAsync();
+
+        return result == 1;
     }
 
     public async Task<StudentModel?> Create(StudentModel model)
     {
+        // 输入验证
+        if (string.IsNullOrWhiteSpace(model.UserId))
+        {
+            throw new ArgumentException("用户ID不能为空");
+        }
+
+        if (string.IsNullOrWhiteSpace(model.UserName))
+        {
+            throw new ArgumentException("用户名不能为空");
+        }
+
+        // 验证手机号格式
+        if (!ValidationTool.IsValidPhoneNumber(model.PhoneNum))
+        {
+            throw new ArgumentException("手机号格式错误");
+        }
+
+        // 验证邮箱格式
+        if (!string.IsNullOrEmpty(model.EMail) && !ValidationTool.IsValidEmail(model.EMail))
+        {
+            throw new ArgumentException("邮箱格式错误");
+        }
+
+        //如果密码不是哈希加密过的，则进行加密
+        if (!string.IsNullOrEmpty(model.PasswordHash) && !DataTool.IsValidHash(model.PasswordHash))
+        {
+            model.PasswordHash = DataTool.StringToHash(model.PasswordHash);
+        }
+
         await using var context = await factory.CreateDbContextAsync();
         var stu = await context.Students.FirstOrDefaultAsync(x => x.UserId == model.UserId);
-        if (stu != null) return null;
+        if (stu != null)
+        {
+            return null;
+        }
 
         await context.Students.AddAsync(model);
-        return await context.SaveChangesAsync() == 1 ? model : null;
+        var result = await context.SaveChangesAsync();
+
+        return result == 1 ? model : null;
     }
 
     public async Task<bool> Delete(string id)
     {
+        // 输入验证
+        if (string.IsNullOrWhiteSpace(id))
+        {
+            return false;
+        }
+
         await using var context = await factory.CreateDbContextAsync();
         var stu = await context.Students.FirstOrDefaultAsync(x => x.UserId == id);
-        if (stu == null) return false;
+        if (stu == null)
+        {
+            return false;
+        }
+
         context.Students.Remove(stu);
-        return await context.SaveChangesAsync() == 1;
+        var result = await context.SaveChangesAsync();
+
+        return result == 1;
     }
 
     public async Task<bool> Login(string userId, string password)
     {
+        // 输入验证
+        if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(password))
+        {
+            return false;
+        }
+
         await using var context = await factory.CreateDbContextAsync();
         var hash = DataTool.StringToHash(password);
 
         // 使用编译查询提高性能
         var student = await LoginQuery(context, userId, hash);
+
         return student != null;
     }
 
 
-
     public async Task<bool> UpdateAsync(StudentModel model)
     {
+        // 输入验证
+        if (string.IsNullOrWhiteSpace(model.UserId))
+        {
+            return false;
+        }
+
+        // 验证手机号格式
+        if (!string.IsNullOrWhiteSpace(model.PhoneNum) && !ValidationTool.IsValidPhoneNumber(model.PhoneNum))
+        {
+            return false;
+        }
+
+        // 验证邮箱格式
+        if (!string.IsNullOrEmpty(model.EMail) && !ValidationTool.IsValidEmail(model.EMail))
+        {
+            return false;
+        }
+
         await using var context = await factory.CreateDbContextAsync();
         var stu = await context.Students.FirstOrDefaultAsync(x => x.UserId == model.UserId);
         if (stu == null)
         {
             model.Standardization();
+
+            // 确保PhoneNum作为默认密码
+            if (string.IsNullOrWhiteSpace(model.PasswordHash))
+            {
+                model.PasswordHash = DataTool.StringToHash(model.PhoneNum);
+            }
+
             await context.Students.AddAsync(model);
         }
         else
@@ -116,20 +217,45 @@ public class StudentRepository(IDbContextFactory<ClubContext> factory) : IStuden
             stu.Update(model);
         }
 
-        return await context.SaveChangesAsync() > 0;
+        var result = await context.SaveChangesAsync();
+
+        return result > 0;
     }
 
     public async Task<bool> DeleteAsync(string id)
     {
+        // 输入验证
+        if (string.IsNullOrWhiteSpace(id))
+        {
+            return false;
+        }
+
         await using var context = await factory.CreateDbContextAsync();
         var stu = await context.Students.FirstOrDefaultAsync(x => x.UserId == id);
-        if (stu == null) return false;
+        if (stu == null)
+        {
+            return false;
+        }
+
         context.Students.Remove(stu);
-        return await context.SaveChangesAsync() > 0;
+        var result = await context.SaveChangesAsync();
+
+        return result > 0;
     }
 
     public async Task<bool> UpdateManyAsync(List<StudentModel> list)
     {
+        // 输入验证
+        if (list.Count == 0)
+        {
+            return true; // 返回true表示没有需要更新的内容
+        }
+
+        // 验证列表中的每个学生数据
+        var validStudents = list.Where(model => !string.IsNullOrWhiteSpace(model.UserId))
+            .Where(model =>
+                !string.IsNullOrWhiteSpace(model.PhoneNum) && ValidationTool.IsValidPhoneNumber(model.PhoneNum));
+
         await using var context = await factory.CreateDbContextAsync();
         // 获取所有现有的学生ID
         var existingStudentIds = await context.Students
@@ -137,7 +263,7 @@ public class StudentRepository(IDbContextFactory<ClubContext> factory) : IStuden
             .ToHashSetAsync();
 
         // 标准化所有学生数据
-        var standardizedStudents = list.Select(model => model.Standardization()).ToList();
+        var standardizedStudents = validStudents.Select(model => model.Standardization()).ToList();
 
         // 分离需要插入和更新的学生
         var newStudents = standardizedStudents
@@ -154,6 +280,12 @@ public class StudentRepository(IDbContextFactory<ClubContext> factory) : IStuden
         // 批量添加新学生
         if (newStudents.Count > 0)
         {
+            // 为新学生设置默认密码
+            foreach (var student in newStudents.Where(student => string.IsNullOrWhiteSpace(student.PasswordHash)))
+            {
+                student.PasswordHash = DataTool.StringToHash(student.PhoneNum);
+            }
+
             await context.Students.AddRangeAsync(newStudents);
             changes = true;
         }
@@ -167,16 +299,16 @@ public class StudentRepository(IDbContextFactory<ClubContext> factory) : IStuden
             foreach (var student in existingStudents)
             {
                 var existingStudent = await context.Students.FirstOrDefaultAsync(s => s.UserId == student.UserId);
-                if (existingStudent != null)
-                {
-                    existingStudent.Update(student);
-                    changes = true;
-                }
+                if (existingStudent == null) continue;
+                existingStudent.Update(student);
+                changes = true;
             }
         }
 
         // 只有在有变化时才调用SaveChangesAsync，减少数据库调用
-        return changes ? await context.SaveChangesAsync() > 0 : true;
+        if (!changes) return true;
+        var result = await context.SaveChangesAsync();
+        return result > 0;
     }
 
     public async Task<List<MemberModel>> GetAllMembersAsync()

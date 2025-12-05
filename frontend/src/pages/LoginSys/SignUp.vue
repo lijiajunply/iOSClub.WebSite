@@ -117,7 +117,7 @@
 
             <!-- 步骤 3: 账号设置 -->
             <div v-else-if="currentStep === 3" key="step3" class="space-y-4">
-              <n-form-item path="password" :rule="{ required: true, message: '', trigger: 'blur' }">
+              <n-form-item path="password" :rule="[{ required: true, message: '请设置密码', trigger: 'blur' }, { validator: passwordValidator, trigger: ['blur', 'input'] }]">
                 <n-input
                     v-model:value="form.password"
                     type="password"
@@ -309,6 +309,14 @@ const emailValidator = (_rule: any, value: string) => {
   const emailReg = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   if (emailReg.test(value)) return true
   return new Error('请输入有效的邮箱地址')
+}
+
+const passwordValidator = (_rule: any, value: string) => {
+  if (!value) return true
+  // 密码至少8个字符，包含一个大写字母和一个数字
+  const passwordReg = /^(?=.*[A-Z])(?=.*\d).{8,}$/
+  if (passwordReg.test(value)) return true
+  return new Error('密码至少8个字符，包含一个大写字母和一个数字')
 }
 
 const validateCurrentStep = async (): Promise<boolean> => {

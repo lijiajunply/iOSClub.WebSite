@@ -95,13 +95,14 @@ public class GlobalExceptionMiddleware
                 if (validationException.ValidationErrors != null && validationException.ValidationErrors.Any())
                 {
                     response.Detail = string.Join(", ",
-                        validationException.ValidationErrors.SelectMany(e => 
+                        validationException.ValidationErrors.SelectMany(e =>
                             e.Value.Select(error => $"{e.Key}: {error}")));
                 }
                 else
                 {
                     response.Detail = validationException.Detail;
                 }
+
                 break;
 
             // 处理其他自定义异常
@@ -154,7 +155,7 @@ public class GlobalExceptionMiddleware
                 response.Message = authException.Message;
                 break;
 
-            case SecurityTokenExpiredException tokenExpiredException:
+            case SecurityTokenExpiredException:
                 response.Code = (int)HttpStatusCode.Unauthorized;
                 response.ErrorCode = ErrorCode.InvalidToken;
                 response.Message = "访问令牌已过期";
