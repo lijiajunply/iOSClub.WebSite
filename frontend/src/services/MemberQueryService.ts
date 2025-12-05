@@ -1,5 +1,6 @@
 import {url} from './Url';
 import {AuthService} from './AuthService';
+import {apiRequest} from './ApiService';
 import type {MemberModel, PaginatedMemberResponse, StudentModel} from '../models'
 import {GZipService} from "./GZipService";
 
@@ -37,8 +38,14 @@ export class MemberQueryService {
         }
 
         // 注意：后端返回的是压缩后的JSON字符串，需要解压处理
-        const jsonData = await GZipService.decompressFromString(await response.text());
-        return JSON.parse(jsonData);
+        const apiResponse = await response.json();
+        
+        // 检查API响应状态
+        if (apiResponse.code !== 200) {
+            throw new Error(apiResponse.message || '获取成员数据失败');
+        }
+        
+        return JSON.parse(await GZipService.decompressFromString(apiResponse.data)) ;
     }
 
     /**
@@ -89,38 +96,24 @@ export class MemberQueryService {
             throw new Error('获取分页成员数据失败');
         }
 
-        const jsonData = await GZipService.decompressFromString(await response.text());
-        return JSON.parse(jsonData);
+        const apiResponse = await response.json();
+        
+        // 检查API响应状态
+        if (apiResponse.code !== 200) {
+            throw new Error(apiResponse.message || '获取分页成员数据失败');
+        }
+        
+        return JSON.parse(await GZipService.decompressFromString(apiResponse.data));
     }
 
     public static async search(searchTerm: string, searchCondition: string): Promise<StudentModel[]> {
-        const token = AuthService.getToken();
-        if (!token) {
-            throw new Error('未登录');
-        }
-
         const params = new URLSearchParams();
         params.append('searchTerm', searchTerm);
         params.append('searchCondition', searchCondition);
-        const response = await fetch(`${url}/MemberQuery/all-data/search?${params.toString()}`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
+        
+        return apiRequest<StudentModel[]>({
+            url: `${url}/MemberQuery/all-data/search?${params.toString()}`,
+            method: 'GET'
         });
-
-        if (!response.ok) {
-            if (response.status === 401) {
-                AuthService.clearToken();
-                throw new Error('登录已过期，请重新登录');
-            }
-            if (response.status === 403) {
-                throw new Error('权限不足，需要管理员身份');
-            }
-            throw new Error('获取分页成员数据失败');
-        }
-
-        return await response.json();
     }
 }

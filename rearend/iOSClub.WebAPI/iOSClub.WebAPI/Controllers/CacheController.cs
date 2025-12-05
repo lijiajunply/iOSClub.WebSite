@@ -1,4 +1,5 @@
 using System.Text;
+using iOSClub.WebAPI.Common;
 using Microsoft.AspNetCore.Mvc;
 using StackExchange.Redis;
 
@@ -12,7 +13,7 @@ public class CacheController(
     private readonly IDatabase _db = redis.GetDatabase();
 
     [HttpGet("/clean")]
-    public async Task<IActionResult> CleanData()
+    public async Task<ActionResult<ApiResponse<string>>> CleanData()
     {
         try
         {
@@ -37,11 +38,12 @@ public class CacheController(
                 deletedCount = await _db.KeyDeleteAsync(keyArray);
             }
 
-            return Ok($"缓存已清除，共清理了 {deletedCount} 个缓存项 \n\r 清理的缓存项列表：\n\r {builder}");
+            var message = $"缓存已清除，共清理了 {deletedCount} 个缓存项 \n\r 清理的缓存项列表：\n\r {builder}";
+            return Ok(ApiResponse<string>.Success(message, "缓存清除成功"));
         }
         catch (Exception ex)
         {
-            return BadRequest($"清除缓存时出现问题: {ex.Message}");
+            return Ok(ApiResponse<string>.Fail(ErrorCode.CacheOperationFailed, $"清除缓存时出现问题: {ex.Message}"));
         }
     }
 }

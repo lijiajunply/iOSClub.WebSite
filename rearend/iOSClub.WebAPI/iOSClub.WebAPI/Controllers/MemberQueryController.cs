@@ -1,4 +1,5 @@
 using iOSClub.DataApi.Repositories;
+using iOSClub.WebAPI.Common;
 using iOSClub.WebAPI.IdentityModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -20,14 +21,22 @@ public class MemberQueryController(IStudentRepository studentRepository) : Contr
     /// </summary>
     /// <returns>压缩后的成员数据JSON字符串</returns>
     [HttpGet("all-data")]
-    public async Task<ActionResult<string>> GetAllData()
+    public async Task<ActionResult<ApiResponse<string>>> GetAllData()
     {
-        var members = await studentRepository.GetAllMembersAsync();
-        var settings = new JsonSerializerSettings
+        try
         {
-            ContractResolver = new CamelCasePropertyNamesContractResolver()
-        };
-        return GZipServer.CompressString(JsonConvert.SerializeObject(members, settings));
+            var members = await studentRepository.GetAllMembersAsync();
+            var settings = new JsonSerializerSettings
+            {
+                ContractResolver = new CamelCasePropertyNamesContractResolver()
+            };
+            var result = GZipServer.CompressString(JsonConvert.SerializeObject(members, settings));
+            return Ok(ApiResponse<string>.Success(result, "获取所有成员数据成功"));
+        }
+        catch (Exception ex)
+        {
+            return Ok(ApiResponse<string>.Fail(ErrorCode.InternalServerError, "获取所有成员数据失败"));
+        }
     }
 
     /// <summary>
@@ -39,31 +48,39 @@ public class MemberQueryController(IStudentRepository studentRepository) : Contr
     /// <param name="searchCondition">搜索条件</param>
     /// <returns>分页后的成员数据</returns>
     [HttpGet("all-data/page")]
-    public async Task<ActionResult<string>> GetAllDataByPage(int pageNum = 1, int pageSize = 10,
+    public async Task<ActionResult<ApiResponse<string>>> GetAllDataByPage(int pageNum = 1, int pageSize = 10,
         string? searchTerm = null, string? searchCondition = null)
     {
-        if (pageNum < 1 || pageSize < 1 || pageSize > 100) // 限制最大页大小
+        try
         {
-            return BadRequest("Invalid pagination parameters");
+            if (pageNum < 1 || pageSize < 1 || pageSize > 100) // 限制最大页大小
+            {
+                return Ok(ApiResponse<string>.Fail(ErrorCode.ParameterOutOfRange, "无效的分页参数"));
+            }
+
+            var (members, totalCount) =
+                await studentRepository.GetMembersPagedAsync(pageNum, pageSize, searchTerm, searchCondition);
+
+            var response = new
+            {
+                TotalCount = totalCount,
+                PageSize = pageSize,
+                CurrentPage = pageNum,
+                TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize),
+                Data = members
+            };
+
+            var settingsWithCamelCase = new JsonSerializerSettings
+            {
+                ContractResolver = new CamelCasePropertyNamesContractResolver()
+            };
+            var result = GZipServer.CompressString(JsonConvert.SerializeObject(response, settingsWithCamelCase));
+            return Ok(ApiResponse<string>.Success(result, "分页获取成员数据成功"));
         }
-
-        var (members, totalCount) =
-            await studentRepository.GetMembersPagedAsync(pageNum, pageSize, searchTerm, searchCondition);
-
-        var response = new
+        catch (Exception ex)
         {
-            TotalCount = totalCount,
-            PageSize = pageSize,
-            CurrentPage = pageNum,
-            TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize),
-            Data = members
-        };
-
-        var settingsWithCamelCase = new JsonSerializerSettings
-        {
-            ContractResolver = new CamelCasePropertyNamesContractResolver()
-        };
-        return GZipServer.CompressString(JsonConvert.SerializeObject(response, settingsWithCamelCase));
+            return Ok(ApiResponse<string>.Fail(ErrorCode.InternalServerError, "分页获取成员数据失败"));
+        }
     }
 
     /// <summary>
@@ -73,9 +90,16 @@ public class MemberQueryController(IStudentRepository studentRepository) : Contr
     /// <param name="searchCondition">搜索条件</param>
     /// <returns>分页后的成员数据</returns>
     [HttpGet("all-data/search")]
-    public async Task<ActionResult> Search(string searchTerm, string searchCondition)
+    public async Task<ActionResult<ApiResponse<object>>> Search(string searchTerm, string searchCondition)
     {
-        var data = await studentRepository.Search(searchTerm, searchCondition);
-        return Ok(data);
+        try
+        {
+            var data = await studentRepository.Search(searchTerm, searchCondition);
+            return Ok(ApiResponse<object>.Success(data, "搜索成员数据成功"));
+        }
+        catch (Exception ex)
+        {
+            return Ok(ApiResponse<object>.Fail(ErrorCode.InternalServerError, "搜索成员数据失败"));
+        }
     }
 }

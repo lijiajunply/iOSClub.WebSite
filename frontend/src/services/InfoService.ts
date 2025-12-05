@@ -1,6 +1,6 @@
 import { url } from './Url';
-import { AuthService } from './AuthService';
 import {UserInfoResponse} from "../models";
+import { apiRequest } from './ApiService';
 
 /**
  * 信息服务类 - 处理系统信息相关的API调用
@@ -11,18 +11,11 @@ export class InfoService {
    * @returns Promise<string[]> 学院名称字符串数组
    */
   static async getAcademies(): Promise<string[]> {
-    const response = await fetch(`${url}/Info/academies`, {
+    return await apiRequest<string[]>({
+      url: `${url}/Info/academies`,
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      requiresAuth: false
     });
-
-    if (!response.ok) {
-      throw new Error('获取学院列表失败');
-    }
-
-    return await response.json();
   }
 
   /**
@@ -31,29 +24,11 @@ export class InfoService {
    * @returns Promise<UserInfoResponse> 用户信息对象
    */
   static async getUserInfo(): Promise<UserInfoResponse> {
-    const token = AuthService.getToken();
-    if (!token) {
-      throw new Error('未登录');
-    }
-
-    const response = await fetch(`${url}/Info/user-info`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        AuthService.clearToken();
-        throw new Error('登录已过期，请重新登录');
-      }
-      throw new Error('获取用户信息失败');
-    }
-
     // 对于普通成员，返回空对象
-    const data = await response.json();
+    const data = await apiRequest<UserInfoResponse>({
+      url: `${url}/Info/user-info`,
+      method: 'GET'
+    });
     return data || {};
   }
 }

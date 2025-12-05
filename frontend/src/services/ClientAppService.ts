@@ -1,6 +1,6 @@
 import { url } from './Url';
-import { AuthService } from './AuthService';
 import type { ClientApplication, ClientAppResultModel, CreateClientAppModel, UpdateClientAppModel, RegenerateSecretResult } from '../models';
+import { apiRequest } from './ApiService';
 
 /**
  * 客户端应用服务类 - 处理客户端应用管理相关的API调用
@@ -11,31 +11,10 @@ export class ClientAppService {
      * @returns Promise<ClientApplication[]> 客户端应用列表
      */
     static async getAllClientApplications(): Promise<ClientApplication[]> {
-        const token = AuthService.getToken();
-        if (!token) {
-            throw new Error('未登录');
-        }
-
-        const response = await fetch(`${url}/ClientApp`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
+        return await apiRequest<ClientApplication[]>({
+            url: `${url}/ClientApp`,
+            method: 'GET'
         });
-
-        if (!response.ok) {
-            if (response.status === 401) {
-                AuthService.clearToken();
-                throw new Error('登录已过期，请重新登录');
-            }
-            if (response.status === 403) {
-                throw new Error('权限不足，需要管理员身份');
-            }
-            throw new Error('获取客户端应用列表失败');
-        }
-
-        return await response.json();
     }
 
     /**
@@ -44,34 +23,10 @@ export class ClientAppService {
      * @returns Promise<ClientApplication> 客户端应用
      */
     static async getClientApplication(clientId: string): Promise<ClientApplication> {
-        const token = AuthService.getToken();
-        if (!token) {
-            throw new Error('未登录');
-        }
-
-        const response = await fetch(`${url}/ClientApp/${clientId}`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
+        return await apiRequest<ClientApplication>({
+            url: `${url}/ClientApp/${clientId}`,
+            method: 'GET'
         });
-
-        if (!response.ok) {
-            if (response.status === 401) {
-                AuthService.clearToken();
-                throw new Error('登录已过期，请重新登录');
-            }
-            if (response.status === 403) {
-                throw new Error('权限不足，需要管理员身份');
-            }
-            if (response.status === 404) {
-                throw new Error('客户端应用不存在');
-            }
-            throw new Error('获取客户端应用失败');
-        }
-
-        return await response.json();
     }
 
     /**
@@ -80,32 +35,11 @@ export class ClientAppService {
      * @returns Promise<ClientAppResultModel> 创建的客户端应用（包含密钥）
      */
     static async createClientApplication(clientAppModel: CreateClientAppModel): Promise<ClientAppResultModel> {
-        const token = AuthService.getToken();
-        if (!token) {
-            throw new Error('未登录');
-        }
-
-        const response = await fetch(`${url}/ClientApp`, {
+        return await apiRequest<ClientAppResultModel>({
+            url: `${url}/ClientApp`,
             method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(clientAppModel),
+            body: JSON.stringify(clientAppModel)
         });
-
-        if (!response.ok) {
-            if (response.status === 401) {
-                AuthService.clearToken();
-                throw new Error('登录已过期，请重新登录');
-            }
-            if (response.status === 403) {
-                throw new Error('权限不足，需要管理员身份');
-            }
-            throw new Error('创建客户端应用失败');
-        }
-
-        return await response.json();
     }
 
     /**
@@ -115,33 +49,11 @@ export class ClientAppService {
      * @returns Promise<void>
      */
     static async updateClientApplication(clientId: string, clientAppModel: UpdateClientAppModel): Promise<void> {
-        const token = AuthService.getToken();
-        if (!token) {
-            throw new Error('未登录');
-        }
-
-        const response = await fetch(`${url}/ClientApp/${clientId}`, {
+        await apiRequest<void>({
+            url: `${url}/ClientApp/${clientId}`,
             method: 'PUT',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(clientAppModel),
+            body: JSON.stringify(clientAppModel)
         });
-
-        if (!response.ok) {
-            if (response.status === 401) {
-                AuthService.clearToken();
-                throw new Error('登录已过期，请重新登录');
-            }
-            if (response.status === 403) {
-                throw new Error('权限不足，需要管理员身份');
-            }
-            if (response.status === 404) {
-                throw new Error('客户端应用不存在');
-            }
-            throw new Error('更新客户端应用失败');
-        }
     }
 
     /**
@@ -150,32 +62,10 @@ export class ClientAppService {
      * @returns Promise<void>
      */
     static async deleteClientApplication(clientId: string): Promise<void> {
-        const token = AuthService.getToken();
-        if (!token) {
-            throw new Error('未登录');
-        }
-
-        const response = await fetch(`${url}/ClientApp/${clientId}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
+        await apiRequest<void>({
+            url: `${url}/ClientApp/${clientId}`,
+            method: 'DELETE'
         });
-
-        if (!response.ok) {
-            if (response.status === 401) {
-                AuthService.clearToken();
-                throw new Error('登录已过期，请重新登录');
-            }
-            if (response.status === 403) {
-                throw new Error('权限不足，需要管理员身份');
-            }
-            if (response.status === 404) {
-                throw new Error('客户端应用不存在');
-            }
-            throw new Error('删除客户端应用失败');
-        }
     }
 
     /**
@@ -184,33 +74,9 @@ export class ClientAppService {
      * @returns Promise<RegenerateSecretResult> 新的客户端密钥
      */
     static async regenerateClientSecret(clientId: string): Promise<RegenerateSecretResult> {
-        const token = AuthService.getToken();
-        if (!token) {
-            throw new Error('未登录');
-        }
-
-        const response = await fetch(`${url}/ClientApp/${clientId}/regenerate-secret`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
+        return await apiRequest<RegenerateSecretResult>({
+            url: `${url}/ClientApp/${clientId}/regenerate-secret`,
+            method: 'POST'
         });
-
-        if (!response.ok) {
-            if (response.status === 401) {
-                AuthService.clearToken();
-                throw new Error('登录已过期，请重新登录');
-            }
-            if (response.status === 403) {
-                throw new Error('权限不足，需要管理员身份');
-            }
-            if (response.status === 404) {
-                throw new Error('客户端应用不存在');
-            }
-            throw new Error('重新生成密钥失败');
-        }
-
-        return await response.json();
     }
 }

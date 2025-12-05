@@ -4,6 +4,7 @@ using iOSClub.Data;
 using iOSClub.Data.DataModels;
 using iOSClub.DataApi.Repositories;
 using iOSClub.DataApi.Services;
+using iOSClub.WebAPI.Common;
 using iOSClub.WebAPI.IdentityModels;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
@@ -218,6 +219,9 @@ builder.Services.Configure<GzipCompressionProviderOptions>(options => { options.
 #endregion
 
 var app = builder.Build();
+
+// 注册全局异常处理中间件
+app.UseMiddleware<GlobalExceptionMiddleware>();
 
 // 创建数据库
 using (var scope = app.Services.CreateScope())

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using iOSClub.Data.DataModels;
 using iOSClub.DataApi.Repositories;
+using iOSClub.WebAPI.Common;
 using System.Security.Cryptography;
 
 namespace iOSClub.WebAPI.Controllers;
@@ -16,10 +17,17 @@ public class ClientAppController(IClientApplicationRepository clientAppRepositor
     /// </summary>
     /// <returns>客户端应用列表</returns>
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<ClientApplication>>> GetClientApplications()
+    public async Task<ActionResult<ApiResponse<IEnumerable<ClientApplication>>>> GetClientApplications()
     {
-        var clientApps = await clientAppRepository.GetAllAsync();
-        return Ok(clientApps);
+        try
+        {
+            var clientApps = await clientAppRepository.GetAllAsync();
+            return Ok(ApiResponse<IEnumerable<ClientApplication>>.Success(clientApps));
+        }
+        catch (Exception ex)
+        {
+            return Ok(ApiResponse<IEnumerable<ClientApplication>>.Fail(ErrorCode.InternalServerError, "获取客户端应用列表失败"));
+        }
     }
 
     /// <summary>
@@ -28,13 +36,20 @@ public class ClientAppController(IClientApplicationRepository clientAppRepositor
     /// <param name="clientId">客户端ID</param>
     /// <returns>客户端应用</returns>
     [HttpGet("{clientId}")]
-    public async Task<ActionResult<ClientApplication>> GetClientApplication(string clientId)
+    public async Task<ActionResult<ApiResponse<ClientApplication>>> GetClientApplication(string clientId)
     {
-        var clientApp = await clientAppRepository.GetByClientIdAsync(clientId);
-        if (clientApp == null)
-            return NotFound();
+        try
+        {
+            var clientApp = await clientAppRepository.GetByClientIdAsync(clientId);
+            if (clientApp == null)
+                return Ok(ApiResponse<ClientApplication>.Fail(ErrorCode.ResourceNotFound, "客户端应用不存在"));
 
-        return Ok(clientApp);
+            return Ok(ApiResponse<ClientApplication>.Success(clientApp));
+        }
+        catch (Exception ex)
+        {
+            return Ok(ApiResponse<ClientApplication>.Fail(ErrorCode.InternalServerError, "获取客户端应用失败"));
+        }
     }
 
     /// <summary>
@@ -43,50 +58,57 @@ public class ClientAppController(IClientApplicationRepository clientAppRepositor
     /// <param name="clientAppModel">客户端应用信息</param>
     /// <returns>创建的客户端应用</returns>
     [HttpPost]
-    public async Task<ActionResult<ClientApplication>> CreateClientApplication(CreateClientAppModel clientAppModel)
+    public async Task<ActionResult<ApiResponse<ClientAppResultModel>>> CreateClientApplication(CreateClientAppModel clientAppModel)
     {
-        // 生成客户端ID和密钥
-        var clientId = GenerateClientId();
-        var clientSecret = GenerateClientSecret();
-
-        var clientApp = new ClientApplication
+        try
         {
-            ClientId = clientId,
-            ClientSecret = clientSecret,
-            ApplicationName = clientAppModel.ApplicationName,
-            Description = clientAppModel.Description,
-            HomepageUrl = clientAppModel.HomepageUrl,
-            RedirectUris = string.Join(";", clientAppModel.RedirectUris),
-            LogoUrl = clientAppModel.LogoUrl,
-            IsActive = true,
-            IsNeedEMail = clientAppModel.IsNeedEMail,
-            SupportsPkce = clientAppModel.SupportsPkce
-        };
+            // 生成客户端ID和密钥
+            var clientId = GenerateClientId();
+            var clientSecret = GenerateClientSecret();
 
-        // 保存原始密钥用于返回给客户端
-        var originalClientSecret = clientApp.ClientSecret;
+            var clientApp = new ClientApplication
+            {
+                ClientId = clientId,
+                ClientSecret = clientSecret,
+                ApplicationName = clientAppModel.ApplicationName,
+                Description = clientAppModel.Description,
+                HomepageUrl = clientAppModel.HomepageUrl,
+                RedirectUris = string.Join(";", clientAppModel.RedirectUris),
+                LogoUrl = clientAppModel.LogoUrl,
+                IsActive = true,
+                IsNeedEMail = clientAppModel.IsNeedEMail,
+                SupportsPkce = clientAppModel.SupportsPkce
+            };
 
-        var result = await clientAppRepository.CreateAsync(clientApp);
-        if (!result)
-            return BadRequest("创建客户端应用失败");
+            // 保存原始密钥用于返回给客户端
+            var originalClientSecret = clientApp.ClientSecret;
 
-        // 返回包含密钥的信息（只在创建时显示）
-        var resultModel = new ClientAppResultModel
+            var result = await clientAppRepository.CreateAsync(clientApp);
+            if (!result)
+                return Ok(ApiResponse<ClientAppResultModel>.Fail(ErrorCode.OperationFailed, "创建客户端应用失败"));
+
+            // 返回包含密钥的信息（只在创建时显示）
+            var resultModel = new ClientAppResultModel
+            {
+                ClientId = clientApp.ClientId,
+                // 返回原始密钥而不是哈希值
+                ClientSecret = originalClientSecret,
+                ApplicationName = clientApp.ApplicationName,
+                Description = clientApp.Description,
+                HomepageUrl = clientApp.HomepageUrl,
+                RedirectUris = clientApp.RedirectUris.Split(';').ToList(),
+                LogoUrl = clientApp.LogoUrl,
+                IsActive = clientApp.IsActive,
+                IsNeedEMail = clientApp.IsNeedEMail,
+                SupportsPkce = clientApp.SupportsPkce
+            };
+
+            return CreatedAtAction(nameof(GetClientApplication), new { clientId = clientApp.ClientId }, ApiResponse<ClientAppResultModel>.Success(resultModel, "创建客户端应用成功"));
+        }
+        catch (Exception ex)
         {
-            ClientId = clientApp.ClientId,
-            // 返回原始密钥而不是哈希值
-            ClientSecret = originalClientSecret,
-            ApplicationName = clientApp.ApplicationName,
-            Description = clientApp.Description,
-            HomepageUrl = clientApp.HomepageUrl,
-            RedirectUris = clientApp.RedirectUris.Split(';').ToList(),
-            LogoUrl = clientApp.LogoUrl,
-            IsActive = clientApp.IsActive,
-            IsNeedEMail = clientApp.IsNeedEMail,
-            SupportsPkce = clientApp.SupportsPkce
-        };
-
-        return CreatedAtAction(nameof(GetClientApplication), new { clientId = clientApp.ClientId }, resultModel);
+            return Ok(ApiResponse<ClientAppResultModel>.Fail(ErrorCode.InternalServerError, "创建客户端应用失败"));
+        }
     }
 
     /// <summary>
@@ -96,27 +118,34 @@ public class ClientAppController(IClientApplicationRepository clientAppRepositor
     /// <param name="clientAppModel">客户端应用信息</param>
     /// <returns>更新结果</returns>
     [HttpPut("{clientId}")]
-    public async Task<IActionResult> UpdateClientApplication(string clientId, UpdateClientAppModel clientAppModel)
+    public async Task<ActionResult<ApiResponse>> UpdateClientApplication(string clientId, UpdateClientAppModel clientAppModel)
     {
-        var existingClientApp = await clientAppRepository.GetByClientIdAsync(clientId);
-        if (existingClientApp == null)
-            return NotFound();
+        try
+        {
+            var existingClientApp = await clientAppRepository.GetByClientIdAsync(clientId);
+            if (existingClientApp == null)
+                return Ok(ApiResponse.Fail(ErrorCode.ResourceNotFound, "客户端应用不存在"));
 
-        existingClientApp.ApplicationName = clientAppModel.ApplicationName;
-        existingClientApp.Description = clientAppModel.Description;
-        existingClientApp.HomepageUrl = clientAppModel.HomepageUrl;
-        existingClientApp.RedirectUris = string.Join(";", clientAppModel.RedirectUris);
-        existingClientApp.LogoUrl = clientAppModel.LogoUrl;
-        existingClientApp.IsActive = clientAppModel.IsActive;
-        existingClientApp.UpdatedAt = DateTime.UtcNow;
-        existingClientApp.IsNeedEMail = clientAppModel.IsNeedEMail;
-        existingClientApp.SupportsPkce = clientAppModel.SupportsPkce;
+            existingClientApp.ApplicationName = clientAppModel.ApplicationName;
+            existingClientApp.Description = clientAppModel.Description;
+            existingClientApp.HomepageUrl = clientAppModel.HomepageUrl;
+            existingClientApp.RedirectUris = string.Join(";", clientAppModel.RedirectUris);
+            existingClientApp.LogoUrl = clientAppModel.LogoUrl;
+            existingClientApp.IsActive = clientAppModel.IsActive;
+            existingClientApp.UpdatedAt = DateTime.UtcNow;
+            existingClientApp.IsNeedEMail = clientAppModel.IsNeedEMail;
+            existingClientApp.SupportsPkce = clientAppModel.SupportsPkce;
 
-        var result = await clientAppRepository.UpdateAsync(existingClientApp);
-        if (!result)
-            return BadRequest("更新客户端应用失败");
+            var result = await clientAppRepository.UpdateAsync(existingClientApp);
+            if (!result)
+                return Ok(ApiResponse.Fail(ErrorCode.OperationFailed, "更新客户端应用失败"));
 
-        return NoContent();
+            return Ok(ApiResponse.Success("更新客户端应用成功"));
+        }
+        catch (Exception ex)
+        {
+            return Ok(ApiResponse.Fail(ErrorCode.InternalServerError, "更新客户端应用失败"));
+        }
     }
 
     /// <summary>
@@ -125,13 +154,20 @@ public class ClientAppController(IClientApplicationRepository clientAppRepositor
     /// <param name="clientId">客户端ID</param>
     /// <returns>删除结果</returns>
     [HttpDelete("{clientId}")]
-    public async Task<IActionResult> DeleteClientApplication(string clientId)
+    public async Task<ActionResult<ApiResponse>> DeleteClientApplication(string clientId)
     {
-        var result = await clientAppRepository.DeleteAsync(clientId);
-        if (!result)
-            return NotFound();
+        try
+        {
+            var result = await clientAppRepository.DeleteAsync(clientId);
+            if (!result)
+                return Ok(ApiResponse.Fail(ErrorCode.ResourceNotFound, "客户端应用不存在"));
 
-        return NoContent();
+            return Ok(ApiResponse.Success("删除客户端应用成功"));
+        }
+        catch (Exception ex)
+        {
+            return Ok(ApiResponse.Fail(ErrorCode.InternalServerError, "删除客户端应用失败"));
+        }
     }
 
     /// <summary>
@@ -140,22 +176,30 @@ public class ClientAppController(IClientApplicationRepository clientAppRepositor
     /// <param name="clientId">客户端ID</param>
     /// <returns>新的客户端密钥</returns>
     [HttpPost("{clientId}/regenerate-secret")]
-    public async Task<ActionResult<RegenerateSecretResult>> RegenerateClientSecret(string clientId)
+    public async Task<ActionResult<ApiResponse<RegenerateSecretResult>>> RegenerateClientSecret(string clientId)
     {
-        var existingClientApp = await clientAppRepository.GetByClientIdAsync(clientId);
-        if (existingClientApp == null)
-            return NotFound();
+        try
+        {
+            var existingClientApp = await clientAppRepository.GetByClientIdAsync(clientId);
+            if (existingClientApp == null)
+                return Ok(ApiResponse<RegenerateSecretResult>.Fail(ErrorCode.ResourceNotFound, "客户端应用不存在"));
 
-        var newSecret = GenerateClientSecret();
-        // 保存原始密钥用于返回给客户端，但存储到数据库的是哈希值
-        existingClientApp.ClientSecret = newSecret;
-        existingClientApp.UpdatedAt = DateTime.UtcNow;
+            var newSecret = GenerateClientSecret();
+            // 保存原始密钥用于返回给客户端，但存储到数据库的是哈希值
+            existingClientApp.ClientSecret = newSecret;
+            existingClientApp.UpdatedAt = DateTime.UtcNow;
 
-        var result = await clientAppRepository.UpdateAsync(existingClientApp);
-        if (!result)
-            return BadRequest("重新生成密钥失败");
+            var result = await clientAppRepository.UpdateAsync(existingClientApp);
+            if (!result)
+                return Ok(ApiResponse<RegenerateSecretResult>.Fail(ErrorCode.OperationFailed, "重新生成密钥失败"));
 
-        return Ok(new RegenerateSecretResult { ClientId = clientId, NewSecret = newSecret });
+            var resultModel = new RegenerateSecretResult { ClientId = clientId, NewSecret = newSecret };
+            return Ok(ApiResponse<RegenerateSecretResult>.Success(resultModel, "重新生成密钥成功"));
+        }
+        catch (Exception ex)
+        {
+            return Ok(ApiResponse<RegenerateSecretResult>.Fail(ErrorCode.InternalServerError, "重新生成密钥失败"));
+        }
     }
 
     /// <summary>

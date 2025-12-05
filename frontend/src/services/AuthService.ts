@@ -1,5 +1,6 @@
 import {url} from './Url';
 import type {StudentModel, LoginModel} from '../models';
+import { apiRequest } from './ApiService';
 
 /**
  * 密码哈希函数
@@ -26,22 +27,12 @@ export class AuthService {
      * @returns Promise<string> JWT令牌
      */
     static async login(loginModel: LoginModel, clientId: string | null | undefined = '', scope: string | null | undefined = ''): Promise<string> {
-        const response = await fetch(`${url}/Auth/login?clientId=${clientId}&scope=${scope}`, {
+        return await apiRequest<string>({
+            url: `${url}/Auth/login?clientId=${clientId}&scope=${scope}`,
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
             body: JSON.stringify(loginModel),
+            requiresAuth: false
         });
-
-        if (!response.ok) {
-            if (response.status === 404) {
-                throw new Error('用户不存在');
-            }
-            throw new Error('登录失败');
-        }
-
-        return await response.text();
     }
 
     /**
@@ -50,48 +41,36 @@ export class AuthService {
      * @returns Promise<string> JWT令牌
      */
     static async signup(model: StudentModel): Promise<string> {
-        const response = await fetch(`${url}/Auth/signup`, {
+        return await apiRequest<string>({
+            url: `${url}/Auth/signup`,
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
             body: JSON.stringify(model),
+            requiresAuth: false
         });
-
-        if (!response.ok) {
-            if (response.status === 409) {
-                throw new Error('用户ID已存在');
-            }
-            throw new Error('注册失败');
-        }
-
-        return await response.text();
     }
 
-    static async logout(userId: string, clientId: string | null | undefined = '') {
-        const token = AuthService.getToken();
-        const response = await fetch(`${url}/Auth/logout?userId=${userId}&clientId=${clientId}`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
-        });
-
-        return response.ok;
+    static async logout(userId: string, clientId: string | null | undefined = ''): Promise<boolean> {
+        try {
+            await apiRequest<boolean>({
+                url: `${url}/Auth/logout?userId=${userId}&clientId=${clientId}`,
+                method: 'POST'
+            });
+            return true;
+        } catch (error) {
+            return false;
+        }
     }
 
     static async validate(userId: string, token: string, clientId: string | null | undefined = ''): Promise<boolean> {
         try {
-            const response = await fetch(`${url}/Auth/validate?userId=${userId}&clientId=${clientId}`, {
+            await apiRequest<boolean>({
+                url: `${url}/Auth/validate?userId=${userId}&clientId=${clientId}`,
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
+                    'Authorization': `Bearer ${token}`
+                }
             });
-
-            return response.ok;
+            return true;
         } catch (e) {
             console.error(e);
             return false;
@@ -174,20 +153,10 @@ export class AuthService {
      * @returns Promise<boolean> 是否修改成功
      */
     static async changePassword(userId: string, oldPassword: string, newPassword: string): Promise<boolean> {
-        const token = this.getToken();
-        const response = await fetch(`${url}/Auth/change-password?userId=${userId}&oldPassword=${oldPassword}&newPassword=${newPassword}`, {
-            method: 'PUT',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
+        return await apiRequest<boolean>({
+            url: `${url}/Auth/change-password?userId=${userId}&oldPassword=${oldPassword}&newPassword=${newPassword}`,
+            method: 'PUT'
         });
-
-        if (!response.ok) {
-            throw new Error('密码修改失败');
-        }
-
-        return true;
     }
 
     /**
@@ -196,21 +165,11 @@ export class AuthService {
      * @returns Promise<boolean> 是否发送成功
      */
     static async requestPasswordReset(userId: string): Promise<boolean> {
-        const response = await fetch(`${url}/Auth/request-password-reset?userId=${userId}`, {
+        return await apiRequest<boolean>({
+            url: `${url}/Auth/request-password-reset?userId=${userId}`,
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            requiresAuth: false
         });
-
-        if (!response.ok) {
-            if (response.status === 404) {
-                throw new Error('用户不存在');
-            }
-            throw new Error('请联系管理员进行密码更改');
-        }
-
-        return true;
     }
 
     /**
@@ -221,18 +180,11 @@ export class AuthService {
      * @returns Promise<boolean> 是否重置成功
      */
     static async resetPassword(userId: string, code: string, newPassword: string): Promise<boolean> {
-        const response = await fetch(`${url}/Auth/reset-password?userId=${userId}&code=${code}&newPassword=${newPassword}`, {
+        return await apiRequest<boolean>({
+            url: `${url}/Auth/reset-password?userId=${userId}&code=${code}&newPassword=${newPassword}`,
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            requiresAuth: false
         });
-
-        if (!response.ok) {
-            throw new Error('验证码无效或密码重置失败');
-        }
-
-        return true;
     }
 
     /**

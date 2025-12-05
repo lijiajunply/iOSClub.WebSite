@@ -1,5 +1,6 @@
 using System.Data.SQLite;
 using System.Text.Json;
+using iOSClub.WebAPI.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.Sqlite;
@@ -41,7 +42,7 @@ public class LogsController(ILogger<LogsController> logger)
     /// <param name="timeRange">时间范围过滤："today"表示当天，或正整数表示最近几天</param>
     /// <returns>包含分页信息和日志条目的JSON响应</returns>
     [HttpGet]
-    public async Task<IActionResult> GetRecentLogs(int pageIndex = 1, int pageSize = 10, string? searchTerm = null,
+    public async Task<ActionResult<ApiResponse<PaginatedResponse<LogEntry>>>> GetRecentLogs(int pageIndex = 1, int pageSize = 10, string? searchTerm = null,
         string? levelFilter = null, string? timeRange = null)
     {
         try
@@ -219,7 +220,7 @@ public class LogsController(ILogger<LogsController> logger)
                 TotalPages = totalPages
             };
 
-            return Ok(response);
+            return Ok(ApiResponse<PaginatedResponse<LogEntry>>.Success(response, "获取日志成功"));
         }
         catch (Exception ex)
         {
@@ -227,7 +228,7 @@ public class LogsController(ILogger<LogsController> logger)
             logger.LogError(ex,
                 "获取日志时发生错误，搜索参数：searchTerm={SearchTerm}, levelFilter={LevelFilter}, timeRange={TimeRange}",
                 searchTerm ?? "null", levelFilter ?? "null", timeRange ?? "null");
-            return StatusCode(500, new { Error = "获取日志时发生错误", Details = ex.Message });
+            return Ok(ApiResponse<PaginatedResponse<LogEntry>>.Fail(ErrorCode.InternalServerError, $"获取日志时发生错误: {ex.Message}"));
         }
     }
 
@@ -237,7 +238,7 @@ public class LogsController(ILogger<LogsController> logger)
     /// </summary>
     /// <returns>日志统计结果</returns>
     [HttpGet("statistics")]
-    public async Task<IActionResult> GetLogStatistics()
+    public async Task<ActionResult<ApiResponse<LogStatistics>>> GetLogStatistics()
     {
         try
         {
@@ -267,12 +268,12 @@ public class LogsController(ILogger<LogsController> logger)
                 }
             }
 
-            return Ok(statistics);
+            return Ok(ApiResponse<LogStatistics>.Success(statistics, "获取日志统计信息成功"));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "获取日志统计信息时发生错误");
-            return StatusCode(500, new { Error = "获取日志统计信息时发生错误", Details = ex.Message });
+            return Ok(ApiResponse<LogStatistics>.Fail(ErrorCode.InternalServerError, $"获取日志统计信息时发生错误: {ex.Message}"));
         }
     }
 
@@ -282,14 +283,14 @@ public class LogsController(ILogger<LogsController> logger)
     /// <param name="days">要保留的日志天数，默认为7天</param>
     /// <returns>清理结果</returns>
     [HttpPost("cleanup")]
-    public async Task<IActionResult> CleanupOldLogs([FromQuery] int days = 7)
+    public async Task<ActionResult<ApiResponse<object>>> CleanupOldLogs([FromQuery] int days = 7)
     {
         try
         {
             // 验证参数
             if (days <= 0)
             {
-                return BadRequest(new { Error = "天数必须大于0" });
+                return Ok(ApiResponse<object>.Fail(ErrorCode.ParameterOutOfRange, "天数必须大于0"));
             }
 
             // 获取日志数据库路径
@@ -307,12 +308,13 @@ public class LogsController(ILogger<LogsController> logger)
             command.Parameters.AddWithValue("@cutoffDate", DateTime.Now.AddDays(-days));
             var rowsAffected = await command.ExecuteNonQueryAsync();
 
-            return Ok(new { Message = $"成功清理了 {rowsAffected} 条 {days} 天前的日志" });
+            var result = new { Message = $"成功清理了 {rowsAffected} 条 {days} 天前的日志" };
+            return Ok(ApiResponse<object>.Success(result, "清理日志成功"));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "手动清理旧日志时出错");
-            return StatusCode(500, new { Error = "清理旧日志时出错", Details = ex.Message });
+            return Ok(ApiResponse<object>.Fail(ErrorCode.InternalServerError, $"清理旧日志时出错: {ex.Message}"));
         }
     }
 
@@ -322,7 +324,7 @@ public class LogsController(ILogger<LogsController> logger)
     /// <param name="timeRange">时间范围过滤："today"表示当天，或正整数表示最近几天</param>
     /// <returns>按时间分布的日志数据</returns>
     [HttpGet("distribution")]
-    public async Task<IActionResult> GetLogDistribution(string? timeRange = "today")
+    public async Task<ActionResult<ApiResponse<List<LogDistribution>>>> GetLogDistribution(string? timeRange = "today")
     {
         try
         {
@@ -415,12 +417,12 @@ public class LogsController(ILogger<LogsController> logger)
                 }
             }
 
-            return Ok(distributions);
+            return Ok(ApiResponse<List<LogDistribution>>.Success(distributions, "获取日志分布数据成功"));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "获取日志分布数据时发生错误，时间范围：{TimeRange}", timeRange ?? "null");
-            return StatusCode(500, new { Error = "获取日志分布数据时发生错误", Details = ex.Message });
+            return Ok(ApiResponse<List<LogDistribution>>.Fail(ErrorCode.InternalServerError, $"获取日志分布数据时发生错误: {ex.Message}"));
         }
     }
 }
