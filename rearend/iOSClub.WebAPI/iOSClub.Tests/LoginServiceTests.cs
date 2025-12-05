@@ -171,4 +171,140 @@ public class LoginServiceTests
         // Assert
         Assert.False(result);
     }
+
+    [Fact]
+    public async Task Login_StudentLogin_ReturnsToken()
+    {
+        // Arrange
+        var loginModel = new LoginModel { UserId = "20123456", Password = "password123" };
+        var student = new StudentModel { UserId = loginModel.UserId, UserName = "Test Student", PasswordHash = DataTool.StringToHash(loginModel.Password) };
+        var token = "mock-jwt-token";
+
+        _studentRepoMock.Setup(s => s.Login(loginModel.UserId, loginModel.Password)).ReturnsAsync(true);
+        _studentRepoMock.Setup(s => s.GetByIdAsync(loginModel.UserId)).ReturnsAsync(student);
+        _staffRepoMock.Setup(s => s.GetStaffByIdWithoutOtherData(loginModel.UserId)).ReturnsAsync((StaffModel?)null);
+        _tokenGeneratorMock.Setup(t => t.GetMemberToken(It.IsAny<MemberModel>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>())).Returns(token);
+        _redisDbMock.Setup(r => r.StringGetAsync(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>())).ReturnsAsync(RedisValue.Null);
+
+        // Act
+        var result = await _loginService.Login(loginModel);
+
+        // Assert
+        Assert.Equal(token, result);
+        _tokenGeneratorMock.Verify(t => t.GetMemberToken(It.IsAny<MemberModel>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task Login_RedisAlreadyHasToken_ReturnsExistingToken()
+    {
+        // Arrange
+        var loginModel = new LoginModel { UserId = "1234567890", Password = "password123" };
+        var existingToken = "existing-jwt-token";
+        var student = new StudentModel { UserId = loginModel.UserId, UserName = "Test Student" };
+
+        _studentRepoMock.Setup(s => s.Login(loginModel.UserId, loginModel.Password)).ReturnsAsync(true);
+        _studentRepoMock.Setup(s => s.GetByIdAsync(loginModel.UserId)).ReturnsAsync(student);
+        _staffRepoMock.Setup(s => s.GetStaffByIdWithoutOtherData(loginModel.UserId)).ReturnsAsync((StaffModel?)null);
+        _redisDbMock.Setup(r => r.StringGetAsync($"token:{loginModel.UserId}", It.IsAny<CommandFlags>())).ReturnsAsync(existingToken);
+
+        // Act
+        var result = await _loginService.Login(loginModel);
+
+        // Assert
+        Assert.Equal(existingToken, result);
+        _tokenGeneratorMock.Verify(t => t.GetMemberToken(It.IsAny<MemberModel>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ValidateToken_TokenNotInRedis_ReturnsFalse()
+    {
+        // Arrange
+        var userId = "1234567890";
+        var token = "valid-token";
+
+        _redisDbMock.Setup(r => r.StringGetAsync(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>())).ReturnsAsync(RedisValue.Null);
+
+        // Act
+        var result = await _loginService.ValidateToken(userId, token);
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task Logout_ReturnsTrue()
+    {
+        // Arrange
+        var userId = "1234567890";
+
+        _redisDbMock.Setup(r => r.KeyDeleteAsync(It.IsAny<RedisKey[]>(), It.IsAny<CommandFlags>())).ReturnsAsync(2L);
+
+        // Act
+        var result = await _loginService.Logout(userId);
+
+        // Assert
+        Assert.True(result);
+        _redisDbMock.Verify(r => r.KeyDeleteAsync(It.IsAny<RedisKey[]>(), It.IsAny<CommandFlags>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task Login_EmptyUserId_ReturnsEmptyString()
+    {
+        // Arrange
+        var loginModel = new LoginModel { UserId = "", Password = "password123" };
+
+        // Act
+        var result = await _loginService.Login(loginModel);
+
+        // Assert
+        Assert.Equal("", result);
+    }
+
+    [Fact]
+    public async Task Login_EmptyPassword_ReturnsEmptyString()
+    {
+        // Arrange
+        var loginModel = new LoginModel { UserId = "1234567890", Password = "" };
+
+        // Act
+        var result = await _loginService.Login(loginModel);
+
+        // Assert
+        Assert.Equal("", result);
+    }
+
+    [Fact]
+    public async Task ChangePassword_EmptyNewPassword_ReturnsFalse()
+    {
+        // Arrange
+        var userId = "1234567890";
+        var oldPassword = "oldpass";
+        var newPassword = "";
+
+        _studentRepoMock.Setup(s => s.Login(userId, oldPassword)).ReturnsAsync(true);
+        _studentRepoMock.Setup(s => s.GetByIdAsync(userId)).ReturnsAsync(new StudentModel { UserId = userId });
+
+        // Act
+        var result = await _loginService.ChangePassword(userId, oldPassword, newPassword);
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task ChangePassword_SameAsOldPassword_ReturnsFalse()
+    {
+        // Arrange
+        var userId = "1234567890";
+        var password = "samepass";
+
+        _studentRepoMock.Setup(s => s.Login(userId, password)).ReturnsAsync(true);
+        _studentRepoMock.Setup(s => s.GetByIdAsync(userId)).ReturnsAsync(new StudentModel { UserId = userId, PasswordHash = DataTool.StringToHash(password) });
+
+        // Act
+        var result = await _loginService.ChangePassword(userId, password, password);
+
+        // Assert
+        Assert.False(result);
+    }
 }

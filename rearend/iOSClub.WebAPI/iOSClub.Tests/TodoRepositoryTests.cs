@@ -22,16 +22,26 @@ public class TodoRepositoryTests
         _context = new ClubContext(options);
         _repository = new TodoRepository(_context);
 
-        // 清理数据
+        // 同步清理数据
         _context.Todos.RemoveRange(_context.Todos);
         _context.Students.RemoveRange(_context.Students);
-        _context.SaveChangesAsync().Wait();
+        _context.SaveChanges();
     }
 
     [Fact]
     public async Task GetTodosByUserIdAsync_ReturnsUserTodos()
     {
         // Arrange
+        // 先创建并保存Student实例，确保唯一性
+        var student1 = new StudentModel
+            { UserId = _testUserId, UserName = "Test Student 1", Academy = "Computer", Gender = "男" };
+        var student2 = new StudentModel
+            { UserId = _testUserId2, UserName = "Test Student 2", Academy = "Information", Gender = "女" };
+
+        await _context.Students.AddRangeAsync(student1, student2);
+        await _context.SaveChangesAsync();
+
+        // 创建Todo实例，关联到已存在的Student
         var todo1 = new TodoModel
         {
             Id = "todo-1",
@@ -39,9 +49,11 @@ public class TodoRepositoryTests
             Title = "Test Todo 1",
             Description = "Description 1",
             Status = false,
-            CreatedTime = DateTime.Now,
-            Student = null
+            CreatedTime = DateTime.Now
         };
+
+        // 设置Student属性为已存在的Student实例，避免自动创建新实例
+        todo1.Student = student1;
 
         var todo2 = new TodoModel
         {
@@ -50,9 +62,9 @@ public class TodoRepositoryTests
             Title = "Test Todo 2",
             Description = "Description 2",
             Status = true,
-            CreatedTime = DateTime.Now,
-            Student = null
+            CreatedTime = DateTime.Now
         };
+        todo2.Student = student1;
 
         var todo3 = new TodoModel
         {
@@ -61,9 +73,9 @@ public class TodoRepositoryTests
             Title = "Other User Todo",
             Description = "Other Description",
             Status = false,
-            CreatedTime = DateTime.Now,
-            Student = null
+            CreatedTime = DateTime.Now
         };
+        todo3.Student = student2;
 
         await _context.Todos.AddRangeAsync(todo1, todo2, todo3);
         await _context.SaveChangesAsync();
@@ -90,8 +102,7 @@ public class TodoRepositoryTests
             Title = "Test Todo",
             Description = "Description",
             Status = false,
-            CreatedTime = DateTime.Now,
-            Student = null
+            CreatedTime = DateTime.Now
         };
 
         await _context.Todos.AddAsync(todo);
@@ -127,8 +138,7 @@ public class TodoRepositoryTests
             Title = "Test Todo",
             Description = "Description",
             Status = false,
-            CreatedTime = DateTime.Now,
-            Student = null
+            CreatedTime = DateTime.Now
         };
 
         // Act
@@ -150,8 +160,7 @@ public class TodoRepositoryTests
             Title = "Test Todo",
             Description = "Description",
             Status = false,
-            CreatedTime = DateTime.Now,
-            Student = null
+            CreatedTime = DateTime.Now
         };
 
         await _context.Todos.AddAsync(todo);
@@ -165,7 +174,6 @@ public class TodoRepositoryTests
             Description = "Updated Description",
             Status = true,
             CreatedTime = todo.CreatedTime,
-            Student = null
         };
 
         // Act
@@ -273,6 +281,12 @@ public class TodoRepositoryTests
     public async Task HasPermissionAsync_Owner_ReturnsTrue()
     {
         // Arrange
+        // 先创建并保存Student实例
+        var student = new StudentModel { UserId = _testUserId, UserName = "Test Student", Academy = "Computer", Gender = "男" };
+        await _context.Students.AddAsync(student);
+        await _context.SaveChangesAsync();
+        
+        // 创建Todo实例，关联到已存在的Student
         var todo = new TodoModel
         {
             Id = "todo-1",
@@ -280,9 +294,9 @@ public class TodoRepositoryTests
             Title = "Test Todo",
             Description = "Description",
             Status = false,
-            CreatedTime = DateTime.Now,
-            Student = null
+            CreatedTime = DateTime.Now
         };
+        todo.Student = student;
 
         await _context.Todos.AddAsync(todo);
         await _context.SaveChangesAsync();
@@ -305,8 +319,7 @@ public class TodoRepositoryTests
             Title = "Test Todo",
             Description = "Description",
             Status = false,
-            CreatedTime = DateTime.Now,
-            Student = null
+            CreatedTime = DateTime.Now
         };
 
         await _context.Todos.AddAsync(todo);
@@ -323,6 +336,13 @@ public class TodoRepositoryTests
     public async Task GetTodoCountAsync_ReturnsCorrectCount()
     {
         // Arrange
+        // 先创建并保存Student实例
+        var student1 = new StudentModel { UserId = _testUserId, UserName = "Test Student 1", Academy = "Computer", Gender = "男" };
+        var student2 = new StudentModel { UserId = _testUserId2, UserName = "Test Student 2", Academy = "Information", Gender = "女" };
+        await _context.Students.AddRangeAsync(student1, student2);
+        await _context.SaveChangesAsync();
+        
+        // 创建Todo实例，关联到已存在的Student
         var todos = new List<TodoModel>
         {
             new TodoModel
@@ -332,8 +352,7 @@ public class TodoRepositoryTests
                 Title = "Test Todo 1",
                 Description = "Description 1",
                 Status = false,
-                CreatedTime = DateTime.Now,
-                Student = null
+                CreatedTime = DateTime.Now
             },
             new TodoModel
             {
@@ -342,8 +361,7 @@ public class TodoRepositoryTests
                 Title = "Test Todo 2",
                 Description = "Description 2",
                 Status = true,
-                CreatedTime = DateTime.Now,
-                Student = null
+                CreatedTime = DateTime.Now
             },
             new TodoModel
             {
@@ -352,10 +370,14 @@ public class TodoRepositoryTests
                 Title = "Other User Todo",
                 Description = "Other Description",
                 Status = false,
-                CreatedTime = DateTime.Now,
-                Student = null
+                CreatedTime = DateTime.Now
             }
         };
+        
+        // 关联每个Todo到对应的Student实例
+        todos[0].Student = student1;
+        todos[1].Student = student1;
+        todos[2].Student = student2;
 
         await _context.Todos.AddRangeAsync(todos);
         await _context.SaveChangesAsync();
@@ -371,6 +393,12 @@ public class TodoRepositoryTests
     public async Task GetCompletedTodoCountAsync_ReturnsCorrectCount()
     {
         // Arrange
+        // 先创建并保存Student实例
+        var student = new StudentModel { UserId = _testUserId, UserName = "Test Student", Academy = "Computer", Gender = "男" };
+        await _context.Students.AddAsync(student);
+        await _context.SaveChangesAsync();
+        
+        // 创建Todo实例，关联到已存在的Student
         var todos = new List<TodoModel>
         {
             new TodoModel
@@ -380,8 +408,7 @@ public class TodoRepositoryTests
                 Title = "Test Todo 1",
                 Description = "Description 1",
                 Status = false,
-                CreatedTime = DateTime.Now,
-                Student = null
+                CreatedTime = DateTime.Now
             },
             new TodoModel
             {
@@ -390,8 +417,7 @@ public class TodoRepositoryTests
                 Title = "Test Todo 2",
                 Description = "Description 2",
                 Status = true,
-                CreatedTime = DateTime.Now,
-                Student = null
+                CreatedTime = DateTime.Now
             },
             new TodoModel
             {
@@ -400,10 +426,15 @@ public class TodoRepositoryTests
                 Title = "Test Todo 3",
                 Description = "Description 3",
                 Status = true,
-                CreatedTime = DateTime.Now,
-                Student = null
+                CreatedTime = DateTime.Now
             }
         };
+        
+        // 关联每个Todo到同一个Student实例
+        foreach (var todo in todos)
+        {
+            todo.Student = student;
+        }
 
         await _context.Todos.AddRangeAsync(todos);
         await _context.SaveChangesAsync();
@@ -419,19 +450,26 @@ public class TodoRepositoryTests
     public async Task GetTodosPagedAsync_ReturnsCorrectPage()
     {
         // Arrange
+        // 先创建并保存Student实例
+        var student = new StudentModel { UserId = _testUserId, UserName = "Test Student", Academy = "Computer", Gender = "男" };
+        await _context.Students.AddAsync(student);
+        await _context.SaveChangesAsync();
+        
+        // 创建Todo实例，关联到已存在的Student
         var todos = new List<TodoModel>();
         for (int i = 1; i <= 15; i++)
         {
-            todos.Add(new TodoModel
+            var todo = new TodoModel
             {
                 Id = $"todo-{i}",
                 StudentId = _testUserId,
                 Title = $"Test Todo {i}",
                 Description = $"Description {i}",
                 Status = i % 2 == 0,
-                CreatedTime = DateTime.Now.AddMinutes(-i),
-                Student = null
-            });
+                CreatedTime = DateTime.Now.AddMinutes(-i)
+            };
+            todo.Student = student;
+            todos.Add(todo);
         }
 
         await _context.Todos.AddRangeAsync(todos);
