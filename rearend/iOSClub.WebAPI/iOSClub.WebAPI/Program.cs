@@ -251,7 +251,7 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine("No pending migrations.");
     }
 
-    if (!context.Staffs.Any())
+    if (!await context.Staffs.AnyAsync())
     {
         var user = Environment.GetEnvironmentVariable("USER", EnvironmentVariableTarget.Process);
         Console.WriteLine(user);
@@ -277,7 +277,7 @@ using (var scope = app.Services.CreateScope())
     //     }
     // }
     
-    if (context.Categories.Any())
+    if (await context.Categories.AnyAsync())
     {
         var categories = await context.Categories.Where(x => string.IsNullOrEmpty(x.Id)).ToListAsync();
         context.Categories.RemoveRange(categories);

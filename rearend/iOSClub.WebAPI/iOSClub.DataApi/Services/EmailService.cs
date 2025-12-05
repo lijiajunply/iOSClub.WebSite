@@ -1,6 +1,7 @@
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using MimeKit;
 
 namespace iOSClub.DataApi.Services;
@@ -18,10 +19,12 @@ public interface IEmailService
     Task<bool> SendEmailAsync(string to, string subject, string body, bool isHtml = false);
 }
 
-public class EmailService(IConfiguration configuration) : IEmailService
+public class EmailService(IConfiguration configuration, ILogger<EmailService> logger) : IEmailService
 {
     public async Task<bool> SendEmailAsync(string to, string subject, string body, bool isHtml = false)
     {
+        logger.LogInformation("开始发送邮件，收件人: {To}, 主题: {Subject}", to, subject);
+
         var smtpServer = Environment.GetEnvironmentVariable("SMTP", EnvironmentVariableTarget.Process);
         var port = 0;
         var portStr = Environment.GetEnvironmentVariable("EMAIL_POST", EnvironmentVariableTarget.Process);
@@ -46,7 +49,7 @@ public class EmailService(IConfiguration configuration) : IEmailService
             {
                 int.TryParse(configPortStr, out port);
             }
-            
+
             // 如果解析失败或配置未设置，使用默认端口587
             if (port == 0)
             {
@@ -75,6 +78,7 @@ public class EmailService(IConfiguration configuration) : IEmailService
             string.IsNullOrEmpty(password) ||
             string.IsNullOrEmpty(fromAddress))
         {
+            logger.LogError("邮件发送失败: 必要的SMTP配置缺失");
             return false;
         }
 
@@ -107,16 +111,23 @@ public class EmailService(IConfiguration configuration) : IEmailService
                 _ => SecureSocketOptions.Auto
             };
 
+            logger.LogDebug("连接到SMTP服务器: {SmtpServer}, 端口: {Port}, 安全选项: {SecureSocketOptions}", smtpServer, port,
+                secureSocketOptions);
             await client.ConnectAsync(smtpServer, port, secureSocketOptions);
+
+            logger.LogDebug("SMTP服务器连接成功，开始认证");
             await client.AuthenticateAsync(fromAddress, password);
 
+            logger.LogDebug("SMTP认证成功，开始发送邮件");
             await client.SendAsync(message);
             await client.DisconnectAsync(true);
 
+            logger.LogInformation("邮件发送成功，收件人: {To}, 主题: {Subject}", to, subject);
             return true;
         }
-        catch
+        catch (Exception ex)
         {
+            logger.LogError(ex, "邮件发送失败，收件人: {To}, 主题: {Subject}", to, subject);
             return false;
         }
     }
