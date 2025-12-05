@@ -33,16 +33,16 @@ const events = ref<EventItem[]>([
     bgGradient: 'from-orange-500/10 via-red-500/5 to-transparent'
   },
   {
-    title: '夜校 Training',
-    content: '携手业界专业讲师，开启硬核夜校。从 Swift 编程到 UI 设计，带你打破信息差，掌握最前沿的开发知识。',
-    url: '/Article/Class',
+    title: 'Today at iOS Club',
+    content: '超越课堂，开启沙龙。从基础学习到项目开发，在分享与讨论中带你打破信息差，掌握最前沿的开发知识。',
+    url: '/Article/TodayAtiOSClub',
     icon: 'heroicons:academic-cap',
     bgGradient: 'from-green-500/10 via-teal-500/5 to-transparent'
   },
   {
-    title: '校园游园会',
-    content: '不仅仅是代码。漫步校园，在游园会中打卡互动。连接彼此，畅享属于开发者的欢乐时光与创意碰撞。',
-    url: '/Article/Party',
+    title: 'Time to Code',
+    content: '不仅仅是学习，用技术治理新世界。同时连接彼此，畅享属于开发者的欢乐时光与创意碰撞。',
+    url: '/Article/TimeToCode',
     icon: 'heroicons:ticket',
     bgGradient: 'from-pink-500/10 via-rose-500/5 to-transparent'
   }
