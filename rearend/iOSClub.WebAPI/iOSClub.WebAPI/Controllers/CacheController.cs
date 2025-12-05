@@ -21,22 +21,32 @@ public class CacheController(
             // 获取Redis服务器实例
             var server = redis.GetServer(redis.GetEndPoints().First());
 
+            // 定义本项目使用的缓存键前缀
+            var projectKeyPrefixes = new[]
+            {
+                "token:",
+                "refresh:",
+                "user:",
+                "oauth:auth:",
+                "blacklist:refresh:"
+            };
+
             // 查找所有键
             var keys = server.Keys(pattern: "*", pageSize: 1000);
 
-            // 转换为数组
-            var keyArray = keys.ToArray();
+            // 过滤出本项目生成的缓存项
+            var projectKeys = keys.Where(key => projectKeyPrefixes.Any(prefix => key.ToString().StartsWith(prefix))).ToArray();
             var builder = new StringBuilder();
-            foreach (var key in keyArray)
+            foreach (var key in projectKeys)
             {
                 builder.AppendLine(key);
             }
 
-            // 删除所有键并获取删除的数量
+            // 删除所有本项目的缓存项并获取删除的数量
             long deletedCount = 0;
-            if (keyArray.Length > 0)
+            if (projectKeys.Length > 0)
             {
-                deletedCount = await _db.KeyDeleteAsync(keyArray);
+                deletedCount = await _db.KeyDeleteAsync(projectKeys);
             }
 
             var message = $"缓存已清除，共清理了 {deletedCount} 个缓存项 \n\r 清理的缓存项列表：\n\r {builder}";

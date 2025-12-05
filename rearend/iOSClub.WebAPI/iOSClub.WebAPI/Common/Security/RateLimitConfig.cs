@@ -132,12 +132,13 @@ public class RateLimitConfig
 /// <summary>
 /// 速率限制状态
 /// </summary>
+[Serializable]
 public class RateLimitState
 {
     /// <summary>
     /// 当前系统负载
     /// </summary>
-    public double CurrentSystemLoad { get; set; } = 0;
+    public double CurrentSystemLoad { get; set; }
 
     /// <summary>
     /// 最后调整时间
@@ -147,7 +148,7 @@ public class RateLimitState
     /// <summary>
     /// 当前激活的策略
     /// </summary>
-    public Dictionary<string, RateLimitPolicy> ActivePolicies { get; set; } = new Dictionary<string, RateLimitPolicy>();
+    public Dictionary<string, RateLimitPolicy> ActivePolicies { get; set; } = new();
 }
 
 /// <summary>
@@ -159,8 +160,7 @@ public class RateLimitService
     private readonly RateLimitState _state;
     private readonly ILogger<RateLimitService> _logger;
 
-    private readonly Dictionary<string, TokenBucketRateLimiter> _limiters =
-        new Dictionary<string, TokenBucketRateLimiter>();
+    private readonly Dictionary<string, TokenBucketRateLimiter> _limiters = new();
 
     public RateLimitService(RateLimitConfig config, ILogger<RateLimitService> logger)
     {
@@ -274,14 +274,14 @@ public class RateLimitService
             var currentLoad = GetCurrentSystemLoad();
             _state.CurrentSystemLoad = currentLoad;
 
-            _logger.LogInformation("动态调整限流阈值，当前系统负载: {CurrentLoad:P2}", currentLoad);
+            if (_logger.IsEnabled(LogLevel.Information))
+            {
+                _logger.LogInformation("动态调整限流阈值，当前系统负载: {CurrentLoad:P2}", currentLoad);
+            }
 
             // 根据系统负载调整限流阈值
-            foreach (var policy in _config.Policies)
+            foreach (var policy in _config.Policies.Where(policy => policy.Enabled))
             {
-                if (!policy.Enabled)
-                    continue;
-                    
                 // 检查策略名称是否有效
                 if (string.IsNullOrEmpty(policy.Name))
                 {
@@ -315,8 +315,10 @@ public class RateLimitService
 
                 _limiters[policy.Name] = newLimiter;
                 _state.ActivePolicies[policy.Name] = policy;
-
-                _logger.LogInformation("更新策略 {PolicyName} 的限流阈值为 {NewTokenLimit}", policy.Name, newTokenLimit);
+                if (_logger.IsEnabled(LogLevel.Information))
+                {
+                    _logger.LogInformation("更新策略 {PolicyName} 的限流阈值为 {NewTokenLimit}", policy.Name, newTokenLimit);
+                }
             }
 
             // 更新最后调整时间
@@ -334,13 +336,46 @@ public class RateLimitService
     /// <returns>系统负载（0-1之间）</returns>
     private double GetCurrentSystemLoad()
     {
-        // 实际项目中可以使用以下方式获取系统负载：
-        // 1. 对于Windows，可以使用PerformanceCounter
-        // 2. 对于Linux，可以读取/proc/loadavg
-        // 3. 可以从监控系统获取
-        // 这里使用随机值模拟
-        var random = new Random();
-        return random.NextDouble() * 0.5; // 生成0-0.5之间的随机负载
+        try
+        {
+#if WINDOWS
+            // 对于Windows，可以使用PerformanceCounter
+            using var cpuCounter = new System.Diagnostics.PerformanceCounter("Processor", "% Processor Time", "_Total");
+            cpuCounter.NextValue(); // First call always returns 0, so we ignore it
+            System.Threading.Thread.Sleep(100); // Wait a bit before taking the actual measurement
+            return cpuCounter.NextValue() / 100.0; // Convert percentage to ratio
+#elif LINUX
+            // 对于Linux，可以读取/proc/loadavg
+            if (System.IO.File.Exists("/proc/loadavg"))
+            {
+                var loadAvgContent = System.IO.File.ReadAllText("/proc/loadavg");
+                var parts = loadAvgContent.Split(' ');
+                if (parts.Length > 0 && double.TryParse(parts[0], out var loadAvg))
+                {
+                    // Load average is relative to the number of CPU cores
+                    var cpuCount = Environment.ProcessorCount;
+                    return Math.Min(loadAvg / cpuCount, 1.0); // Normalize and cap at 1.0
+                }
+            }
+#endif
+            // 可以从监控系统获取
+            // Fallback to a rough estimation based on current process
+            var process = System.Diagnostics.Process.GetCurrentProcess();
+            var startTime = process.StartTime;
+            var currentTime = DateTime.Now;
+            var totalTime = process.TotalProcessorTime;
+            var elapsedTime = currentTime - startTime;
+            
+            // Calculate CPU usage percentage
+            var cpuUsage = (totalTime.TotalMilliseconds / elapsedTime.TotalMilliseconds) / Environment.ProcessorCount;
+            return Math.Max(0.0, Math.Min(1.0, cpuUsage)); // Ensure value is between 0 and 1
+        }
+        catch
+        {
+            // If any error occurs, fall back to random value to avoid service disruption
+            var random = new Random();
+            return random.NextDouble() * 0.5; // Generate 0-0.5 between random load
+        }
     }
 
     /// <summary>
@@ -356,6 +391,9 @@ public class RateLimitService
         // 2. 记录到Redis用于实时监控
         // 3. 用于异常请求检测
 
-        _logger.LogDebug("请求统计: IP={ClientIp}, Path={Path}, Allowed={IsAllowed}", clientIp, path, isAllowed);
+        if (_logger.IsEnabled(LogLevel.Debug))
+        {
+            _logger.LogDebug("请求统计: IP={ClientIp}, Path={Path}, Allowed={IsAllowed}", clientIp, path, isAllowed);
+        }
     }
 }
