@@ -141,6 +141,12 @@ public class JwtService(
             logger.LogInformation("访问令牌验证成功");
             return (true, claimsPrincipal.Claims);
         }
+        catch (SecurityTokenExpiredException)
+        {
+            logger.LogError("访问令牌已过期");
+            // 重新抛出令牌过期异常，让中间件捕获处理
+            throw;
+        }
         catch (Exception ex)
         {
             logger.LogError(ex, "访问令牌验证失败");

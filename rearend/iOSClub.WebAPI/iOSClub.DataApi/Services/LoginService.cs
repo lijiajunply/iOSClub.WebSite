@@ -9,7 +9,8 @@ namespace iOSClub.DataApi.Services;
 
 public interface ITokenGenerator
 {
-    public (string AccessToken, string RefreshToken) GetMemberToken(MemberModel model, bool rememberMe = false, string scope = "", string clientId = "");
+    public (string AccessToken, string RefreshToken) GetMemberToken(MemberModel model, bool rememberMe = false,
+        string scope = "", string clientId = "");
 }
 
 public interface ILoginService
@@ -95,7 +96,7 @@ public interface ILoginService
     /// <param name="scope">权限范围</param>
     /// <returns>新的访问令牌</returns>
     public Task<string> RefreshToken(string userId, string refreshToken, string clientId = "", string scope = "");
-    
+
     /// <summary>
     /// 获取刷新令牌
     /// </summary>
@@ -172,17 +173,17 @@ public class LoginService(
 
         // 生成访问令牌和刷新令牌
         var (accessToken, refreshToken) = tokenGenerator.GetMemberToken(memberModel, model.RememberMe, scope, clientId);
-        
+
         // 将访问令牌存储到Redis中（可选，因为JWT本身包含过期时间）
         await _db.StringSetAsync(redisKey, accessToken, TimeSpan.FromMinutes(20 * (model.RememberMe ? 24 : 1)));
-        
+
         // 将刷新令牌存储到Redis中，设置过期时间
         var refreshTokenKey = $"{RefreshTokenPrefix}{model.UserId}{s}";
         await _db.StringSetAsync(
             refreshTokenKey,
             refreshToken,
             TimeSpan.FromHours(RefreshTokenExpiryHours));
-        
+
         // 存储用户信息，便于后续验证
         var userInfoKey = $"user:{model.UserId}{s}";
         await _db.StringSetAsync(userInfoKey, JsonSerializer.Serialize(memberModel),
@@ -263,7 +264,7 @@ public class LoginService(
         try
         {
             _logger.LogInformation("用户登出，开始清理令牌，用户ID：{UserId}", userId);
-            
+
             var s = "";
 
             if (!string.IsNullOrEmpty(clientId))
@@ -277,11 +278,11 @@ public class LoginService(
 
             // 同时删除用户信息、访问令牌和刷新令牌
             await _db.KeyDeleteAsync([
-                $"user:{userId}{s}", 
+                $"user:{userId}{s}",
                 $"{TokenPrefix}{userId}{s}",
                 $"{RefreshTokenPrefix}{userId}{s}"
             ]);
-            
+
             _logger.LogInformation("用户登出，令牌清理成功，用户ID：{UserId}", userId);
             return true;
         }
@@ -309,7 +310,7 @@ public class LoginService(
         var storedToken = await _db.StringGetAsync($"{TokenPrefix}{userId}{s}");
         return storedToken.HasValue && !string.IsNullOrEmpty(storedToken) ? storedToken.ToString() : "";
     }
-    
+
     /// <summary>
     /// 使用刷新令牌生成新的访问令牌
     /// </summary>
@@ -323,7 +324,7 @@ public class LoginService(
         try
         {
             _logger.LogInformation("开始使用刷新令牌生成新的访问令牌，用户ID：{UserId}", userId);
-            
+
             var s = "";
 
             if (!string.IsNullOrEmpty(clientId))
@@ -334,19 +335,21 @@ public class LoginService(
                     _logger.LogWarning("无效的客户端ID，无法使用刷新令牌，用户ID：{UserId}", userId);
                     return "";
                 }
+
                 s = $"client_id:{clientId}";
             }
-            
+
             // 验证刷新令牌是否有效
             var refreshTokenKey = $"{RefreshTokenPrefix}{userId}{s}";
             var storedRefreshToken = await _db.StringGetAsync(refreshTokenKey);
-            
-            if (!storedRefreshToken.HasValue || string.IsNullOrEmpty(storedRefreshToken) || storedRefreshToken != refreshToken)
+
+            if (!storedRefreshToken.HasValue || string.IsNullOrEmpty(storedRefreshToken) ||
+                storedRefreshToken != refreshToken)
             {
                 _logger.LogWarning("无效的刷新令牌，用户ID：{UserId}", userId);
                 return "";
             }
-            
+
             // 检查刷新令牌是否在黑名单中
             var isBlacklisted = await IsRefreshTokenBlacklisted(refreshToken);
             if (isBlacklisted)
@@ -354,7 +357,7 @@ public class LoginService(
                 _logger.LogWarning("刷新令牌已被列入黑名单，用户ID：{UserId}", userId);
                 return "";
             }
-            
+
             // 获取用户信息
             var userInfoKey = $"user:{userId}{s}";
             var userInfoJson = await _db.StringGetAsync(userInfoKey);
@@ -363,24 +366,30 @@ public class LoginService(
                 _logger.LogWarning("无法获取用户信息，用户ID：{UserId}", userId);
                 return "";
             }
-            
+
             var memberModel = JsonSerializer.Deserialize<MemberModel>(userInfoJson.ToString());
             if (memberModel == null)
             {
                 _logger.LogWarning("无法解析用户信息，用户ID：{UserId}", userId);
                 return "";
             }
-            
+
             // 生成新的访问令牌和刷新令牌
-            var (newAccessToken, newRefreshToken) = tokenGenerator.GetMemberToken(memberModel, scope: scope, clientId: clientId);
-            
+            var (newAccessToken, newRefreshToken) =
+                tokenGenerator.GetMemberToken(memberModel, scope: scope, clientId: clientId);
+
             // 更新Redis中的令牌信息
             await _db.StringSetAsync($"{TokenPrefix}{userId}{s}", newAccessToken, TimeSpan.FromMinutes(20));
             await _db.StringSetAsync(refreshTokenKey, newRefreshToken, TimeSpan.FromHours(RefreshTokenExpiryHours));
-            
+
             // 将旧的刷新令牌加入黑名单
-            await AddRefreshTokenToBlacklist(refreshToken);
-            
+            var isAdded = await AddRefreshTokenToBlacklist(refreshToken);
+
+            if (!isAdded)
+            {
+                _logger.LogWarning("将旧的刷新令牌加入黑名单失败，用户ID：{UserId}", userId);
+            }
+
             _logger.LogInformation("使用刷新令牌生成新的访问令牌成功，用户ID：{UserId}", userId);
             return newAccessToken;
         }
@@ -390,7 +399,7 @@ public class LoginService(
             return "";
         }
     }
-    
+
     /// <summary>
     /// 检查刷新令牌是否在黑名单中
     /// </summary>
@@ -411,7 +420,7 @@ public class LoginService(
             return true;
         }
     }
-    
+
     /// <summary>
     /// 将刷新令牌加入黑名单
     /// </summary>
@@ -432,7 +441,7 @@ public class LoginService(
             return false;
         }
     }
-    
+
     /// <summary>
     /// 获取刷新令牌
     /// </summary>
@@ -444,7 +453,7 @@ public class LoginService(
         try
         {
             _logger.LogInformation("开始获取刷新令牌，用户ID：{UserId}", userId);
-            
+
             var s = "";
 
             if (!string.IsNullOrEmpty(clientId))
@@ -459,13 +468,13 @@ public class LoginService(
             // 从Redis中获取刷新令牌
             var refreshTokenKey = $"{RefreshTokenPrefix}{userId}{s}";
             var storedRefreshToken = await _db.StringGetAsync(refreshTokenKey);
-            
+
             if (!storedRefreshToken.HasValue || string.IsNullOrEmpty(storedRefreshToken))
             {
                 _logger.LogWarning("未找到刷新令牌，用户ID：{UserId}", userId);
                 return "";
             }
-            
+
             _logger.LogInformation("获取刷新令牌成功，用户ID：{UserId}", userId);
             return storedRefreshToken.ToString();
         }
@@ -538,7 +547,8 @@ public class LoginService(
         }
 
         // 生成访问令牌和刷新令牌
-        var (accessToken, refreshToken) = tokenGenerator.GetMemberToken(memberModel, model.RememberMe, scope, clientId: clientId);
+        var (accessToken, refreshToken) =
+            tokenGenerator.GetMemberToken(memberModel, model.RememberMe, scope, clientId: clientId);
 
         // 将访问令牌存储到Redis中（可选，因为JWT本身包含过期时间）
         await _db.StringSetAsync(redisKey, accessToken, TimeSpan.FromHours(2 * (model.RememberMe ? 12 : 1)));

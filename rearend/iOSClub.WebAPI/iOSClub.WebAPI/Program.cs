@@ -3,6 +3,11 @@ using System.Security.Cryptography;
 using FluentValidation.AspNetCore;
 using iOSClub.Data;
 using iOSClub.Data.DataModels;
+using iOSClub.Data.ShowModels;
+using iOSClub.DataApi.CQRS;
+using iOSClub.DataApi.CQRS.Commands;
+using iOSClub.DataApi.CQRS.Handlers;
+using iOSClub.DataApi.CQRS.Queries;
 using iOSClub.DataApi.Repositories;
 using iOSClub.DataApi.Services;
 using iOSClub.WebAPI.Common;
@@ -300,6 +305,21 @@ builder.Services.AddScoped<IDataCentreService, DataCentreService>();
 builder.Services.AddScoped<IClientApplicationRepository, ClientApplicationRepository>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<ILoginService, LoginService>();
+
+// 注册CQRS查询处理器和命令处理器
+builder.Services.AddScoped<StudentQueryHandler>();
+builder.Services.AddScoped<StudentCommandHandler>();
+
+// 注册CQRS处理程序的接口映射
+builder.Services.AddScoped(typeof(IQueryHandler<GetStudentsQuery, List<StudentModel>>), typeof(StudentQueryHandler));
+builder.Services.AddScoped(typeof(IQueryHandler<GetStudentByIdQuery, StudentModel?>), typeof(StudentQueryHandler));
+builder.Services.AddScoped(typeof(IQueryHandler<GetStudentsPagedQuery, (List<MemberModel>, int)>), typeof(StudentQueryHandler));
+
+builder.Services.AddScoped(typeof(ICommandHandler<CreateStudentCommand, StudentModel?>), typeof(StudentCommandHandler));
+builder.Services.AddScoped(typeof(ICommandHandler<UpdateStudentCommand, bool>), typeof(StudentCommandHandler));
+builder.Services.AddScoped(typeof(ICommandHandler<DeleteStudentCommand, bool>), typeof(StudentCommandHandler));
+builder.Services.AddScoped(typeof(ICommandHandler<UpdateManyStudentsCommand, bool>), typeof(StudentCommandHandler));
+builder.Services.AddScoped(typeof(ICommandHandler<StudentLoginCommand, bool>), typeof(StudentCommandHandler));
 
 // 注册数据脱敏配置和服务
 builder.Services.AddSingleton<MaskingConfig>();

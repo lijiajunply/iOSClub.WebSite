@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text.Json;
 using iOSClub.WebAPI.Common.Exceptions;
+using Microsoft.IdentityModel.Tokens;
 
 namespace iOSClub.WebAPI.Common;
 
@@ -151,6 +152,12 @@ public class GlobalExceptionMiddleware
                 response.Code = (int)HttpStatusCode.Unauthorized;
                 response.ErrorCode = ErrorCode.InvalidToken;
                 response.Message = authException.Message;
+                break;
+
+            case SecurityTokenExpiredException tokenExpiredException:
+                response.Code = (int)HttpStatusCode.Unauthorized;
+                response.ErrorCode = ErrorCode.InvalidToken;
+                response.Message = "访问令牌已过期";
                 break;
 
             // 处理验证异常

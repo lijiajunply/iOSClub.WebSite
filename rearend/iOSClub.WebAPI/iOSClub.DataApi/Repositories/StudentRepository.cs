@@ -31,6 +31,18 @@ public interface IStudentRepository
 
 public class StudentRepository(IDbContextFactory<ClubContext> factory) : IStudentRepository
 {
+    // 使用EF Core编译查询，缓存查询计划，提高重复查询性能
+    private static readonly Func<ClubContext, string, Task<StudentModel?>> GetStudentByIdQuery =
+        EF.CompileAsyncQuery((ClubContext context, string id) =>
+            context.Students.AsNoTracking().FirstOrDefault(s => s.UserId == id));
+
+    private static readonly Func<ClubContext, string, string, Task<StudentModel?>> LoginQuery =
+        EF.CompileAsyncQuery((ClubContext context, string userId, string passwordHash) =>
+            context.Students.AsNoTracking()
+                .FirstOrDefault(s => s.UserId == userId && (string.IsNullOrEmpty(s.PasswordHash)
+                    ? passwordHash == s.PhoneNum
+                    : s.PasswordHash == passwordHash)));
+
     public async Task<List<StudentModel>> GetAll()
     {
         await using var context = await factory.CreateDbContextAsync();
@@ -41,8 +53,13 @@ public class StudentRepository(IDbContextFactory<ClubContext> factory) : IStuden
     public async Task<StudentModel?> Get(string id)
     {
         await using var context = await factory.CreateDbContextAsync();
-        var stu = await context.Students.AsNoTracking().FirstOrDefaultAsync(x => x.UserId == id);
-        return stu;
+        return await GetStudentByIdQuery(context, id);
+    }
+
+    public async Task<StudentModel?> GetByIdAsync(string id)
+    {
+        await using var context = await factory.CreateDbContextAsync();
+        return await GetStudentByIdQuery(context, id);
     }
 
     public async Task<bool> Update(StudentModel model)
@@ -78,18 +95,12 @@ public class StudentRepository(IDbContextFactory<ClubContext> factory) : IStuden
         await using var context = await factory.CreateDbContextAsync();
         var hash = DataTool.StringToHash(password);
 
-        return await context.Students.AnyAsync(x =>
-            x.UserId == userId && (string.IsNullOrEmpty(x.PasswordHash)
-                ? password == x.PhoneNum
-                : hash == x.PasswordHash));
+        // 使用编译查询提高性能
+        var student = await LoginQuery(context, userId, hash);
+        return student != null;
     }
 
-    // 新增方法实现
-    public async Task<StudentModel?> GetByIdAsync(string id)
-    {
-        await using var context = await factory.CreateDbContextAsync();
-        return await context.Students.AsNoTracking().FirstOrDefaultAsync(x => x.UserId == id);
-    }
+
 
     public async Task<bool> UpdateAsync(StudentModel model)
     {
@@ -125,20 +136,47 @@ public class StudentRepository(IDbContextFactory<ClubContext> factory) : IStuden
             .Select(s => s.UserId)
             .ToHashSetAsync();
 
-        // 过滤出只需要添加的学生
-        var newStudents = list
+        // 标准化所有学生数据
+        var standardizedStudents = list.Select(model => model.Standardization()).ToList();
+
+        // 分离需要插入和更新的学生
+        var newStudents = standardizedStudents
             .Where(model => !existingStudentIds.Contains(model.UserId))
-            .Select(model => model.Standardization())
             .ToList();
+
+        var existingStudents = standardizedStudents
+            .Where(model => existingStudentIds.Contains(model.UserId))
+            .ToList();
+
+        // 批量操作：使用EF Core 7.0+的高效批量处理
+        var changes = false;
 
         // 批量添加新学生
         if (newStudents.Count > 0)
         {
             await context.Students.AddRangeAsync(newStudents);
-            return await context.SaveChangesAsync() > 0;
+            changes = true;
         }
 
-        return true;
+        // 批量更新现有学生：使用ExecuteUpdateAsync进行高效的批量更新
+        if (existingStudents.Count > 0)
+        {
+            // 对于EF Core 7.0+，可以使用ExecuteUpdateAsync进行批量更新
+            // 这里为每个学生单独更新，因为需要调用Update方法处理复杂的更新逻辑
+            // 在实际应用中，可以根据具体情况选择更高效的批量更新方式
+            foreach (var student in existingStudents)
+            {
+                var existingStudent = await context.Students.FirstOrDefaultAsync(s => s.UserId == student.UserId);
+                if (existingStudent != null)
+                {
+                    existingStudent.Update(student);
+                    changes = true;
+                }
+            }
+        }
+
+        // 只有在有变化时才调用SaveChangesAsync，减少数据库调用
+        return changes ? await context.SaveChangesAsync() > 0 : true;
     }
 
     public async Task<List<MemberModel>> GetAllMembersAsync()

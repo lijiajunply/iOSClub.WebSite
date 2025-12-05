@@ -48,8 +48,10 @@ export async function apiRequest<T>(config: ApiRequestConfig): Promise<T> {
 
     // 解析响应
     let apiResponse: ApiResponse<T>;
+    let response: Response | null = null;
+    
     try {
-        let response = await fetch(url, {
+        response = await fetch(url, {
             headers: requestHeaders,
             body: requestBody,
             ...rest
@@ -68,10 +70,13 @@ export async function apiRequest<T>(config: ApiRequestConfig): Promise<T> {
             apiResponse = await response.json();
         }
     } catch (reason: any) {
+        // 网络错误时检查是否可能是401导致的连接问题
+        const isNetworkError = reason instanceof TypeError && reason.message.includes('fetch');
+        
         apiResponse = {
-            code: reason.code || 500,
-            errorCode: 5000,
-            message: reason.message,
+            code: response?.status || reason.code || 0,
+            errorCode: (response?.status === 401 || isNetworkError) ? 3001 : 5000,
+            message: reason.message || '网络连接异常',
             data: null!
         };
     }
@@ -79,6 +84,7 @@ export async function apiRequest<T>(config: ApiRequestConfig): Promise<T> {
     // 处理不同的错误情况
     if (apiResponse.code !== 200) {
         // 根据HTTP状态码处理特殊情况
+        // 当code为401或者errorCode为3001时触发令牌刷新逻辑
         if (apiResponse.code === 401 || apiResponse.errorCode === 3001) {
             try {
                 // 尝试使用刷新令牌获取新的访问令牌
@@ -90,28 +96,41 @@ export async function apiRequest<T>(config: ApiRequestConfig): Promise<T> {
                     requestHeaders['Authorization'] = `Bearer ${newToken}`;
 
                     // 重新发送请求
-                    let response = await fetch(url, {
+                    let retryResponse = await fetch(url, {
                         headers: requestHeaders,
                         body: requestBody,
                         ...rest
                     });
 
                     // 重新解析响应
-                    apiResponse = await response.json();
+                    if (!retryResponse.ok) {
+                        apiResponse = {
+                            code: retryResponse.status,
+                            errorCode: retryResponse.status === 401 ? 3001 : 5000,
+                            message: retryResponse.statusText || '请求失败',
+                            data: null!
+                        };
+                    } else {
+                        apiResponse = await retryResponse.json();
+                    }
 
                     // 如果重新请求成功，返回数据
                     if (apiResponse.code === 200) {
                         return apiResponse.data;
                     }
+                    
+                    // 如果重新请求还是失败，继续执行下面的错误处理逻辑
                 }
             } catch (refreshError) {
                 // 刷新令牌失败，清除令牌并抛出错误
                 AuthService.clearToken();
                 throw new Error('登录已过期，请重新登录');
             }
+            
+            // 如果令牌刷新成功但重新请求仍然失败，继续执行下面的错误处理逻辑
         }
 
-        // 如果重新请求失败，根据业务错误码处理
+        // 根据业务错误码处理
         switch (apiResponse.errorCode) {
             case 1001: // 参数不能为空
             case 1002: // 参数格式错误
