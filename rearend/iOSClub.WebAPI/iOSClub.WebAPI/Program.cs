@@ -259,14 +259,15 @@ if (builder.Environment.IsProduction())
     }
 
     // 日志 注册
-    var logger = new LoggerConfiguration()
-        .MinimumLevel.Information()
-        .Enrich.FromLogContext()
-        .WriteTo.Console()
-        .WriteTo.SQLite(
-            sqliteDbPath: sqlPath,
-            tableName: "Logs")
-        .CreateLogger();
+        var logger = new LoggerConfiguration()
+            .MinimumLevel.Information()
+            .Enrich.FromLogContext()
+            .Enrich.With<SensitiveDataFilter>()
+            .WriteTo.Console(outputTemplate: "{Timestamp:HH:mm:ss} [{Level:u3}] {Message:lj} {Properties:j}{NewLine}{Exception}")
+            .WriteTo.SQLite(
+                sqliteDbPath: sqlPath,
+                tableName: "Logs")
+            .CreateLogger();
 
     builder.Logging
         .ClearProviders()
@@ -300,6 +301,15 @@ builder.Services.AddScoped<IClientApplicationRepository, ClientApplicationReposi
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<ILoginService, LoginService>();
 
+// 注册数据脱敏配置和服务
+builder.Services.AddSingleton<MaskingConfig>();
+builder.Services.AddSingleton<DataMaskingService>();
+builder.Services.AddSingleton<LogAuditService>();
+
+// 注册速率限制配置和服务
+builder.Services.AddSingleton<RateLimitConfig>();
+builder.Services.AddSingleton<RateLimitService>();
+
 #endregion
 
 #region 压缩
@@ -327,6 +337,9 @@ app.UseMiddleware<GlobalExceptionMiddleware>();
 
 // 注册请求频率限制中间件
 app.UseMiddleware<RateLimitMiddleware>();
+
+// 注册数据脱敏中间件
+app.UseDataMasking();
 
 // 配置安全响应头
 app.Use(async (context, next) =>

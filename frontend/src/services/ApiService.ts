@@ -25,7 +25,7 @@ export interface ApiRequestConfig extends Omit<RequestInit, 'body'> {
  * @returns Promise<T> 响应数据
  */
 export async function apiRequest<T>(config: ApiRequestConfig): Promise<T> {
-    const {url, requiresAuth = true, headers = {}, body, ...rest} = config;
+    const {url, headers = {}, body, ...rest} = config;
 
     // 添加默认请求头
     const requestHeaders: Record<string, string> = {
@@ -46,19 +46,34 @@ export async function apiRequest<T>(config: ApiRequestConfig): Promise<T> {
         requestBody = JSON.stringify(body);
     }
 
-    // 发送请求
-    let response = await fetch(url, {
-        headers: requestHeaders,
-        body: requestBody,
-        ...rest
-    });
-
     // 解析响应
     let apiResponse: ApiResponse<T>;
     try {
-        apiResponse = await response.json();
-    } catch (error) {
-        throw new Error('响应解析失败');
+        let response = await fetch(url, {
+            headers: requestHeaders,
+            body: requestBody,
+            ...rest
+        });
+
+        // 检查响应是否成功
+        if (!response.ok) {
+            // 如果是401错误，创建相应的错误响应对象
+            apiResponse = {
+                code: response.status,
+                errorCode: response.status === 401 ? 3001 : 5000,
+                message: response.statusText || '请求失败',
+                data: null!
+            };
+        } else {
+            apiResponse = await response.json();
+        }
+    } catch (reason: any) {
+        apiResponse = {
+            code: reason.code || 500,
+            errorCode: 5000,
+            message: reason.message,
+            data: null!
+        };
     }
 
     // 处理不同的错误情况
@@ -68,22 +83,22 @@ export async function apiRequest<T>(config: ApiRequestConfig): Promise<T> {
             try {
                 // 尝试使用刷新令牌获取新的访问令牌
                 await AuthService.refreshToken();
-                
+
                 // 更新请求头中的令牌
                 const newToken = AuthService.getToken();
                 if (newToken) {
                     requestHeaders['Authorization'] = `Bearer ${newToken}`;
-                    
+
                     // 重新发送请求
-                    response = await fetch(url, {
+                    let response = await fetch(url, {
                         headers: requestHeaders,
                         body: requestBody,
                         ...rest
                     });
-                    
+
                     // 重新解析响应
                     apiResponse = await response.json();
-                    
+
                     // 如果重新请求成功，返回数据
                     if (apiResponse.code === 200) {
                         return apiResponse.data;

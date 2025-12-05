@@ -78,7 +78,7 @@ public class JwtService(
         // 从RSA密钥中导出公钥的SHA256哈希值作为KeyId
         var publicKeyBytes = rsa.ExportRSAPublicKey();
         var keyId = Convert.ToBase64String(SHA256.HashData(publicKeyBytes)).Substring(0, 16);
-        
+
         var rsaSecurityKey = new RsaSecurityKey(rsa) { KeyId = keyId };
         var signingCredentials = new SigningCredentials(
             rsaSecurityKey,
@@ -187,7 +187,7 @@ public class JwtService(
     {
         // 获取当前有效的RSA公钥
         var rsa = rsaKeyManager.GetCurrentPublicKey();
-        
+
         // 从RSA密钥中导出公钥的SHA256哈希值作为KeyId，与生成令牌时使用的KeyId保持一致
         var publicKeyBytes = rsa.ExportRSAPublicKey();
         var keyId = Convert.ToBase64String(SHA256.HashData(publicKeyBytes)).Substring(0, 16);
@@ -228,7 +228,7 @@ public class JwtService(
         catch (Exception ex)
         {
             logger.LogError(ex, "从访问令牌中提取声明失败");
-            return Enumerable.Empty<Claim>();
+            return [];
         }
     }
 }
