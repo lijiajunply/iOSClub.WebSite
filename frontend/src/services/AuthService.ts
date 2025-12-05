@@ -24,29 +24,65 @@ export class AuthService {
      * @param loginModel 登录信息
      * @param clientId 客户端ID
      * @param scope 授权范围
-     * @returns Promise<string> JWT令牌
+     * @returns Promise<{ accessToken: string, refreshToken: string }> 访问令牌和刷新令牌
      */
-    static async login(loginModel: LoginModel, clientId: string | null | undefined = '', scope: string | null | undefined = ''): Promise<string> {
-        return await apiRequest<string>({
-            url: `${url}/Auth/login?clientId=${clientId}&scope=${scope}`,
+    static async login(loginModel: LoginModel, clientId: string | null | undefined = '', scope: string | null | undefined = ''): Promise<{ accessToken: string, refreshToken: string }> {
+        // 直接使用fetch获取完整响应，以便获取响应头中的刷新令牌
+        const response = await fetch(`${url}/Auth/login?clientId=${clientId}&scope=${scope}`, {
             method: 'POST',
-            body: JSON.stringify(loginModel),
-            requiresAuth: false
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(loginModel)
         });
+        
+        if (!response.ok) {
+            // 处理错误响应
+            const errorData = await response.json();
+            throw new Error(errorData.message || '登录失败');
+        }
+        
+        // 解析响应体
+        const responseData = await response.json();
+        const accessToken = responseData.data;
+        
+        // 从响应头中获取刷新令牌
+        const refreshToken = response.headers.get('X-Refresh-Token') || '';
+        
+        this.saveTokens(accessToken, refreshToken);
+        return { accessToken, refreshToken };
     }
 
     /**
      * 学生注册
      * @param model 学生注册信息
-     * @returns Promise<string> JWT令牌
+     * @returns Promise<{ accessToken: string, refreshToken: string }> 访问令牌和刷新令牌
      */
-    static async signup(model: StudentModel): Promise<string> {
-        return await apiRequest<string>({
-            url: `${url}/Auth/signup`,
+    static async signup(model: StudentModel): Promise<{ accessToken: string, refreshToken: string }> {
+        // 直接使用fetch获取完整响应，以便获取响应头中的刷新令牌
+        const response = await fetch(`${url}/Auth/signup`, {
             method: 'POST',
-            body: JSON.stringify(model),
-            requiresAuth: false
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(model)
         });
+        
+        if (!response.ok) {
+            // 处理错误响应
+            const errorData = await response.json();
+            throw new Error(errorData.message || '注册失败');
+        }
+        
+        // 解析响应体
+        const responseData = await response.json();
+        const accessToken = responseData.data;
+        
+        // 从响应头中获取刷新令牌
+        const refreshToken = response.headers.get('X-Refresh-Token') || '';
+        
+        this.saveTokens(accessToken, refreshToken);
+        return { accessToken, refreshToken };
     }
 
     static async logout(userId: string, clientId: string | null | undefined = ''): Promise<boolean> {
@@ -55,6 +91,7 @@ export class AuthService {
                 url: `${url}/Auth/logout?userId=${userId}&clientId=${clientId}`,
                 method: 'POST'
             });
+            this.clearTokens();
             return true;
         } catch (error) {
             return false;
@@ -78,26 +115,85 @@ export class AuthService {
     }
 
     /**
-     * 保存令牌到本地存储
-     * @param token JWT令牌
+     * 保存访问令牌和刷新令牌到本地存储
+     * @param accessToken 访问令牌
+     * @param refreshToken 刷新令牌
      */
-    static saveToken(token: string): void {
-        localStorage.setItem('Authorization', token);
+    static saveTokens(accessToken: string, refreshToken: string): void {
+        localStorage.setItem('accessToken', accessToken);
+        localStorage.setItem('refreshToken', refreshToken);
     }
 
     /**
-     * 从本地存储获取令牌
-     * @returns string | null JWT令牌或null
+     * 从本地存储获取访问令牌
+     * @returns string | null 访问令牌或null
      */
-    static getToken(): string | null {
-        return localStorage.getItem('Authorization');
+    static getAccessToken(): string | null {
+        return localStorage.getItem('accessToken');
+    }
+
+    /**
+     * 从本地存储获取刷新令牌
+     * @returns string | null 刷新令牌或null
+     */
+    static getRefreshToken(): string | null {
+        return localStorage.getItem('refreshToken');
+    }
+
+    /**
+     * 使用刷新令牌获取新的访问令牌
+     * @returns Promise<string> 新的访问令牌
+     */
+    static async refreshToken(): Promise<string> {
+        const refreshToken = this.getRefreshToken();
+        const userInfo = this.getCurrentUserInfo();
+        
+        if (!refreshToken || !userInfo?.sub) {
+            throw new Error('刷新令牌不存在或用户信息无效');
+        }
+        
+        // 调用后端刷新令牌API
+        const newAccessToken = await apiRequest<string>({
+            url: `${url}/Auth/refresh-token?userId=${userInfo.sub}&refreshToken=${refreshToken}`,
+            method: 'POST',
+            requiresAuth: false
+        });
+        
+        // 更新访问令牌
+        this.saveTokens(newAccessToken, refreshToken);
+        return newAccessToken;
     }
 
     /**
      * 清除本地存储的令牌
      */
+    static clearTokens(): void {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+    }
+
+    /**
+     * 获取当前令牌（兼容旧代码）
+     * @returns string | null 访问令牌或null
+     */
+    static getToken(): string | null {
+        return this.getAccessToken();
+    }
+
+    /**
+     * 保存令牌（兼容旧代码）
+     * @param token 访问令牌
+     */
+    static saveToken(token: string): void {
+        const refreshToken = this.getRefreshToken() || '';
+        this.saveTokens(token, refreshToken);
+    }
+
+    /**
+     * 清除令牌（兼容旧代码）
+     */
     static clearToken(): void {
-        localStorage.removeItem('Authorization');
+        this.clearTokens();
     }
 
     /**
@@ -191,7 +287,7 @@ export class AuthService {
      * 从主站JWT获取SSO会话
      * @param clientId 客户端ID
      * @param scope 权限范围
-     * @returns Promise<boolean> 是否成功
+     * @returns Promise<string> SSO令牌
      */
     static async loginFromMainJwt(clientId: string, scope: string = 'profile openid role'): Promise<string> {
         const token = this.getToken();

@@ -167,4 +167,18 @@ public static class ErrorCode
     public const int ExternalServiceNotConfigured = 6003;
 
     #endregion
+    
+    #region HTTP状态码相关错误 (7000-7999)
+    
+    /// <summary>
+    /// 请求频率过高
+    /// </summary>
+    public const int TooManyRequests = 7000;
+    
+    /// <summary>
+    /// 无效请求
+    /// </summary>
+    public const int InvalidRequest = 7001;
+    
+    #endregion
 }

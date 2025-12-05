@@ -4,7 +4,7 @@ import type {LoginModel, StudentModel} from '../models';
 
 export const useAuthorizationStore = defineStore('AuthorizationId', {
     state: () => ({
-        Authorization: localStorage.getItem('Authorization') || ''
+        Authorization: localStorage.getItem('accessToken') || ''
     }),
     getters: {
         getAuthorization: (state) => state.Authorization,
@@ -39,29 +39,27 @@ export const useAuthorizationStore = defineStore('AuthorizationId', {
     },
     actions: {
         async signup(stu: StudentModel): Promise<boolean> {
-            const result = await AuthService.signup(stu)
-            if (result === '') return false;
-            this.Authorization = result;
-            localStorage.setItem('Authorization', result);
+            const { accessToken } = await AuthService.signup(stu);
+            if (!accessToken) return false;
+            this.Authorization = accessToken;
             localStorage.setItem('UserId', stu.userId);
-            return true
+            return true;
         },
         async logout(clientId: string | null | undefined = '') {
             this.Authorization = '';
-            localStorage.removeItem('Authorization');
-            localStorage.removeItem('UserId');
             const id = localStorage.getItem('UserId');
-            if (id === null || id === '') return false;
-            await AuthService.logout(id, clientId);
+            if (id) {
+                await AuthService.logout(id, clientId);
+            }
+            localStorage.removeItem('UserId');
         },
         async login(user: LoginModel, clientId: string | null | undefined = '', scope: string | null | undefined = ''): Promise<boolean> {
             try {
-                const a = await AuthService.login(user, clientId, scope)
-                if (!a) {
+                const { accessToken } = await AuthService.login(user, clientId, scope);
+                if (!accessToken) {
                     return false;
                 }
-                this.Authorization = a;
-                localStorage.setItem('Authorization', a);
+                this.Authorization = accessToken;
                 localStorage.setItem('UserId', user.userId);
                 return true;
             } catch (e) {
@@ -69,15 +67,31 @@ export const useAuthorizationStore = defineStore('AuthorizationId', {
             }
         },
         async oauthLogin(user: LoginModel, clientId: string | null | undefined = '', scope: string | null | undefined = ''): Promise<string> {
-            return  await AuthService.login(user, clientId, scope)
+            const { accessToken } = await AuthService.login(user, clientId, scope);
+            this.Authorization = accessToken;
+            localStorage.setItem('UserId', user.userId);
+            return accessToken;
         },
         async validate(clientId: string | null | undefined = ''): Promise<boolean> {
             const id = localStorage.getItem('UserId');
             if (id === null || id === '') return false;
             return await AuthService.validate(id, this.Authorization, clientId);
         },
+        async refreshToken(): Promise<boolean> {
+            try {
+                const newAccessToken = await AuthService.refreshToken();
+                if (newAccessToken) {
+                    this.Authorization = newAccessToken;
+                    return true;
+                }
+                return false;
+            } catch (e) {
+                console.error('刷新令牌失败:', e);
+                return false;
+            }
+        },
         isAdmin() {
-            return this.getRole === 'Founder' || this.getRole === 'President' || this.getRole === 'Minister'
+            return this.getRole === 'Founder' || this.getRole === 'President' || this.getRole === 'Minister';
         }
     }
 });

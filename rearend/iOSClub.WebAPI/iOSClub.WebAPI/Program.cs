@@ -1,10 +1,13 @@
 using System.IO.Compression;
-using System.Text;
+using System.Security.Cryptography;
 using iOSClub.Data;
 using iOSClub.Data.DataModels;
 using iOSClub.DataApi.Repositories;
 using iOSClub.DataApi.Services;
 using iOSClub.WebAPI.Common;
+using iOSClub.WebAPI.Common.Config;
+using iOSClub.WebAPI.Common.Middleware;
+using iOSClub.WebAPI.Common.Security;
 using iOSClub.WebAPI.IdentityModels;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
@@ -26,9 +29,48 @@ builder.Services.AddOpenApi(opt => { opt.AddDocumentTransformer<BearerSecuritySc
 
 #endregion
 
+#region JWT配置和密钥管理
+
+var jwtConfig = new JwtConfig
+{
+    AccessTokenExpiryMinutes =
+        int.TryParse(Environment.GetEnvironmentVariable("JWT_ACCESS_TOKEN_EXPIRY_MINUTES"), out var accessTokenExpiry)
+            ? accessTokenExpiry
+            : 20,
+    RefreshTokenExpiryHours =
+        int.TryParse(Environment.GetEnvironmentVariable("JWT_REFRESH_TOKEN_EXPIRY_HOURS"), out var refreshTokenExpiry)
+            ? refreshTokenExpiry
+            : 72,
+    RsaPrivateKeyPath = Environment.GetEnvironmentVariable("JWT_RSA_PRIVATE_KEY_PATH") ?? "./app/keys/rsa_private.pem",
+    RsaPublicKeyPath = Environment.GetEnvironmentVariable("JWT_RSA_PUBLIC_KEY_PATH") ?? "./app/keys/rsa_public.pem",
+    Issuer = Environment.GetEnvironmentVariable("JWT_ISSUER") ?? "iOS Club of XAUAT",
+    Audience = Environment.GetEnvironmentVariable("JWT_AUDIENCE") ?? "iOS Club of XAUAT",
+    KeyRotationDays = int.TryParse(Environment.GetEnvironmentVariable("JWT_KEY_ROTATION_DAYS"), out var keyRotationDays)
+        ? keyRotationDays
+        : 90
+};
+
+builder.Services.AddSingleton(jwtConfig);
+builder.Services.AddSingleton<RsaKeyManager>();
+builder.Services.AddSingleton<JwtService>();
+
+#endregion
+
 #region 身份验证
 
 builder.Services.AddAuthorizationCore();
+
+// 配置JWT认证
+var rsaKeyManager = new RsaKeyManager(jwtConfig,
+    LoggerFactory.Create(loggingBuilder => loggingBuilder.AddConsole()).CreateLogger<RsaKeyManager>());
+rsaKeyManager.EnsureKeysValid();
+
+var publicKey = rsaKeyManager.GetCurrentPublicKey();
+
+// 从RSA密钥中导出公钥的SHA256哈希值作为KeyId，与生成令牌时使用的KeyId保持一致
+var publicKeyBytes = publicKey.ExportRSAPublicKey();
+var keyId = Convert.ToBase64String(SHA256.HashData(publicKeyBytes)).Substring(0, 16);
+var rsaSecurityKey = new RsaSecurityKey(publicKey) { KeyId = keyId };
 
 builder.Services.AddAuthentication(options =>
     {
@@ -37,20 +79,36 @@ builder.Services.AddAuthentication(options =>
     })
     .AddJwtBearer(options =>
     {
-        var secretKey = Environment.GetEnvironmentVariable("SECRETKEY", EnvironmentVariableTarget.Process) ??
-                        builder.Configuration["Jwt:SecretKey"] ?? "";
         options.TokenValidationParameters = new TokenValidationParameters()
         {
-            ValidateIssuer = true,
-            ValidIssuer = "iOS Club of XAUAT",
-            ValidateAudience = true,
-            ValidAudience = "iOS Club of XAUAT",
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey =
-                new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
+            IssuerSigningKey = rsaSecurityKey,
+            ValidateIssuer = true,
+            ValidIssuer = jwtConfig.Issuer,
+            ValidateAudience = true,
+            ValidAudience = jwtConfig.Audience,
             ValidateLifetime = true,
-            ClockSkew = TimeSpan.FromMinutes(10),
+            ClockSkew = TimeSpan.FromMinutes(1),
             RequireExpirationTime = true,
+            RequireSignedTokens = true
+        };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = context =>
+            {
+                // 可以在这里添加额外的验证逻辑
+                context.Success();
+                return Task.CompletedTask;
+            },
+            OnAuthenticationFailed = context =>
+            {
+                // 记录认证失败日志
+                context.NoResult();
+                context.Fail("认证失败");
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                return Task.CompletedTask;
+            }
         };
     })
     .AddCookie("OAuth2", options =>
@@ -60,6 +118,9 @@ builder.Services.AddAuthentication(options =>
         options.AccessDeniedPath = "/OAuth/access-denied";
         options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
         options.SlidingExpiration = true;
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+        options.Cookie.SameSite = SameSiteMode.None;
     });
 
 #endregion
@@ -83,7 +144,7 @@ builder.Services.AddStackExchangeRedisCache(options =>
     {
         redis = builder.Configuration["Redis"];
     }
-    
+
     if (!string.IsNullOrEmpty(redis))
     {
         options.Configuration = redis;
@@ -104,7 +165,8 @@ builder.Services.AddCors(options =>
                 origin.StartsWith("http://localhost")) // 支持本地开发环境
             .AllowAnyMethod()
             .AllowAnyHeader()
-            .AllowCredentials(); // 如果需要发送凭据（如cookies、认证头等）
+            .AllowCredentials() // 如果需要发送凭据（如cookies、认证头等）
+            .WithExposedHeaders("X-Refresh-Token"); // 允许前端访问X-Refresh-Token响应头
     });
 });
 
@@ -194,6 +256,7 @@ if (builder.Environment.IsProduction())
 builder.Services.AddHttpClient();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<GlobalAuthorizationFilter>();
+// 注册ITokenGenerator服务
 builder.Services.AddScoped<ITokenGenerator, JwtGenerator>();
 
 builder.Services.AddScoped<IArticleRepository, ArticleRepository>();
@@ -234,6 +297,9 @@ var app = builder.Build();
 
 // 注册全局异常处理中间件
 app.UseMiddleware<GlobalExceptionMiddleware>();
+
+// 注册请求频率限制中间件
+app.UseMiddleware<RateLimitMiddleware>();
 
 // 创建数据库
 using (var scope = app.Services.CreateScope())
@@ -288,7 +354,7 @@ using (var scope = app.Services.CreateScope())
     //         department.Key = department.GetHashKey();
     //     }
     // }
-    
+
     if (await context.Categories.AnyAsync())
     {
         var categories = await context.Categories.Where(x => string.IsNullOrEmpty(x.Id)).ToListAsync();

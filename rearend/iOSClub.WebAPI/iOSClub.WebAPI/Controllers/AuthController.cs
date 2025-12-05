@@ -35,8 +35,10 @@ public class AuthController(
                 return Ok(ApiResponse<string>.Fail(ErrorCode.ResourceAlreadyExists, "用户已存在"));
             }
 
-            var token = tokenGenerator.GetMemberToken(MemberModel.AutoCopy<StudentModel, MemberModel>(createdStudent));
-            return Ok(ApiResponse<string>.Success(token, "注册成功"));
+            var (accessToken, refreshToken) = tokenGenerator.GetMemberToken(MemberModel.AutoCopy<StudentModel, MemberModel>(createdStudent));
+            // 返回访问令牌和刷新令牌，刷新令牌存储在响应头中
+            Response.Headers.Append("X-Refresh-Token", refreshToken);
+            return Ok(ApiResponse<string>.Success(accessToken, "注册成功"));
         }
         catch (Exception ex)
         {
@@ -66,14 +68,23 @@ public class AuthController(
             var studentToken = await loginService.Login(loginModel, clientId, scope);
             if (!string.IsNullOrEmpty(studentToken))
             {
+                // 从Redis中获取刷新令牌
+                var refreshToken = await loginService.GetRefreshToken(loginModel.UserId, clientId);
+                Response.Headers.Append("X-Refresh-Token", refreshToken);
                 return Ok(ApiResponse<string>.Success(studentToken, "登录成功"));
             }
 
             // 如果学生登录失败，尝试员工登录
             var staffToken = await loginService.StaffLogin(loginModel, clientId, scope);
-            return Ok(!string.IsNullOrEmpty(staffToken)
-                ? ApiResponse<string>.Success(staffToken, "登录成功")
-                : ApiResponse<string>.Fail(ErrorCode.UserNotFound, "用户不存在或密码错误"));
+            if (!string.IsNullOrEmpty(staffToken))
+            {
+                // 从Redis中获取刷新令牌
+                var refreshToken = await loginService.GetRefreshToken(loginModel.UserId, clientId);
+                Response.Headers.Append("X-Refresh-Token", refreshToken);
+                return Ok(ApiResponse<string>.Success(staffToken, "登录成功"));
+            }
+            
+            return Ok(ApiResponse<string>.Fail(ErrorCode.UserNotFound, "用户不存在或密码错误"));
         }
         catch (Exception ex)
         {
@@ -237,6 +248,40 @@ public class AuthController(
                 logger.LogInformation(ex, "密码重置失败");
             }
             return Ok(ApiResponse<bool>.Fail(ErrorCode.InternalServerError, "密码重置失败"));
+        }
+    }
+    
+    /// <summary>
+    /// 使用刷新令牌获取新的访问令牌
+    /// </summary>
+    /// <param name="userId">用户ID</param>
+    /// <param name="refreshToken">刷新令牌</param>
+    /// <param name="clientId">客户端ID</param>
+    /// <param name="scope">权限范围</param>
+    /// <returns>成功返回新的访问令牌，失败返回相应的错误信息</returns>
+    [HttpPost("refresh-token")]
+    public async Task<ActionResult<ApiResponse<string>>> RefreshToken(string userId, string refreshToken, string clientId = "", string scope = "")
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(refreshToken))
+            {
+                return Ok(ApiResponse<string>.Fail(ErrorCode.InvalidRequest, "用户ID和刷新令牌不能为空"));
+            }
+            
+            var newToken = await loginService.RefreshToken(userId, refreshToken, clientId, scope);
+            
+            return Ok(!string.IsNullOrEmpty(newToken)
+                ? ApiResponse<string>.Success(newToken, "刷新令牌成功")
+                : ApiResponse<string>.Fail(ErrorCode.InvalidToken, "无效的刷新令牌"));
+        }
+        catch (Exception ex)
+        {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "刷新令牌失败");
+            }
+            return Ok(ApiResponse<string>.Fail(ErrorCode.InternalServerError, "刷新令牌失败"));
         }
     }
 }

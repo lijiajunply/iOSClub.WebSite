@@ -58,7 +58,7 @@ public class LoginServiceTests
         _studentRepoMock.Setup(s => s.Login(loginModel.UserId, loginModel.Password)).ReturnsAsync(true);
         _studentRepoMock.Setup(s => s.GetByIdAsync(loginModel.UserId)).ReturnsAsync(student);
         _staffRepoMock.Setup(s => s.GetStaffByIdWithoutOtherData(loginModel.UserId)).ReturnsAsync((StaffModel?)null);
-        _tokenGeneratorMock.Setup(t => t.GetMemberToken(It.IsAny<MemberModel>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>())).Returns(token);
+        _tokenGeneratorMock.Setup(t => t.GetMemberToken(It.IsAny<MemberModel>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>())).Returns((token, "mock-refresh-token"));
         _redisDbMock.Setup(r => r.StringGetAsync(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>())).ReturnsAsync(RedisValue.Null);
 
         // Act
@@ -183,7 +183,7 @@ public class LoginServiceTests
         _studentRepoMock.Setup(s => s.Login(loginModel.UserId, loginModel.Password)).ReturnsAsync(true);
         _studentRepoMock.Setup(s => s.GetByIdAsync(loginModel.UserId)).ReturnsAsync(student);
         _staffRepoMock.Setup(s => s.GetStaffByIdWithoutOtherData(loginModel.UserId)).ReturnsAsync((StaffModel?)null);
-        _tokenGeneratorMock.Setup(t => t.GetMemberToken(It.IsAny<MemberModel>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>())).Returns(token);
+        _tokenGeneratorMock.Setup(t => t.GetMemberToken(It.IsAny<MemberModel>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>())).Returns((token, "mock-refresh-token"));
         _redisDbMock.Setup(r => r.StringGetAsync(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>())).ReturnsAsync(RedisValue.Null);
 
         // Act

@@ -471,7 +471,7 @@ public class SSOController(
                 if (logger.IsEnabled(LogLevel.Error))
                 {
                     logger.LogInformation("Failed to generate ID token for user {UserId} and client {ClientId}", userId,
-                    authState.ClientId);
+                        authState.ClientId);
                 }
 
                 return BadRequest("ID token生成失败");
@@ -828,15 +828,27 @@ public class SSOController(
             }
 
             var token = await loginService.GetToken(member.UserId, request.ClientId);
+            var refreshToken = await loginService.GetRefreshToken(member.UserId, request.ClientId);
             if (string.IsNullOrEmpty(token))
             {
                 if (logger.IsEnabled(LogLevel.Error))
                 {
                     logger.LogInformation("Token exchange failed: unable to generate token for user {UserId}",
-                    authCodeInfo.UserId);
+                        authCodeInfo.UserId);
                 }
 
                 return BadRequest(new { error = "server_error", error_description = "令牌生成失败" });
+            }
+
+            if (string.IsNullOrEmpty(refreshToken))
+            {
+                if (logger.IsEnabled(LogLevel.Error))
+                {
+                    logger.LogInformation("Token exchange failed: unable to generate refresh token for user {UserId}",
+                        authCodeInfo.UserId);
+                }
+
+                return BadRequest(new { error = "server_error", error_description = "刷新令牌生成失败" });
             }
 
             // 生成ID token（如果scope包含openid）
@@ -866,6 +878,7 @@ public class SSOController(
             var response = new Dictionary<string, object>
             {
                 ["access_token"] = token,
+                ["refresh_token"] = refreshToken,
                 ["token_type"] = "Bearer",
                 ["expires_in"] = 7200, // 2小时
                 ["scope"] = string.IsNullOrEmpty(authCodeInfo.Scope) ? DefaultScore : authCodeInfo.Scope
@@ -1040,7 +1053,7 @@ public class SSOController(
             if (logger.IsEnabled(LogLevel.Error))
             {
                 logger.LogInformation(ex, "Failed to generate ID token for user {UserId} and client {ClientId}", userId,
-                clientId);
+                    clientId);
             }
 
             return null;

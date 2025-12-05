@@ -85,7 +85,7 @@ public class LoginIntegrationTests
         var loginModel = new LoginModel { UserId = student.UserId, Password = "password123" };
         var expectedToken = "mock-jwt-token";
         
-        _tokenGeneratorMock.Setup(t => t.GetMemberToken(It.IsAny<MemberModel>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>())).Returns(expectedToken);
+        _tokenGeneratorMock.Setup(t => t.GetMemberToken(It.IsAny<MemberModel>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>())).Returns((expectedToken, "mock-refresh-token"));
         
         // Act
         var result = await _loginService.Login(loginModel);
@@ -163,7 +163,7 @@ public class LoginIntegrationTests
         var loginModel = new LoginModel { UserId = student.UserId, Password = "password123" };
         var expectedToken = "mock-jwt-token";
         
-        _tokenGeneratorMock.Setup(t => t.GetMemberToken(It.Is<MemberModel>(m => m.Identity == "President"), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>())).Returns(expectedToken);
+        _tokenGeneratorMock.Setup(t => t.GetMemberToken(It.Is<MemberModel>(m => m.Identity == "President"), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>())).Returns((expectedToken, "mock-refresh-token"));
         
         // Act
         var result = await _loginService.Login(loginModel);
