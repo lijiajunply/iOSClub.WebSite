@@ -48,7 +48,10 @@ public class DataCentreService(IDbContextFactory<ClubContext> contextFactory) : 
         ]);
 
         if (total <= 430) return yearData;
-        var students = await context.Students.ToListAsync();
+        
+        // 一次性获取所有学生数据，并添加AsNoTracking()减少EF Core跟踪开销
+        var students = await context.Students.AsNoTracking().ToListAsync();
+        
         for (var i = year - 2024; i >= 0; i--)
         {
             var date = new DateTime(year - i, 9, 1, 0, 0, 0, DateTimeKind.Utc);
@@ -61,9 +64,8 @@ public class DataCentreService(IDbContextFactory<ClubContext> contextFactory) : 
 
         if (month < 9) return yearData;
 
-        // 使用客户端评估来处理字符串到整数的转换
-        var allStudents = await context.Students.ToListAsync();
-        var value = allStudents.Count(s => int.Parse(s.UserId.Substring(0, 2)) > (year - 2004));
+        // 复用已获取的学生数据，不再重复查询数据库
+        var value = students.Count(s => int.Parse(s.UserId.Substring(0, 2)) > (year - 2004));
         yearData.Add(new YearCount($"{year}学年", value));
 
         return yearData;
@@ -74,8 +76,8 @@ public class DataCentreService(IDbContextFactory<ClubContext> contextFactory) : 
     {
         await using var context = await contextFactory.CreateDbContextAsync();
 
-        // 使用LINQ查询替代原始SQL以确保跨数据库兼容性
-        return await context.Students
+        // 使用LINQ查询替代原始SQL以确保跨数据库兼容性，并添加AsNoTracking()减少EF Core跟踪开销
+        return await context.Students.AsNoTracking()
             .GroupBy(s => s.Academy)
             .Select(g => new AcademyCount { Type = g.Key, Value = g.Count() })
             .OrderByDescending(ac => ac.Value)
@@ -87,8 +89,8 @@ public class DataCentreService(IDbContextFactory<ClubContext> contextFactory) : 
     {
         await using var context = await contextFactory.CreateDbContextAsync();
 
-        // 使用客户端评估处理年级数据
-        var students = await context.Students.ToListAsync();
+        // 使用客户端评估处理年级数据，并添加AsNoTracking()减少EF Core跟踪开销
+        var students = await context.Students.AsNoTracking().ToListAsync();
         var groupedStudents = students.GroupBy(s => s.UserId.Substring(0, 2));
 
         var gradeData = groupedStudents.Select(group => new GradeCount(group.Key + "级", group.Count())).ToList();
@@ -103,8 +105,8 @@ public class DataCentreService(IDbContextFactory<ClubContext> contextFactory) : 
     {
         await using var context = await contextFactory.CreateDbContextAsync();
 
-        // 使用客户端评估处理政治面貌数据
-        var students = await context.Students.ToListAsync();
+        // 使用客户端评估处理政治面貌数据，并添加AsNoTracking()减少EF Core跟踪开销
+        var students = await context.Students.AsNoTracking().ToListAsync();
         var groupedStudents = students.GroupBy(s => s.PoliticalLandscape);
 
         return groupedStudents.Select(group => new LandscapeCount(group.Key, group.Count())).ToList();
@@ -116,8 +118,9 @@ public class DataCentreService(IDbContextFactory<ClubContext> contextFactory) : 
         await using var context = await contextFactory.CreateDbContextAsync();
         var genderData = new List<GenderCount>();
 
-        var man = await context.Students.CountAsync(x => x.Gender == "男");
-        var woman = await context.Students.CountAsync(x => x.Gender == "女");
+        // 对于Count查询，AsNoTracking()不影响结果，但添加也不会有负面影响
+        var man = await context.Students.AsNoTracking().CountAsync(x => x.Gender == "男");
+        var woman = await context.Students.AsNoTracking().CountAsync(x => x.Gender == "女");
 
         genderData.AddRange(new List<GenderCount>
         {

@@ -34,14 +34,14 @@ public class StudentRepository(IDbContextFactory<ClubContext> factory) : IStuden
     public async Task<List<StudentModel>> GetAll()
     {
         await using var context = await factory.CreateDbContextAsync();
-        var students = await context.Students.ToListAsync();
+        var students = await context.Students.AsNoTracking().ToListAsync();
         return students;
     }
 
     public async Task<StudentModel?> Get(string id)
     {
         await using var context = await factory.CreateDbContextAsync();
-        var stu = await context.Students.FirstOrDefaultAsync(x => x.UserId == id);
+        var stu = await context.Students.AsNoTracking().FirstOrDefaultAsync(x => x.UserId == id);
         return stu;
     }
 
@@ -88,7 +88,7 @@ public class StudentRepository(IDbContextFactory<ClubContext> factory) : IStuden
     public async Task<StudentModel?> GetByIdAsync(string id)
     {
         await using var context = await factory.CreateDbContextAsync();
-        return await context.Students.FirstOrDefaultAsync(x => x.UserId == id);
+        return await context.Students.AsNoTracking().FirstOrDefaultAsync(x => x.UserId == id);
     }
 
     public async Task<bool> UpdateAsync(StudentModel model)
@@ -144,8 +144,8 @@ public class StudentRepository(IDbContextFactory<ClubContext> factory) : IStuden
     public async Task<List<MemberModel>> GetAllMembersAsync()
     {
         await using var context = await factory.CreateDbContextAsync();
-        var query = from student in context.Students
-            join staff in context.Staffs
+        var query = from student in context.Students.AsNoTracking()
+            join staff in context.Staffs.AsNoTracking()
                 on student.UserId equals staff.UserId into staffGroup
             from staff in staffGroup.DefaultIfEmpty() // LEFT JOIN
             select MemberModel.CopyFrom(student, staff != null ? staff.Identity : "Member");
@@ -184,33 +184,31 @@ public class StudentRepository(IDbContextFactory<ClubContext> factory) : IStuden
             };
         }
 
+        // 计算总记录数
+        var totalCount = await query.CountAsync();
         var skipCount = (pageNum - 1) * pageSize;
-        var studentIdsQuery = query
-            .OrderBy(s => s.UserId) // 确保结果一致性的排序
+
+        // 在数据库层面执行LEFT JOIN操作，避免内存中连接
+        var memberQuery = from student in query.AsNoTracking()
+            join staff in context.Staffs.AsNoTracking()
+                on student.UserId equals staff.UserId into staffGroup
+            from staff in staffGroup.DefaultIfEmpty() // LEFT JOIN
+            orderby student.UserId // 确保结果一致性的排序
+            select new
+            {
+                Student = student,
+                StaffIdentity = staff != null ? staff.Identity : "Member"
+            };
+
+        // 应用分页并执行查询
+        var memberData = await memberQuery
             .Skip(skipCount)
             .Take(pageSize)
-            .Select(s => s.UserId);
+            .ToListAsync();
 
-        var studentIds = await studentIdsQuery.ToListAsync();
-        var studentsQuery = context.Students
-            .Where(s => studentIds.Contains(s.UserId))
-            .AsNoTracking();
-        var staffQuery = context.Staffs
-            .Where(s => studentIds.Contains(s.UserId))
-            .AsNoTracking();
-
-        var totalCount = await query.CountAsync();
-        var students = await studentsQuery.ToListAsync();
-        var staffs = await staffQuery.ToListAsync();
-
-        // 在内存中执行连接操作
-        var staffMap = staffs.ToDictionary(s => s.UserId);
-
-        var results = students.Select(student =>
-        {
-            staffMap.TryGetValue(student.UserId, out var staff);
-            return MemberModel.CopyFrom(student, staff != null ? staff.Identity : "Member");
-        }).ToList();
+        // 转换为MemberModel列表
+        var results = memberData.Select(item =>
+            MemberModel.CopyFrom(item.Student, item.StaffIdentity)).ToList();
 
         return (results, totalCount);
     }
@@ -237,18 +235,9 @@ public class StudentRepository(IDbContextFactory<ClubContext> factory) : IStuden
             };
         }
 
-
-        var studentIdsQuery = query
-            .OrderBy(s => s.UserId) // 确保结果
-            .Select(s => s.UserId);
-
-        var studentIds = await studentIdsQuery.ToListAsync();
-        var studentsQuery = context.Students
-            .Where(s => studentIds.Contains(s.UserId))
-            .AsNoTracking();
-
-        var students = await studentsQuery.ToListAsync();
-
-        return students;
+        // 直接返回结果，避免多余的查询和内存操作
+        return await query.AsNoTracking()
+            .OrderBy(s => s.UserId) // 确保结果一致性
+            .ToListAsync();
     }
 }
