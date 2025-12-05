@@ -728,7 +728,7 @@ public class LoginService(
 </html>";
     }
 
-    private async Task<string> GetClientKey(string clientId, bool isNotHasEMail = true)
+    private async Task<string> GetClientKey(string clientId, bool isNotHasEMail = false)
     {
         var s = "";
         var app = await clientApplicationRepository.GetByClientIdAsync(clientId);
