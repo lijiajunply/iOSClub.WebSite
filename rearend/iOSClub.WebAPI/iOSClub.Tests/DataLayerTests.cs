@@ -1,21 +1,16 @@
 using iOSClub.Data;
 using iOSClub.Data.DataModels;
 using Microsoft.EntityFrameworkCore;
-using Xunit;
 
 namespace iOSClub.Tests;
 
 public class DataLayerTests
 {
-    private readonly DbContextOptions<ClubContext> _options;
+    private readonly DbContextOptions<ClubContext> _options = new DbContextOptionsBuilder<ClubContext>()
+        .UseInMemoryDatabase(databaseName: "TestDatabase")
+        .Options;
 
-    public DataLayerTests()
-    {
-        // 使用内存数据库进行测试
-        _options = new DbContextOptionsBuilder<ClubContext>()
-            .UseInMemoryDatabase(databaseName: "TestDatabase")
-            .Options;
-    }
+    // 使用内存数据库进行测试
 
     [Fact]
     public async Task CanAddAndRetrieveStudent()

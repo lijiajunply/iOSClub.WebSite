@@ -6,7 +6,6 @@ using iOSClub.Data.ShowModels;
 using Microsoft.Extensions.Logging;
 using Moq;
 using StackExchange.Redis;
-using Xunit;
 
 namespace iOSClub.Tests;
 

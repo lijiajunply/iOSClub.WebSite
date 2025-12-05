@@ -2,7 +2,6 @@ using iOSClub.Data;
 using iOSClub.DataApi.Services;
 using iOSClub.Data.DataModels;
 using Microsoft.EntityFrameworkCore;
-using Xunit;
 
 namespace iOSClub.Tests;
 
@@ -17,7 +16,7 @@ public class DataCentreServiceTests
         _options = new DbContextOptionsBuilder<ClubContext>()
             .UseInMemoryDatabase(databaseName: "DataCentreTestDatabase")
             .Options;
-        
+
         var contextFactory = new TestDbContextFactory(_options);
         _dataCentreService = new DataCentreService(contextFactory);
     }
@@ -29,7 +28,7 @@ public class DataCentreServiceTests
         await using var context = new ClubContext(_options);
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
-        
+
         var students = new List<StudentModel>
         {
             new() { UserId = "2101010101", Gender = "男" },
@@ -38,7 +37,7 @@ public class DataCentreServiceTests
             new() { UserId = "2101010104", Gender = "男" },
             new() { UserId = "2101010105", Gender = "女" }
         };
-        
+
         await context.Students.AddRangeAsync(students);
         await context.SaveChangesAsync();
 
@@ -59,7 +58,7 @@ public class DataCentreServiceTests
         await using var context = new ClubContext(_options);
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
-        
+
         var students = new List<StudentModel>
         {
             new() { UserId = "2101010101", Academy = "计算机学院" },
@@ -69,7 +68,7 @@ public class DataCentreServiceTests
             new() { UserId = "2101010105", Academy = "计算机学院" },
             new() { UserId = "2101010106", Academy = "电子工程学院" }
         };
-        
+
         await context.Students.AddRangeAsync(students);
         await context.SaveChangesAsync();
 
@@ -92,7 +91,7 @@ public class DataCentreServiceTests
         await using var context = new ClubContext(_options);
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
-        
+
         var students = new List<StudentModel>
         {
             new() { UserId = "2101010101" },
@@ -102,7 +101,7 @@ public class DataCentreServiceTests
             new() { UserId = "2201010105" },
             new() { UserId = "2301010106" }
         };
-        
+
         await context.Students.AddRangeAsync(students);
         await context.SaveChangesAsync();
 
@@ -119,22 +118,15 @@ public class DataCentreServiceTests
 }
 
 // 简单的DbContextFactory实现，用于测试
-public class TestDbContextFactory : IDbContextFactory<ClubContext>
+public class TestDbContextFactory(DbContextOptions<ClubContext> options) : IDbContextFactory<ClubContext>
 {
-    private readonly DbContextOptions<ClubContext> _options;
-
-    public TestDbContextFactory(DbContextOptions<ClubContext> options)
-    {
-        _options = options;
-    }
-
     public ClubContext CreateDbContext()
     {
-        return new ClubContext(_options);
+        return new ClubContext(options);
     }
 
     public ValueTask<ClubContext> CreateDbContextAsync(CancellationToken cancellationToken = default)
     {
-        return ValueTask.FromResult(new ClubContext(_options));
+        return ValueTask.FromResult(new ClubContext(options));
     }
 }
