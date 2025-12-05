@@ -158,21 +158,7 @@ public class LoginService(
             PasswordHash = model.Password
         };
 
-        var s = "";
-
-        if (!string.IsNullOrEmpty(clientId))
-        {
-            var app = await clientApplicationRepository.GetByClientIdAsync(clientId);
-            if (app != null)
-            {
-                if (app.IsNeedEMail && isNotHasEMail)
-                {
-                    return "";
-                }
-
-                s = $"client_id:{clientId}";
-            }
-        }
+        var s = await GetClientKey(clientId, isNotHasEMail);
 
         var redisKey = $"{TokenPrefix}{model.UserId}{s}";
         var storedToken = await _db.StringGetAsync(redisKey);
@@ -210,20 +196,11 @@ public class LoginService(
             {
                 logger.LogError("Invalid JWT token");
             }
+
             return "";
         }
 
-        var app = await clientApplicationRepository.GetByClientIdAsync(clientId);
-        if (app == null)
-        {
-            if (logger.IsEnabled(LogLevel.Error))
-            {
-                logger.LogError("Invalid client ID");
-            }
-            return "";
-        }
-
-        var s = $"client_id:{clientId}";
+        var s = await GetClientKey(clientId);
 
         var redisKey = $"{TokenPrefix}{userId}{s}";
         var storedToken = await _db.StringGetAsync(redisKey);
@@ -284,16 +261,7 @@ public class LoginService(
                 logger.LogInformation("用户登出，开始清理令牌，用户ID：{UserId}", userId);
             }
 
-            var s = "";
-
-            if (!string.IsNullOrEmpty(clientId))
-            {
-                var app = await clientApplicationRepository.GetByClientIdAsync(clientId);
-                if (app != null)
-                {
-                    s = $"client_id:{clientId}";
-                }
-            }
+            var s = await GetClientKey(clientId);
 
             // 同时删除用户信息、访问令牌和刷新令牌
             await _db.KeyDeleteAsync([
@@ -306,6 +274,7 @@ public class LoginService(
             {
                 logger.LogInformation("用户登出，令牌清理成功，用户ID：{UserId}", userId);
             }
+
             return true;
         }
         catch (Exception ex)
@@ -314,6 +283,7 @@ public class LoginService(
             {
                 logger.LogError(ex, "用户登出，令牌清理失败，用户ID：{UserId}", userId);
             }
+
             return false;
         }
     }
@@ -321,16 +291,7 @@ public class LoginService(
     public async Task<string> GetToken(string userId, string clientId = "")
     {
         if (string.IsNullOrEmpty(userId)) return "";
-        var s = "";
-
-        if (!string.IsNullOrEmpty(clientId))
-        {
-            var app = await clientApplicationRepository.GetByClientIdAsync(clientId);
-            if (app != null)
-            {
-                s = $"client_id:{clientId}";
-            }
-        }
+        var s = await GetClientKey(clientId);
 
         var storedToken = await _db.StringGetAsync($"{TokenPrefix}{userId}{s}");
         return storedToken.HasValue && !string.IsNullOrEmpty(storedToken) ? storedToken.ToString() : "";
@@ -353,22 +314,7 @@ public class LoginService(
                 logger.LogInformation("开始使用刷新令牌生成新的访问令牌，用户ID：{UserId}", userId);
             }
 
-            var s = "";
-
-            if (!string.IsNullOrEmpty(clientId))
-            {
-                var app = await clientApplicationRepository.GetByClientIdAsync(clientId);
-                if (app == null)
-                {
-                    if (logger.IsEnabled(LogLevel.Warning))
-                    {
-                        logger.LogWarning("无效的客户端ID，无法使用刷新令牌，用户ID：{UserId}", userId);
-                    }
-                    return "";
-                }
-
-                s = $"client_id:{clientId}";
-            }
+            var s = await GetClientKey(clientId);
 
             // 验证刷新令牌是否有效
             var refreshTokenKey = $"{RefreshTokenPrefix}{userId}{s}";
@@ -381,6 +327,7 @@ public class LoginService(
                 {
                     logger.LogWarning("无效的刷新令牌，用户ID：{UserId}", userId);
                 }
+
                 return "";
             }
 
@@ -392,6 +339,7 @@ public class LoginService(
                 {
                     logger.LogWarning("刷新令牌已被列入黑名单，用户ID：{UserId}", userId);
                 }
+
                 return "";
             }
 
@@ -404,6 +352,7 @@ public class LoginService(
                 {
                     logger.LogWarning("无法获取用户信息，用户ID：{UserId}", userId);
                 }
+
                 return "";
             }
 
@@ -414,11 +363,13 @@ public class LoginService(
                 {
                     logger.LogWarning("无法解析用户信息，用户ID：{UserId}", userId);
                 }
+
                 return "";
             }
 
             // 生成新的访问令牌和刷新令牌
-            var (newAccessToken, newRefreshToken) = tokenGenerator.GetMemberToken(memberModel, scope: scope, clientId: clientId);
+            var (newAccessToken, newRefreshToken) =
+                tokenGenerator.GetMemberToken(memberModel, scope: scope, clientId: clientId);
 
             // 更新Redis中的令牌信息
             await _db.StringSetAsync($"{TokenPrefix}{userId}{s}", newAccessToken, TimeSpan.FromMinutes(20));
@@ -439,6 +390,7 @@ public class LoginService(
             {
                 logger.LogInformation("使用刷新令牌生成新的访问令牌成功，用户ID：{UserId}", userId);
             }
+
             return newAccessToken;
         }
         catch (Exception ex)
@@ -447,6 +399,7 @@ public class LoginService(
             {
                 logger.LogError(ex, "使用刷新令牌生成新的访问令牌失败，用户ID：{UserId}", userId);
             }
+
             return "";
         }
     }
@@ -470,6 +423,7 @@ public class LoginService(
             {
                 logger.LogError(ex, "检查刷新令牌黑名单状态失败");
             }
+
             // 发生错误时，默认认为令牌无效，返回true
             return true;
         }
@@ -495,6 +449,7 @@ public class LoginService(
             {
                 logger.LogError(ex, "将刷新令牌加入黑名单失败");
             }
+
             return false;
         }
     }
@@ -514,16 +469,7 @@ public class LoginService(
                 logger.LogInformation("开始获取刷新令牌，用户ID：{UserId}", userId);
             }
 
-            var s = "";
-
-            if (!string.IsNullOrEmpty(clientId))
-            {
-                var app = await clientApplicationRepository.GetByClientIdAsync(clientId);
-                if (app != null)
-                {
-                    s = $"client_id:{clientId}";
-                }
-            }
+            var s = await GetClientKey(clientId);
 
             // 从Redis中获取刷新令牌
             var refreshTokenKey = $"{RefreshTokenPrefix}{userId}{s}";
@@ -535,6 +481,7 @@ public class LoginService(
                 {
                     logger.LogWarning("未找到刷新令牌，用户ID：{UserId}", userId);
                 }
+
                 return "";
             }
 
@@ -542,6 +489,7 @@ public class LoginService(
             {
                 logger.LogInformation("获取刷新令牌成功，用户ID：{UserId}", userId);
             }
+
             return storedRefreshToken.ToString();
         }
         catch (Exception ex)
@@ -550,6 +498,7 @@ public class LoginService(
             {
                 logger.LogError(ex, "获取刷新令牌失败，用户ID：{UserId}", userId);
             }
+
             return "";
         }
     }
@@ -563,16 +512,7 @@ public class LoginService(
     {
         if (string.IsNullOrEmpty(userId)) return false;
 
-        var s = "";
-
-        if (!string.IsNullOrEmpty(clientId))
-        {
-            var app = await clientApplicationRepository.GetByClientIdAsync(clientId);
-            if (app != null)
-            {
-                s = $"client_id:{app.ClientSecret}";
-            }
-        }
+        var s = await GetClientKey(clientId);
 
         var redisKey = $"{TokenPrefix}{userId}{s}";
         var storedToken = await _db.StringGetAsync(redisKey);
@@ -597,16 +537,7 @@ public class LoginService(
             Identity = staff.Identity
         };
 
-        var s = "";
-
-        if (!string.IsNullOrEmpty(clientId))
-        {
-            var app = await clientApplicationRepository.GetByClientIdAsync(clientId);
-            if (app != null)
-            {
-                s = $"client_id:{clientId}";
-            }
-        }
+        var s = await GetClientKey(clientId);
 
         var redisKey = $"{TokenPrefix}{model.Password}{s}";
         var storedToken = await _db.StringGetAsync(redisKey);
@@ -795,5 +726,19 @@ public class LoginService(
     </div>
 </body>
 </html>";
+    }
+
+    private async Task<string> GetClientKey(string clientId, bool isNotHasEMail = true)
+    {
+        var s = "";
+        var app = await clientApplicationRepository.GetByClientIdAsync(clientId);
+        if (app == null) return s;
+        if (app.IsNeedEMail && isNotHasEMail)
+        {
+            return "";
+        }
+
+        s = $"client_secret:{app.ClientSecret}";
+        return s;
     }
 }
