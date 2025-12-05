@@ -1,6 +1,5 @@
 using System.Net;
 using System.Text.Json;
-using FluentValidation;
 using iOSClub.WebAPI.Common.Exceptions;
 
 namespace iOSClub.WebAPI.Common;
@@ -12,7 +11,7 @@ public class GlobalExceptionMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly ILogger<GlobalExceptionMiddleware> _logger;
-    
+
     /// <summary>
     /// 构造函数
     /// </summary>
@@ -23,40 +22,51 @@ public class GlobalExceptionMiddleware
         _next = next;
         _logger = logger;
     }
-    
+
     /// <summary>
     /// 中间件执行方法
     /// </summary>
     /// <param name="context">HTTP上下文</param>
     public async Task InvokeAsync(HttpContext context)
     {
+        // 生成或获取请求ID
+        var requestId = context.TraceIdentifier;
+
         try
         {
+            // 将请求ID添加到响应头，方便客户端追踪
+            context.Response.Headers.Append("X-Request-ID", requestId);
             await _next(context);
         }
         catch (Exception ex)
         {
             // 记录异常日志，包含请求上下文信息
-            _logger.LogError(ex, "Unhandled exception occurred. Request: {Method} {Path}, UserAgent: {UserAgent}, RemoteIp: {RemoteIp}",
+            _logger.LogError(ex,
+                "Unhandled exception occurred. Request: {Method} {Path}, UserAgent: {UserAgent}, RemoteIp: {RemoteIp}, RequestId: {RequestId}, CorrelationId: {CorrelationId}",
                 context.Request.Method,
                 context.Request.Path,
                 context.Request.Headers.UserAgent.ToString(),
-                context.Connection.RemoteIpAddress?.ToString());
-            
-            await HandleExceptionAsync(context, ex);
+                context.Connection.RemoteIpAddress?.ToString(),
+                requestId,
+                context.Request.Headers.TryGetValue("X-Correlation-ID", out var correlationId)
+                    ? correlationId.ToString()
+                    : "N/A");
+
+            await HandleExceptionAsync(context, ex, requestId);
         }
     }
-    
+
     /// <summary>
     /// 处理异常并返回标准化响应
     /// </summary>
     /// <param name="context">HTTP上下文</param>
     /// <param name="exception">异常对象</param>
-    private static async Task HandleExceptionAsync(HttpContext context, Exception exception)
+    /// <param name="requestId">请求ID</param>
+    private static async Task HandleExceptionAsync(HttpContext context, Exception exception, string requestId)
     {
         context.Response.ContentType = "application/json";
         var env = context.RequestServices.GetRequiredService<IHostEnvironment>();
-        
+
         var response = new ApiResponse<object>
         {
             Code = (int)HttpStatusCode.InternalServerError,
@@ -64,79 +74,95 @@ public class GlobalExceptionMiddleware
             Message = "服务器内部错误",
             Data = null
         };
-        
+
         // 根据不同异常类型设置不同的错误码和消息
         switch (exception)
         {
-            // 处理自定义异常
+            // 处理数据访问异常
+            case DataAccessException dataAccessEx:
+                response.Code = dataAccessEx.HttpStatusCode;
+                response.ErrorCode = dataAccessEx.ErrorCode;
+                response.Message = dataAccessEx.Message;
+                response.Detail = dataAccessEx.Detail;
+                break;
+
+            // 处理自定义异常（其他类型）
             case CustomException customException:
                 response.Code = customException.HttpStatusCode;
                 response.ErrorCode = customException.ErrorCode;
                 response.Message = customException.Message;
                 response.Detail = customException.Detail;
                 break;
-            
+
             // 处理参数异常
-            case ArgumentNullException:
+            case ArgumentNullException argNullException:
                 response.Code = (int)HttpStatusCode.BadRequest;
                 response.ErrorCode = ErrorCode.ParameterEmpty;
-                response.Message = "请求参数不能为空";
+                response.Message = $"请求参数不能为空: {argNullException.ParamName}";
                 break;
-            
-            case ArgumentException:
+
+            case ArgumentException argException:
                 response.Code = (int)HttpStatusCode.BadRequest;
                 response.ErrorCode = ErrorCode.ParameterFormatError;
-                response.Message = "请求参数格式错误";
+                response.Message = string.IsNullOrEmpty(argException.ParamName)
+                    ? argException.Message
+                    : $"请求参数格式错误: {argException.ParamName} - {argException.Message}";
                 break;
-            
+
             // 处理业务逻辑异常
-            case InvalidOperationException:
+            case InvalidOperationException invalidOpException:
                 response.Code = (int)HttpStatusCode.BadRequest;
                 response.ErrorCode = ErrorCode.InvalidStatusForOperation;
-                response.Message = exception.Message;
+                response.Message = invalidOpException.Message;
                 break;
-            
+
             // 处理资源访问异常
             case KeyNotFoundException:
                 response.Code = (int)HttpStatusCode.NotFound;
                 response.ErrorCode = ErrorCode.ResourceNotFound;
                 response.Message = "请求的资源不存在";
                 break;
-            
+
             // 处理认证授权异常
             case UnauthorizedAccessException:
                 response.Code = (int)HttpStatusCode.Unauthorized;
                 response.ErrorCode = ErrorCode.Unauthorized;
                 response.Message = "未授权访问";
                 break;
-            
-            case System.Security.Authentication.AuthenticationException:
+
+            case System.Security.Authentication.AuthenticationException authException:
                 response.Code = (int)HttpStatusCode.Unauthorized;
                 response.ErrorCode = ErrorCode.InvalidToken;
-                response.Message = "认证失败";
+                response.Message = authException.Message;
                 break;
-            
+
             // 处理验证异常
             case FluentValidation.ValidationException validationException:
                 response.Code = (int)HttpStatusCode.BadRequest;
                 response.ErrorCode = ErrorCode.ParameterValidationFailed;
                 response.Message = "请求参数验证失败";
-                response.Detail = string.Join(", ", validationException.Errors.Select(e => e.ErrorMessage));
+                response.Detail = string.Join(", ",
+                    validationException.Errors.Select(e => $"{e.PropertyName}: {e.ErrorMessage}"));
                 break;
-            
+
             // 处理数据库异常
             case Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException:
                 response.Code = (int)HttpStatusCode.Conflict;
                 response.ErrorCode = ErrorCode.DataProcessingFailed;
-                response.Message = "数据并发冲突";
+                response.Message = "数据并发冲突，同一资源被同时修改";
                 break;
-            
-            case Microsoft.EntityFrameworkCore.DbUpdateException:
+
+            case Microsoft.EntityFrameworkCore.DbUpdateException dbUpdateEx:
                 response.Code = (int)HttpStatusCode.BadRequest;
                 response.ErrorCode = ErrorCode.DataProcessingFailed;
                 response.Message = "数据更新失败";
+                if (env.IsDevelopment())
+                {
+                    response.Detail = dbUpdateEx.Message;
+                }
+
                 break;
-            
+
             // 处理其他异常
             default:
                 // 生产环境不返回具体异常信息，避免泄露敏感信息
@@ -145,15 +171,23 @@ public class GlobalExceptionMiddleware
                     response.Message = exception.Message;
                     response.Detail = exception.StackTrace;
                 }
+
                 break;
         }
-        
+
+        // 添加请求ID到响应头
+        context.Response.Headers.Append("X-Request-ID", requestId);
+
+        // 设置请求ID和时间戳
+        response.RequestId = requestId;
+        response.Timestamp = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+
         var jsonResponse = JsonSerializer.Serialize(response, new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
         });
-        
+
         context.Response.StatusCode = response.Code;
         await context.Response.WriteAsync(jsonResponse);
     }
