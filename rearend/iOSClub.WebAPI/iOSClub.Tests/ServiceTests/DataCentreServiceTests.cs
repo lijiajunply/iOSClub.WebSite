@@ -2,6 +2,7 @@ using iOSClub.Data;
 using iOSClub.Data.DataModels;
 using iOSClub.DataApi.Services;
 using Microsoft.EntityFrameworkCore;
+using iOSClub.Tests;
 
 namespace iOSClub.Tests.ServiceTests;
 
@@ -30,39 +31,43 @@ public class DataCentreServiceTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
 
-        // 添加测试数据
+        // 使用Bogus生成测试数据
         var students = new List<StudentModel>
         {
-            new()
-            {
-                UserId = "20123456", JoinTime = new DateTime(2020, 9, 1), Academy = "Computer", Gender = "男",
-                PoliticalLandscape = "共青团员"
-            },
-            new()
-            {
-                UserId = "21123456", JoinTime = new DateTime(2021, 9, 1), Academy = "Computer", Gender = "男",
-                PoliticalLandscape = "中共党员"
-            },
-            new()
-            {
-                UserId = "21234567", JoinTime = new DateTime(2021, 9, 1), Academy = "Information", Gender = "女",
-                PoliticalLandscape = "共青团员"
-            },
-            new()
-            {
-                UserId = "22123456", JoinTime = new DateTime(2022, 9, 1), Academy = "Computer", Gender = "女",
-                PoliticalLandscape = "共青团员"
-            },
-            new()
-            {
-                UserId = "22234567", JoinTime = new DateTime(2022, 9, 1), Academy = "Information", Gender = "男",
-                PoliticalLandscape = "群众"
-            },
-            new()
-            {
-                UserId = "22345678", JoinTime = new DateTime(2022, 9, 1), Academy = "Mathematics", Gender = "男",
-                PoliticalLandscape = "共青团员"
-            },
+            BogusDataGenerator.StudentFaker.Clone()
+                .RuleFor(s => s.UserId, "20123456")
+                .RuleFor(s => s.JoinTime, new DateTime(2020, 9, 1))
+                .RuleFor(s => s.Academy, "Computer")
+                .Generate(),
+            BogusDataGenerator.StudentFaker.Clone()
+                .RuleFor(s => s.UserId, "21123456")
+                .RuleFor(s => s.JoinTime, new DateTime(2021, 9, 1))
+                .RuleFor(s => s.Academy, "Computer")
+                .RuleFor(s => s.PoliticalLandscape, "中共党员")
+                .Generate(),
+            BogusDataGenerator.StudentFaker.Clone()
+                .RuleFor(s => s.UserId, "21234567")
+                .RuleFor(s => s.JoinTime, new DateTime(2021, 9, 1))
+                .RuleFor(s => s.Academy, "Information")
+                .RuleFor(s => s.Gender, "女")
+                .Generate(),
+            BogusDataGenerator.StudentFaker.Clone()
+                .RuleFor(s => s.UserId, "22123456")
+                .RuleFor(s => s.JoinTime, new DateTime(2022, 9, 1))
+                .RuleFor(s => s.Academy, "Computer")
+                .RuleFor(s => s.Gender, "女")
+                .Generate(),
+            BogusDataGenerator.StudentFaker.Clone()
+                .RuleFor(s => s.UserId, "22234567")
+                .RuleFor(s => s.JoinTime, new DateTime(2022, 9, 1))
+                .RuleFor(s => s.Academy, "Information")
+                .RuleFor(s => s.PoliticalLandscape, "群众")
+                .Generate(),
+            BogusDataGenerator.StudentFaker.Clone()
+                .RuleFor(s => s.UserId, "22345678")
+                .RuleFor(s => s.JoinTime, new DateTime(2022, 9, 1))
+                .RuleFor(s => s.Academy, "Mathematics")
+                .Generate(),
         };
 
         await context.Students.AddRangeAsync(students);
@@ -86,34 +91,38 @@ public class DataCentreServiceTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
 
-        // 添加测试数据
+        // 使用Bogus生成测试数据
         var students = new List<StudentModel>
         {
-            new()
-            {
-                UserId = "20123456", JoinTime = new DateTime(2020, 9, 1), Academy = "Computer", Gender = "男",
-                PoliticalLandscape = "共青团员"
-            },
-            new()
-            {
-                UserId = "21123456", JoinTime = new DateTime(2021, 9, 1), Academy = "Computer", Gender = "男",
-                PoliticalLandscape = "中共党员"
-            },
-            new()
-            {
-                UserId = "21234567", JoinTime = new DateTime(2021, 9, 1), Academy = "Information", Gender = "女",
-                PoliticalLandscape = "共青团员"
-            },
-            new()
-            {
-                UserId = "22123456", JoinTime = new DateTime(2022, 9, 1), Academy = "Computer", Gender = "女",
-                PoliticalLandscape = "共青团员"
-            },
-            new()
-            {
-                UserId = "22234567", JoinTime = new DateTime(2022, 9, 1), Academy = "Information", Gender = "男",
-                PoliticalLandscape = "群众"
-            },
+            BogusDataGenerator.StudentFaker.Clone()
+                .RuleFor(s => s.UserId, "20123456")
+                .RuleFor(s => s.JoinTime, new DateTime(2020, 9, 1))
+                .RuleFor(s => s.Academy, "Computer")
+                .Generate(),
+            BogusDataGenerator.StudentFaker.Clone()
+                .RuleFor(s => s.UserId, "21123456")
+                .RuleFor(s => s.JoinTime, new DateTime(2021, 9, 1))
+                .RuleFor(s => s.Academy, "Computer")
+                .RuleFor(s => s.PoliticalLandscape, "中共党员")
+                .Generate(),
+            BogusDataGenerator.StudentFaker.Clone()
+                .RuleFor(s => s.UserId, "21234567")
+                .RuleFor(s => s.JoinTime, new DateTime(2021, 9, 1))
+                .RuleFor(s => s.Academy, "Information")
+                .RuleFor(s => s.Gender, "女")
+                .Generate(),
+            BogusDataGenerator.StudentFaker.Clone()
+                .RuleFor(s => s.UserId, "22123456")
+                .RuleFor(s => s.JoinTime, new DateTime(2022, 9, 1))
+                .RuleFor(s => s.Academy, "Computer")
+                .RuleFor(s => s.Gender, "女")
+                .Generate(),
+            BogusDataGenerator.StudentFaker.Clone()
+                .RuleFor(s => s.UserId, "22234567")
+                .RuleFor(s => s.JoinTime, new DateTime(2022, 9, 1))
+                .RuleFor(s => s.Academy, "Information")
+                .RuleFor(s => s.PoliticalLandscape, "群众")
+                .Generate(),
         };
 
         await context.Students.AddRangeAsync(students);
@@ -138,39 +147,43 @@ public class DataCentreServiceTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
 
-        // 添加测试数据
+        // 使用Bogus生成测试数据
         var students = new List<StudentModel>
         {
-            new()
-            {
-                UserId = "20123456", JoinTime = new DateTime(2020, 9, 1), Academy = "Computer", Gender = "男",
-                PoliticalLandscape = "共青团员"
-            },
-            new()
-            {
-                UserId = "21123456", JoinTime = new DateTime(2021, 9, 1), Academy = "Computer", Gender = "男",
-                PoliticalLandscape = "中共党员"
-            },
-            new()
-            {
-                UserId = "21234567", JoinTime = new DateTime(2021, 9, 1), Academy = "Information", Gender = "女",
-                PoliticalLandscape = "共青团员"
-            },
-            new()
-            {
-                UserId = "22123456", JoinTime = new DateTime(2022, 9, 1), Academy = "Computer", Gender = "女",
-                PoliticalLandscape = "共青团员"
-            },
-            new()
-            {
-                UserId = "22234567", JoinTime = new DateTime(2022, 9, 1), Academy = "Information", Gender = "男",
-                PoliticalLandscape = "群众"
-            },
-            new()
-            {
-                UserId = "22345678", JoinTime = new DateTime(2022, 9, 1), Academy = "Mathematics", Gender = "男",
-                PoliticalLandscape = "共青团员"
-            },
+            BogusDataGenerator.StudentFaker.Clone()
+                .RuleFor(s => s.UserId, "20123456")
+                .RuleFor(s => s.JoinTime, new DateTime(2020, 9, 1))
+                .RuleFor(s => s.Academy, "Computer")
+                .Generate(),
+            BogusDataGenerator.StudentFaker.Clone()
+                .RuleFor(s => s.UserId, "21123456")
+                .RuleFor(s => s.JoinTime, new DateTime(2021, 9, 1))
+                .RuleFor(s => s.Academy, "Computer")
+                .RuleFor(s => s.PoliticalLandscape, "中共党员")
+                .Generate(),
+            BogusDataGenerator.StudentFaker.Clone()
+                .RuleFor(s => s.UserId, "21234567")
+                .RuleFor(s => s.JoinTime, new DateTime(2021, 9, 1))
+                .RuleFor(s => s.Academy, "Information")
+                .RuleFor(s => s.Gender, "女")
+                .Generate(),
+            BogusDataGenerator.StudentFaker.Clone()
+                .RuleFor(s => s.UserId, "22123456")
+                .RuleFor(s => s.JoinTime, new DateTime(2022, 9, 1))
+                .RuleFor(s => s.Academy, "Computer")
+                .RuleFor(s => s.Gender, "女")
+                .Generate(),
+            BogusDataGenerator.StudentFaker.Clone()
+                .RuleFor(s => s.UserId, "22234567")
+                .RuleFor(s => s.JoinTime, new DateTime(2022, 9, 1))
+                .RuleFor(s => s.Academy, "Information")
+                .RuleFor(s => s.PoliticalLandscape, "群众")
+                .Generate(),
+            BogusDataGenerator.StudentFaker.Clone()
+                .RuleFor(s => s.UserId, "22345678")
+                .RuleFor(s => s.JoinTime, new DateTime(2022, 9, 1))
+                .RuleFor(s => s.Academy, "Mathematics")
+                .Generate(),
         };
 
         await context.Students.AddRangeAsync(students);
@@ -196,34 +209,41 @@ public class DataCentreServiceTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
 
-        // 添加测试数据
+        // 使用Bogus生成测试数据
         var students = new List<StudentModel>
         {
-            new()
-            {
-                UserId = "20123456", JoinTime = new DateTime(2020, 9, 1), Academy = "Computer", Gender = "男",
-                PoliticalLandscape = "共青团员"
-            },
-            new()
-            {
-                UserId = "21123456", JoinTime = new DateTime(2021, 9, 1), Academy = "Computer", Gender = "男",
-                PoliticalLandscape = "中共党员"
-            },
-            new()
-            {
-                UserId = "21234567", JoinTime = new DateTime(2021, 9, 1), Academy = "Information", Gender = "女",
-                PoliticalLandscape = "共青团员"
-            },
-            new()
-            {
-                UserId = "22123456", JoinTime = new DateTime(2022, 9, 1), Academy = "Computer", Gender = "女",
-                PoliticalLandscape = "共青团员"
-            },
-            new()
-            {
-                UserId = "22234567", JoinTime = new DateTime(2022, 9, 1), Academy = "Information", Gender = "男",
-                PoliticalLandscape = "群众"
-            },
+            BogusDataGenerator.StudentFaker.Clone()
+                .RuleFor(s => s.UserId, "20123456")
+                .RuleFor(s => s.JoinTime, new DateTime(2020, 9, 1))
+                .RuleFor(s => s.Academy, "Computer")
+                .RuleFor(s => s.PoliticalLandscape, "共青团员")
+                .Generate(),
+            BogusDataGenerator.StudentFaker.Clone()
+                .RuleFor(s => s.UserId, "21123456")
+                .RuleFor(s => s.JoinTime, new DateTime(2021, 9, 1))
+                .RuleFor(s => s.Academy, "Computer")
+                .RuleFor(s => s.PoliticalLandscape, "中共党员")
+                .Generate(),
+            BogusDataGenerator.StudentFaker.Clone()
+                .RuleFor(s => s.UserId, "21234567")
+                .RuleFor(s => s.JoinTime, new DateTime(2021, 9, 1))
+                .RuleFor(s => s.Academy, "Information")
+                .RuleFor(s => s.Gender, "女")
+                .RuleFor(s => s.PoliticalLandscape, "共青团员")
+                .Generate(),
+            BogusDataGenerator.StudentFaker.Clone()
+                .RuleFor(s => s.UserId, "22123456")
+                .RuleFor(s => s.JoinTime, new DateTime(2022, 9, 1))
+                .RuleFor(s => s.Academy, "Computer")
+                .RuleFor(s => s.Gender, "女")
+                .RuleFor(s => s.PoliticalLandscape, "共青团员")
+                .Generate(),
+            BogusDataGenerator.StudentFaker.Clone()
+                .RuleFor(s => s.UserId, "22234567")
+                .RuleFor(s => s.JoinTime, new DateTime(2022, 9, 1))
+                .RuleFor(s => s.Academy, "Information")
+                .RuleFor(s => s.PoliticalLandscape, "群众")
+                .Generate(),
         };
 
         await context.Students.AddRangeAsync(students);
@@ -249,34 +269,39 @@ public class DataCentreServiceTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
 
-        // 添加测试数据
+        // 使用Bogus生成测试数据，确保性别分布符合预期
         var students = new List<StudentModel>
         {
-            new()
-            {
-                UserId = "20123456", JoinTime = new DateTime(2020, 9, 1), Academy = "Computer", Gender = "男",
-                PoliticalLandscape = "共青团员"
-            },
-            new()
-            {
-                UserId = "21123456", JoinTime = new DateTime(2021, 9, 1), Academy = "Computer", Gender = "男",
-                PoliticalLandscape = "中共党员"
-            },
-            new()
-            {
-                UserId = "21234567", JoinTime = new DateTime(2021, 9, 1), Academy = "Information", Gender = "女",
-                PoliticalLandscape = "共青团员"
-            },
-            new()
-            {
-                UserId = "22123456", JoinTime = new DateTime(2022, 9, 1), Academy = "Computer", Gender = "女",
-                PoliticalLandscape = "共青团员"
-            },
-            new()
-            {
-                UserId = "22234567", JoinTime = new DateTime(2022, 9, 1), Academy = "Information", Gender = "男",
-                PoliticalLandscape = "群众"
-            },
+            BogusDataGenerator.StudentFaker.Clone()
+                .RuleFor(s => s.UserId, "20123456")
+                .RuleFor(s => s.JoinTime, new DateTime(2020, 9, 1))
+                .RuleFor(s => s.Academy, "Computer")
+                .RuleFor(s => s.Gender, "男")
+                .Generate(),
+            BogusDataGenerator.StudentFaker.Clone()
+                .RuleFor(s => s.UserId, "21123456")
+                .RuleFor(s => s.JoinTime, new DateTime(2021, 9, 1))
+                .RuleFor(s => s.Academy, "Computer")
+                .RuleFor(s => s.Gender, "男")
+                .Generate(),
+            BogusDataGenerator.StudentFaker.Clone()
+                .RuleFor(s => s.UserId, "21234567")
+                .RuleFor(s => s.JoinTime, new DateTime(2021, 9, 1))
+                .RuleFor(s => s.Academy, "Information")
+                .RuleFor(s => s.Gender, "女")
+                .Generate(),
+            BogusDataGenerator.StudentFaker.Clone()
+                .RuleFor(s => s.UserId, "22123456")
+                .RuleFor(s => s.JoinTime, new DateTime(2022, 9, 1))
+                .RuleFor(s => s.Academy, "Computer")
+                .RuleFor(s => s.Gender, "女")
+                .Generate(),
+            BogusDataGenerator.StudentFaker.Clone()
+                .RuleFor(s => s.UserId, "22234567")
+                .RuleFor(s => s.JoinTime, new DateTime(2022, 9, 1))
+                .RuleFor(s => s.Academy, "Information")
+                .RuleFor(s => s.Gender, "男")
+                .Generate(),
         };
 
         await context.Students.AddRangeAsync(students);

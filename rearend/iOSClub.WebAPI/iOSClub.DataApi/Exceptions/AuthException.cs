@@ -1,4 +1,4 @@
-namespace iOSClub.WebAPI.Common.Exceptions;
+namespace iOSClub.DataApi.Exceptions;
 
 /// <summary>
 /// 认证授权异常

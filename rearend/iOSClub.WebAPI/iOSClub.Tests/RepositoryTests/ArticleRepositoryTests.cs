@@ -31,14 +31,18 @@ public class ArticleRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
         
-        var category = new CategoryModel { Id = "test-category", Name = "Test Category", Order = 1 };
+        // 使用Bogus生成分类
+        var category = BogusDataGenerator.CategoryFaker.Generate();
         await context.Categories.AddAsync(category);
         
-        var articles = new List<ArticleModel>
+        // 使用Bogus生成2篇文章
+        var articles = BogusDataGenerator.GenerateArticles(2);
+        foreach (var article in articles)
         {
-            new() { Path = "/test/article1", Title = "Article 1", Content = "Content 1", CategoryId = category.Id, Identity = "Member" },
-            new() { Path = "/test/article2", Title = "Article 2", Content = "Content 2", CategoryId = category.Id, Identity = "Member" }
-        };
+            article.CategoryId = category.Id;
+            article.Identity = "Member";
+        }
+        
         await context.Articles.AddRangeAsync(articles);
         await context.SaveChangesAsync();
 
@@ -58,12 +62,14 @@ public class ArticleRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
         
-        var article = new ArticleModel { Path = "/test/article", Title = "Test Article", Content = "Test Content", Identity = "Member" };
+        // 使用Bogus生成文章
+        var article = BogusDataGenerator.ArticleFaker.Generate();
+        article.Identity = "Member";
         await context.Articles.AddAsync(article);
         await context.SaveChangesAsync();
 
         // Act
-        var result = await _articleRepository.GetFromPath("/test/article");
+        var result = await _articleRepository.GetFromPath(article.Path);
 
         // Assert
         Assert.NotNull(result);
@@ -79,7 +85,9 @@ public class ArticleRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
         
-        var article = new ArticleModel { Path = "/test/newarticle", Title = "New Article", Content = "New Content", Identity = "Member" };
+        // 使用Bogus生成文章
+        var article = BogusDataGenerator.ArticleFaker.Generate();
+        article.Identity = "Member";
 
         // Act
         var result = await _articleRepository.CreateOrUpdate(article);
@@ -99,10 +107,13 @@ public class ArticleRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
         
-        var article = new ArticleModel { Path = "/test/article", Title = "Original Title", Content = "Original Content", Identity = "Member" };
+        // 使用Bogus生成文章
+        var article = BogusDataGenerator.ArticleFaker.Generate();
+        article.Identity = "Member";
         await context.Articles.AddAsync(article);
         await context.SaveChangesAsync();
         
+        // 更新文章信息
         article.Title = "Updated Title";
         article.Content = "Updated Content";
 
@@ -125,13 +136,15 @@ public class ArticleRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
         
-        var article = new ArticleModel { Path = "/test/article", Title = "Test Article", Content = "Test Content", Identity = "Member" };
+        // 使用Bogus生成文章
+        var article = BogusDataGenerator.ArticleFaker.Generate();
+        article.Identity = "Member";
         await context.Articles.AddAsync(article);
         await context.SaveChangesAsync();
 
         // Act
-        var result = await _articleRepository.Delete("/test/article");
-        var deletedArticle = await context.Articles.FirstOrDefaultAsync(a => a.Path == "/test/article");
+        var result = await _articleRepository.Delete(article.Path);
+        var deletedArticle = await context.Articles.FirstOrDefaultAsync(a => a.Path == article.Path);
 
         // Assert
         Assert.True(result);
@@ -146,16 +159,25 @@ public class ArticleRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
         
-        var category1 = new CategoryModel { Id = "cat1", Name = "Category 1", Order = 1 };
-        var category2 = new CategoryModel { Id = "cat2", Name = "Category 2", Order = 2 };
+        // 使用Bogus生成分类
+        var category1 = BogusDataGenerator.CategoryFaker.Generate();
+        var category2 = BogusDataGenerator.CategoryFaker.Generate();
         await context.Categories.AddRangeAsync(category1, category2);
         
-        var articles = new List<ArticleModel>
+        // 使用Bogus生成3篇文章
+        var articles = BogusDataGenerator.GenerateArticles(3);
+        
+        // 将前2篇文章分配给category1
+        for (int i = 0; i < 2; i++)
         {
-            new() { Path = "/test/article1", Title = "Article 1", Content = "Content 1", CategoryId = category1.Id, Identity = "Member" },
-            new() { Path = "/test/article2", Title = "Article 2", Content = "Content 2", CategoryId = category1.Id, Identity = "Member" },
-            new() { Path = "/test/article3", Title = "Article 3", Content = "Content 3", CategoryId = category2.Id, Identity = "Member" }
-        };
+            articles[i].CategoryId = category1.Id;
+            articles[i].Identity = "Member";
+        }
+        
+        // 将第3篇文章分配给category2
+        articles[2].CategoryId = category2.Id;
+        articles[2].Identity = "Member";
+        
         await context.Articles.AddRangeAsync(articles);
         await context.SaveChangesAsync();
 
@@ -165,9 +187,9 @@ public class ArticleRepositoryTests
         // Assert
         Assert.NotNull(result);
         Assert.Equal(2, result.Count);
-        Assert.True(result.ContainsKey("Category 1"));
-        Assert.True(result.ContainsKey("Category 2"));
-        Assert.Equal(2, result["Category 1"].Count());
-        Assert.Single(result["Category 2"]);
+        Assert.True(result.ContainsKey(category1.Name));
+        Assert.True(result.ContainsKey(category2.Name));
+        Assert.Equal(2, result[category1.Name].Count());
+        Assert.Single(result[category2.Name]);
     }
 }

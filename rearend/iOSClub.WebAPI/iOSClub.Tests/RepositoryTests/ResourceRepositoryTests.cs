@@ -30,11 +30,8 @@ public class ResourceRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
 
-        var resources = new List<ResourceModel>
-        {
-            new() { Id = "res1", Name = "Resource 1", Tag = "tag1" },
-            new() { Id = "res2", Name = "Resource 2", Tag = "tag2" }
-        };
+        // 使用Bogus生成2个资源
+        var resources = BogusDataGenerator.GenerateResources(2);
         await context.Resources.AddRangeAsync(resources);
         await context.SaveChangesAsync();
 
@@ -54,12 +51,13 @@ public class ResourceRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
 
-        var resource = new ResourceModel { Id = "res1", Name = "Test Resource", Tag = "test-tag" };
+        // 使用Bogus生成1个资源
+        var resource = BogusDataGenerator.ResourceFaker.Generate();
         await context.Resources.AddAsync(resource);
         await context.SaveChangesAsync();
 
         // Act
-        var result = await _resourceRepository.GetResourceByIdAsync("res1");
+        var result = await _resourceRepository.GetResourceByIdAsync(resource.Id);
 
         // Assert
         Assert.NotNull(result);
@@ -75,22 +73,24 @@ public class ResourceRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
 
-        var resources = new List<ResourceModel>
-        {
-            new() { Id = "res1", Name = "Resource 1", Tag = "tag1" },
-            new() { Id = "res2", Name = "Resource 2", Tag = "tag2" },
-            new() { Id = "res3", Name = "Resource 3", Tag = "tag1" }
-        };
+        // 使用Bogus生成3个资源
+        var resources = BogusDataGenerator.GenerateResources(3);
+        // 确保其中2个资源使用相同的标签
+        var commonTag = "common-tag";
+        resources[0].Tag = commonTag;
+        resources[1].Tag = commonTag;
+        resources[2].Tag = "other-tag";
+        
         await context.Resources.AddRangeAsync(resources);
         await context.SaveChangesAsync();
 
         // Act
-        var result = await _resourceRepository.GetResourcesByTagAsync("tag1");
+        var result = await _resourceRepository.GetResourcesByTagAsync(commonTag);
 
         // Assert
         Assert.NotNull(result);
         Assert.Equal(2, result.Count);
-        Assert.All(result, r => Assert.Equal("tag1", r.Tag));
+        Assert.All(result, r => Assert.Equal(commonTag, r.Tag));
     }
 
     [Fact]
@@ -101,12 +101,13 @@ public class ResourceRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
 
-        var resources = new List<ResourceModel>
-        {
-            new() { Id = "res1", Name = "Test Resource 1", Tag = "tag1" },
-            new() { Id = "res2", Name = "Another Resource", Tag = "tag2" },
-            new() { Id = "res3", Name = "Resource 3", Tag = "tag1" }
-        };
+        // 使用Bogus生成3个资源
+        var resources = BogusDataGenerator.GenerateResources(3);
+        // 确保其中1个资源名称包含"Test"
+        resources[0].Name = "Test Resource";
+        resources[1].Name = "Another Resource";
+        resources[2].Name = "Resource 3";
+        
         await context.Resources.AddRangeAsync(resources);
         await context.SaveChangesAsync();
 
@@ -116,7 +117,7 @@ public class ResourceRepositoryTests
         // Assert
         Assert.NotNull(result);
         Assert.Single(result);
-        Assert.Equal("Test Resource 1", result[0].Name);
+        Assert.Equal("Test Resource", result[0].Name);
     }
 
     [Fact]
@@ -127,14 +128,16 @@ public class ResourceRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
 
-        var resource = new ResourceModel { Name = "New Resource", Tag = "new-tag" };
+        // 使用Bogus生成1个资源
+        var resource = BogusDataGenerator.ResourceFaker.Generate();
+        resource.Id = string.Empty; // 确保是新资源
 
         // Act
         var result = await _resourceRepository.AddResourceAsync(resource);
 
         // 创建新的context实例来查询更新后的结果
         await using var newContext = new ClubContext(_options);
-        var savedResource = await newContext.Resources.FirstOrDefaultAsync(r => r.Name == "New Resource");
+        var savedResource = await newContext.Resources.FirstOrDefaultAsync(r => r.Name == resource.Name);
 
         // Assert
         Assert.True(result);
@@ -151,7 +154,8 @@ public class ResourceRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
 
-        var resource = new ResourceModel { Id = "res1", Name = "Original Name", Tag = "original-tag" };
+        // 使用Bogus生成1个资源
+        var resource = BogusDataGenerator.ResourceFaker.Generate();
         await context.Resources.AddAsync(resource);
         await context.SaveChangesAsync();
 
@@ -164,7 +168,7 @@ public class ResourceRepositoryTests
 
         // 创建新的context实例来查询更新后的结果
         await using var newContext = new ClubContext(_options);
-        var updatedResource = await newContext.Resources.FirstOrDefaultAsync(r => r.Id == "res1");
+        var updatedResource = await newContext.Resources.FirstOrDefaultAsync(r => r.Id == resource.Id);
 
         // Assert
         Assert.True(result);
@@ -181,16 +185,17 @@ public class ResourceRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
 
-        var resource = new ResourceModel { Id = "res1", Name = "Test Resource", Tag = "test-tag" };
+        // 使用Bogus生成1个资源
+        var resource = BogusDataGenerator.ResourceFaker.Generate();
         await context.Resources.AddAsync(resource);
         await context.SaveChangesAsync();
 
         // Act
-        var result = await _resourceRepository.DeleteResourceAsync("res1");
+        var result = await _resourceRepository.DeleteResourceAsync(resource.Id);
 
         // 创建新的context实例来查询更新后的结果
         await using var newContext = new ClubContext(_options);
-        var deletedResource = await newContext.Resources.FirstOrDefaultAsync(r => r.Id == "res1");
+        var deletedResource = await newContext.Resources.FirstOrDefaultAsync(r => r.Id == resource.Id);
 
         // Assert
         Assert.True(result);
@@ -205,12 +210,14 @@ public class ResourceRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
 
-        var resources = new List<ResourceModel>
-        {
-            new() { Id = "res1", Name = "Resource 1", Tag = "tag1" },
-            new() { Id = "res2", Name = "Resource 2", Tag = "tag2" },
-            new() { Id = "res3", Name = "Resource 3", Tag = "tag1" }
-        };
+        // 使用Bogus生成3个资源
+        var resources = BogusDataGenerator.GenerateResources(3);
+        // 确保其中2个资源使用相同的标签
+        var commonTag = "common-tag";
+        resources[0].Tag = commonTag;
+        resources[1].Tag = commonTag;
+        resources[2].Tag = "other-tag";
+        
         await context.Resources.AddRangeAsync(resources);
         await context.SaveChangesAsync();
 
@@ -220,8 +227,8 @@ public class ResourceRepositoryTests
         // Assert
         Assert.NotNull(result);
         Assert.Equal(2, result.Count);
-        Assert.Contains("tag1", result);
-        Assert.Contains("tag2", result);
+        Assert.Contains(commonTag, result);
+        Assert.Contains("other-tag", result);
     }
 
     [Fact]
@@ -232,12 +239,8 @@ public class ResourceRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
 
-        var resources = new List<ResourceModel>
-        {
-            new() { Id = "res1", Name = "Resource 1", Tag = "tag1" },
-            new() { Id = "res2", Name = "Resource 2", Tag = "tag2" },
-            new() { Id = "res3", Name = "Resource 3", Tag = "tag3" }
-        };
+        // 使用Bogus生成3个资源
+        var resources = BogusDataGenerator.GenerateResources(3);
         await context.Resources.AddRangeAsync(resources);
         await context.SaveChangesAsync();
 
@@ -256,12 +259,13 @@ public class ResourceRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
 
-        var resource = new ResourceModel { Id = "res1", Name = "Test Resource", Tag = "test-tag" };
+        // 使用Bogus生成1个资源
+        var resource = BogusDataGenerator.ResourceFaker.Generate();
         await context.Resources.AddAsync(resource);
         await context.SaveChangesAsync();
 
         // Act
-        var result = await _resourceRepository.ResourceExistsAsync("res1");
+        var result = await _resourceRepository.ResourceExistsAsync(resource.Id);
 
         // Assert
         Assert.True(result);

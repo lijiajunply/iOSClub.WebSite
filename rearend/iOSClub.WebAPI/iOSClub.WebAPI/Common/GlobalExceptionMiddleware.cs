@@ -1,6 +1,6 @@
 using System.Net;
 using System.Text.Json;
-using iOSClub.WebAPI.Common.Exceptions;
+using iOSClub.DataApi.Exceptions;
 using Microsoft.IdentityModel.Tokens;
 
 namespace iOSClub.WebAPI.Common;

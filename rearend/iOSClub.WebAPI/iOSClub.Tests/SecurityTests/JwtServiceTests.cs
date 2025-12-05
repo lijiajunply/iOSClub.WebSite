@@ -9,6 +9,7 @@ using Moq;
 using iOSClub.Data.ShowModels;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
+using Bogus;
 
 namespace iOSClub.Tests.SecurityTests;
 
@@ -20,6 +21,7 @@ public class JwtServiceTests : IDisposable
     private readonly RsaKeyManager _rsaKeyManager;
     private readonly JwtService _jwtService;
     private readonly string _testDirectory;
+    private readonly Faker<MemberModel> _memberFaker;
 
     public JwtServiceTests()
     {
@@ -42,6 +44,12 @@ public class JwtServiceTests : IDisposable
         _loggerMock = new Mock<ILogger<JwtService>>();
         _rsaLoggerMock = new Mock<ILogger<RsaKeyManager>>();
         
+        // 创建MemberModel的Bogus生成器
+        _memberFaker = new Faker<MemberModel>()
+            .RuleFor(m => m.UserId, f => f.Random.AlphaNumeric(10))
+            .RuleFor(m => m.UserName, f => f.Name.FullName())
+            .RuleFor(m => m.Identity, f => f.PickRandom("Student", "Staff", "President", "Founder"));
+        
         // 创建RsaKeyManager和JwtService实例
         _rsaKeyManager = new RsaKeyManager(_jwtConfig, _rsaLoggerMock.Object);
         _jwtService = new JwtService(_jwtConfig, _rsaKeyManager, _loggerMock.Object);
@@ -51,12 +59,7 @@ public class JwtServiceTests : IDisposable
     public void GenerateTokens_ReturnsValidTokens()
     {
         // Arrange
-        var memberModel = new MemberModel
-        {
-            UserId = "test_user_123",
-            UserName = "Test User",
-            Identity = "Student"
-        };
+        var memberModel = _memberFaker.Generate();
         var result = _jwtService.GenerateTokens(memberModel);
         
         // Assert
@@ -77,12 +80,7 @@ public class JwtServiceTests : IDisposable
     public void GenerateTokens_HandlesMultipleUsers()
     {
         // Arrange
-        var members = new[]
-        {
-            new MemberModel { UserId = "user1", UserName = "User 1", Identity = "Student" },
-            new MemberModel { UserId = "user2", UserName = "User 2", Identity = "Staff" },
-            new MemberModel { UserId = "user3", UserName = "User 3", Identity = "President" }
-        };
+        var members = _memberFaker.Generate(3);
         
         // Act & Assert
         foreach (var member in members)
@@ -98,12 +96,7 @@ public class JwtServiceTests : IDisposable
     public void ValidateAccessToken_ReturnsTrueForValidToken()
     {
         // Arrange
-        var memberModel = new MemberModel
-        {
-            UserId = "test_user_123",
-            UserName = "Test User",
-            Identity = "Student"
-        };
+        var memberModel = _memberFaker.Generate();
         var result = _jwtService.GenerateTokens(memberModel);
         
         // Act
@@ -132,12 +125,7 @@ public class JwtServiceTests : IDisposable
     public void ValidateAccessToken_ReturnsFalseForExpiredToken()
     {
         // Arrange
-        var memberModel = new MemberModel
-        {
-            UserId = "test_user_123",
-            UserName = "Test User",
-            Identity = "Student"
-        };
+        var memberModel = _memberFaker.Generate();
         
         // 生成一个正常令牌
         var result = _jwtService.GenerateTokens(memberModel);
@@ -163,12 +151,7 @@ public class JwtServiceTests : IDisposable
     public void ExtractClaimsFromToken_ReturnsCorrectClaims()
     {
         // Arrange
-        var memberModel = new MemberModel
-        {
-            UserId = "test_user_123",
-            UserName = "Test User",
-            Identity = "Student"
-        };
+        var memberModel = _memberFaker.Generate();
         var result = _jwtService.GenerateTokens(memberModel);
         
         // Act
@@ -210,12 +193,7 @@ public class JwtServiceTests : IDisposable
     public void GenerateTokens_WithScopeAndClientId_IncludesThemInClaims()
     {
         // Arrange
-        var memberModel = new MemberModel
-        {
-            UserId = "test_user_123",
-            UserName = "Test User",
-            Identity = "Student"
-        };
+        var memberModel = _memberFaker.Generate();
         var scope = "profile email role";
         var clientId = "test-client-123";
         
@@ -260,12 +238,7 @@ public class JwtServiceTests : IDisposable
     public void GenerateTokens_ReturnsDifferentTokensOnSubsequentCalls()
     {
         // Arrange
-        var memberModel = new MemberModel
-        {
-            UserId = "test_user_123",
-            UserName = "Test User",
-            Identity = "Student"
-        };
+        var memberModel = _memberFaker.Generate();
         
         // Act - 生成两组令牌
         var result1 = _jwtService.GenerateTokens(memberModel);
@@ -297,12 +270,7 @@ public class JwtServiceTests : IDisposable
     public void RefreshAccessToken_GeneratesNewToken()
     {
         // Arrange
-        var memberModel = new MemberModel
-        {
-            UserId = "test_user_123",
-            UserName = "Test User",
-            Identity = "Student"
-        };
+        var memberModel = _memberFaker.Generate();
         var result = _jwtService.GenerateTokens(memberModel);
         
         // Act

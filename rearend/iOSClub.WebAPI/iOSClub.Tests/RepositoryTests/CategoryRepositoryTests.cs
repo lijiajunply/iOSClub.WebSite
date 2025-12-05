@@ -29,11 +29,8 @@ public class CategoryRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
         
-        var categories = new List<CategoryModel>
-        {
-            new() { Id = "cat1", Name = "Category 1", Order = 1 },
-            new() { Id = "cat2", Name = "Category 2", Order = 2 }
-        };
+        // 使用Bogus生成2个分类
+        var categories = BogusDataGenerator.GenerateCategories(2);
         await context.Categories.AddRangeAsync(categories);
         await context.SaveChangesAsync();
 
@@ -53,12 +50,13 @@ public class CategoryRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
         
-        var category = new CategoryModel { Id = "cat1", Name = "Test Category", Order = 1 };
+        // 使用Bogus生成1个分类
+        var category = BogusDataGenerator.CategoryFaker.Generate();
         await context.Categories.AddAsync(category);
         await context.SaveChangesAsync();
 
         // Act
-        var result = await _categoryRepository.GetByName("Test Category");
+        var result = await _categoryRepository.GetByName(category.Name);
 
         // Assert
         Assert.NotNull(result);
@@ -73,7 +71,9 @@ public class CategoryRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
         
-        var category = new CategoryModel { Name = "New Category", Description = "New Description", Order = 1 };
+        // 使用Bogus生成1个分类
+        var category = BogusDataGenerator.CategoryFaker.Generate();
+        category.Id = string.Empty; // 确保是新分类
 
         // Act
         var result = await _categoryRepository.CreateOrUpdate(category);
@@ -94,10 +94,12 @@ public class CategoryRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
         
-        var category = new CategoryModel { Id = "cat1", Name = "Test Category", Description = "Original Description", Order = 1 };
+        // 使用Bogus生成1个分类
+        var category = BogusDataGenerator.CategoryFaker.Generate();
         await context.Categories.AddAsync(category);
         await context.SaveChangesAsync();
         
+        // 更新分类信息
         category.Description = "Updated Description";
         category.Order = 2;
 
@@ -120,13 +122,14 @@ public class CategoryRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
         
-        var category = new CategoryModel { Id = "cat1", Name = "Test Category", Order = 1 };
+        // 使用Bogus生成1个分类
+        var category = BogusDataGenerator.CategoryFaker.Generate();
         await context.Categories.AddAsync(category);
         await context.SaveChangesAsync();
 
         // Act
-        var result = await _categoryRepository.Delete("Test Category");
-        var deletedCategory = await context.Categories.FirstOrDefaultAsync(c => c.Name == "Test Category");
+        var result = await _categoryRepository.Delete(category.Name);
+        var deletedCategory = await context.Categories.FirstOrDefaultAsync(c => c.Name == category.Name);
 
         // Assert
         Assert.True(result);
@@ -141,16 +144,17 @@ public class CategoryRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
         
-        var category = new CategoryModel { Id = "cat1", Name = "Test Category", Order = 1 };
+        // 使用Bogus生成1个分类
+        var category = BogusDataGenerator.CategoryFaker.Generate();
         await context.Categories.AddAsync(category);
         await context.SaveChangesAsync();
 
         // Act
-        var result = await _categoryRepository.UpdateCategoryOrder("Test Category", 3);
+        var result = await _categoryRepository.UpdateCategoryOrder(category.Name, 3);
         
         // 创建新的context实例来查询更新后的结果
         await using var newContext = new ClubContext(_options);
-        var updatedCategory = await newContext.Categories.FirstOrDefaultAsync(c => c.Name == "Test Category");
+        var updatedCategory = await newContext.Categories.FirstOrDefaultAsync(c => c.Name == category.Name);
 
         // Assert
         Assert.True(result);
@@ -166,12 +170,13 @@ public class CategoryRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
         
-        var category = new CategoryModel { Id = "cat1", Name = "Test Category", Order = 1 };
+        // 使用Bogus生成1个分类
+        var category = BogusDataGenerator.CategoryFaker.Generate();
         await context.Categories.AddAsync(category);
         await context.SaveChangesAsync();
 
         // Act
-        var result = await _categoryRepository.GetById("cat1");
+        var result = await _categoryRepository.GetById(category.Id);
 
         // Assert
         Assert.NotNull(result);
@@ -187,14 +192,16 @@ public class CategoryRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
         
-        var category = new CategoryModel { Id = "cat1", Name = "Test Category", Order = 1 };
+        // 使用Bogus生成1个分类
+        var category = BogusDataGenerator.CategoryFaker.Generate();
         await context.Categories.AddAsync(category);
         
-        var articles = new List<ArticleModel>
+        // 使用Bogus生成2篇文章
+        var articles = BogusDataGenerator.GenerateArticles(2);
+        foreach (var article in articles)
         {
-            new() { Path = "/test/article1", Title = "Article 1", Content = "Content 1", CategoryId = category.Id },
-            new() { Path = "/test/article2", Title = "Article 2", Content = "Content 2", CategoryId = category.Id }
-        };
+            article.CategoryId = category.Id;
+        }
         await context.Articles.AddRangeAsync(articles);
         await context.SaveChangesAsync();
 

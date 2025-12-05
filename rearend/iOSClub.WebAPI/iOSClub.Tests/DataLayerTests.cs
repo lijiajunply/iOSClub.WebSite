@@ -17,18 +17,10 @@ public class DataLayerTests
     {
         // Arrange
         await using var context = new ClubContext(_options);
-        var student = new StudentModel
-        {
-            UserId = "1234567890",
-            UserName = "Test Student",
-            EMail = "test@example.com",
-            PhoneNum = "13800138000",
-            Academy = "Computer Science",
-            ClassName = "CS2022",
-            Gender = "男",
-            PoliticalLandscape = "群众",
-            JoinTime = DateTime.UtcNow
-        };
+        var student = BogusDataGenerator.StudentFaker.Clone()
+            .RuleFor(s => s.UserId, "1234567890")
+            .RuleFor(s => s.JoinTime, DateTime.UtcNow)
+            .Generate();
 
         // Act
         context.Students.Add(student);
@@ -46,26 +38,19 @@ public class DataLayerTests
     {
         // Arrange
         await using var context = new ClubContext(_options);
-        var category = new CategoryModel
-        {
-            Id = "test-category",
-            Name = "Test Category",
-            Description = "Test Description",
-            Order = 1
-        };
+        var category = BogusDataGenerator.CategoryFaker.Clone()
+            .RuleFor(c => c.Id, "test-category")
+            .RuleFor(c => c.Order, 1)
+            .Generate();
         context.Categories.Add(category);
         await context.SaveChangesAsync();
 
-        var article = new ArticleModel
-        {
-            Path = "/test/article",
-            Title = "Test Article",
-            Content = "Test Content",
-            CategoryId = category.Id,
-            Identity = "Test Author",
-            LastWriteTime = DateTime.UtcNow,
-            ArticleOrder = 1
-        };
+        var article = BogusDataGenerator.ArticleFaker.Clone()
+            .RuleFor(a => a.Path, "/test/article")
+            .RuleFor(a => a.CategoryId, category.Id)
+            .RuleFor(a => a.LastWriteTime, DateTime.UtcNow)
+            .RuleFor(a => a.ArticleOrder, 1)
+            .Generate();
 
         // Act
         context.Articles.Add(article);
@@ -83,23 +68,17 @@ public class DataLayerTests
     {
         // Arrange
         await using var context = new ClubContext(_options);
-        var department = new DepartmentModel
-        {
-            Name = "Test Department",
-            Key = "test-dept",
-            Description = "Test Description"
-        };
+        var department = BogusDataGenerator.DepartmentFaker.Clone()
+            .RuleFor(d => d.Key, "test-dept")
+            .Generate();
         context.Departments.Add(department);
         await context.SaveChangesAsync();
 
-        var project = new ProjectModel
-        {
-            Id = "test-project",
-            Title = "Test Project",
-            Description = "Test Description",
-            StartTime = "2024-01-01",
-            EndTime = "2024-12-31"
-        };
+        var project = BogusDataGenerator.ProjectFaker.Clone()
+            .RuleFor(p => p.Id, "test-project")
+            .RuleFor(p => p.StartTime, "2024-01-01")
+            .RuleFor(p => p.EndTime, "2024-12-31")
+            .Generate();
 
         // Act
         context.Projects.Add(project);

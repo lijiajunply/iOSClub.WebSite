@@ -30,11 +30,8 @@ public class ProjectRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
         
-        var projects = new List<ProjectModel>
-        {
-            new() { Id = "project1", Title = "Project 1", Description = "Description 1" },
-            new() { Id = "project2", Title = "Project 2", Description = "Description 2" }
-        };
+        // 使用Bogus生成2个项目
+        var projects = BogusDataGenerator.GenerateProjects(2);
         await context.Projects.AddRangeAsync(projects);
         await context.SaveChangesAsync();
 
@@ -54,12 +51,13 @@ public class ProjectRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
         
-        var project = new ProjectModel { Id = "project1", Title = "Test Project", Description = "Test Description" };
+        // 使用Bogus生成1个项目
+        var project = BogusDataGenerator.ProjectFaker.Generate();
         await context.Projects.AddAsync(project);
         await context.SaveChangesAsync();
 
         // Act
-        var result = await _projectRepository.GetProjectByIdAsync("project1");
+        var result = await _projectRepository.GetProjectByIdAsync(project.Id);
 
         // Assert
         Assert.NotNull(result);
@@ -75,12 +73,13 @@ public class ProjectRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
         
-        var project = new ProjectModel { Id = "project1", Title = "Test Project", Description = "Test Description" };
+        // 使用Bogus生成1个项目
+        var project = BogusDataGenerator.ProjectFaker.Generate();
         await context.Projects.AddAsync(project);
         await context.SaveChangesAsync();
 
         // Act
-        var result = await _projectRepository.GetProjectByTitleAsync("Test Project");
+        var result = await _projectRepository.GetProjectByTitleAsync(project.Title);
 
         // Assert
         Assert.NotNull(result);
@@ -96,12 +95,13 @@ public class ProjectRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
         
-        var project = new ProjectModel { Id = "project1", Title = "Test Project", Description = "Test Description" };
+        // 使用Bogus生成1个项目
+        var project = BogusDataGenerator.ProjectFaker.Generate();
         await context.Projects.AddAsync(project);
         await context.SaveChangesAsync();
 
         // Act
-        var result = await _projectRepository.ProjectExistsAsync("project1");
+        var result = await _projectRepository.ProjectExistsAsync(project.Id);
 
         // Assert
         Assert.True(result);
@@ -130,11 +130,14 @@ public class ProjectRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
         
-        var staff = new StaffModel { UserId = "staff1", Name = "Staff 1", Identity = "Member" };
+        // 使用Bogus生成1个员工
+        var staff = BogusDataGenerator.StaffFaker.Generate();
         await context.Staffs.AddAsync(staff);
         await context.SaveChangesAsync();
         
-        var project = new ProjectModel { Title = "New Project", Description = "New Description" };
+        // 使用Bogus生成1个项目
+        var project = BogusDataGenerator.ProjectFaker.Generate();
+        project.Id = string.Empty; // 确保是新项目
 
         // Act
         var result = await _projectRepository.CreateProjectAsync(project, staff);
@@ -153,7 +156,8 @@ public class ProjectRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
         
-        var project = new ProjectModel { Id = "project1", Title = "Original Title", Description = "Original Description" };
+        // 使用Bogus生成1个项目
+        var project = BogusDataGenerator.ProjectFaker.Generate();
         await context.Projects.AddAsync(project);
         await context.SaveChangesAsync();
         
@@ -166,7 +170,7 @@ public class ProjectRepositoryTests
         
         // 创建新的context实例来查询更新后的结果
         await using var newContext = new ClubContext(_options);
-        var updatedProject = await newContext.Projects.FirstOrDefaultAsync(p => p.Id == "project1");
+        var updatedProject = await newContext.Projects.FirstOrDefaultAsync(p => p.Id == project.Id);
 
         // Assert
         Assert.True(result);
@@ -183,16 +187,17 @@ public class ProjectRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
         
-        var project = new ProjectModel { Id = "project1", Title = "Test Project", Description = "Test Description" };
+        // 使用Bogus生成1个项目
+        var project = BogusDataGenerator.ProjectFaker.Generate();
         await context.Projects.AddAsync(project);
         await context.SaveChangesAsync();
 
         // Act
-        var result = await _projectRepository.DeleteProjectAsync("project1");
+        var result = await _projectRepository.DeleteProjectAsync(project.Id);
         
         // 创建新的context实例来查询更新后的结果
         await using var newContext = new ClubContext(_options);
-        var deletedProject = await newContext.Projects.FirstOrDefaultAsync(p => p.Id == "project1");
+        var deletedProject = await newContext.Projects.FirstOrDefaultAsync(p => p.Id == project.Id);
 
         // Assert
         Assert.True(result);
@@ -207,12 +212,14 @@ public class ProjectRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
         
-        var projects = new List<ProjectModel>
-        {
-            new() { Id = "project1", Title = "Test Project 1", Description = "Description 1" },
-            new() { Id = "project2", Title = "Another Project", Description = "Test Description" },
-            new() { Id = "project3", Title = "Project 3", Description = "Description 3" }
-        };
+        // 使用Bogus生成3个项目
+        var projects = BogusDataGenerator.GenerateProjects(3);
+        
+        // 确保其中2个项目包含"Test"关键词
+        projects[0].Title = "Test Project 1";
+        projects[1].Description = "Test Description";
+        projects[2].Title = "Project 3";
+        
         await context.Projects.AddRangeAsync(projects);
         await context.SaveChangesAsync();
 
@@ -232,15 +239,18 @@ public class ProjectRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
         
-        var staff = new StaffModel { UserId = "staff1", Name = "Staff 1", Identity = "Founder" };
+        // 使用Bogus生成1个Founder身份的员工
+        var staff = BogusDataGenerator.StaffFaker.Generate();
+        staff.Identity = "Founder";
         await context.Staffs.AddAsync(staff);
         
-        var project = new ProjectModel { Id = "project1", Title = "Test Project", Description = "Test Description" };
+        // 使用Bogus生成1个项目
+        var project = BogusDataGenerator.ProjectFaker.Generate();
         await context.Projects.AddAsync(project);
         await context.SaveChangesAsync();
 
         // Act
-        var result = await _projectRepository.HasProjectManagementPermissionAsync("staff1", "project1");
+        var result = await _projectRepository.HasProjectManagementPermissionAsync(staff.UserId, project.Id);
 
         // Assert
         Assert.True(result);
@@ -254,15 +264,18 @@ public class ProjectRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
         
-        var staff = new StaffModel { UserId = "staff1", Name = "Staff 1", Identity = "President" };
+        // 使用Bogus生成1个President身份的员工
+        var staff = BogusDataGenerator.StaffFaker.Generate();
+        staff.Identity = "President";
         await context.Staffs.AddAsync(staff);
         
-        var project = new ProjectModel { Id = "project1", Title = "Test Project", Description = "Test Description" };
+        // 使用Bogus生成1个项目
+        var project = BogusDataGenerator.ProjectFaker.Generate();
         await context.Projects.AddAsync(project);
         await context.SaveChangesAsync();
 
         // Act
-        var result = await _projectRepository.HasProjectManagementPermissionAsync("staff1", "project1");
+        var result = await _projectRepository.HasProjectManagementPermissionAsync(staff.UserId, project.Id);
 
         // Assert
         Assert.True(result);

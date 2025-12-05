@@ -29,11 +29,8 @@ public class StaffRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
         
-        var staffs = new List<StaffModel>
-        {
-            new() { UserId = "staff1", Name = "Staff 1", Identity = "Member" },
-            new() { UserId = "staff2", Name = "Staff 2", Identity = "Member" }
-        };
+        // 使用Bogus生成2个员工
+        var staffs = BogusDataGenerator.GenerateStaffs(2);
         await context.Staffs.AddRangeAsync(staffs);
         await context.SaveChangesAsync();
 
@@ -53,12 +50,13 @@ public class StaffRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
         
-        var staff = new StaffModel { UserId = "staff1", Name = "Test Staff", Identity = "Member" };
+        // 使用Bogus生成1个员工
+        var staff = BogusDataGenerator.StaffFaker.Generate();
         await context.Staffs.AddAsync(staff);
         await context.SaveChangesAsync();
 
         // Act
-        var result = await _staffRepository.GetStaffByIdAsync("staff1");
+        var result = await _staffRepository.GetStaffByIdAsync(staff.UserId);
 
         // Assert
         Assert.NotNull(result);
@@ -74,12 +72,13 @@ public class StaffRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
         
-        var staff = new StaffModel { UserId = "staff1", Name = "Test Staff", Identity = "Member" };
+        // 使用Bogus生成1个员工
+        var staff = BogusDataGenerator.StaffFaker.Generate();
         await context.Staffs.AddAsync(staff);
         await context.SaveChangesAsync();
 
         // Act
-        var result = await _staffRepository.GetStaffByIdWithoutOtherData("staff1");
+        var result = await _staffRepository.GetStaffByIdWithoutOtherData(staff.UserId);
 
         // Assert
         Assert.NotNull(result);
@@ -95,12 +94,13 @@ public class StaffRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
         
-        var staff = new StaffModel { UserId = "staff1", Name = "Test Staff", Identity = "Member" };
+        // 使用Bogus生成1个员工
+        var staff = BogusDataGenerator.StaffFaker.Generate();
         await context.Staffs.AddAsync(staff);
         await context.SaveChangesAsync();
 
         // Act
-        var result = await _staffRepository.StaffExistsAsync("staff1");
+        var result = await _staffRepository.StaffExistsAsync(staff.UserId);
 
         // Assert
         Assert.True(result);
@@ -129,20 +129,16 @@ public class StaffRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
         
-        // 创建一个部门，因为Member身份的员工需要部门
-        var department = new DepartmentModel { Key = "dept1", Name = "Test Department", Description = "Test Description" };
-        await context.Departments.AddAsync(department);
-        await context.SaveChangesAsync();
-        
-        // 创建一个Founder身份的员工，这样不需要部门
-        var staff = new StaffModel { UserId = "staff1", Name = "New Staff", Identity = "Founder" };
+        // 使用Bogus生成1个Founder身份的员工
+        var staff = BogusDataGenerator.StaffFaker.Generate();
+        staff.Identity = "Founder"; // Founder身份不需要部门
 
         // Act
         var result = await _staffRepository.CreateStaffAsync(staff);
         
         // 创建新的context实例来查询更新后的结果
         await using var newContext = new ClubContext(_options);
-        var savedStaff = await newContext.Staffs.FirstOrDefaultAsync(s => s.UserId == "staff1");
+        var savedStaff = await newContext.Staffs.FirstOrDefaultAsync(s => s.UserId == staff.UserId);
 
         // Assert
         Assert.True(result);
@@ -158,7 +154,8 @@ public class StaffRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
         
-        var staff = new StaffModel { UserId = "staff1", Name = "Original Name", Identity = "Member" };
+        // 使用Bogus生成1个员工
+        var staff = BogusDataGenerator.StaffFaker.Generate();
         await context.Staffs.AddAsync(staff);
         await context.SaveChangesAsync();
         
@@ -171,7 +168,7 @@ public class StaffRepositoryTests
         
         // 创建新的context实例来查询更新后的结果
         await using var newContext = new ClubContext(_options);
-        var updatedStaff = await newContext.Staffs.FirstOrDefaultAsync(s => s.UserId == "staff1");
+        var updatedStaff = await newContext.Staffs.FirstOrDefaultAsync(s => s.UserId == staff.UserId);
 
         // Assert
         Assert.True(result);
@@ -188,16 +185,17 @@ public class StaffRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
         
-        var staff = new StaffModel { UserId = "staff1", Name = "Test Staff", Identity = "Member" };
+        // 使用Bogus生成1个员工
+        var staff = BogusDataGenerator.StaffFaker.Generate();
         await context.Staffs.AddAsync(staff);
         await context.SaveChangesAsync();
 
         // Act
-        var result = await _staffRepository.DeleteStaffAsync("staff1");
+        var result = await _staffRepository.DeleteStaffAsync(staff.UserId);
         
         // 创建新的context实例来查询更新后的结果
         await using var newContext = new ClubContext(_options);
-        var deletedStaff = await newContext.Staffs.FirstOrDefaultAsync(s => s.UserId == "staff1");
+        var deletedStaff = await newContext.Staffs.FirstOrDefaultAsync(s => s.UserId == staff.UserId);
 
         // Assert
         Assert.True(result);
@@ -212,26 +210,28 @@ public class StaffRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
         
-        var department1 = new DepartmentModel { Key = "dept1", Name = "Department 1", Description = "Description 1" };
-        var department2 = new DepartmentModel { Key = "dept2", Name = "Department 2", Description = "Description 2" };
-        await context.Departments.AddRangeAsync(department1, department2);
+        // 使用Bogus生成2个部门
+        var departments = BogusDataGenerator.GenerateDepartments(2);
+        await context.Departments.AddRangeAsync(departments);
         
-        var staff = new StaffModel { UserId = "staff1", Name = "Test Staff", Identity = "Member", Department = department1 };
+        // 使用Bogus生成1个员工，并关联到第一个部门
+        var staff = BogusDataGenerator.StaffFaker.Generate();
+        staff.Department = departments[0];
         await context.Staffs.AddAsync(staff);
         await context.SaveChangesAsync();
 
         // Act
-        var result = await _staffRepository.ChangeStaffDepartmentAsync("staff1", "Department 2");
+        var result = await _staffRepository.ChangeStaffDepartmentAsync(staff.UserId, departments[1].Name);
         
         // 创建新的context实例来查询更新后的结果
         await using var newContext = new ClubContext(_options);
-        var updatedStaff = await newContext.Staffs.Include(s => s.Department).FirstOrDefaultAsync(s => s.UserId == "staff1");
+        var updatedStaff = await newContext.Staffs.Include(s => s.Department).FirstOrDefaultAsync(s => s.UserId == staff.UserId);
 
         // Assert
         Assert.True(result);
         Assert.NotNull(updatedStaff);
         Assert.NotNull(updatedStaff.Department);
-        Assert.Equal("Department 2", updatedStaff.Department.Name);
+        Assert.Equal(departments[1].Name, updatedStaff.Department.Name);
     }
 
     [Fact]
@@ -242,12 +242,17 @@ public class StaffRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
         
-        var staffs = new List<StaffModel>
-        {
-            new() { UserId = "staff1", Name = "Staff 1", Identity = "President" },
-            new() { UserId = "staff2", Name = "Staff 2", Identity = "Minister" },
-            new() { UserId = "staff3", Name = "Staff 3", Identity = "Member" }
-        };
+        // 使用Bogus生成3个员工，分别设置不同身份
+        var presidentStaff = BogusDataGenerator.StaffFaker.Generate();
+        presidentStaff.Identity = "President";
+        
+        var ministerStaff = BogusDataGenerator.StaffFaker.Generate();
+        ministerStaff.Identity = "Minister";
+        
+        var memberStaff = BogusDataGenerator.StaffFaker.Generate();
+        memberStaff.Identity = "Member";
+        
+        var staffs = new List<StaffModel> { presidentStaff, ministerStaff, memberStaff };
         await context.Staffs.AddRangeAsync(staffs);
         await context.SaveChangesAsync();
 

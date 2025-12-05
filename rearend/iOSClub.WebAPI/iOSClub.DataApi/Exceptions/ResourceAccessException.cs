@@ -1,4 +1,4 @@
-namespace iOSClub.WebAPI.Common.Exceptions;
+namespace iOSClub.DataApi.Exceptions;
 
 /// <summary>
 /// 资源访问异常

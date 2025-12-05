@@ -845,7 +845,7 @@ public class SSOController(
             var refreshToken = await loginService.GetRefreshToken(member.UserId, request.ClientId);
             if (string.IsNullOrEmpty(token))
             {
-                if (logger.IsEnabled(LogLevel.Error))
+                if (logger.IsEnabled(LogLevel.Information))
                 {
                     logger.LogInformation("Token exchange failed: unable to generate token for user {UserId}",
                         authCodeInfo.UserId);
@@ -856,7 +856,7 @@ public class SSOController(
 
             if (string.IsNullOrEmpty(refreshToken))
             {
-                if (logger.IsEnabled(LogLevel.Error))
+                if (logger.IsEnabled(LogLevel.Information))
                 {
                     logger.LogInformation("Token exchange failed: unable to generate refresh token for user {UserId}",
                         authCodeInfo.UserId);
@@ -872,7 +872,7 @@ public class SSOController(
                 idToken = await GenerateIdToken(member.UserId, request.ClientId, authCodeInfo.Nonce);
                 if (string.IsNullOrEmpty(idToken))
                 {
-                    if (logger.IsEnabled(LogLevel.Error))
+                    if (logger.IsEnabled(LogLevel.Information))
                     {
                         logger.LogInformation("Token exchange failed: unable to generate ID token for user {UserId}",
                             authCodeInfo.UserId);
@@ -907,7 +907,7 @@ public class SSOController(
         }
         catch (Exception ex)
         {
-            if (logger.IsEnabled(LogLevel.Error))
+            if (logger.IsEnabled(LogLevel.Information))
             {
                 logger.LogInformation(ex, "Token exchange failed with exception for code {Code}", request.Code);
             }
@@ -1069,7 +1069,7 @@ public class SSOController(
         }
         catch (Exception ex)
         {
-            if (logger.IsEnabled(LogLevel.Error))
+            if (logger.IsEnabled(LogLevel.Information))
             {
                 logger.LogInformation(ex, "Failed to generate ID token for user {UserId} and client {ClientId}", userId,
                     clientId);
@@ -1107,21 +1107,9 @@ public class SSOController(
 
         // 验证token格式和签名
         var tokenHandler = new JwtSecurityTokenHandler();
-        var secretKey = Environment.GetEnvironmentVariable("SECRETKEY", EnvironmentVariableTarget.Process) ??
-                        config["Jwt:SecretKey"] ?? "";
-        var key = Encoding.UTF8.GetBytes(secretKey);
-
-        var validationParameters = new TokenValidationParameters
-        {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(key),
-            ValidateIssuer = true,
-            ValidIssuer = "iOS Club of XAUAT",
-            ValidateAudience = true,
-            ValidAudience = "iOS Club of XAUAT",
-            ValidateLifetime = true,
-            ClockSkew = TimeSpan.FromSeconds(30)
-        };
+        
+        // 使用JwtService获取默认验证参数（包含当前有效的RSA公钥）
+        var validationParameters = jwtService.GetDefaultValidationParameters();
 
         // 尝试验证token
         var claimsPrincipal = tokenHandler.ValidateToken(token, validationParameters, out var validatedToken);

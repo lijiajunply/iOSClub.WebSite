@@ -32,11 +32,8 @@ public class DepartmentRepositoryTests
         await _context.Database.EnsureDeletedAsync();
         await _context.Database.EnsureCreatedAsync();
         
-        var departments = new List<DepartmentModel>
-        {
-            new() { Key = "dept1", Name = "Department 1", Description = "Description 1" },
-            new() { Key = "dept2", Name = "Department 2", Description = "Description 2" }
-        };
+        // 使用Bogus生成2个部门
+        var departments = BogusDataGenerator.GenerateDepartments(2);
         await _context.Departments.AddRangeAsync(departments);
         await _context.SaveChangesAsync();
 
@@ -55,12 +52,13 @@ public class DepartmentRepositoryTests
         await _context.Database.EnsureDeletedAsync();
         await _context.Database.EnsureCreatedAsync();
         
-        var department = new DepartmentModel { Key = "dept1", Name = "Test Department", Description = "Test Description" };
+        // 使用Bogus生成1个部门
+        var department = BogusDataGenerator.DepartmentFaker.Generate();
         await _context.Departments.AddAsync(department);
         await _context.SaveChangesAsync();
 
         // Act
-        var result = await _departmentRepository.GetDepartmentByNameAsync("Test Department");
+        var result = await _departmentRepository.GetDepartmentByNameAsync(department.Name);
 
         // Assert
         Assert.NotNull(result);
@@ -75,12 +73,13 @@ public class DepartmentRepositoryTests
         await _context.Database.EnsureDeletedAsync();
         await _context.Database.EnsureCreatedAsync();
         
-        var department = new DepartmentModel { Key = "test-key", Name = "Test Department", Description = "Test Description" };
+        // 使用Bogus生成1个部门
+        var department = BogusDataGenerator.DepartmentFaker.Generate();
         await _context.Departments.AddAsync(department);
         await _context.SaveChangesAsync();
 
         // Act
-        var result = await _departmentRepository.GetDepartmentByKeyAsync("test-key");
+        var result = await _departmentRepository.GetDepartmentByKeyAsync(department.Key);
 
         // Assert
         Assert.NotNull(result);
@@ -95,14 +94,15 @@ public class DepartmentRepositoryTests
         await _context.Database.EnsureDeletedAsync();
         await _context.Database.EnsureCreatedAsync();
         
-        var department = new DepartmentModel { Key = "dept1", Name = "New Department", Description = "New Description" };
+        // 使用Bogus生成1个部门
+        var department = BogusDataGenerator.DepartmentFaker.Generate();
 
         // Act
         var result = await _departmentRepository.AddDepartmentAsync(department);
         
         // 创建新的context实例来查询更新后的结果
         await using var newContext = new ClubContext(_options);
-        var savedDepartment = await newContext.Departments.FirstOrDefaultAsync(d => d.Name == "New Department");
+        var savedDepartment = await newContext.Departments.FirstOrDefaultAsync(d => d.Key == department.Key);
 
         // Assert
         Assert.True(result);
@@ -117,7 +117,8 @@ public class DepartmentRepositoryTests
         await _context.Database.EnsureDeletedAsync();
         await _context.Database.EnsureCreatedAsync();
         
-        var department = new DepartmentModel { Key = "dept1", Name = "Test Department", Description = "Original Description" };
+        // 使用Bogus生成1个部门
+        var department = BogusDataGenerator.DepartmentFaker.Generate();
         await _context.Departments.AddAsync(department);
         await _context.SaveChangesAsync();
         
@@ -129,7 +130,7 @@ public class DepartmentRepositoryTests
         
         // 创建新的context实例来查询更新后的结果
         await using var newContext = new ClubContext(_options);
-        var updatedDepartment = await newContext.Departments.FirstOrDefaultAsync(d => d.Name == "Test Department");
+        var updatedDepartment = await newContext.Departments.FirstOrDefaultAsync(d => d.Key == department.Key);
 
         // Assert
         Assert.True(result);
@@ -144,16 +145,17 @@ public class DepartmentRepositoryTests
         await _context.Database.EnsureDeletedAsync();
         await _context.Database.EnsureCreatedAsync();
         
-        var department = new DepartmentModel { Key = "dept1", Name = "Test Department", Description = "Test Description" };
+        // 使用Bogus生成1个部门
+        var department = BogusDataGenerator.DepartmentFaker.Generate();
         await _context.Departments.AddAsync(department);
         await _context.SaveChangesAsync();
 
         // Act
-        var result = await _departmentRepository.DeleteDepartmentAsync("Test Department");
+        var result = await _departmentRepository.DeleteDepartmentAsync(department.Name);
         
         // 创建新的context实例来查询更新后的结果
         await using var newContext = new ClubContext(_options);
-        var deletedDepartment = await newContext.Departments.FirstOrDefaultAsync(d => d.Name == "Test Department");
+        var deletedDepartment = await newContext.Departments.FirstOrDefaultAsync(d => d.Name == department.Name);
 
         // Assert
         Assert.True(result);
@@ -167,12 +169,13 @@ public class DepartmentRepositoryTests
         await _context.Database.EnsureDeletedAsync();
         await _context.Database.EnsureCreatedAsync();
         
-        var department = new DepartmentModel { Key = "dept1", Name = "Test Department", Description = "Test Description" };
+        // 使用Bogus生成1个部门
+        var department = BogusDataGenerator.DepartmentFaker.Generate();
         await _context.Departments.AddAsync(department);
         await _context.SaveChangesAsync();
 
         // Act
-        var result = await _departmentRepository.DepartmentExistsAsync("Test Department");
+        var result = await _departmentRepository.DepartmentExistsAsync(department.Name);
 
         // Assert
         Assert.True(result);
@@ -199,19 +202,21 @@ public class DepartmentRepositoryTests
         await _context.Database.EnsureDeletedAsync();
         await _context.Database.EnsureCreatedAsync();
         
-        var department = new DepartmentModel { Key = "dept1", Name = "Test Department", Description = "Test Description" };
+        // 使用Bogus生成1个部门
+        var department = BogusDataGenerator.DepartmentFaker.Generate();
         await _context.Departments.AddAsync(department);
         
-        var staffs = new List<StaffModel>
+        // 使用Bogus生成2个员工
+        var staffs = BogusDataGenerator.GenerateStaffs(2);
+        foreach (var staff in staffs)
         {
-            new() { UserId = "staff1", Name = "Staff 1", Identity = "Member", Department = department },
-            new() { UserId = "staff2", Name = "Staff 2", Identity = "Member", Department = department }
-        };
+            staff.Department = department;
+        }
         await _context.Staffs.AddRangeAsync(staffs);
         await _context.SaveChangesAsync();
 
         // Act
-        var result = await _departmentRepository.GetStaffCountAsync("Test Department");
+        var result = await _departmentRepository.GetStaffCountAsync(department.Name);
 
         // Assert
         Assert.Equal(2, result);
@@ -224,19 +229,21 @@ public class DepartmentRepositoryTests
         await _context.Database.EnsureDeletedAsync();
         await _context.Database.EnsureCreatedAsync();
         
-        var department = new DepartmentModel { Key = "dept1", Name = "Test Department", Description = "Test Description" };
+        // 使用Bogus生成1个部门
+        var department = BogusDataGenerator.DepartmentFaker.Generate();
         await _context.Departments.AddAsync(department);
         
-        var projects = new List<ProjectModel>
+        // 使用Bogus生成2个项目
+        var projects = BogusDataGenerator.GenerateProjects(2);
+        foreach (var project in projects)
         {
-            new() { Id = "project1", Title = "Project 1", Description = "Description 1", Department = department },
-            new() { Id = "project2", Title = "Project 2", Description = "Description 2", Department = department }
-        };
+            project.Department = department;
+        }
         await _context.Projects.AddRangeAsync(projects);
         await _context.SaveChangesAsync();
 
         // Act
-        var result = await _departmentRepository.GetProjectCountAsync("Test Department");
+        var result = await _departmentRepository.GetProjectCountAsync(department.Name);
 
         // Assert
         Assert.Equal(2, result);

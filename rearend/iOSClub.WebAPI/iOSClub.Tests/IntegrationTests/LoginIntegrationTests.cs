@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 using Moq;
+using iOSClub.Tests;
 
 namespace iOSClub.Tests.IntegrationTests;
 
@@ -66,18 +67,12 @@ public class LoginIntegrationTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
         
-        // 添加测试学生数据
-        var student = new StudentModel
-        {
-            UserId = "20123456",
-            UserName = "Test Student",
-            PasswordHash = DataTool.StringToHash("password123"),
-            Academy = "Computer",
-            Gender = "男",
-            PoliticalLandscape = "共青团员",
-            ClassName = "2020级计算机1班",
-            PhoneNum = "13800138000"
-        };
+        // 使用Bogus生成测试学生数据
+        var student = BogusDataGenerator.StudentFaker.Clone()
+            .RuleFor(s => s.UserId, "20123456")
+            .RuleFor(s => s.PasswordHash, DataTool.StringToHash("password123"))
+            .RuleFor(s => s.ClassName, "2020级计算机1班")
+            .Generate();
         await context.Students.AddAsync(student);
         await context.SaveChangesAsync();
         
@@ -103,18 +98,12 @@ public class LoginIntegrationTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
         
-        // 添加测试学生数据
-        var student = new StudentModel
-        {
-            UserId = "20123456",
-            UserName = "Test Student",
-            PasswordHash = DataTool.StringToHash("password123"),
-            Academy = "Computer",
-            Gender = "男",
-            PoliticalLandscape = "共青团员",
-            ClassName = "2020级计算机1班",
-            PhoneNum = "13800138000"
-        };
+        // 使用Bogus生成测试学生数据
+        var student = BogusDataGenerator.StudentFaker.Clone()
+            .RuleFor(s => s.UserId, "20123456")
+            .RuleFor(s => s.PasswordHash, DataTool.StringToHash("password123"))
+            .RuleFor(s => s.ClassName, "2020级计算机1班")
+            .Generate();
         await context.Students.AddAsync(student);
         await context.SaveChangesAsync();
         
@@ -135,27 +124,20 @@ public class LoginIntegrationTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
         
-        // 添加测试学生数据
-        var student = new StudentModel
-        {
-            UserId = "20123456",
-            UserName = "Test Student",
-            PasswordHash = DataTool.StringToHash("password123"),
-            Academy = "Computer",
-            Gender = "男",
-            PoliticalLandscape = "共青团员",
-            ClassName = "2020级计算机1班",
-            PhoneNum = "13800138000"
-        };
+        // 使用Bogus生成测试学生数据
+        var student = BogusDataGenerator.StudentFaker.Clone()
+            .RuleFor(s => s.UserId, "20123456")
+            .RuleFor(s => s.PasswordHash, DataTool.StringToHash("password123"))
+            .RuleFor(s => s.ClassName, "2020级计算机1班")
+            .Generate();
         await context.Students.AddAsync(student);
         
-        // 添加对应员工数据
-        var staff = new StaffModel
-        {
-            UserId = student.UserId,
-            Name = student.UserName,
-            Identity = "President"
-        };
+        // 使用Bogus生成对应员工数据
+        var staff = BogusDataGenerator.StaffFaker.Clone()
+            .RuleFor(s => s.UserId, student.UserId)
+            .RuleFor(s => s.Name, student.UserName)
+            .RuleFor(s => s.Identity, "President")
+            .Generate();
         await context.Staffs.AddAsync(staff);
         await context.SaveChangesAsync();
         

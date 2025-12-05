@@ -1,9 +1,9 @@
 using iOSClub.WebAPI.Common;
-using iOSClub.WebAPI.Common.Exceptions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Moq;
 using System.Text.Json;
+using iOSClub.DataApi.Exceptions;
 
 namespace iOSClub.Tests;
 

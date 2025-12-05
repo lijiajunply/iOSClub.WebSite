@@ -29,11 +29,8 @@ public class ClientApplicationRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
         
-        var clientApps = new List<ClientApplication>
-        {
-            new() { ClientId = "app1", ClientSecret = "secret1", IsActive = true, RedirectUris = "http://localhost:3000" },
-            new() { ClientId = "app2", ClientSecret = "secret2", IsActive = true, RedirectUris = "http://localhost:4000" }
-        };
+        // 使用Bogus生成2个客户端应用
+        var clientApps = BogusDataGenerator.GenerateClientApplications(2);
         await context.ClientApplications.AddRangeAsync(clientApps);
         await context.SaveChangesAsync();
 
@@ -53,12 +50,13 @@ public class ClientApplicationRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
         
-        var clientApp = new ClientApplication { ClientId = "app1", ClientSecret = "secret1", IsActive = true, RedirectUris = "http://localhost:3000" };
+        // 使用Bogus生成1个客户端应用
+        var clientApp = BogusDataGenerator.ClientApplicationFaker.Generate();
         await context.ClientApplications.AddAsync(clientApp);
         await context.SaveChangesAsync();
 
         // Act
-        var result = await _clientAppRepository.GetByClientIdAsync("app1");
+        var result = await _clientAppRepository.GetByClientIdAsync(clientApp.ClientId);
 
         // Assert
         Assert.NotNull(result);
@@ -73,14 +71,15 @@ public class ClientApplicationRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
         
-        var clientApp = new ClientApplication { ClientId = "app1", ClientSecret = "secret1", IsActive = true, RedirectUris = "http://localhost:3000" };
+        // 使用Bogus生成1个客户端应用
+        var clientApp = BogusDataGenerator.ClientApplicationFaker.Generate();
 
         // Act
         var result = await _clientAppRepository.CreateAsync(clientApp);
         
         // 创建新的context实例来查询更新后的结果
         await using var newContext = new ClubContext(_options);
-        var savedClientApp = await newContext.ClientApplications.FirstOrDefaultAsync(c => c.ClientId == "app1");
+        var savedClientApp = await newContext.ClientApplications.FirstOrDefaultAsync(c => c.ClientId == clientApp.ClientId);
 
         // Assert
         Assert.True(result);
@@ -96,26 +95,27 @@ public class ClientApplicationRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
         
-        var clientApp = new ClientApplication { ClientId = "app1", ClientSecret = "secret1", IsActive = true, RedirectUris = "http://localhost:3000" };
+        // 使用Bogus生成1个客户端应用
+        var clientApp = BogusDataGenerator.ClientApplicationFaker.Generate();
         await context.ClientApplications.AddAsync(clientApp);
         await context.SaveChangesAsync();
         
         // 修改客户端应用
         clientApp.IsActive = false;
-        clientApp.RedirectUris = "http://localhost:3000;http://localhost:4000";
+        clientApp.RedirectUris = $"{clientApp.RedirectUris};http://localhost:{new Random().Next(3000, 9999)}";
 
         // Act
         var result = await _clientAppRepository.UpdateAsync(clientApp);
         
         // 创建新的context实例来查询更新后的结果
         await using var newContext = new ClubContext(_options);
-        var updatedClientApp = await newContext.ClientApplications.FirstOrDefaultAsync(c => c.ClientId == "app1");
+        var updatedClientApp = await newContext.ClientApplications.FirstOrDefaultAsync(c => c.ClientId == clientApp.ClientId);
 
         // Assert
         Assert.True(result);
         Assert.NotNull(updatedClientApp);
         Assert.False(updatedClientApp.IsActive);
-        Assert.Equal("http://localhost:3000;http://localhost:4000", updatedClientApp.RedirectUris);
+        Assert.Equal(clientApp.RedirectUris, updatedClientApp.RedirectUris);
     }
 
     [Fact]
@@ -126,16 +126,17 @@ public class ClientApplicationRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
         
-        var clientApp = new ClientApplication { ClientId = "app1", ClientSecret = "secret1", IsActive = true, RedirectUris = "http://localhost:3000" };
+        // 使用Bogus生成1个客户端应用
+        var clientApp = BogusDataGenerator.ClientApplicationFaker.Generate();
         await context.ClientApplications.AddAsync(clientApp);
         await context.SaveChangesAsync();
 
         // Act
-        var result = await _clientAppRepository.DeleteAsync("app1");
+        var result = await _clientAppRepository.DeleteAsync(clientApp.ClientId);
         
         // 创建新的context实例来查询更新后的结果
         await using var newContext = new ClubContext(_options);
-        var deletedClientApp = await newContext.ClientApplications.FirstOrDefaultAsync(c => c.ClientId == "app1");
+        var deletedClientApp = await newContext.ClientApplications.FirstOrDefaultAsync(c => c.ClientId == clientApp.ClientId);
 
         // Assert
         Assert.True(result);
@@ -150,16 +151,19 @@ public class ClientApplicationRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
         
-        var clientApp = new ClientApplication { ClientId = "app1", ClientSecret = "secret1", IsActive = true, RedirectUris = "http://localhost:3000" };
+        // 使用Bogus生成1个客户端应用
+        var clientApp = BogusDataGenerator.ClientApplicationFaker.Generate();
+        var originalSecret = clientApp.ClientSecret;
+        // 保存原始密钥到数据库，不进行哈希处理
         await context.ClientApplications.AddAsync(clientApp);
         await context.SaveChangesAsync();
 
         // Act
-        var result = await _clientAppRepository.ValidateCredentialsAsync("app1", "secret1");
+        var result = await _clientAppRepository.ValidateCredentialsAsync(clientApp.ClientId, originalSecret);
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal("app1", result.ClientId);
+        Assert.Equal(clientApp.ClientId, result.ClientId);
     }
 
     [Fact]
@@ -170,12 +174,13 @@ public class ClientApplicationRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
         
-        var clientApp = new ClientApplication { ClientId = "app1", ClientSecret = "secret1", IsActive = true, RedirectUris = "http://localhost:3000" };
+        // 使用Bogus生成1个客户端应用
+        var clientApp = BogusDataGenerator.ClientApplicationFaker.Generate();
         await context.ClientApplications.AddAsync(clientApp);
         await context.SaveChangesAsync();
 
         // Act
-        var result = await _clientAppRepository.ValidateCredentialsAsync("app1", "wrong-secret");
+        var result = await _clientAppRepository.ValidateCredentialsAsync(clientApp.ClientId, "wrong-secret");
 
         // Assert
         Assert.Null(result);
@@ -189,15 +194,18 @@ public class ClientApplicationRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
         
-        var clientApp = new ClientApplication { ClientId = "app1", ClientSecret = "secret1", IsActive = true, RedirectUris = "http://localhost:3000;http://localhost:4000" };
+        // 使用Bogus生成1个客户端应用
+        var clientApp = BogusDataGenerator.ClientApplicationFaker.Generate();
+        // 获取其中一个重定向URI用于测试
+        var redirectUri = clientApp.RedirectUris.Split(';').First();
         await context.ClientApplications.AddAsync(clientApp);
         await context.SaveChangesAsync();
 
         // Act
-        var result = await _clientAppRepository.GetByRedirectUriAsync("http://localhost:3000");
+        var result = await _clientAppRepository.GetByRedirectUriAsync(redirectUri);
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal("app1", result.ClientId);
+        Assert.Equal(clientApp.ClientId, result.ClientId);
     }
 }

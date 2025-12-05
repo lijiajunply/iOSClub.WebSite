@@ -4,6 +4,7 @@ using iOSClub.DataApi.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
+using iOSClub.Tests;
 
 namespace iOSClub.Tests.RepositoryTests;
 
@@ -32,19 +33,7 @@ public class StudentRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
 
-        var students = new List<StudentModel>
-        {
-            new()
-            {
-                UserId = "2101010101", UserName = "Student 1", PasswordHash = DataTool.StringToHash("password1"),
-                PhoneNum = "13800138001"
-            },
-            new()
-            {
-                UserId = "2101010102", UserName = "Student 2", PasswordHash = DataTool.StringToHash("password2"),
-                PhoneNum = "13800138002"
-            }
-        };
+        var students = BogusDataGenerator.StudentFaker.Generate(2);
         await context.Students.AddRangeAsync(students);
         await context.SaveChangesAsync();
 
@@ -64,16 +53,12 @@ public class StudentRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
 
-        var student = new StudentModel
-        {
-            UserId = "2101010101", UserName = "Test Student", PasswordHash = DataTool.StringToHash("password"),
-            PhoneNum = "13800138001"
-        };
+        var student = BogusDataGenerator.StudentFaker.Generate();
         await context.Students.AddAsync(student);
         await context.SaveChangesAsync();
 
         // Act
-        var result = await _studentRepository.GetByIdAsync("2101010101");
+        var result = await _studentRepository.GetByIdAsync(student.UserId);
 
         // Assert
         Assert.NotNull(result);
@@ -89,11 +74,7 @@ public class StudentRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
 
-        var student = new StudentModel
-        {
-            UserId = "2101010101", UserName = "New Student", PasswordHash = DataTool.StringToHash("password"),
-            PhoneNum = "13800138001"
-        };
+        var student = BogusDataGenerator.StudentFaker.Generate();
 
         // Act
         var result = await _studentRepository.Create(student);
@@ -112,11 +93,7 @@ public class StudentRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
 
-        var student = new StudentModel
-        {
-            UserId = "2101010101", UserName = "Original Name", PasswordHash = DataTool.StringToHash("password"),
-            PhoneNum = "13800138001"
-        };
+        var student = BogusDataGenerator.StudentFaker.Generate();
         await context.Students.AddAsync(student);
         await context.SaveChangesAsync();
 
@@ -125,7 +102,7 @@ public class StudentRepositoryTests
 
         // Act
         var result = await _studentRepository.UpdateAsync(student);
-        var updatedStudent = await _studentRepository.GetByIdAsync("2101010101");
+        var updatedStudent = await _studentRepository.GetByIdAsync(student.UserId);
 
         // Assert
         Assert.True(result);
@@ -142,17 +119,13 @@ public class StudentRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
 
-        var student = new StudentModel
-        {
-            UserId = "2101010101", UserName = "Test Student", PasswordHash = DataTool.StringToHash("password"),
-            PhoneNum = "13800138001"
-        };
+        var student = BogusDataGenerator.StudentFaker.Generate();
         await context.Students.AddAsync(student);
         await context.SaveChangesAsync();
 
         // Act
-        var result = await _studentRepository.DeleteAsync("2101010101");
-        var deletedStudent = await _studentRepository.GetByIdAsync("2101010101");
+        var result = await _studentRepository.DeleteAsync(student.UserId);
+        var deletedStudent = await _studentRepository.GetByIdAsync(student.UserId);
 
         // Assert
         Assert.True(result);
@@ -167,16 +140,14 @@ public class StudentRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
 
-        var student = new StudentModel
-        {
-            UserId = "2101010101", UserName = "Test Student", PasswordHash = DataTool.StringToHash("password"),
-            PhoneNum = "13800138001"
-        };
+        var student = BogusDataGenerator.StudentFaker.Generate();
+        var password = "password";
+        student.PasswordHash = DataTool.StringToHash(password);
         await context.Students.AddAsync(student);
         await context.SaveChangesAsync();
 
         // Act
-        var result = await _studentRepository.Login("2101010101", "password");
+        var result = await _studentRepository.Login(student.UserId, password);
 
         // Assert
         Assert.True(result);
@@ -190,16 +161,13 @@ public class StudentRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
 
-        var student = new StudentModel
-        {
-            UserId = "2101010101", UserName = "Test Student", PasswordHash = DataTool.StringToHash("password"),
-            PhoneNum = "13800138001"
-        };
+        var student = BogusDataGenerator.StudentFaker.Generate();
+        student.PasswordHash = DataTool.StringToHash("password");
         await context.Students.AddAsync(student);
         await context.SaveChangesAsync();
 
         // Act
-        var result = await _studentRepository.Login("2101010101", "wrongpassword");
+        var result = await _studentRepository.Login(student.UserId, "wrongpassword");
 
         // Assert
         Assert.False(result);
@@ -213,19 +181,7 @@ public class StudentRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
 
-        var students = new List<StudentModel>
-        {
-            new()
-            {
-                UserId = "2101010101", UserName = "Student 1", PasswordHash = DataTool.StringToHash("password1"),
-                PhoneNum = "13800138001"
-            },
-            new()
-            {
-                UserId = "2101010102", UserName = "Student 2", PasswordHash = DataTool.StringToHash("password2"),
-                PhoneNum = "13800138002"
-            }
-        };
+        var students = BogusDataGenerator.StudentFaker.Generate(2);
 
         // Act
         var result = await _studentRepository.UpdateManyAsync(students);
@@ -244,19 +200,9 @@ public class StudentRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
 
-        // 添加5个学生
-        for (int i = 1; i <= 5; i++)
-        {
-            var student = new StudentModel
-            {
-                UserId = $"210101010{i}",
-                UserName = $"Student {i}",
-                PasswordHash = DataTool.StringToHash($"password{i}"),
-                PhoneNum = $"1380013800{i}"
-            };
-            await context.Students.AddAsync(student);
-        }
-
+        // 使用Bogus生成5个学生
+        var students = BogusDataGenerator.StudentFaker.Generate(5);
+        await context.Students.AddRangeAsync(students);
         await context.SaveChangesAsync();
 
         // Act
@@ -276,23 +222,18 @@ public class StudentRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
 
+        // 使用Bogus生成学生，并确保有两个学生的Academy是"Computer Science"
         var students = new List<StudentModel>
         {
-            new()
-            {
-                UserId = "2101010101", UserName = "Test Student 1", Academy = "Computer Science",
-                PasswordHash = DataTool.StringToHash("password1"), PhoneNum = "13800138001"
-            },
-            new()
-            {
-                UserId = "2101010102", UserName = "Test Student 2", Academy = "Mathematics",
-                PasswordHash = DataTool.StringToHash("password2"), PhoneNum = "13800138002"
-            },
-            new()
-            {
-                UserId = "2101010103", UserName = "Other Student", Academy = "Computer Science",
-                PasswordHash = DataTool.StringToHash("password3"), PhoneNum = "13800138003"
-            }
+            BogusDataGenerator.StudentFaker
+                .RuleFor(s => s.Academy, "Computer Science")
+                .Generate(),
+            BogusDataGenerator.StudentFaker
+                .RuleFor(s => s.Academy, "Mathematics")
+                .Generate(),
+            BogusDataGenerator.StudentFaker
+                .RuleFor(s => s.Academy, "Computer Science")
+                .Generate()
         };
         await context.Students.AddRangeAsync(students);
         await context.SaveChangesAsync();
@@ -314,23 +255,15 @@ public class StudentRepositoryTests
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
 
-        // 添加学生
-        var student = new StudentModel
-        {
-            UserId = "2101010101",
-            UserName = "Test Student",
-            PasswordHash = DataTool.StringToHash("password"),
-            PhoneNum = "13800138001"
-        };
+        // 使用Bogus生成学生
+        var student = BogusDataGenerator.StudentFaker.Generate();
         await context.Students.AddAsync(student);
 
-        // 添加员工
-        var staff = new StaffModel
-        {
-            UserId = "2101010101",
-            Name = "Test Staff",
-            Identity = "President"
-        };
+        // 使用Bogus生成员工
+        var staff = BogusDataGenerator.StaffFaker
+            .RuleFor(s => s.UserId, student.UserId)
+            .RuleFor(s => s.Identity, "President")
+            .Generate();
         await context.Staffs.AddAsync(staff);
 
         await context.SaveChangesAsync();

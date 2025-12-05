@@ -1,7 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
+using iOSClub.DataApi.Exceptions;
 using iOSClub.WebAPI.Common;
-using iOSClub.WebAPI.Common.Exceptions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
