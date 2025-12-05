@@ -39,13 +39,13 @@ export class MemberQueryService {
 
         // 注意：后端返回的是压缩后的JSON字符串，需要解压处理
         const apiResponse = await response.json();
-        
+
         // 检查API响应状态
         if (apiResponse.code !== 200) {
             throw new Error(apiResponse.message || '获取成员数据失败');
         }
-        
-        return JSON.parse(await GZipService.decompressFromString(apiResponse.data)) ;
+
+        return JSON.parse(await GZipService.decompressFromString(apiResponse.data));
     }
 
     /**
@@ -97,12 +97,12 @@ export class MemberQueryService {
         }
 
         const apiResponse = await response.json();
-        
+
         // 检查API响应状态
         if (apiResponse.code !== 200) {
             throw new Error(apiResponse.message || '获取分页成员数据失败');
         }
-        
+
         return JSON.parse(await GZipService.decompressFromString(apiResponse.data));
     }
 
@@ -110,7 +110,7 @@ export class MemberQueryService {
         const params = new URLSearchParams();
         params.append('searchTerm', searchTerm);
         params.append('searchCondition', searchCondition);
-        
+
         return apiRequest<StudentModel[]>({
             url: `${url}/MemberQuery/all-data/search?${params.toString()}`,
             method: 'GET'

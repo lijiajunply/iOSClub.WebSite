@@ -1,6 +1,6 @@
 import {url} from './Url';
 import type {StudentModel, LoginModel} from '../models';
-import { apiRequest } from './ApiService';
+import {apiRequest} from './ApiService';
 
 /**
  * 密码哈希函数

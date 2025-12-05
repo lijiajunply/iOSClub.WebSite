@@ -1,7 +1,7 @@
 import {url} from './Url';
 import type {ArticleModel, ArticleCreateDto, ArticleUpdateDto} from "../models";
 import type {ArticleSearchResult} from '../models'
-import { apiRequest } from './ApiService';
+import {apiRequest} from './ApiService';
 
 /**
  * 文章服务类 - 处理文章相关的API调用
@@ -71,7 +71,6 @@ export class ArticleService {
     static async getArticle(path: string): Promise<ArticleModel> {
         return this.getArticleByPath(path);
     }
-
 
 
     /**

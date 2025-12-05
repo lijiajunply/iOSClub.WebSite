@@ -1,6 +1,6 @@
 import {url} from './Url';
 import {AuthService} from "./AuthService";
-import { apiRequest } from './ApiService';
+import {apiRequest} from './ApiService';
 
 // 定义数据模型
 export interface YearCount {
@@ -82,13 +82,13 @@ export class DataCentreService {
         // 对于文件上传，我们需要使用FormData
         const formData = new FormData();
         formData.append('file', file);
-        
+
         // 直接使用fetch而不是apiRequest，因为apiRequest不支持FormData上传
         const token = AuthService.getToken();
         if (!token) {
             throw new Error('未登录');
         }
-        
+
         const response = await fetch(`${url}/DataCentre/update-from-json`, {
             method: 'POST',
             headers: {
@@ -106,7 +106,8 @@ export class DataCentreService {
                 if (errorData.Message) {
                     errorMessage = errorData.Message;
                 }
-            } catch {}
+            } catch {
+            }
             throw new Error(errorMessage);
         }
     }
@@ -117,14 +118,14 @@ export class DataCentreService {
         if (!token) {
             throw new Error('未登录');
         }
-        
+
         const response = await fetch(`${url}/DataCentre/export-json`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
             },
         });
-        
+
         if (!response.ok) {
             // 尝试解析错误响应
             let errorMessage = `HTTP error! status: ${response.status}`;
@@ -133,10 +134,11 @@ export class DataCentreService {
                 if (errorData.Message) {
                     errorMessage = errorData.Message;
                 }
-            } catch {}
+            } catch {
+            }
             throw new Error(errorMessage);
         }
-        
+
         return await response.blob();
     }
 }

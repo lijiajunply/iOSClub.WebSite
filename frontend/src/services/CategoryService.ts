@@ -1,6 +1,6 @@
 import {url} from './Url';
 import {ArticleModel, CategoryModel} from '../models';
-import { apiRequest } from './ApiService';
+import {apiRequest} from './ApiService';
 
 /**
  * 分类服务类 - 处理文章分类相关的API调用

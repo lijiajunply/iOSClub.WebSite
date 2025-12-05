@@ -44,7 +44,7 @@ export class MemberManagementService {
             body: model
         });
     }
-    
+
     /**
      * 管理员重置成员密码
      * @param userId 成员ID
@@ -55,7 +55,7 @@ export class MemberManagementService {
         await apiRequest<void>({
             url: `${url}/MemberManagement/reset-password`,
             method: 'POST',
-            body: { userId, newPassword }
+            body: {userId, newPassword}
         });
     }
 }

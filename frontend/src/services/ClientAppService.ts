@@ -1,6 +1,12 @@
-import { url } from './Url';
-import type { ClientApplication, ClientAppResultModel, CreateClientAppModel, UpdateClientAppModel, RegenerateSecretResult } from '../models';
-import { apiRequest } from './ApiService';
+import {url} from './Url';
+import type {
+    ClientApplication,
+    ClientAppResultModel,
+    CreateClientAppModel,
+    UpdateClientAppModel,
+    RegenerateSecretResult
+} from '../models';
+import {apiRequest} from './ApiService';
 
 /**
  * 客户端应用服务类 - 处理客户端应用管理相关的API调用
