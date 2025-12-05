@@ -29,11 +29,10 @@ public class LoginIntegrationTests
             .Options;
         
         // 创建数据库上下文和上下文工厂
-        var context = new ClubContext(_options);
         var contextFactory = new TestDbContextFactory(_options);
         
         // 初始化Repository
-        var studentRepository = new StudentRepository(context);
+        var studentRepository = new StudentRepository(contextFactory);
         var staffRepository = new StaffRepository(contextFactory);
         
         // 设置Mock

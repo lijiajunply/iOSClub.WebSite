@@ -1,14 +1,14 @@
 using iOSClub.Data;
-using iOSClub.DataApi.Repositories;
 using iOSClub.Data.DataModels;
+using iOSClub.DataApi.Repositories;
 using Microsoft.EntityFrameworkCore;
 
-namespace iOSClub.Tests;
+namespace iOSClub.Tests.RepositoryTests;
 
 public class StudentRepositoryTests
 {
     private readonly DbContextOptions<ClubContext> _options;
-    private readonly ClubContext _context;
+    private readonly TestDbContextFactory _contextFactory;
     private readonly StudentRepository _studentRepository;
 
     public StudentRepositoryTests()
@@ -17,25 +17,34 @@ public class StudentRepositoryTests
         _options = new DbContextOptionsBuilder<ClubContext>()
             .UseInMemoryDatabase(databaseName: "StudentRepositoryTestDatabase")
             .Options;
-        
-        _context = new ClubContext(_options);
-        _studentRepository = new StudentRepository(_context);
+
+        _contextFactory = new TestDbContextFactory(_options);
+        _studentRepository = new StudentRepository(_contextFactory);
     }
 
     [Fact]
     public async Task GetAll_ReturnsAllStudents()
     {
+        await using var context = await _contextFactory.CreateDbContextAsync();
         // Arrange
-        await _context.Database.EnsureDeletedAsync();
-        await _context.Database.EnsureCreatedAsync();
-        
+        await context.Database.EnsureDeletedAsync();
+        await context.Database.EnsureCreatedAsync();
+
         var students = new List<StudentModel>
         {
-            new() { UserId = "2101010101", UserName = "Student 1", PasswordHash = DataTool.StringToHash("password1"), PhoneNum = "13800138001" },
-            new() { UserId = "2101010102", UserName = "Student 2", PasswordHash = DataTool.StringToHash("password2"), PhoneNum = "13800138002" }
+            new()
+            {
+                UserId = "2101010101", UserName = "Student 1", PasswordHash = DataTool.StringToHash("password1"),
+                PhoneNum = "13800138001"
+            },
+            new()
+            {
+                UserId = "2101010102", UserName = "Student 2", PasswordHash = DataTool.StringToHash("password2"),
+                PhoneNum = "13800138002"
+            }
         };
-        await _context.Students.AddRangeAsync(students);
-        await _context.SaveChangesAsync();
+        await context.Students.AddRangeAsync(students);
+        await context.SaveChangesAsync();
 
         // Act
         var result = await _studentRepository.GetAll();
@@ -48,13 +57,18 @@ public class StudentRepositoryTests
     [Fact]
     public async Task GetByIdAsync_ReturnsCorrectStudent()
     {
+        await using var context = await _contextFactory.CreateDbContextAsync();
         // Arrange
-        await _context.Database.EnsureDeletedAsync();
-        await _context.Database.EnsureCreatedAsync();
-        
-        var student = new StudentModel { UserId = "2101010101", UserName = "Test Student", PasswordHash = DataTool.StringToHash("password"), PhoneNum = "13800138001" };
-        await _context.Students.AddAsync(student);
-        await _context.SaveChangesAsync();
+        await context.Database.EnsureDeletedAsync();
+        await context.Database.EnsureCreatedAsync();
+
+        var student = new StudentModel
+        {
+            UserId = "2101010101", UserName = "Test Student", PasswordHash = DataTool.StringToHash("password"),
+            PhoneNum = "13800138001"
+        };
+        await context.Students.AddAsync(student);
+        await context.SaveChangesAsync();
 
         // Act
         var result = await _studentRepository.GetByIdAsync("2101010101");
@@ -68,11 +82,16 @@ public class StudentRepositoryTests
     [Fact]
     public async Task Create_ReturnsCreatedStudent()
     {
+        await using var context = await _contextFactory.CreateDbContextAsync();
         // Arrange
-        await _context.Database.EnsureDeletedAsync();
-        await _context.Database.EnsureCreatedAsync();
-        
-        var student = new StudentModel { UserId = "2101010101", UserName = "New Student", PasswordHash = DataTool.StringToHash("password"), PhoneNum = "13800138001" };
+        await context.Database.EnsureDeletedAsync();
+        await context.Database.EnsureCreatedAsync();
+
+        var student = new StudentModel
+        {
+            UserId = "2101010101", UserName = "New Student", PasswordHash = DataTool.StringToHash("password"),
+            PhoneNum = "13800138001"
+        };
 
         // Act
         var result = await _studentRepository.Create(student);
@@ -86,14 +105,19 @@ public class StudentRepositoryTests
     [Fact]
     public async Task UpdateAsync_UpdatesExistingStudent()
     {
+        await using var context = await _contextFactory.CreateDbContextAsync();
         // Arrange
-        await _context.Database.EnsureDeletedAsync();
-        await _context.Database.EnsureCreatedAsync();
-        
-        var student = new StudentModel { UserId = "2101010101", UserName = "Original Name", PasswordHash = DataTool.StringToHash("password"), PhoneNum = "13800138001" };
-        await _context.Students.AddAsync(student);
-        await _context.SaveChangesAsync();
-        
+        await context.Database.EnsureDeletedAsync();
+        await context.Database.EnsureCreatedAsync();
+
+        var student = new StudentModel
+        {
+            UserId = "2101010101", UserName = "Original Name", PasswordHash = DataTool.StringToHash("password"),
+            PhoneNum = "13800138001"
+        };
+        await context.Students.AddAsync(student);
+        await context.SaveChangesAsync();
+
         student.UserName = "Updated Name";
         student.PhoneNum = "13800138002";
 
@@ -111,13 +135,18 @@ public class StudentRepositoryTests
     [Fact]
     public async Task DeleteAsync_RemovesStudent()
     {
+        await using var context = await _contextFactory.CreateDbContextAsync();
         // Arrange
-        await _context.Database.EnsureDeletedAsync();
-        await _context.Database.EnsureCreatedAsync();
-        
-        var student = new StudentModel { UserId = "2101010101", UserName = "Test Student", PasswordHash = DataTool.StringToHash("password"), PhoneNum = "13800138001" };
-        await _context.Students.AddAsync(student);
-        await _context.SaveChangesAsync();
+        await context.Database.EnsureDeletedAsync();
+        await context.Database.EnsureCreatedAsync();
+
+        var student = new StudentModel
+        {
+            UserId = "2101010101", UserName = "Test Student", PasswordHash = DataTool.StringToHash("password"),
+            PhoneNum = "13800138001"
+        };
+        await context.Students.AddAsync(student);
+        await context.SaveChangesAsync();
 
         // Act
         var result = await _studentRepository.DeleteAsync("2101010101");
@@ -131,13 +160,18 @@ public class StudentRepositoryTests
     [Fact]
     public async Task Login_ValidCredentials_ReturnsTrue()
     {
+        await using var context = await _contextFactory.CreateDbContextAsync();
         // Arrange
-        await _context.Database.EnsureDeletedAsync();
-        await _context.Database.EnsureCreatedAsync();
-        
-        var student = new StudentModel { UserId = "2101010101", UserName = "Test Student", PasswordHash = DataTool.StringToHash("password"), PhoneNum = "13800138001" };
-        await _context.Students.AddAsync(student);
-        await _context.SaveChangesAsync();
+        await context.Database.EnsureDeletedAsync();
+        await context.Database.EnsureCreatedAsync();
+
+        var student = new StudentModel
+        {
+            UserId = "2101010101", UserName = "Test Student", PasswordHash = DataTool.StringToHash("password"),
+            PhoneNum = "13800138001"
+        };
+        await context.Students.AddAsync(student);
+        await context.SaveChangesAsync();
 
         // Act
         var result = await _studentRepository.Login("2101010101", "password");
@@ -149,13 +183,18 @@ public class StudentRepositoryTests
     [Fact]
     public async Task Login_InvalidCredentials_ReturnsFalse()
     {
+        await using var context = await _contextFactory.CreateDbContextAsync();
         // Arrange
-        await _context.Database.EnsureDeletedAsync();
-        await _context.Database.EnsureCreatedAsync();
-        
-        var student = new StudentModel { UserId = "2101010101", UserName = "Test Student", PasswordHash = DataTool.StringToHash("password"), PhoneNum = "13800138001" };
-        await _context.Students.AddAsync(student);
-        await _context.SaveChangesAsync();
+        await context.Database.EnsureDeletedAsync();
+        await context.Database.EnsureCreatedAsync();
+
+        var student = new StudentModel
+        {
+            UserId = "2101010101", UserName = "Test Student", PasswordHash = DataTool.StringToHash("password"),
+            PhoneNum = "13800138001"
+        };
+        await context.Students.AddAsync(student);
+        await context.SaveChangesAsync();
 
         // Act
         var result = await _studentRepository.Login("2101010101", "wrongpassword");
@@ -167,14 +206,23 @@ public class StudentRepositoryTests
     [Fact]
     public async Task UpdateManyAsync_AddsNewStudents()
     {
+        await using var context = await _contextFactory.CreateDbContextAsync();
         // Arrange
-        await _context.Database.EnsureDeletedAsync();
-        await _context.Database.EnsureCreatedAsync();
-        
+        await context.Database.EnsureDeletedAsync();
+        await context.Database.EnsureCreatedAsync();
+
         var students = new List<StudentModel>
         {
-            new() { UserId = "2101010101", UserName = "Student 1", PasswordHash = DataTool.StringToHash("password1"), PhoneNum = "13800138001" },
-            new() { UserId = "2101010102", UserName = "Student 2", PasswordHash = DataTool.StringToHash("password2"), PhoneNum = "13800138002" }
+            new()
+            {
+                UserId = "2101010101", UserName = "Student 1", PasswordHash = DataTool.StringToHash("password1"),
+                PhoneNum = "13800138001"
+            },
+            new()
+            {
+                UserId = "2101010102", UserName = "Student 2", PasswordHash = DataTool.StringToHash("password2"),
+                PhoneNum = "13800138002"
+            }
         };
 
         // Act
@@ -189,23 +237,25 @@ public class StudentRepositoryTests
     [Fact]
     public async Task GetMembersPagedAsync_ReturnsCorrectPage()
     {
+        await using var context = await _contextFactory.CreateDbContextAsync();
         // Arrange
-        await _context.Database.EnsureDeletedAsync();
-        await _context.Database.EnsureCreatedAsync();
-        
+        await context.Database.EnsureDeletedAsync();
+        await context.Database.EnsureCreatedAsync();
+
         // 添加5个学生
         for (int i = 1; i <= 5; i++)
         {
-            var student = new StudentModel 
-            { 
-                UserId = $"210101010{i}", 
-                UserName = $"Student {i}", 
-                PasswordHash = DataTool.StringToHash($"password{i}"), 
+            var student = new StudentModel
+            {
+                UserId = $"210101010{i}",
+                UserName = $"Student {i}",
+                PasswordHash = DataTool.StringToHash($"password{i}"),
                 PhoneNum = $"1380013800{i}"
             };
-            await _context.Students.AddAsync(student);
+            await context.Students.AddAsync(student);
         }
-        await _context.SaveChangesAsync();
+
+        await context.SaveChangesAsync();
 
         // Act
         var (members, totalCount) = await _studentRepository.GetMembersPagedAsync(1, 2);
@@ -219,18 +269,31 @@ public class StudentRepositoryTests
     [Fact]
     public async Task Search_ReturnsMatchingStudents()
     {
+        await using var context = await _contextFactory.CreateDbContextAsync();
         // Arrange
-        await _context.Database.EnsureDeletedAsync();
-        await _context.Database.EnsureCreatedAsync();
-        
+        await context.Database.EnsureDeletedAsync();
+        await context.Database.EnsureCreatedAsync();
+
         var students = new List<StudentModel>
         {
-            new() { UserId = "2101010101", UserName = "Test Student 1", Academy = "Computer Science", PasswordHash = DataTool.StringToHash("password1"), PhoneNum = "13800138001" },
-            new() { UserId = "2101010102", UserName = "Test Student 2", Academy = "Mathematics", PasswordHash = DataTool.StringToHash("password2"), PhoneNum = "13800138002" },
-            new() { UserId = "2101010103", UserName = "Other Student", Academy = "Computer Science", PasswordHash = DataTool.StringToHash("password3"), PhoneNum = "13800138003" }
+            new()
+            {
+                UserId = "2101010101", UserName = "Test Student 1", Academy = "Computer Science",
+                PasswordHash = DataTool.StringToHash("password1"), PhoneNum = "13800138001"
+            },
+            new()
+            {
+                UserId = "2101010102", UserName = "Test Student 2", Academy = "Mathematics",
+                PasswordHash = DataTool.StringToHash("password2"), PhoneNum = "13800138002"
+            },
+            new()
+            {
+                UserId = "2101010103", UserName = "Other Student", Academy = "Computer Science",
+                PasswordHash = DataTool.StringToHash("password3"), PhoneNum = "13800138003"
+            }
         };
-        await _context.Students.AddRangeAsync(students);
-        await _context.SaveChangesAsync();
+        await context.Students.AddRangeAsync(students);
+        await context.SaveChangesAsync();
 
         // Act
         var result = await _studentRepository.Search("Computer Science", "academy");
@@ -244,30 +307,31 @@ public class StudentRepositoryTests
     [Fact]
     public async Task GetAllMembersAsync_ReturnsAllMembersWithCorrectIdentity()
     {
+        await using var context = await _contextFactory.CreateDbContextAsync();
         // Arrange
-        await _context.Database.EnsureDeletedAsync();
-        await _context.Database.EnsureCreatedAsync();
-        
+        await context.Database.EnsureDeletedAsync();
+        await context.Database.EnsureCreatedAsync();
+
         // 添加学生
-        var student = new StudentModel 
-        { 
-            UserId = "2101010101", 
-            UserName = "Test Student", 
-            PasswordHash = DataTool.StringToHash("password"), 
+        var student = new StudentModel
+        {
+            UserId = "2101010101",
+            UserName = "Test Student",
+            PasswordHash = DataTool.StringToHash("password"),
             PhoneNum = "13800138001"
         };
-        await _context.Students.AddAsync(student);
-        
+        await context.Students.AddAsync(student);
+
         // 添加员工
-        var staff = new StaffModel 
-        { 
-            UserId = "2101010101", 
-            Name = "Test Staff", 
+        var staff = new StaffModel
+        {
+            UserId = "2101010101",
+            Name = "Test Staff",
             Identity = "President"
         };
-        await _context.Staffs.AddAsync(staff);
-        
-        await _context.SaveChangesAsync();
+        await context.Staffs.AddAsync(staff);
+
+        await context.SaveChangesAsync();
 
         // Act
         var result = await _studentRepository.GetAllMembersAsync();

@@ -1,4 +1,4 @@
-﻿using iOSClub.Data;
+using iOSClub.Data;
 using iOSClub.Data.DataModels;
 using Microsoft.EntityFrameworkCore;
 
@@ -22,16 +22,16 @@ public interface ITodoRepository
     Task<List<TodoModel>> GetTodosPagedAsync(string userId, int page, int pageSize);
 }
 
-public class TodoRepository(ClubContext context) : ITodoRepository
+public class TodoRepository(IDbContextFactory<ClubContext> factory) : ITodoRepository
 {
-    private readonly ClubContext _context = context;
 
     /// <summary>
     /// 获取用户的所有待办事项
     /// </summary>
     public async Task<List<TodoModel>> GetTodosByUserIdAsync(string userId)
     {
-        return await _context.Todos
+        await using var context = await factory.CreateDbContextAsync();
+        return await context.Todos
             .Where(x => x.StudentId == userId)
             .OrderByDescending(x => x.CreatedTime)
             .ToListAsync();
@@ -42,7 +42,8 @@ public class TodoRepository(ClubContext context) : ITodoRepository
     /// </summary>
     public async Task<TodoModel?> GetTodoByIdAsync(string id)
     {
-        return await _context.Todos
+        await using var context = await factory.CreateDbContextAsync();
+        return await context.Todos
             .FirstOrDefaultAsync(x => x.Id == id);
     }
 
@@ -51,10 +52,11 @@ public class TodoRepository(ClubContext context) : ITodoRepository
     /// </summary>
     public async Task<bool> AddTodoAsync(TodoModel todo)
     {
+        await using var context = await factory.CreateDbContextAsync();
         try
         {
-            await _context.Todos.AddAsync(todo);
-            await _context.SaveChangesAsync();
+            await context.Todos.AddAsync(todo);
+            await context.SaveChangesAsync();
             return true;
         }
         catch
@@ -68,15 +70,16 @@ public class TodoRepository(ClubContext context) : ITodoRepository
     /// </summary>
     public async Task<bool> UpdateTodoAsync(TodoModel todo)
     {
+        await using var context = await factory.CreateDbContextAsync();
         try
         {
-            var existingTodo = await GetTodoByIdAsync(todo.Id);
+            var existingTodo = await context.Todos.FirstOrDefaultAsync(x => x.Id == todo.Id);
             if (existingTodo == null)
                 return false;
 
             existingTodo.Update(todo);
-            _context.Todos.Update(existingTodo);
-            await _context.SaveChangesAsync();
+            context.Todos.Update(existingTodo);
+            await context.SaveChangesAsync();
             return true;
         }
         catch
@@ -90,14 +93,15 @@ public class TodoRepository(ClubContext context) : ITodoRepository
     /// </summary>
     public async Task<bool> DeleteTodoAsync(string id)
     {
+        await using var context = await factory.CreateDbContextAsync();
         try
         {
-            var todo = await GetTodoByIdAsync(id);
+            var todo = await context.Todos.FirstOrDefaultAsync(x => x.Id == id);
             if (todo == null)
                 return false;
 
-            _context.Todos.Remove(todo);
-            await _context.SaveChangesAsync();
+            context.Todos.Remove(todo);
+            await context.SaveChangesAsync();
             return true;
         }
         catch
@@ -111,7 +115,8 @@ public class TodoRepository(ClubContext context) : ITodoRepository
     /// </summary>
     public async Task<bool> TodoExistsAsync(string id)
     {
-        return await _context.Todos.AnyAsync(x => x.Id == id);
+        await using var context = await factory.CreateDbContextAsync();
+        return await context.Todos.AnyAsync(x => x.Id == id);
     }
 
     /// <summary>
@@ -119,7 +124,8 @@ public class TodoRepository(ClubContext context) : ITodoRepository
     /// </summary>
     public async Task<bool> HasPermissionAsync(string id, string userId)
     {
-        return await _context.Todos
+        await using var context = await factory.CreateDbContextAsync();
+        return await context.Todos
             .AnyAsync(x => x.Id == id && x.StudentId == userId);
     }
 
@@ -128,7 +134,8 @@ public class TodoRepository(ClubContext context) : ITodoRepository
     /// </summary>
     public async Task<int> GetTodoCountAsync(string userId)
     {
-        return await _context.Todos
+        await using var context = await factory.CreateDbContextAsync();
+        return await context.Todos
             .Where(x => x.StudentId == userId)
             .CountAsync();
     }
@@ -138,7 +145,8 @@ public class TodoRepository(ClubContext context) : ITodoRepository
     /// </summary>
     public async Task<int> GetCompletedTodoCountAsync(string userId)
     {
-        return await _context.Todos
+        await using var context = await factory.CreateDbContextAsync();
+        return await context.Todos
             .Where(x => x.StudentId == userId && x.Status)
             .CountAsync();
     }
@@ -148,7 +156,8 @@ public class TodoRepository(ClubContext context) : ITodoRepository
     /// </summary>
     public async Task<List<TodoModel>> GetTodosPagedAsync(string userId, int page, int pageSize)
     {
-        return await _context.Todos
+        await using var context = await factory.CreateDbContextAsync();
+        return await context.Todos
             .Where(x => x.StudentId == userId)
             .OrderByDescending(x => x.CreatedTime)
             .Skip((page - 1) * pageSize)

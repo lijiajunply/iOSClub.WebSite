@@ -1,4 +1,4 @@
-﻿using iOSClub.Data;
+using iOSClub.Data;
 using iOSClub.Data.DataModels;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,16 +18,16 @@ public interface IResourceRepository
     Task<bool> ResourceExistsAsync(string id);
 }
 
-public class ResourceRepository(ClubContext context) : IResourceRepository
+public class ResourceRepository(IDbContextFactory<ClubContext> factory) : IResourceRepository
 {
-    private readonly ClubContext _context = context;
 
     /// <summary>
     /// 获取所有资源
     /// </summary>
     public async Task<List<ResourceModel>> GetAllResourcesAsync()
     {
-        return await _context.Resources.ToListAsync();
+        await using var context = await factory.CreateDbContextAsync();
+        return await context.Resources.ToListAsync();
     }
 
     /// <summary>
@@ -35,7 +35,8 @@ public class ResourceRepository(ClubContext context) : IResourceRepository
     /// </summary>
     public async Task<ResourceModel?> GetResourceByIdAsync(string id)
     {
-        return await _context.Resources.FindAsync(id);
+        await using var context = await factory.CreateDbContextAsync();
+        return await context.Resources.FindAsync(id);
     }
 
     /// <summary>
@@ -43,7 +44,8 @@ public class ResourceRepository(ClubContext context) : IResourceRepository
     /// </summary>
     public async Task<List<ResourceModel>> GetResourcesByTagAsync(string tag)
     {
-        return await _context.Resources
+        await using var context = await factory.CreateDbContextAsync();
+        return await context.Resources
             .Where(r => r.Tag != null && r.Tag.Contains(tag))
             .ToListAsync();
     }
@@ -53,7 +55,8 @@ public class ResourceRepository(ClubContext context) : IResourceRepository
     /// </summary>
     public async Task<List<ResourceModel>> SearchResourcesByNameAsync(string name)
     {
-        return await _context.Resources
+        await using var context = await factory.CreateDbContextAsync();
+        return await context.Resources
             .Where(r => r.Name.Contains(name))
             .ToListAsync();
     }
@@ -63,12 +66,13 @@ public class ResourceRepository(ClubContext context) : IResourceRepository
     /// </summary>
     public async Task<bool> AddResourceAsync(ResourceModel resource)
     {
+        await using var context = await factory.CreateDbContextAsync();
         try
         {
             // 生成唯一ID
             resource.Id = Guid.NewGuid().ToString("N");
-            await _context.Resources.AddAsync(resource);
-            await _context.SaveChangesAsync();
+            await context.Resources.AddAsync(resource);
+            await context.SaveChangesAsync();
             return true;
         }
         catch
@@ -82,10 +86,11 @@ public class ResourceRepository(ClubContext context) : IResourceRepository
     /// </summary>
     public async Task<bool> UpdateResourceAsync(ResourceModel resource)
     {
+        await using var context = await factory.CreateDbContextAsync();
         try
         {
-            _context.Resources.Update(resource);
-            await _context.SaveChangesAsync();
+            context.Resources.Update(resource);
+            await context.SaveChangesAsync();
             return true;
         }
         catch
@@ -99,14 +104,15 @@ public class ResourceRepository(ClubContext context) : IResourceRepository
     /// </summary>
     public async Task<bool> DeleteResourceAsync(string id)
     {
+        await using var context = await factory.CreateDbContextAsync();
         try
         {
             var resource = await GetResourceByIdAsync(id);
             if (resource == null)
                 return false;
 
-            _context.Resources.Remove(resource);
-            await _context.SaveChangesAsync();
+            context.Resources.Remove(resource);
+            await context.SaveChangesAsync();
             return true;
         }
         catch
@@ -120,7 +126,8 @@ public class ResourceRepository(ClubContext context) : IResourceRepository
     /// </summary>
     public async Task<bool> ResourceExistsAsync(string id)
     {
-        return await _context.Resources.AnyAsync(r => r.Id == id);
+        await using var context = await factory.CreateDbContextAsync();
+        return await context.Resources.AnyAsync(r => r.Id == id);
     }
 
     /// <summary>
@@ -128,7 +135,8 @@ public class ResourceRepository(ClubContext context) : IResourceRepository
     /// </summary>
     public async Task<List<string>> GetAllTagsAsync()
     {
-        return await _context.Resources
+        await using var context = await factory.CreateDbContextAsync();
+        return await context.Resources
             .Where(r => r.Tag != null)
             .Select(r => r.Tag!)
             .Distinct()
@@ -140,6 +148,7 @@ public class ResourceRepository(ClubContext context) : IResourceRepository
     /// </summary>
     public async Task<int> GetResourceCountAsync()
     {
-        return await _context.Resources.CountAsync();
+        await using var context = await factory.CreateDbContextAsync();
+        return await context.Resources.CountAsync();
     }
 }

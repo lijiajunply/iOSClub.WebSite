@@ -29,13 +29,14 @@ public interface IProjectRepository
     Task<List<ProjectModel>> SearchProjectsAsync(string searchTerm);
 }
 
-public class ProjectRepository(ClubContext context) : IProjectRepository
+public class ProjectRepository(IDbContextFactory<ClubContext> factory) : IProjectRepository
 {
     /// <summary>
     /// 获取所有项目（包含关联数据）
     /// </summary>
     public async Task<List<ProjectModel>> GetAllProjectsAsync()
     {
+        await using var context = await factory.CreateDbContextAsync();
         return (await context.Projects
             .Include(p => p.Staffs)
             .Include(p => p.Tasks)
@@ -50,6 +51,7 @@ public class ProjectRepository(ClubContext context) : IProjectRepository
     /// </summary>
     public async Task<ProjectModel?> GetProjectByIdAsync(string id)
     {
+        await using var context = await factory.CreateDbContextAsync();
         var project = await context.Projects
             .Include(p => p.Staffs)
             .Include(p => p.Tasks)
@@ -63,6 +65,7 @@ public class ProjectRepository(ClubContext context) : IProjectRepository
     /// </summary>
     public async Task<ProjectModel?> GetProjectByTitleAsync(string title)
     {
+        await using var context = await factory.CreateDbContextAsync();
         var project = await context.Projects
             .Include(p => p.Staffs)
             .Include(p => p.Tasks)
@@ -76,6 +79,7 @@ public class ProjectRepository(ClubContext context) : IProjectRepository
     /// </summary>
     public async Task<List<ProjectModel>> GetProjectsByDepartmentAsync(string departmentName)
     {
+        await using var context = await factory.CreateDbContextAsync();
         return (await context.Projects
             .Include(p => p.Staffs)
             .Include(p => p.Tasks)
@@ -91,6 +95,7 @@ public class ProjectRepository(ClubContext context) : IProjectRepository
     /// </summary>
     public async Task<List<ProjectModel>> GetProjectsByStaffAsync(string userId)
     {
+        await using var context = await factory.CreateDbContextAsync();
         return (await context.Projects
             .Include(p => p.Staffs)
             .Include(p => p.Tasks)
@@ -106,23 +111,38 @@ public class ProjectRepository(ClubContext context) : IProjectRepository
     /// </summary>
     public async Task<ProjectModel?> CreateProjectAsync(ProjectModel project, StaffModel creator)
     {
+        await using var context = await factory.CreateDbContextAsync();
         try
         {
             // 设置项目ID
             if (string.IsNullOrEmpty(project.Id))
             {
-                project.Id = project.ToHash();
+                project.Id = project.GetHashKey();
             }
 
             // 添加创建者到项目成员
-            project.Staffs.Add(creator);
+            // 首先检查创建者是否已经在数据库中存在
+            var existingStaff = await context.Staffs.FindAsync(creator.UserId);
+            if (existingStaff != null)
+            {
+                // 如果存在，使用数据库中的 StaffModel
+                project.Staffs.Add(existingStaff);
+            }
+            else
+            {
+                // 如果不存在，添加新的 StaffModel
+                project.Staffs.Add(creator);
+            }
 
             await context.Projects.AddAsync(project);
             await context.SaveChangesAsync();
             return project;
         }
-        catch
+        catch (Exception ex)
         {
+            // 记录异常，便于调试
+            Console.WriteLine($"Error creating project: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
             return null;
         }
     }
@@ -132,6 +152,7 @@ public class ProjectRepository(ClubContext context) : IProjectRepository
     /// </summary>
     public async Task<bool> UpdateProjectAsync(ProjectModel project)
     {
+        await using var context = await factory.CreateDbContextAsync();
         try
         {
             var existingProject = await context.Projects
@@ -156,6 +177,7 @@ public class ProjectRepository(ClubContext context) : IProjectRepository
     /// </summary>
     public async Task<bool> DeleteProjectAsync(string id)
     {
+        await using var context = await factory.CreateDbContextAsync();
         try
         {
             var project = await GetProjectByIdAsync(id);
@@ -177,6 +199,7 @@ public class ProjectRepository(ClubContext context) : IProjectRepository
     /// </summary>
     public async Task<bool> ProjectExistsAsync(string id)
     {
+        await using var context = await factory.CreateDbContextAsync();
         return await context.Projects.AnyAsync(p => p.Id == id);
     }
 
@@ -185,6 +208,7 @@ public class ProjectRepository(ClubContext context) : IProjectRepository
     /// </summary>
     public async Task<bool> AddStaffToProjectAsync(string projectId, string userId)
     {
+        await using var context = await factory.CreateDbContextAsync();
         try
         {
             var project = await context.Projects
@@ -215,6 +239,7 @@ public class ProjectRepository(ClubContext context) : IProjectRepository
     /// </summary>
     public async Task<bool> RemoveStaffFromProjectAsync(string projectId, string userId)
     {
+        await using var context = await factory.CreateDbContextAsync();
         try
         {
             var project = await context.Projects
@@ -240,6 +265,7 @@ public class ProjectRepository(ClubContext context) : IProjectRepository
     /// </summary>
     public async Task<List<StaffModel>> GetProjectStaffsAsync(string projectId)
     {
+        await using var context = await factory.CreateDbContextAsync();
         return await context.Projects
             .Where(p => p.Id == projectId)
             .SelectMany(p => p.Staffs)
@@ -251,6 +277,7 @@ public class ProjectRepository(ClubContext context) : IProjectRepository
     /// </summary>
     public async Task<List<TaskModel>> GetProjectTasksAsync(string projectId)
     {
+        await using var context = await factory.CreateDbContextAsync();
         return await context.Projects
             .Where(p => p.Id == projectId)
             .SelectMany(p => p.Tasks)
@@ -262,6 +289,7 @@ public class ProjectRepository(ClubContext context) : IProjectRepository
     /// </summary>
     public async Task<bool> HasProjectManagementPermissionAsync(string userId, string projectId)
     {
+        await using var context = await factory.CreateDbContextAsync();
         var staff = await context.Staffs
             .FirstOrDefaultAsync(s => s.UserId == userId);
 
@@ -284,6 +312,7 @@ public class ProjectRepository(ClubContext context) : IProjectRepository
     /// </summary>
     public async Task<List<ProjectModel>> GetProjectsByTimeRangeAsync(string? startTime, string? endTime)
     {
+        await using var context = await factory.CreateDbContextAsync();
         var query = context.Projects
             .Include(p => p.Staffs)
             .Include(p => p.Tasks)
@@ -308,6 +337,7 @@ public class ProjectRepository(ClubContext context) : IProjectRepository
     /// </summary>
     public async Task<List<ProjectModel>> SearchProjectsAsync(string searchTerm)
     {
+        await using var context = await factory.CreateDbContextAsync();
         return await context.Projects
             .Include(p => p.Staffs)
             .Include(p => p.Tasks)

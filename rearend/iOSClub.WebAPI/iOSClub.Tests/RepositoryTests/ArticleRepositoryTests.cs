@@ -1,9 +1,9 @@
 using iOSClub.Data;
-using iOSClub.DataApi.Repositories;
 using iOSClub.Data.DataModels;
+using iOSClub.DataApi.Repositories;
 using Microsoft.EntityFrameworkCore;
 
-namespace iOSClub.Tests;
+namespace iOSClub.Tests.RepositoryTests;
 
 public class ArticleRepositoryTests
 {

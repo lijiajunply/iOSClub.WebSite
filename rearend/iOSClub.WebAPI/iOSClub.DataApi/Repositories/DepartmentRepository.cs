@@ -12,15 +12,21 @@ public interface IDepartmentRepository
     Task<bool> AddDepartmentAsync(DepartmentModel department);
     Task<bool> UpdateDepartmentAsync(DepartmentModel department);
     Task<bool> DeleteDepartmentAsync(string name);
+    Task<bool> DepartmentExistsAsync(string name);
+    Task<int> GetStaffCountAsync(string departmentName);
+    Task<int> GetProjectCountAsync(string departmentName);
+    Task<List<StaffModel>> GetDepartmentStaffsAsync(string departmentName);
+    Task<List<ProjectModel>> GetDepartmentProjectsAsync(string departmentName);
 }
 
-public class DepartmentRepository(ClubContext context) : IDepartmentRepository
+public class DepartmentRepository(IDbContextFactory<ClubContext> factory) : IDepartmentRepository
 {
     /// <summary>
     /// 获取所有部门
     /// </summary>
     public async Task<List<DepartmentModel>> GetAllDepartmentsAsync()
     {
+        await using var context = await factory.CreateDbContextAsync();
         return (await context.Departments
             .Include(d => d.Staffs)
             .Include(d => d.Projects)
@@ -34,6 +40,7 @@ public class DepartmentRepository(ClubContext context) : IDepartmentRepository
     /// </summary>
     public async Task<DepartmentModel?> GetDepartmentByNameAsync(string name)
     {
+        await using var context = await factory.CreateDbContextAsync();
         var department = await context.Departments
             .Include(d => d.Staffs)
             .Include(d => d.Projects)
@@ -46,6 +53,7 @@ public class DepartmentRepository(ClubContext context) : IDepartmentRepository
     /// </summary>
     public async Task<DepartmentModel?> GetDepartmentByKeyAsync(string key)
     {
+        await using var context = await factory.CreateDbContextAsync();
         var department = await context.Departments
             .Include(d => d.Staffs)
             .Include(d => d.Projects)
@@ -58,6 +66,7 @@ public class DepartmentRepository(ClubContext context) : IDepartmentRepository
     /// </summary>
     public async Task<bool> AddDepartmentAsync(DepartmentModel department)
     {
+        await using var context = await factory.CreateDbContextAsync();
         try
         {
             await context.Departments.AddAsync(department);
@@ -75,6 +84,7 @@ public class DepartmentRepository(ClubContext context) : IDepartmentRepository
     /// </summary>
     public async Task<bool> UpdateDepartmentAsync(DepartmentModel department)
     {
+        await using var context = await factory.CreateDbContextAsync();
         try
         {
             context.Departments.Update(department);
@@ -92,6 +102,7 @@ public class DepartmentRepository(ClubContext context) : IDepartmentRepository
     /// </summary>
     public async Task<bool> DeleteDepartmentAsync(string name)
     {
+        await using var context = await factory.CreateDbContextAsync();
         try
         {
             var department = await GetDepartmentByNameAsync(name);
@@ -113,6 +124,7 @@ public class DepartmentRepository(ClubContext context) : IDepartmentRepository
     /// </summary>
     public async Task<bool> DepartmentExistsAsync(string name)
     {
+        await using var context = await factory.CreateDbContextAsync();
         return await context.Departments.AnyAsync(d => d.Name == name);
     }
 
@@ -121,6 +133,7 @@ public class DepartmentRepository(ClubContext context) : IDepartmentRepository
     /// </summary>
     public async Task<int> GetStaffCountAsync(string departmentName)
     {
+        await using var context = await factory.CreateDbContextAsync();
         return await context.Departments
             .Where(d => d.Name == departmentName)
             .SelectMany(d => d.Staffs)
@@ -132,6 +145,7 @@ public class DepartmentRepository(ClubContext context) : IDepartmentRepository
     /// </summary>
     public async Task<int> GetProjectCountAsync(string departmentName)
     {
+        await using var context = await factory.CreateDbContextAsync();
         return await context.Departments
             .Where(d => d.Name == departmentName)
             .SelectMany(d => d.Projects)
@@ -143,6 +157,7 @@ public class DepartmentRepository(ClubContext context) : IDepartmentRepository
     /// </summary>
     public async Task<List<StaffModel>> GetDepartmentStaffsAsync(string departmentName)
     {
+        await using var context = await factory.CreateDbContextAsync();
         return await context.Departments
             .Where(d => d.Name == departmentName)
             .SelectMany(d => d.Staffs)
@@ -154,6 +169,7 @@ public class DepartmentRepository(ClubContext context) : IDepartmentRepository
     /// </summary>
     public async Task<List<ProjectModel>> GetDepartmentProjectsAsync(string departmentName)
     {
+        await using var context = await factory.CreateDbContextAsync();
         return await context.Departments
             .Where(d => d.Name == departmentName)
             .SelectMany(d => d.Projects)

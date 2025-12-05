@@ -86,7 +86,24 @@ public class GlobalExceptionMiddleware
                 response.Detail = dataAccessEx.Detail;
                 break;
 
-            // 处理自定义异常（其他类型）
+            // 处理自定义验证异常
+            case ValidationException validationException:
+                response.Code = validationException.HttpStatusCode;
+                response.ErrorCode = validationException.ErrorCode;
+                response.Message = validationException.Message;
+                if (validationException.ValidationErrors != null && validationException.ValidationErrors.Any())
+                {
+                    response.Detail = string.Join(", ",
+                        validationException.ValidationErrors.SelectMany(e => 
+                            e.Value.Select(error => $"{e.Key}: {error}")));
+                }
+                else
+                {
+                    response.Detail = validationException.Detail;
+                }
+                break;
+
+            // 处理其他自定义异常
             case CustomException customException:
                 response.Code = customException.HttpStatusCode;
                 response.ErrorCode = customException.ErrorCode;

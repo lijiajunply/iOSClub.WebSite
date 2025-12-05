@@ -1,14 +1,14 @@
 using iOSClub.Data;
-using iOSClub.DataApi.Repositories;
 using iOSClub.Data.DataModels;
+using iOSClub.DataApi.Repositories;
 using Microsoft.EntityFrameworkCore;
 
-namespace iOSClub.Tests;
+namespace iOSClub.Tests.RepositoryTests;
 
 public class ResourceRepositoryTests
 {
     private readonly DbContextOptions<ClubContext> _options;
-    private readonly ClubContext _context;
+    private readonly TestDbContextFactory _contextFactory;
     private readonly ResourceRepository _resourceRepository;
 
     public ResourceRepositoryTests()
@@ -18,24 +18,25 @@ public class ResourceRepositoryTests
             .UseInMemoryDatabase(databaseName: "ResourceRepositoryTestDatabase")
             .Options;
 
-        _context = new ClubContext(_options);
-        _resourceRepository = new ResourceRepository(_context);
+        _contextFactory = new TestDbContextFactory(_options);
+        _resourceRepository = new ResourceRepository(_contextFactory);
     }
 
     [Fact]
     public async Task GetAllResourcesAsync_ReturnsAllResources()
     {
+        await using var context = await _contextFactory.CreateDbContextAsync();
         // Arrange
-        await _context.Database.EnsureDeletedAsync();
-        await _context.Database.EnsureCreatedAsync();
+        await context.Database.EnsureDeletedAsync();
+        await context.Database.EnsureCreatedAsync();
 
         var resources = new List<ResourceModel>
         {
             new() { Id = "res1", Name = "Resource 1", Tag = "tag1" },
             new() { Id = "res2", Name = "Resource 2", Tag = "tag2" }
         };
-        await _context.Resources.AddRangeAsync(resources);
-        await _context.SaveChangesAsync();
+        await context.Resources.AddRangeAsync(resources);
+        await context.SaveChangesAsync();
 
         // Act
         var result = await _resourceRepository.GetAllResourcesAsync();
@@ -48,13 +49,14 @@ public class ResourceRepositoryTests
     [Fact]
     public async Task GetResourceByIdAsync_ReturnsCorrectResource()
     {
+        await using var context = await _contextFactory.CreateDbContextAsync();
         // Arrange
-        await _context.Database.EnsureDeletedAsync();
-        await _context.Database.EnsureCreatedAsync();
+        await context.Database.EnsureDeletedAsync();
+        await context.Database.EnsureCreatedAsync();
 
         var resource = new ResourceModel { Id = "res1", Name = "Test Resource", Tag = "test-tag" };
-        await _context.Resources.AddAsync(resource);
-        await _context.SaveChangesAsync();
+        await context.Resources.AddAsync(resource);
+        await context.SaveChangesAsync();
 
         // Act
         var result = await _resourceRepository.GetResourceByIdAsync("res1");
@@ -68,9 +70,10 @@ public class ResourceRepositoryTests
     [Fact]
     public async Task GetResourcesByTagAsync_ReturnsResourcesWithMatchingTag()
     {
+        await using var context = await _contextFactory.CreateDbContextAsync();
         // Arrange
-        await _context.Database.EnsureDeletedAsync();
-        await _context.Database.EnsureCreatedAsync();
+        await context.Database.EnsureDeletedAsync();
+        await context.Database.EnsureCreatedAsync();
 
         var resources = new List<ResourceModel>
         {
@@ -78,8 +81,8 @@ public class ResourceRepositoryTests
             new() { Id = "res2", Name = "Resource 2", Tag = "tag2" },
             new() { Id = "res3", Name = "Resource 3", Tag = "tag1" }
         };
-        await _context.Resources.AddRangeAsync(resources);
-        await _context.SaveChangesAsync();
+        await context.Resources.AddRangeAsync(resources);
+        await context.SaveChangesAsync();
 
         // Act
         var result = await _resourceRepository.GetResourcesByTagAsync("tag1");
@@ -93,9 +96,10 @@ public class ResourceRepositoryTests
     [Fact]
     public async Task SearchResourcesByNameAsync_ReturnsResourcesWithMatchingName()
     {
+        await using var context = await _contextFactory.CreateDbContextAsync();
         // Arrange
-        await _context.Database.EnsureDeletedAsync();
-        await _context.Database.EnsureCreatedAsync();
+        await context.Database.EnsureDeletedAsync();
+        await context.Database.EnsureCreatedAsync();
 
         var resources = new List<ResourceModel>
         {
@@ -103,8 +107,8 @@ public class ResourceRepositoryTests
             new() { Id = "res2", Name = "Another Resource", Tag = "tag2" },
             new() { Id = "res3", Name = "Resource 3", Tag = "tag1" }
         };
-        await _context.Resources.AddRangeAsync(resources);
-        await _context.SaveChangesAsync();
+        await context.Resources.AddRangeAsync(resources);
+        await context.SaveChangesAsync();
 
         // Act
         var result = await _resourceRepository.SearchResourcesByNameAsync("Test");
@@ -118,9 +122,10 @@ public class ResourceRepositoryTests
     [Fact]
     public async Task AddResourceAsync_AddsNewResource()
     {
+        await using var context = await _contextFactory.CreateDbContextAsync();
         // Arrange
-        await _context.Database.EnsureDeletedAsync();
-        await _context.Database.EnsureCreatedAsync();
+        await context.Database.EnsureDeletedAsync();
+        await context.Database.EnsureCreatedAsync();
 
         var resource = new ResourceModel { Name = "New Resource", Tag = "new-tag" };
 
@@ -141,13 +146,14 @@ public class ResourceRepositoryTests
     [Fact]
     public async Task UpdateResourceAsync_UpdatesExistingResource()
     {
+        await using var context = await _contextFactory.CreateDbContextAsync();
         // Arrange
-        await _context.Database.EnsureDeletedAsync();
-        await _context.Database.EnsureCreatedAsync();
+        await context.Database.EnsureDeletedAsync();
+        await context.Database.EnsureCreatedAsync();
 
         var resource = new ResourceModel { Id = "res1", Name = "Original Name", Tag = "original-tag" };
-        await _context.Resources.AddAsync(resource);
-        await _context.SaveChangesAsync();
+        await context.Resources.AddAsync(resource);
+        await context.SaveChangesAsync();
 
         // 修改资源信息
         resource.Name = "Updated Name";
@@ -170,13 +176,14 @@ public class ResourceRepositoryTests
     [Fact]
     public async Task DeleteResourceAsync_RemovesResource()
     {
+        await using var context = await _contextFactory.CreateDbContextAsync();
         // Arrange
-        await _context.Database.EnsureDeletedAsync();
-        await _context.Database.EnsureCreatedAsync();
+        await context.Database.EnsureDeletedAsync();
+        await context.Database.EnsureCreatedAsync();
 
         var resource = new ResourceModel { Id = "res1", Name = "Test Resource", Tag = "test-tag" };
-        await _context.Resources.AddAsync(resource);
-        await _context.SaveChangesAsync();
+        await context.Resources.AddAsync(resource);
+        await context.SaveChangesAsync();
 
         // Act
         var result = await _resourceRepository.DeleteResourceAsync("res1");
@@ -193,9 +200,10 @@ public class ResourceRepositoryTests
     [Fact]
     public async Task GetAllTagsAsync_ReturnsAllUniqueTags()
     {
+        await using var context = await _contextFactory.CreateDbContextAsync();
         // Arrange
-        await _context.Database.EnsureDeletedAsync();
-        await _context.Database.EnsureCreatedAsync();
+        await context.Database.EnsureDeletedAsync();
+        await context.Database.EnsureCreatedAsync();
 
         var resources = new List<ResourceModel>
         {
@@ -203,8 +211,8 @@ public class ResourceRepositoryTests
             new() { Id = "res2", Name = "Resource 2", Tag = "tag2" },
             new() { Id = "res3", Name = "Resource 3", Tag = "tag1" }
         };
-        await _context.Resources.AddRangeAsync(resources);
-        await _context.SaveChangesAsync();
+        await context.Resources.AddRangeAsync(resources);
+        await context.SaveChangesAsync();
 
         // Act
         var result = await _resourceRepository.GetAllTagsAsync();
@@ -219,9 +227,10 @@ public class ResourceRepositoryTests
     [Fact]
     public async Task GetResourceCountAsync_ReturnsCorrectCount()
     {
+        await using var context = await _contextFactory.CreateDbContextAsync();
         // Arrange
-        await _context.Database.EnsureDeletedAsync();
-        await _context.Database.EnsureCreatedAsync();
+        await context.Database.EnsureDeletedAsync();
+        await context.Database.EnsureCreatedAsync();
 
         var resources = new List<ResourceModel>
         {
@@ -229,8 +238,8 @@ public class ResourceRepositoryTests
             new() { Id = "res2", Name = "Resource 2", Tag = "tag2" },
             new() { Id = "res3", Name = "Resource 3", Tag = "tag3" }
         };
-        await _context.Resources.AddRangeAsync(resources);
-        await _context.SaveChangesAsync();
+        await context.Resources.AddRangeAsync(resources);
+        await context.SaveChangesAsync();
 
         // Act
         var result = await _resourceRepository.GetResourceCountAsync();
@@ -242,13 +251,14 @@ public class ResourceRepositoryTests
     [Fact]
     public async Task ResourceExistsAsync_ReturnsTrue_WhenResourceExists()
     {
+        await using var context = await _contextFactory.CreateDbContextAsync();
         // Arrange
-        await _context.Database.EnsureDeletedAsync();
-        await _context.Database.EnsureCreatedAsync();
+        await context.Database.EnsureDeletedAsync();
+        await context.Database.EnsureCreatedAsync();
 
         var resource = new ResourceModel { Id = "res1", Name = "Test Resource", Tag = "test-tag" };
-        await _context.Resources.AddAsync(resource);
-        await _context.SaveChangesAsync();
+        await context.Resources.AddAsync(resource);
+        await context.SaveChangesAsync();
 
         // Act
         var result = await _resourceRepository.ResourceExistsAsync("res1");
@@ -260,9 +270,10 @@ public class ResourceRepositoryTests
     [Fact]
     public async Task ResourceExistsAsync_ReturnsFalse_WhenResourceDoesNotExist()
     {
+        await using var context = await _contextFactory.CreateDbContextAsync();
         // Arrange
-        await _context.Database.EnsureDeletedAsync();
-        await _context.Database.EnsureCreatedAsync();
+        await context.Database.EnsureDeletedAsync();
+        await context.Database.EnsureCreatedAsync();
 
         // Act
         var result = await _resourceRepository.ResourceExistsAsync("non-existent-resource");

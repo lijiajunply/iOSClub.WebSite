@@ -1,36 +1,31 @@
 using System.Net;
 using System.Net.Http.Json;
-using FluentValidation;
-using iOSClub.Data.DataModels;
 using iOSClub.WebAPI.Common;
 using iOSClub.WebAPI.Common.Exceptions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Moq;
-using Xunit;
 
 namespace iOSClub.Tests;
 
 public class GlobalExceptionMiddlewareTests
 {
     // 测试控制器，用于抛出各种异常
-    private class TestExceptionController : ControllerBase
+    public class TestExceptionController : ControllerBase
     {
         [HttpGet("/throw-argument-null")]
         public IActionResult ThrowArgumentNullException()
         {
-            throw new ArgumentNullException("testParam");
+            throw new ArgumentNullException($"testParam");
         }
 
         [HttpGet("/throw-argument")]
         public IActionResult ThrowArgumentException()
         {
-            throw new ArgumentException("Invalid argument", "testParam");
+            throw new ArgumentException("Invalid argument", $"testParam");
         }
 
         [HttpGet("/throw-key-not-found")]
@@ -55,12 +50,13 @@ public class GlobalExceptionMiddlewareTests
         public IActionResult ThrowValidationException()
         {
             // 直接抛出自定义验证异常
-            throw new iOSClub.WebAPI.Common.Exceptions.ValidationException(
+            throw new ValidationException(
                 ErrorCode.ParameterValidationFailed,
                 "请求参数验证失败",
-                new Dictionary<string, string[]> {
-                    { "Name", new[] { "Name is required" } },
-                    { "Age", new[] { "Age must be greater than 0" } }
+                new Dictionary<string, string[]>
+                {
+                    { "Name", ["Name is required"] },
+                    { "Age", ["Age must be greater than 0"] }
                 }
             );
         }
@@ -96,15 +92,41 @@ public class GlobalExceptionMiddlewareTests
         builder.WebHost.UseTestServer();
 
         // 配置服务
-        builder.Services.AddControllers()
-            .AddApplicationPart(typeof(TestExceptionController).Assembly);
+        builder.Services.AddControllers();
+        builder.Services.AddLogging();
 
         // 构建应用
         var app = builder.Build();
 
-        // 注册全局异常处理中间件
-        app.UseMiddleware<GlobalExceptionMiddleware>();
+        // 先注册路由
         app.MapControllers();
+        
+        // 然后注册全局异常处理中间件
+        app.UseMiddleware<GlobalExceptionMiddleware>();
+
+        // 手动注册测试控制器的路由
+        app.MapGet("/throw-argument-null", context => throw new ArgumentNullException("testParam"));
+        app.MapGet("/throw-argument", context => throw new ArgumentException("Invalid argument", "testParam"));
+        app.MapGet("/throw-key-not-found", context => throw new KeyNotFoundException("Key not found"));
+        app.MapGet("/throw-business-exception", context => throw new BusinessException(ErrorCode.OperationFailed, "Business operation failed"));
+        app.MapGet("/throw-auth-exception", context => throw new AuthException(ErrorCode.Unauthorized, "Authentication failed"));
+        app.MapGet("/throw-validation-exception", context => throw new ValidationException(
+            ErrorCode.ParameterValidationFailed,
+            "请求参数验证失败",
+            new Dictionary<string, string[]> {
+                { "Name", ["Name is required"] },
+                { "Age", ["Age must be greater than 0"] }
+            }
+        ));
+        app.MapGet("/throw-data-access-exception", context => throw new DataAccessException(
+            ErrorCode.DatabaseOperationFailed,
+            "Database operation failed",
+            "Insert",
+            "Users",
+            "Failed to insert user record"
+        ));
+        app.MapGet("/throw-generic-exception", context => throw new Exception("Generic exception occurred"));
+        app.MapGet("/success", () => "Success");
 
         await app.StartAsync();
         return app.GetTestServer();
@@ -128,7 +150,7 @@ public class GlobalExceptionMiddlewareTests
         Assert.Equal(ErrorCode.ParameterEmpty, responseBody?.ErrorCode);
         Assert.Contains("testParam", responseBody?.Message ?? string.Empty);
         Assert.NotNull(responseBody?.RequestId);
-        Assert.NotNull(responseBody?.Timestamp);
+        Assert.NotNull(responseBody.Timestamp);
     }
 
     // 测试参数异常处理
@@ -149,7 +171,7 @@ public class GlobalExceptionMiddlewareTests
         Assert.Equal(ErrorCode.ParameterFormatError, responseBody?.ErrorCode);
         Assert.Contains("testParam", responseBody?.Message ?? string.Empty);
         Assert.NotNull(responseBody?.RequestId);
-        Assert.NotNull(responseBody?.Timestamp);
+        Assert.NotNull(responseBody.Timestamp);
     }
 
     // 测试资源不存在异常处理
@@ -169,7 +191,7 @@ public class GlobalExceptionMiddlewareTests
         Assert.Equal((int)HttpStatusCode.NotFound, responseBody?.Code);
         Assert.Equal(ErrorCode.ResourceNotFound, responseBody?.ErrorCode);
         Assert.NotNull(responseBody?.RequestId);
-        Assert.NotNull(responseBody?.Timestamp);
+        Assert.NotNull(responseBody.Timestamp);
     }
 
     // 测试业务异常处理
@@ -189,7 +211,7 @@ public class GlobalExceptionMiddlewareTests
         Assert.Equal((int)HttpStatusCode.BadRequest, responseBody?.Code);
         Assert.Equal(ErrorCode.OperationFailed, responseBody?.ErrorCode);
         Assert.NotNull(responseBody?.RequestId);
-        Assert.NotNull(responseBody?.Timestamp);
+        Assert.NotNull(responseBody.Timestamp);
     }
 
     // 测试认证异常处理
@@ -209,7 +231,7 @@ public class GlobalExceptionMiddlewareTests
         Assert.Equal((int)HttpStatusCode.Unauthorized, responseBody?.Code);
         Assert.Equal(ErrorCode.Unauthorized, responseBody?.ErrorCode);
         Assert.NotNull(responseBody?.RequestId);
-        Assert.NotNull(responseBody?.Timestamp);
+        Assert.NotNull(responseBody.Timestamp);
     }
 
     // 测试验证异常处理
@@ -231,7 +253,7 @@ public class GlobalExceptionMiddlewareTests
         Assert.Contains("Name", responseBody?.Detail ?? string.Empty);
         Assert.Contains("Age", responseBody?.Detail ?? string.Empty);
         Assert.NotNull(responseBody?.RequestId);
-        Assert.NotNull(responseBody?.Timestamp);
+        Assert.NotNull(responseBody.Timestamp);
     }
 
     // 测试数据访问异常处理
@@ -251,7 +273,7 @@ public class GlobalExceptionMiddlewareTests
         Assert.Equal((int)HttpStatusCode.InternalServerError, responseBody?.Code);
         Assert.Equal(ErrorCode.DatabaseOperationFailed, responseBody?.ErrorCode);
         Assert.NotNull(responseBody?.RequestId);
-        Assert.NotNull(responseBody?.Timestamp);
+        Assert.NotNull(responseBody.Timestamp);
     }
 
     // 测试通用异常处理
@@ -271,7 +293,7 @@ public class GlobalExceptionMiddlewareTests
         Assert.Equal((int)HttpStatusCode.InternalServerError, responseBody?.Code);
         Assert.Equal(ErrorCode.InternalServerError, responseBody?.ErrorCode);
         Assert.NotNull(responseBody?.RequestId);
-        Assert.NotNull(responseBody?.Timestamp);
+        Assert.NotNull(responseBody.Timestamp);
     }
 
     // 测试成功响应
@@ -304,7 +326,7 @@ public class GlobalExceptionMiddlewareTests
 
         // Assert
         Assert.True(response.Headers.TryGetValues("X-Request-ID", out var requestIdValues));
-        var requestId = requestIdValues?.FirstOrDefault();
+        var requestId = requestIdValues.FirstOrDefault();
         Assert.NotNull(requestId);
 
         // 验证响应体中也包含相同的请求ID
@@ -317,18 +339,27 @@ public class GlobalExceptionMiddlewareTests
     public async Task ProductionEnvironment_DoesNotReturnDetailedExceptionInfo()
     {
         // Arrange
-        var builder = WebApplication.CreateBuilder();
+        var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+        {
+            EnvironmentName = Environments.Production
+        });
         builder.WebHost.UseTestServer();
-        builder.WebHost.UseEnvironment(Environments.Production);
 
         // 配置服务
-        builder.Services.AddControllers()
-            .AddApplicationPart(typeof(TestExceptionController).Assembly);
+        builder.Services.AddControllers();
+        builder.Services.AddLogging();
 
         // 构建应用
         var app = builder.Build();
-        app.UseMiddleware<GlobalExceptionMiddleware>();
+
+        // 先注册路由
         app.MapControllers();
+        
+        // 然后注册全局异常处理中间件
+        app.UseMiddleware<GlobalExceptionMiddleware>();
+
+        // 手动注册测试路由
+        app.MapGet("/throw-generic-exception", context => throw new Exception("Generic exception occurred"));
 
         await app.StartAsync();
         var client = app.GetTestServer().CreateClient();

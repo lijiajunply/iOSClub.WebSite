@@ -29,23 +29,26 @@ public interface IStudentRepository
     public Task<List<StudentModel>> Search(string searchTerm, string searchCondition);
 }
 
-public class StudentRepository(ClubContext context) : IStudentRepository
+public class StudentRepository(IDbContextFactory<ClubContext> factory) : IStudentRepository
 {
     public async Task<List<StudentModel>> GetAll()
     {
+        await using var context = await factory.CreateDbContextAsync();
         var students = await context.Students.ToListAsync();
         return students;
     }
 
     public async Task<StudentModel?> Get(string id)
     {
+        await using var context = await factory.CreateDbContextAsync();
         var stu = await context.Students.FirstOrDefaultAsync(x => x.UserId == id);
         return stu;
     }
 
     public async Task<bool> Update(StudentModel model)
     {
-        var stu = await Get(model.UserId);
+        await using var context = await factory.CreateDbContextAsync();
+        var stu = await context.Students.FirstOrDefaultAsync(x => x.UserId == model.UserId);
         if (stu == null) return false;
         stu.Update(model);
         return await context.SaveChangesAsync() == 1;
@@ -53,16 +56,18 @@ public class StudentRepository(ClubContext context) : IStudentRepository
 
     public async Task<StudentModel?> Create(StudentModel model)
     {
-        var stu = await Get(model.UserId);
+        await using var context = await factory.CreateDbContextAsync();
+        var stu = await context.Students.FirstOrDefaultAsync(x => x.UserId == model.UserId);
         if (stu != null) return null;
 
-        context.Students.Add(model);
+        await context.Students.AddAsync(model);
         return await context.SaveChangesAsync() == 1 ? model : null;
     }
 
     public async Task<bool> Delete(string id)
     {
-        var stu = await Get(id);
+        await using var context = await factory.CreateDbContextAsync();
+        var stu = await context.Students.FirstOrDefaultAsync(x => x.UserId == id);
         if (stu == null) return false;
         context.Students.Remove(stu);
         return await context.SaveChangesAsync() == 1;
@@ -70,6 +75,7 @@ public class StudentRepository(ClubContext context) : IStudentRepository
 
     public async Task<bool> Login(string userId, string password)
     {
+        await using var context = await factory.CreateDbContextAsync();
         var hash = DataTool.StringToHash(password);
 
         return await context.Students.AnyAsync(x =>
@@ -81,12 +87,14 @@ public class StudentRepository(ClubContext context) : IStudentRepository
     // 新增方法实现
     public async Task<StudentModel?> GetByIdAsync(string id)
     {
+        await using var context = await factory.CreateDbContextAsync();
         return await context.Students.FirstOrDefaultAsync(x => x.UserId == id);
     }
 
     public async Task<bool> UpdateAsync(StudentModel model)
     {
-        var stu = await GetByIdAsync(model.UserId);
+        await using var context = await factory.CreateDbContextAsync();
+        var stu = await context.Students.FirstOrDefaultAsync(x => x.UserId == model.UserId);
         if (stu == null)
         {
             model.Standardization();
@@ -102,7 +110,8 @@ public class StudentRepository(ClubContext context) : IStudentRepository
 
     public async Task<bool> DeleteAsync(string id)
     {
-        var stu = await GetByIdAsync(id);
+        await using var context = await factory.CreateDbContextAsync();
+        var stu = await context.Students.FirstOrDefaultAsync(x => x.UserId == id);
         if (stu == null) return false;
         context.Students.Remove(stu);
         return await context.SaveChangesAsync() > 0;
@@ -110,6 +119,7 @@ public class StudentRepository(ClubContext context) : IStudentRepository
 
     public async Task<bool> UpdateManyAsync(List<StudentModel> list)
     {
+        await using var context = await factory.CreateDbContextAsync();
         // 获取所有现有的学生ID
         var existingStudentIds = await context.Students
             .Select(s => s.UserId)
@@ -133,6 +143,7 @@ public class StudentRepository(ClubContext context) : IStudentRepository
 
     public async Task<List<MemberModel>> GetAllMembersAsync()
     {
+        await using var context = await factory.CreateDbContextAsync();
         var query = from student in context.Students
             join staff in context.Staffs
                 on student.UserId equals staff.UserId into staffGroup
@@ -152,6 +163,7 @@ public class StudentRepository(ClubContext context) : IStudentRepository
     public async Task<(List<MemberModel>, int)> GetMembersPagedAsync(int pageNum, int pageSize, string? searchTerm,
         string? searchCondition)
     {
+        await using var context = await factory.CreateDbContextAsync();
         // 构建基础查询
         var query = context.Students.AsQueryable();
 
@@ -205,6 +217,7 @@ public class StudentRepository(ClubContext context) : IStudentRepository
 
     public async Task<List<StudentModel>> Search(string searchTerm, string searchCondition)
     {
+        await using var context = await factory.CreateDbContextAsync();
         var query = context.Students.AsQueryable();
 
         // 如果提供了搜索词，则应用搜索条件
@@ -226,7 +239,7 @@ public class StudentRepository(ClubContext context) : IStudentRepository
 
 
         var studentIdsQuery = query
-            .OrderBy(s => s.UserId) // 确保结
+            .OrderBy(s => s.UserId) // 确保结果
             .Select(s => s.UserId);
 
         var studentIds = await studentIdsQuery.ToListAsync();
