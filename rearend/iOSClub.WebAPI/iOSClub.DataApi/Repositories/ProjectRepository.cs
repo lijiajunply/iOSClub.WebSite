@@ -1,4 +1,4 @@
-﻿using iOSClub.Data;
+using iOSClub.Data;
 using iOSClub.Data.DataModels;
 using Microsoft.EntityFrameworkCore;
 
@@ -36,11 +36,13 @@ public class ProjectRepository(ClubContext context) : IProjectRepository
     /// </summary>
     public async Task<List<ProjectModel>> GetAllProjectsAsync()
     {
-        return await context.Projects
+        return (await context.Projects
             .Include(p => p.Staffs)
             .Include(p => p.Tasks)
             .Include(p => p.Department)
-            .ToListAsync();
+            .ToListAsync())
+            .Select(x => x.OutputWhenOtherList())
+            .ToList();
     }
 
     /// <summary>
@@ -48,11 +50,12 @@ public class ProjectRepository(ClubContext context) : IProjectRepository
     /// </summary>
     public async Task<ProjectModel?> GetProjectByIdAsync(string id)
     {
-        return await context.Projects
+        var project = await context.Projects
             .Include(p => p.Staffs)
             .Include(p => p.Tasks)
             .Include(p => p.Department)
             .FirstOrDefaultAsync(p => p.Id == id);
+        return project?.OutputWhenOtherList();
     }
 
     /// <summary>
@@ -60,11 +63,12 @@ public class ProjectRepository(ClubContext context) : IProjectRepository
     /// </summary>
     public async Task<ProjectModel?> GetProjectByTitleAsync(string title)
     {
-        return await context.Projects
+        var project = await context.Projects
             .Include(p => p.Staffs)
             .Include(p => p.Tasks)
             .Include(p => p.Department)
             .FirstOrDefaultAsync(p => p.Title == title);
+        return project?.OutputWhenOtherList();
     }
 
     /// <summary>
@@ -72,12 +76,14 @@ public class ProjectRepository(ClubContext context) : IProjectRepository
     /// </summary>
     public async Task<List<ProjectModel>> GetProjectsByDepartmentAsync(string departmentName)
     {
-        return await context.Projects
+        return (await context.Projects
             .Include(p => p.Staffs)
             .Include(p => p.Tasks)
             .Include(p => p.Department)
             .Where(p => p.Department != null && p.Department.Name == departmentName)
-            .ToListAsync();
+            .ToListAsync())
+            .Select(x => x.OutputWhenOtherList())
+            .ToList();
     }
 
     /// <summary>
@@ -85,12 +91,14 @@ public class ProjectRepository(ClubContext context) : IProjectRepository
     /// </summary>
     public async Task<List<ProjectModel>> GetProjectsByStaffAsync(string userId)
     {
-        return await context.Projects
+        return (await context.Projects
             .Include(p => p.Staffs)
             .Include(p => p.Tasks)
             .Include(p => p.Department)
             .Where(p => p.Staffs.Any(s => s.UserId == userId))
-            .ToListAsync();
+            .ToListAsync())
+            .Select(x => x.OutputWhenOtherList())
+            .ToList();
     }
 
     /// <summary>

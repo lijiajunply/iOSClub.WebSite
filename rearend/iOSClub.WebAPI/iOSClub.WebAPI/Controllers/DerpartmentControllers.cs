@@ -220,7 +220,7 @@ public class DepartmentController(
     {
         try
         {
-            var members = await staffRepository.GetAllStaffToMembers();
+            var members = await staffRepository.GetAllStaffIdentity();
 
             var jsonOptions = new JsonSerializerOptions
             {

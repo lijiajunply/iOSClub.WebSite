@@ -1,13 +1,10 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.Text.Json.Serialization;
 
 namespace iOSClub.Data.DataModels;
 
 public class StaffModel
 {
-    [Key]
-    [MaxLength(10)]
-    public string UserId { get; set; } = "";
+    [Key] [MaxLength(10)] public string UserId { get; set; } = "";
 
     [MaxLength(50)] public string Name { get; set; } = "";
 
@@ -21,9 +18,25 @@ public class StaffModel
     [MaxLength(20)]
     public string Identity { get; set; } = "Member";
 
-    [JsonIgnore]
     public DepartmentModel? Department { get; set; }
-    
-    public List<ProjectModel> Projects { get; init; } = [];
-    public List<TaskModel> Tasks { get; init; } = [];
+
+    public List<ProjectModel> Projects { get; set; } = [];
+    public List<TaskModel> Tasks { get; set; } = [];
+
+    public StaffModel OutputWhenOtherList()
+    {
+        Department = Department == null
+            ? null
+            : new DepartmentModel()
+            {
+                Key = Department.Key,
+                Name = Department.Name,
+                Description = Department.Description,
+            };
+
+        Tasks = Tasks.Select(t => t.OutputWhenOtherList()).ToList();
+        Projects = Projects.Select(p => p.OutputWhenOtherList()).ToList();
+
+        return this;
+    }
 }

@@ -35,6 +35,7 @@ export class StaffService {
      * @returns Promise<any> 创建结果
      */
     static async createStaff(staff: StaffModel): Promise<any> {
+        console.log(staff)
         return apiRequest<any>({
             url: `${url}/Staff/Create`,
             method: 'POST',

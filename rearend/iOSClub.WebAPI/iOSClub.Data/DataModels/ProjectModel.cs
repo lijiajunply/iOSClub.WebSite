@@ -1,11 +1,11 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
 namespace iOSClub.Data.DataModels;
 
 public class ProjectModel : DataModel
 {
-    [JsonIgnore]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public DepartmentModel? Department { get; set; }
     [MaxLength(20)] public string Title { get; set; } = "";
 
@@ -23,9 +23,17 @@ public class ProjectModel : DataModel
         if (!string.IsNullOrEmpty(model.EndTime)) EndTime = model.EndTime;
     }
 
-    [JsonIgnore]
-    public List<StaffModel> Staffs { get; init; } = [];
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public List<StaffModel> Staffs { get; set; } = [];
     
-    [JsonIgnore]
-    public List<TaskModel> Tasks { get; init; } = [];
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public List<TaskModel> Tasks { get; set; } = [];
+
+    public ProjectModel OutputWhenOtherList()
+    {
+        Staffs = Staffs.Select(x => x.OutputWhenOtherList()).ToList();
+        Tasks = Tasks.Select(x => x.OutputWhenOtherList()).ToList();
+        Department = Department?.OutputWhenOtherList();
+        return this;
+    }
 }

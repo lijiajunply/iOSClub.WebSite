@@ -10,8 +10,7 @@ namespace iOSClub.WebAPI.IdentityModels;
 
 public class GlobalAuthorizationFilter(
     ILoginService loginService,
-    IConfiguration configuration,
-    ILogger<GlobalAuthorizationFilter> logger) : IAuthorizationFilter
+    IConfiguration configuration) : IAuthorizationFilter
 {
     public void OnAuthorization(AuthorizationFilterContext context)
     {

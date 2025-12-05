@@ -112,7 +112,7 @@ public class StaffController(IStaffRepository staffRepository, ILogger<StaffCont
     /// <param name="staff">员工信息模型</param>
     /// <returns>创建结果</returns>
     [HttpPost("Create")]
-    public async Task<ActionResult<ApiResponse<StaffModel>>> CreateStaff([FromBody] StaffModel staff)
+    public async Task<ActionResult<ApiResponse>> CreateStaff([FromBody] StaffModel staff)
     {
         try
         {
@@ -132,8 +132,7 @@ public class StaffController(IStaffRepository staffRepository, ILogger<StaffCont
                 logger.LogInformation("创建成员成功，ID: {UserId}, 名称: {Name}", staff.UserId, staff.Name);
             }
 
-            return CreatedAtAction(nameof(GetStaff), new { userId = staff.UserId },
-                ApiResponse<StaffModel>.Success(staff, "创建成员成功"));
+            return ApiResponse.Success("创建成员成功");
         }
         catch (Exception ex)
         {

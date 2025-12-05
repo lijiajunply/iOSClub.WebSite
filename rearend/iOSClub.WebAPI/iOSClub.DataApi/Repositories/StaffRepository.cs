@@ -17,6 +17,7 @@ public interface IStaffRepository
     Task<bool> StaffExistsAsync(string userId);
     Task<IEnumerable<StaffModel>> GetStaffsByIdentitiesAsync(params string[] identities);
     Task<bool> ChangeStaffDepartmentAsync(string userId, string? departmentName);
+    Task<IEnumerable<MemberModel>> GetAllStaffIdentity();
 }
 
 public class StaffRepository(IDbContextFactory<ClubContext> factory) : IStaffRepository
@@ -24,11 +25,12 @@ public class StaffRepository(IDbContextFactory<ClubContext> factory) : IStaffRep
     public async Task<IEnumerable<StaffModel>> GetAllStaffAsync()
     {
         await using var context = await factory.CreateDbContextAsync();
-        return await context.Staffs
-            .Include(s => s.Department)
-            .Include(s => s.Projects)
-            .Include(s => s.Tasks)
-            .ToListAsync();
+        return (await context.Staffs
+                .Include(s => s.Department)
+                .Include(s => s.Projects)
+                .Include(s => s.Tasks)
+                .ToListAsync())
+            .Select(x => x.OutputWhenOtherList());
     }
 
     public async Task<IEnumerable<MemberModel>> GetAllStaffToMembers()
@@ -38,6 +40,7 @@ public class StaffRepository(IDbContextFactory<ClubContext> factory) : IStaffRep
             join student in context.Students
                 on staff.UserId equals student.UserId into studentGroup
             from student in studentGroup.DefaultIfEmpty() // LEFT JOIN
+            where student != null && staff.Identity != "Founder"
             select new MemberModel
             {
                 UserId = staff.UserId,
@@ -55,22 +58,53 @@ public class StaffRepository(IDbContextFactory<ClubContext> factory) : IStaffRep
 
         return await query.ToListAsync();
     }
+    
+    public async Task<IEnumerable<MemberModel>> GetAllStaffIdentity()
+    {
+        await using var context = await factory.CreateDbContextAsync();
+        var query = from staff in context.Staffs
+            join student in context.Students
+                on staff.UserId equals student.UserId into studentGroup
+            from student in studentGroup.DefaultIfEmpty() // LEFT JOIN
+            where student != null && staff.Identity != "Founder"
+            select new MemberModel
+            {
+                UserId = staff.UserId,
+                UserName = student != null ? student.UserName : staff.Name,
+                Academy = student != null ? student.Academy : "",
+                PoliticalLandscape = student != null ? student.PoliticalLandscape : "群众",
+                Gender = student != null ? student.Gender : "",
+                ClassName = student != null ? student.ClassName : "",
+                PhoneNum = student != null ? student.PhoneNum : "",
+                JoinTime = student != null ? student.JoinTime : DateTime.SpecifyKind(DateTime.Today, DateTimeKind.Utc),
+                PasswordHash = student != null ? student.PasswordHash : "",
+                EMail = student != null ? student.EMail : null,
+                Identity = staff.Identity == "Minister" ? $"{staff.Department!.Name} 部长" :
+                    staff.Identity == "Department" ? $"{staff.Department!.Name} 部员" :
+                    staff.Identity == "President" ? "社长" :
+                    staff.Identity == "Founder" ? "创始人" : staff.Identity,
+            };
+
+        return await query.ToListAsync();
+    }
 
     public async Task<StaffModel?> GetStaffByIdWithoutOtherData(string userId)
     {
         await using var context = await factory.CreateDbContextAsync();
-        return await context.Staffs
+        var staff = await context.Staffs
             .FirstOrDefaultAsync(s => s.UserId == userId);
+        return staff?.OutputWhenOtherList();
     }
 
     public async Task<StaffModel?> GetStaffByIdAsync(string userId)
     {
         await using var context = await factory.CreateDbContextAsync();
-        return await context.Staffs
+        var staff = await context.Staffs
             .Include(s => s.Department)
             .Include(s => s.Projects)
             .Include(s => s.Tasks)
             .FirstOrDefaultAsync(s => s.UserId == userId);
+        return staff?.OutputWhenOtherList();
     }
 
     public async Task<bool> CreateStaffAsync(StaffModel staff)
@@ -79,6 +113,13 @@ public class StaffRepository(IDbContextFactory<ClubContext> factory) : IStaffRep
 
         if (await StaffExistsAsync(staff.UserId))
             return false;
+
+        if (staff.Identity == "Member" ||
+            ((staff.Identity != "Founder" || staff.Identity != "President" || staff.Identity != "Minister") &&
+             staff.Department == null))
+            throw new ArgumentException("会员必须指定部门");
+
+        staff.Department = await context.Departments.FirstOrDefaultAsync(d => d.Name == staff.Department!.Name);
 
         context.Staffs.Add(staff);
         return await context.SaveChangesAsync() > 0;
@@ -123,7 +164,7 @@ public class StaffRepository(IDbContextFactory<ClubContext> factory) : IStaffRep
         await using var context = await factory.CreateDbContextAsync();
         return await context.Staffs
             .Include(s => s.Department)
-            .Where(s => identities.Contains(s.Identity))
+            .Where(s => ((IEnumerable<string>)identities).Contains(s.Identity))
             .ToListAsync();
     }
 

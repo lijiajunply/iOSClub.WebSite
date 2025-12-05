@@ -34,11 +34,9 @@ export async function apiRequest<T>(config: ApiRequestConfig): Promise<T> {
     };
 
     // 如果需要认证且有令牌，添加Authorization头
-    if (requiresAuth) {
-        const token = AuthService.getToken();
-        if (token) {
-            requestHeaders['Authorization'] = `Bearer ${token}`;
-        }
+    const token = AuthService.getToken();
+    if (token) {
+        requestHeaders['Authorization'] = `Bearer ${token}`;
     }
 
     // 处理请求体：如果是对象且Content-Type为application/json，则转换为JSON字符串

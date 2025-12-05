@@ -16,17 +16,17 @@ public interface IDepartmentRepository
 
 public class DepartmentRepository(ClubContext context) : IDepartmentRepository
 {
-    private readonly ClubContext _context = context;
-
     /// <summary>
     /// 获取所有部门
     /// </summary>
     public async Task<List<DepartmentModel>> GetAllDepartmentsAsync()
     {
-        return await _context.Departments
+        return (await context.Departments
             .Include(d => d.Staffs)
             .Include(d => d.Projects)
-            .ToListAsync();
+            .ToListAsync())
+            .Select(x => x.OutputWhenOtherList())
+            .ToList();
     }
 
     /// <summary>
@@ -34,10 +34,11 @@ public class DepartmentRepository(ClubContext context) : IDepartmentRepository
     /// </summary>
     public async Task<DepartmentModel?> GetDepartmentByNameAsync(string name)
     {
-        return await _context.Departments
+        var department = await context.Departments
             .Include(d => d.Staffs)
             .Include(d => d.Projects)
             .FirstOrDefaultAsync(d => d.Name == name);
+        return department?.OutputWhenOtherList();
     }
 
     /// <summary>
@@ -45,10 +46,11 @@ public class DepartmentRepository(ClubContext context) : IDepartmentRepository
     /// </summary>
     public async Task<DepartmentModel?> GetDepartmentByKeyAsync(string key)
     {
-        return await _context.Departments
+        var department = await context.Departments
             .Include(d => d.Staffs)
             .Include(d => d.Projects)
             .FirstOrDefaultAsync(d => d.Key == key);
+        return department?.OutputWhenOtherList();
     }
 
     /// <summary>
@@ -58,8 +60,8 @@ public class DepartmentRepository(ClubContext context) : IDepartmentRepository
     {
         try
         {
-            await _context.Departments.AddAsync(department);
-            await _context.SaveChangesAsync();
+            await context.Departments.AddAsync(department);
+            await context.SaveChangesAsync();
             return true;
         }
         catch
@@ -75,8 +77,8 @@ public class DepartmentRepository(ClubContext context) : IDepartmentRepository
     {
         try
         {
-            _context.Departments.Update(department);
-            await _context.SaveChangesAsync();
+            context.Departments.Update(department);
+            await context.SaveChangesAsync();
             return true;
         }
         catch
@@ -96,8 +98,8 @@ public class DepartmentRepository(ClubContext context) : IDepartmentRepository
             if (department == null)
                 return false;
 
-            _context.Departments.Remove(department);
-            await _context.SaveChangesAsync();
+            context.Departments.Remove(department);
+            await context.SaveChangesAsync();
             return true;
         }
         catch
@@ -111,7 +113,7 @@ public class DepartmentRepository(ClubContext context) : IDepartmentRepository
     /// </summary>
     public async Task<bool> DepartmentExistsAsync(string name)
     {
-        return await _context.Departments.AnyAsync(d => d.Name == name);
+        return await context.Departments.AnyAsync(d => d.Name == name);
     }
 
     /// <summary>
@@ -119,7 +121,7 @@ public class DepartmentRepository(ClubContext context) : IDepartmentRepository
     /// </summary>
     public async Task<int> GetStaffCountAsync(string departmentName)
     {
-        return await _context.Departments
+        return await context.Departments
             .Where(d => d.Name == departmentName)
             .SelectMany(d => d.Staffs)
             .CountAsync();
@@ -130,7 +132,7 @@ public class DepartmentRepository(ClubContext context) : IDepartmentRepository
     /// </summary>
     public async Task<int> GetProjectCountAsync(string departmentName)
     {
-        return await _context.Departments
+        return await context.Departments
             .Where(d => d.Name == departmentName)
             .SelectMany(d => d.Projects)
             .CountAsync();
@@ -141,7 +143,7 @@ public class DepartmentRepository(ClubContext context) : IDepartmentRepository
     /// </summary>
     public async Task<List<StaffModel>> GetDepartmentStaffsAsync(string departmentName)
     {
-        return await _context.Departments
+        return await context.Departments
             .Where(d => d.Name == departmentName)
             .SelectMany(d => d.Staffs)
             .ToListAsync();
@@ -152,7 +154,7 @@ public class DepartmentRepository(ClubContext context) : IDepartmentRepository
     /// </summary>
     public async Task<List<ProjectModel>> GetDepartmentProjectsAsync(string departmentName)
     {
-        return await _context.Departments
+        return await context.Departments
             .Where(d => d.Name == departmentName)
             .SelectMany(d => d.Projects)
             .ToListAsync();

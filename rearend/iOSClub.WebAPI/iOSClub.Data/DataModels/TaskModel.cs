@@ -6,16 +6,14 @@ namespace iOSClub.Data.DataModels;
 public class TaskModel : DataModel, ITodo
 {
     [JsonIgnore] public ProjectModel Project { get; set; } = new();
-    [MaxLength(20)]public string Title { get; set; } = "";
+    [MaxLength(20)] public string Title { get; set; } = "";
     [MaxLength(200)] public string Description { get; set; } = "";
     [MaxLength(20)] public string StartTime { get; set; } = "";
     [MaxLength(20)] public string EndTime { get; set; } = "";
 
     public bool Status { get; set; }
 
-    [Key]
-    [MaxLength(32)]
-    public string Id { get; set; } = "";
+    [Key] [MaxLength(32)] public string Id { get; set; } = "";
 
     public void Update(ITodo model)
     {
@@ -26,5 +24,12 @@ public class TaskModel : DataModel, ITodo
         Status = model.Status;
     }
 
-    [JsonIgnore] public List<StaffModel> Users { get; init; } = [];
+    [JsonIgnore] public List<StaffModel> Users { get; set; } = [];
+
+    public TaskModel OutputWhenOtherList()
+    {
+        Users = Users.Select(x => x.OutputWhenOtherList()).ToList();
+        Project = Project.OutputWhenOtherList();
+        return this;
+    }
 }

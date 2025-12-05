@@ -308,6 +308,7 @@
       v-model:show="showAddMemberModal"
       preset="card"
       class="apple-modal"
+      style="max-width: 500px"
       :title="`添加${addMemberType === 'minister' ? '部长' : '成员'}`"
       :bordered="false"
       size="huge"
@@ -348,6 +349,7 @@
       v-model:show="showDepartmentModal"
       preset="card"
       class="apple-modal"
+      style="max-width: 500px"
       :title="editingDepartment ? '编辑部门' : '新建部门'"
       :bordered="false"
   >
@@ -378,6 +380,7 @@
       v-model:show="showChangeDepartmentModalRef"
       preset="card"
       class="apple-modal"
+      style="max-width: 500px"
       title="人事调动"
       :bordered="false"
   >
@@ -390,7 +393,7 @@
         <div>
           <div class="font-medium text-gray-900 dark:text-white">{{ selectedStaff.name }}</div>
           <div class="text-sm text-gray-500">{{ selectedStaff.userId }} | {{
-              selectedStaff.department || '无部门'
+              selectedStaff.department!.name || '无部门'
             }}
           </div>
         </div>
@@ -407,7 +410,7 @@
         <button
             @click="handleChangeDepartment"
             class="apple-btn primary"
-            :disabled="!targetDepartment || targetDepartment === selectedStaff?.department"
+            :disabled="!targetDepartment || targetDepartment === selectedStaff?.department?.name"
         >确认调动
         </button>
       </div>
@@ -577,7 +580,7 @@ const openDepartment = (department: Department | null = null) => {
 
 const showChangeDepartmentModal = (staff: StaffModel) => {
   selectedStaff.value = staff
-  targetDepartment.value = staff.department || ''
+  targetDepartment.value = staff.department?.name || ''
   showChangeDepartmentModalRef.value = true
 }
 
@@ -702,14 +705,18 @@ const addMember = async (member: StudentModel) => {
       await StaffService.createStaff({
         ...commonData,
         identity: addMemberType.value === 'minister' ? 'Minister' : 'Department',
-        department: currentDepartment.value.name
+        department: {
+          key: currentDepartment.value.id,
+          name: currentDepartment.value.name,
+          description: currentDepartment.value.description
+        } as DepartmentModel
       } as StaffModel);
       message.success(`已添加至 ${currentDepartment.value.name}`)
     } else {
       await StaffService.createStaff({
         ...commonData,
         identity: 'President',
-        department: ''
+        department: null
       } as StaffModel);
       message.success(`已添加至领导层`)
     }
@@ -897,6 +904,10 @@ onBeforeUnmount(() => {
 /* Apple Style Base */
 .apple-container {
   background-color: #F1F4F9; /* iCloud light gray */
+}
+
+.apple-modal{
+  max-width: 500px !important;
 }
 
 .apple-card {
