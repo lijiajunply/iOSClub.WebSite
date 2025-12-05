@@ -13,25 +13,25 @@ public interface IDataCentreService
     /// </summary>
     /// <returns>学年统计数据列表</returns>
     public Task<List<YearCount>> GetYearDataAsync();
-    
+
     /// <summary>
     /// 获取按学院统计的数据
     /// </summary>
     /// <returns>学院统计数据列表</returns>
     public Task<List<AcademyCount>> GetCollegeDataAsync();
-    
+
     /// <summary>
     /// 获取按年级统计的数据
     /// </summary>
     /// <returns>年级统计数据列表</returns>
     public Task<List<GradeCount>> GetGradeDataAsync();
-    
+
     /// <summary>
     /// 获取按政治面貌统计的数据
     /// </summary>
     /// <returns>政治面貌统计数据列表</returns>
     public Task<List<LandscapeCount>> GetLandscapeDataAsync();
-    
+
     /// <summary>
     /// 获取按性别统计的数据
     /// </summary>
@@ -83,10 +83,10 @@ public class DataCentreService(IDbContextFactory<ClubContext> contextFactory) : 
         ]);
 
         if (total <= 430) return yearData;
-        
+
         // 一次性获取所有学生数据，并添加AsNoTracking()减少EF Core跟踪开销
         var students = await context.Students.AsNoTracking().ToListAsync();
-        
+
         for (var i = year - 2024; i >= 0; i--)
         {
             var date = new DateTime(year - i, 9, 1, 0, 0, 0, DateTimeKind.Utc);
@@ -100,7 +100,7 @@ public class DataCentreService(IDbContextFactory<ClubContext> contextFactory) : 
         if (month < 9) return yearData;
 
         // 复用已获取的学生数据，不再重复查询数据库
-        var value = students.Count(s => int.Parse(s.UserId.Substring(0, 2)) > (year - 2004));
+        var value = students.Count(s => int.Parse(s.UserId[..2]) > year - 2004);
         yearData.Add(new YearCount($"{year}学年", value));
 
         return yearData;

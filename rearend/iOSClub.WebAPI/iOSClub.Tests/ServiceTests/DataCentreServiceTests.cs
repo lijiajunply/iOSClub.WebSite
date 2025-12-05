@@ -3,7 +3,7 @@ using iOSClub.Data.DataModels;
 using iOSClub.DataApi.Services;
 using Microsoft.EntityFrameworkCore;
 
-namespace iOSClub.Tests;
+namespace iOSClub.Tests.ServiceTests;
 
 public class DataCentreServiceTests
 {
@@ -17,7 +17,7 @@ public class DataCentreServiceTests
         _options = new DbContextOptionsBuilder<ClubContext>()
             .UseInMemoryDatabase(databaseName: "DataCentreServiceTestDatabase")
             .Options;
-        
+
         _contextFactory = new TestDbContextFactory(_options);
         _dataCentreService = new DataCentreService(_contextFactory);
     }
@@ -33,12 +33,36 @@ public class DataCentreServiceTests
         // 添加测试数据
         var students = new List<StudentModel>
         {
-            new() { UserId = "20123456", JoinTime = new DateTime(2020, 9, 1), Academy = "Computer", Gender = "男", PoliticalLandscape = "共青团员" },
-            new() { UserId = "21123456", JoinTime = new DateTime(2021, 9, 1), Academy = "Computer", Gender = "男", PoliticalLandscape = "中共党员" },
-            new() { UserId = "21234567", JoinTime = new DateTime(2021, 9, 1), Academy = "Information", Gender = "女", PoliticalLandscape = "共青团员" },
-            new() { UserId = "22123456", JoinTime = new DateTime(2022, 9, 1), Academy = "Computer", Gender = "女", PoliticalLandscape = "共青团员" },
-            new() { UserId = "22234567", JoinTime = new DateTime(2022, 9, 1), Academy = "Information", Gender = "男", PoliticalLandscape = "群众" },
-            new() { UserId = "22345678", JoinTime = new DateTime(2022, 9, 1), Academy = "Mathematics", Gender = "男", PoliticalLandscape = "共青团员" },
+            new()
+            {
+                UserId = "20123456", JoinTime = new DateTime(2020, 9, 1), Academy = "Computer", Gender = "男",
+                PoliticalLandscape = "共青团员"
+            },
+            new()
+            {
+                UserId = "21123456", JoinTime = new DateTime(2021, 9, 1), Academy = "Computer", Gender = "男",
+                PoliticalLandscape = "中共党员"
+            },
+            new()
+            {
+                UserId = "21234567", JoinTime = new DateTime(2021, 9, 1), Academy = "Information", Gender = "女",
+                PoliticalLandscape = "共青团员"
+            },
+            new()
+            {
+                UserId = "22123456", JoinTime = new DateTime(2022, 9, 1), Academy = "Computer", Gender = "女",
+                PoliticalLandscape = "共青团员"
+            },
+            new()
+            {
+                UserId = "22234567", JoinTime = new DateTime(2022, 9, 1), Academy = "Information", Gender = "男",
+                PoliticalLandscape = "群众"
+            },
+            new()
+            {
+                UserId = "22345678", JoinTime = new DateTime(2022, 9, 1), Academy = "Mathematics", Gender = "男",
+                PoliticalLandscape = "共青团员"
+            },
         };
 
         await context.Students.AddRangeAsync(students);
@@ -50,7 +74,8 @@ public class DataCentreServiceTests
         // Assert
         Assert.NotNull(result);
         Assert.NotEmpty(result);
-        Assert.Contains(result, yc => yc.Year == "2019学年" || yc.Year == "2020学年" || yc.Year == "2021学年" || yc.Year == "2022学年");
+        Assert.Contains(result,
+            yc => yc.Year == "2019学年" || yc.Year == "2020学年" || yc.Year == "2021学年" || yc.Year == "2022学年");
     }
 
     [Fact]
@@ -64,11 +89,31 @@ public class DataCentreServiceTests
         // 添加测试数据
         var students = new List<StudentModel>
         {
-            new() { UserId = "20123456", JoinTime = new DateTime(2020, 9, 1), Academy = "Computer", Gender = "男", PoliticalLandscape = "共青团员" },
-            new() { UserId = "21123456", JoinTime = new DateTime(2021, 9, 1), Academy = "Computer", Gender = "男", PoliticalLandscape = "中共党员" },
-            new() { UserId = "21234567", JoinTime = new DateTime(2021, 9, 1), Academy = "Information", Gender = "女", PoliticalLandscape = "共青团员" },
-            new() { UserId = "22123456", JoinTime = new DateTime(2022, 9, 1), Academy = "Computer", Gender = "女", PoliticalLandscape = "共青团员" },
-            new() { UserId = "22234567", JoinTime = new DateTime(2022, 9, 1), Academy = "Information", Gender = "男", PoliticalLandscape = "群众" },
+            new()
+            {
+                UserId = "20123456", JoinTime = new DateTime(2020, 9, 1), Academy = "Computer", Gender = "男",
+                PoliticalLandscape = "共青团员"
+            },
+            new()
+            {
+                UserId = "21123456", JoinTime = new DateTime(2021, 9, 1), Academy = "Computer", Gender = "男",
+                PoliticalLandscape = "中共党员"
+            },
+            new()
+            {
+                UserId = "21234567", JoinTime = new DateTime(2021, 9, 1), Academy = "Information", Gender = "女",
+                PoliticalLandscape = "共青团员"
+            },
+            new()
+            {
+                UserId = "22123456", JoinTime = new DateTime(2022, 9, 1), Academy = "Computer", Gender = "女",
+                PoliticalLandscape = "共青团员"
+            },
+            new()
+            {
+                UserId = "22234567", JoinTime = new DateTime(2022, 9, 1), Academy = "Information", Gender = "男",
+                PoliticalLandscape = "群众"
+            },
         };
 
         await context.Students.AddRangeAsync(students);
@@ -81,8 +126,8 @@ public class DataCentreServiceTests
         Assert.NotNull(result);
         Assert.NotEmpty(result);
         Assert.Equal(2, result.Count);
-        Assert.Contains(result, ac => ac.Type == "Computer" && ac.Value == 3);
-        Assert.Contains(result, ac => ac.Type == "Information" && ac.Value == 2);
+        Assert.Contains(result, ac => ac is { Type: "Computer", Value: 3 });
+        Assert.Contains(result, ac => ac is { Type: "Information", Value: 2 });
     }
 
     [Fact]
@@ -96,12 +141,36 @@ public class DataCentreServiceTests
         // 添加测试数据
         var students = new List<StudentModel>
         {
-            new() { UserId = "20123456", JoinTime = new DateTime(2020, 9, 1), Academy = "Computer", Gender = "男", PoliticalLandscape = "共青团员" },
-            new() { UserId = "21123456", JoinTime = new DateTime(2021, 9, 1), Academy = "Computer", Gender = "男", PoliticalLandscape = "中共党员" },
-            new() { UserId = "21234567", JoinTime = new DateTime(2021, 9, 1), Academy = "Information", Gender = "女", PoliticalLandscape = "共青团员" },
-            new() { UserId = "22123456", JoinTime = new DateTime(2022, 9, 1), Academy = "Computer", Gender = "女", PoliticalLandscape = "共青团员" },
-            new() { UserId = "22234567", JoinTime = new DateTime(2022, 9, 1), Academy = "Information", Gender = "男", PoliticalLandscape = "群众" },
-            new() { UserId = "22345678", JoinTime = new DateTime(2022, 9, 1), Academy = "Mathematics", Gender = "男", PoliticalLandscape = "共青团员" },
+            new()
+            {
+                UserId = "20123456", JoinTime = new DateTime(2020, 9, 1), Academy = "Computer", Gender = "男",
+                PoliticalLandscape = "共青团员"
+            },
+            new()
+            {
+                UserId = "21123456", JoinTime = new DateTime(2021, 9, 1), Academy = "Computer", Gender = "男",
+                PoliticalLandscape = "中共党员"
+            },
+            new()
+            {
+                UserId = "21234567", JoinTime = new DateTime(2021, 9, 1), Academy = "Information", Gender = "女",
+                PoliticalLandscape = "共青团员"
+            },
+            new()
+            {
+                UserId = "22123456", JoinTime = new DateTime(2022, 9, 1), Academy = "Computer", Gender = "女",
+                PoliticalLandscape = "共青团员"
+            },
+            new()
+            {
+                UserId = "22234567", JoinTime = new DateTime(2022, 9, 1), Academy = "Information", Gender = "男",
+                PoliticalLandscape = "群众"
+            },
+            new()
+            {
+                UserId = "22345678", JoinTime = new DateTime(2022, 9, 1), Academy = "Mathematics", Gender = "男",
+                PoliticalLandscape = "共青团员"
+            },
         };
 
         await context.Students.AddRangeAsync(students);
@@ -114,9 +183,9 @@ public class DataCentreServiceTests
         Assert.NotNull(result);
         Assert.NotEmpty(result);
         Assert.Equal(3, result.Count);
-        Assert.Contains(result, gc => gc.Grade == "20级" && gc.Value == 1);
-        Assert.Contains(result, gc => gc.Grade == "21级" && gc.Value == 2);
-        Assert.Contains(result, gc => gc.Grade == "22级" && gc.Value == 3);
+        Assert.Contains(result, gc => gc is { Grade: "20级", Value: 1 });
+        Assert.Contains(result, gc => gc is { Grade: "21级", Value: 2 });
+        Assert.Contains(result, gc => gc is { Grade: "22级", Value: 3 });
     }
 
     [Fact]
@@ -130,11 +199,31 @@ public class DataCentreServiceTests
         // 添加测试数据
         var students = new List<StudentModel>
         {
-            new() { UserId = "20123456", JoinTime = new DateTime(2020, 9, 1), Academy = "Computer", Gender = "男", PoliticalLandscape = "共青团员" },
-            new() { UserId = "21123456", JoinTime = new DateTime(2021, 9, 1), Academy = "Computer", Gender = "男", PoliticalLandscape = "中共党员" },
-            new() { UserId = "21234567", JoinTime = new DateTime(2021, 9, 1), Academy = "Information", Gender = "女", PoliticalLandscape = "共青团员" },
-            new() { UserId = "22123456", JoinTime = new DateTime(2022, 9, 1), Academy = "Computer", Gender = "女", PoliticalLandscape = "共青团员" },
-            new() { UserId = "22234567", JoinTime = new DateTime(2022, 9, 1), Academy = "Information", Gender = "男", PoliticalLandscape = "群众" },
+            new()
+            {
+                UserId = "20123456", JoinTime = new DateTime(2020, 9, 1), Academy = "Computer", Gender = "男",
+                PoliticalLandscape = "共青团员"
+            },
+            new()
+            {
+                UserId = "21123456", JoinTime = new DateTime(2021, 9, 1), Academy = "Computer", Gender = "男",
+                PoliticalLandscape = "中共党员"
+            },
+            new()
+            {
+                UserId = "21234567", JoinTime = new DateTime(2021, 9, 1), Academy = "Information", Gender = "女",
+                PoliticalLandscape = "共青团员"
+            },
+            new()
+            {
+                UserId = "22123456", JoinTime = new DateTime(2022, 9, 1), Academy = "Computer", Gender = "女",
+                PoliticalLandscape = "共青团员"
+            },
+            new()
+            {
+                UserId = "22234567", JoinTime = new DateTime(2022, 9, 1), Academy = "Information", Gender = "男",
+                PoliticalLandscape = "群众"
+            },
         };
 
         await context.Students.AddRangeAsync(students);
@@ -147,9 +236,9 @@ public class DataCentreServiceTests
         Assert.NotNull(result);
         Assert.NotEmpty(result);
         Assert.Equal(3, result.Count);
-        Assert.Contains(result, lc => lc.Type == "共青团员" && lc.Value == 3);
-        Assert.Contains(result, lc => lc.Type == "中共党员" && lc.Value == 1);
-        Assert.Contains(result, lc => lc.Type == "群众" && lc.Value == 1);
+        Assert.Contains(result, lc => lc is { Type: "共青团员", Value: 3 });
+        Assert.Contains(result, lc => lc is { Type: "中共党员", Value: 1 });
+        Assert.Contains(result, lc => lc is { Type: "群众", Value: 1 });
     }
 
     [Fact]
@@ -163,11 +252,31 @@ public class DataCentreServiceTests
         // 添加测试数据
         var students = new List<StudentModel>
         {
-            new() { UserId = "20123456", JoinTime = new DateTime(2020, 9, 1), Academy = "Computer", Gender = "男", PoliticalLandscape = "共青团员" },
-            new() { UserId = "21123456", JoinTime = new DateTime(2021, 9, 1), Academy = "Computer", Gender = "男", PoliticalLandscape = "中共党员" },
-            new() { UserId = "21234567", JoinTime = new DateTime(2021, 9, 1), Academy = "Information", Gender = "女", PoliticalLandscape = "共青团员" },
-            new() { UserId = "22123456", JoinTime = new DateTime(2022, 9, 1), Academy = "Computer", Gender = "女", PoliticalLandscape = "共青团员" },
-            new() { UserId = "22234567", JoinTime = new DateTime(2022, 9, 1), Academy = "Information", Gender = "男", PoliticalLandscape = "群众" },
+            new()
+            {
+                UserId = "20123456", JoinTime = new DateTime(2020, 9, 1), Academy = "Computer", Gender = "男",
+                PoliticalLandscape = "共青团员"
+            },
+            new()
+            {
+                UserId = "21123456", JoinTime = new DateTime(2021, 9, 1), Academy = "Computer", Gender = "男",
+                PoliticalLandscape = "中共党员"
+            },
+            new()
+            {
+                UserId = "21234567", JoinTime = new DateTime(2021, 9, 1), Academy = "Information", Gender = "女",
+                PoliticalLandscape = "共青团员"
+            },
+            new()
+            {
+                UserId = "22123456", JoinTime = new DateTime(2022, 9, 1), Academy = "Computer", Gender = "女",
+                PoliticalLandscape = "共青团员"
+            },
+            new()
+            {
+                UserId = "22234567", JoinTime = new DateTime(2022, 9, 1), Academy = "Information", Gender = "男",
+                PoliticalLandscape = "群众"
+            },
         };
 
         await context.Students.AddRangeAsync(students);
@@ -180,8 +289,8 @@ public class DataCentreServiceTests
         Assert.NotNull(result);
         Assert.NotEmpty(result);
         Assert.Equal(2, result.Count);
-        Assert.Contains(result, gc => gc.Type == "男" && gc.Value == 3);
-        Assert.Contains(result, gc => gc.Type == "女" && gc.Value == 2);
+        Assert.Contains(result, gc => gc is { Type: "男", Value: 3 });
+        Assert.Contains(result, gc => gc is { Type: "女", Value: 2 });
     }
 
     [Fact]

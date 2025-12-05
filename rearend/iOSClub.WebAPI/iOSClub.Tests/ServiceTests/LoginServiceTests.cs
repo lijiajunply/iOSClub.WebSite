@@ -1,13 +1,13 @@
-using iOSClub.Data; 
-using iOSClub.DataApi.Repositories;
-using iOSClub.DataApi.Services;
+using iOSClub.Data;
 using iOSClub.Data.DataModels;
 using iOSClub.Data.ShowModels;
+using iOSClub.DataApi.Repositories;
+using iOSClub.DataApi.Services;
 using Microsoft.Extensions.Logging;
 using Moq;
 using StackExchange.Redis;
 
-namespace iOSClub.Tests;
+namespace iOSClub.Tests.ServiceTests;
 
 public class LoginServiceTests
 {

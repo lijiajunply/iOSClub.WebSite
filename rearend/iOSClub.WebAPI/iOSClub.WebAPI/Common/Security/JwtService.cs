@@ -27,7 +27,10 @@ public class JwtService(
     {
         try
         {
-            logger.LogInformation("开始生成访问令牌和刷新令牌，用户ID：{UserId}", memberModel.UserId);
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("开始生成访问令牌和刷新令牌，用户ID：{UserId}", memberModel.UserId);
+            }
 
             // 生成访问令牌
             var accessToken = GenerateAccessToken(memberModel, scope, clientId);
@@ -35,12 +38,18 @@ public class JwtService(
             // 生成刷新令牌
             var refreshToken = GenerateRefreshToken();
 
-            logger.LogInformation("访问令牌和刷新令牌生成成功，用户ID：{UserId}", memberModel.UserId);
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("访问令牌和刷新令牌生成成功，用户ID：{UserId}", memberModel.UserId);
+            }
             return (accessToken, refreshToken);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "生成令牌失败，用户ID：{UserId}", memberModel.UserId);
+            if (logger.IsEnabled(LogLevel.Error))
+            {
+                logger.LogError(ex, "生成令牌失败，用户ID：{UserId}", memberModel.UserId);
+            }
             throw;
         }
     }
@@ -116,7 +125,10 @@ public class JwtService(
     {
         try
         {
-            logger.LogInformation("开始验证访问令牌");
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("开始验证访问令牌");
+            }
 
             var tokenHandler = new JwtSecurityTokenHandler();
 
@@ -134,22 +146,34 @@ public class JwtService(
             var usageClaim = claimsPrincipal.FindFirst("usage");
             if (usageClaim == null || usageClaim.Value != "access")
             {
-                logger.LogWarning("访问令牌使用场景验证失败");
+                if (logger.IsEnabled(LogLevel.Warning))
+                {
+                    logger.LogWarning("访问令牌使用场景验证失败");
+                }
                 return (false, Enumerable.Empty<Claim>());
             }
 
-            logger.LogInformation("访问令牌验证成功");
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("访问令牌验证成功");
+            }
             return (true, claimsPrincipal.Claims);
         }
         catch (SecurityTokenExpiredException)
         {
-            logger.LogError("访问令牌已过期");
+            if (logger.IsEnabled(LogLevel.Error))
+            {
+                logger.LogError("访问令牌已过期");
+            }
             // 重新抛出令牌过期异常，让中间件捕获处理
             throw;
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "访问令牌验证失败");
+            if (logger.IsEnabled(LogLevel.Error))
+            {
+                logger.LogError(ex, "访问令牌验证失败");
+            }
             return (false, Enumerable.Empty<Claim>());
         }
     }
@@ -167,7 +191,10 @@ public class JwtService(
     {
         try
         {
-            logger.LogInformation("开始使用刷新令牌生成新的访问令牌，用户ID：{UserId}", memberModel.UserId);
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("开始使用刷新令牌生成新的访问令牌，用户ID：{UserId}", memberModel.UserId);
+            }
 
             // 这里可以添加刷新令牌的验证逻辑，例如检查黑名单
             // 实际实现中，应该从存储中获取刷新令牌并验证其有效性
@@ -175,12 +202,18 @@ public class JwtService(
             // 生成新的访问令牌
             var newAccessToken = GenerateAccessToken(memberModel, scope, clientId);
 
-            logger.LogInformation("刷新访问令牌成功，用户ID：{UserId}", memberModel.UserId);
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("刷新访问令牌成功，用户ID：{UserId}", memberModel.UserId);
+            }
             return newAccessToken;
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "刷新访问令牌失败，用户ID：{UserId}", memberModel.UserId);
+            if (logger.IsEnabled(LogLevel.Error))
+            {
+                logger.LogError(ex, "刷新访问令牌失败，用户ID：{UserId}", memberModel.UserId);
+            }
             throw;
         }
     }
@@ -223,17 +256,26 @@ public class JwtService(
     {
         try
         {
-            logger.LogInformation("开始从访问令牌中提取声明");
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("开始从访问令牌中提取声明");
+            }
 
             var tokenHandler = new JwtSecurityTokenHandler();
             var jwtToken = tokenHandler.ReadJwtToken(token);
 
-            logger.LogInformation("从访问令牌中提取声明成功");
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("从访问令牌中提取声明成功");
+            }
             return jwtToken.Claims;
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "从访问令牌中提取声明失败");
+            if (logger.IsEnabled(LogLevel.Error))
+            {
+                logger.LogError(ex, "从访问令牌中提取声明失败");
+            }
             return [];
         }
     }

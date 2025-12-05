@@ -18,16 +18,25 @@ public class RsaKeyManager(JwtConfig jwtConfig, ILogger<RsaKeyManager> logger)
     {
         try
         {
-            logger.LogInformation("开始生成RSA密钥对，密钥大小：{KeySize}位", keySize);
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("开始生成RSA密钥对，密钥大小：{KeySize}位", keySize);
+            }
 
             var rsa = RSA.Create(keySize);
 
-            logger.LogInformation("RSA密钥对生成成功");
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("RSA密钥对生成成功");
+            }
             return rsa;
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "生成RSA密钥对失败");
+            if (logger.IsEnabled(LogLevel.Error))
+            {
+                logger.LogError(ex, "生成RSA密钥对失败");
+            }
             throw;
         }
     }
@@ -42,7 +51,10 @@ public class RsaKeyManager(JwtConfig jwtConfig, ILogger<RsaKeyManager> logger)
     {
         try
         {
-            logger.LogInformation("开始存储RSA密钥对到文件");
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("开始存储RSA密钥对到文件");
+            }
 
             // 确保目录存在
             Directory.CreateDirectory(Path.GetDirectoryName(privateKeyPath) ?? string.Empty);
@@ -56,12 +68,18 @@ public class RsaKeyManager(JwtConfig jwtConfig, ILogger<RsaKeyManager> logger)
             var publicKey = rsa.ExportRSAPublicKeyPem();
             File.WriteAllText(publicKeyPath, publicKey, Encoding.UTF8);
 
-            logger.LogInformation("RSA密钥对存储成功，私钥路径：{PrivateKeyPath}，公钥路径：{PublicKeyPath}",
-                privateKeyPath, publicKeyPath);
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("RSA密钥对存储成功，私钥路径：{PrivateKeyPath}，公钥路径：{PublicKeyPath}",
+                    privateKeyPath, publicKeyPath);
+            }
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "存储RSA密钥对失败");
+            if (logger.IsEnabled(LogLevel.Error))
+            {
+                logger.LogError(ex, "存储RSA密钥对失败");
+            }
             throw;
         }
     }
@@ -75,11 +93,17 @@ public class RsaKeyManager(JwtConfig jwtConfig, ILogger<RsaKeyManager> logger)
     {
         try
         {
-            logger.LogInformation("开始从文件加载RSA私钥：{PrivateKeyPath}", privateKeyPath);
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("开始从文件加载RSA私钥：{PrivateKeyPath}", privateKeyPath);
+            }
 
             if (!File.Exists(privateKeyPath))
             {
-                logger.LogWarning("私钥文件不存在：{PrivateKeyPath}", privateKeyPath);
+                if (logger.IsEnabled(LogLevel.Warning))
+                {
+                    logger.LogWarning("私钥文件不存在：{PrivateKeyPath}", privateKeyPath);
+                }
                 throw new FileNotFoundException("私钥文件不存在", privateKeyPath);
             }
 
@@ -87,12 +111,18 @@ public class RsaKeyManager(JwtConfig jwtConfig, ILogger<RsaKeyManager> logger)
             var rsa = RSA.Create();
             rsa.ImportFromPem(privateKey);
 
-            logger.LogInformation("RSA私钥加载成功");
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("RSA私钥加载成功");
+            }
             return rsa;
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "加载RSA私钥失败");
+            if (logger.IsEnabled(LogLevel.Error))
+            {
+                logger.LogError(ex, "加载RSA私钥失败");
+            }
             throw;
         }
     }
@@ -106,11 +136,17 @@ public class RsaKeyManager(JwtConfig jwtConfig, ILogger<RsaKeyManager> logger)
     {
         try
         {
-            logger.LogInformation("开始从文件加载RSA公钥：{PublicKeyPath}", publicKeyPath);
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("开始从文件加载RSA公钥：{PublicKeyPath}", publicKeyPath);
+            }
 
             if (!File.Exists(publicKeyPath))
             {
-                logger.LogWarning("公钥文件不存在：{PublicKeyPath}", publicKeyPath);
+                if (logger.IsEnabled(LogLevel.Warning))
+                {
+                    logger.LogWarning("公钥文件不存在：{PublicKeyPath}", publicKeyPath);
+                }
                 throw new FileNotFoundException("公钥文件不存在", publicKeyPath);
             }
 
@@ -118,12 +154,18 @@ public class RsaKeyManager(JwtConfig jwtConfig, ILogger<RsaKeyManager> logger)
             var rsa = RSA.Create();
             rsa.ImportFromPem(publicKey);
 
-            logger.LogInformation("RSA公钥加载成功");
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("RSA公钥加载成功");
+            }
             return rsa;
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "加载RSA公钥失败");
+            if (logger.IsEnabled(LogLevel.Error))
+            {
+                logger.LogError(ex, "加载RSA公钥失败");
+            }
             throw;
         }
     }
@@ -139,21 +181,30 @@ public class RsaKeyManager(JwtConfig jwtConfig, ILogger<RsaKeyManager> logger)
         {
             if (!File.Exists(keyPath))
             {
-                logger.LogWarning("密钥文件不存在，需要生成新密钥");
+                if (logger.IsEnabled(LogLevel.Warning))
+                {
+                    logger.LogWarning("密钥文件不存在，需要生成新密钥");
+                }
                 return true;
             }
 
             var fileInfo = new FileInfo(keyPath);
             var daysSinceCreation = (DateTime.UtcNow - fileInfo.CreationTimeUtc).TotalDays;
 
-            logger.LogInformation("密钥文件创建于：{CreationTime}，已使用：{DaysSinceCreation}天，轮换周期：{RotationDays}天",
-                fileInfo.CreationTimeUtc, daysSinceCreation, jwtConfig.KeyRotationDays);
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("密钥文件创建于：{CreationTime}，已使用：{DaysSinceCreation}天，轮换周期：{RotationDays}天",
+                    fileInfo.CreationTimeUtc, daysSinceCreation, jwtConfig.KeyRotationDays);
+            }
 
             return daysSinceCreation >= jwtConfig.KeyRotationDays;
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "检查密钥轮换状态失败");
+            if (logger.IsEnabled(LogLevel.Error))
+            {
+                logger.LogError(ex, "检查密钥轮换状态失败");
+            }
             // 发生错误时，默认需要轮换密钥
             return true;
         }
@@ -166,7 +217,10 @@ public class RsaKeyManager(JwtConfig jwtConfig, ILogger<RsaKeyManager> logger)
     {
         try
         {
-            logger.LogInformation("开始执行密钥轮换");
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("开始执行密钥轮换");
+            }
 
             // 生成新的密钥对
             var newRsa = GenerateKeyPair();
@@ -177,11 +231,17 @@ public class RsaKeyManager(JwtConfig jwtConfig, ILogger<RsaKeyManager> logger)
             // 存储新密钥
             StoreKeyPair(newRsa, jwtConfig.RsaPrivateKeyPath, jwtConfig.RsaPublicKeyPath);
 
-            logger.LogInformation("密钥轮换成功");
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("密钥轮换成功");
+            }
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "密钥轮换失败");
+            if (logger.IsEnabled(LogLevel.Error))
+            {
+                logger.LogError(ex, "密钥轮换失败");
+            }
             throw;
         }
     }
@@ -193,14 +253,20 @@ public class RsaKeyManager(JwtConfig jwtConfig, ILogger<RsaKeyManager> logger)
     {
         try
         {
-            logger.LogInformation("开始备份旧密钥");
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("开始备份旧密钥");
+            }
 
             // 备份私钥
             if (File.Exists(jwtConfig.RsaPrivateKeyPath))
             {
                 var privateKeyBackupPath = $"{jwtConfig.RsaPrivateKeyPath}.{DateTime.UtcNow:yyyyMMddHHmmss}.bak";
                 File.Copy(jwtConfig.RsaPrivateKeyPath, privateKeyBackupPath, true);
-                logger.LogInformation("私钥备份成功：{BackupPath}", privateKeyBackupPath);
+                if (logger.IsEnabled(LogLevel.Information))
+                {
+                    logger.LogInformation("私钥备份成功：{BackupPath}", privateKeyBackupPath);
+                }
             }
 
             // 备份公钥
@@ -208,12 +274,18 @@ public class RsaKeyManager(JwtConfig jwtConfig, ILogger<RsaKeyManager> logger)
             {
                 var publicKeyBackupPath = $"{jwtConfig.RsaPublicKeyPath}.{DateTime.UtcNow:yyyyMMddHHmmss}.bak";
                 File.Copy(jwtConfig.RsaPublicKeyPath, publicKeyBackupPath, true);
-                logger.LogInformation("公钥备份成功：{BackupPath}", publicKeyBackupPath);
+                if (logger.IsEnabled(LogLevel.Information))
+                {
+                    logger.LogInformation("公钥备份成功：{BackupPath}", publicKeyBackupPath);
+                }
             }
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "备份旧密钥失败");
+            if (logger.IsEnabled(LogLevel.Error))
+            {
+                logger.LogError(ex, "备份旧密钥失败");
+            }
             // 备份失败不影响主流程
         }
     }
@@ -225,27 +297,42 @@ public class RsaKeyManager(JwtConfig jwtConfig, ILogger<RsaKeyManager> logger)
     {
         try
         {
-            logger.LogInformation("开始检查密钥有效性");
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("开始检查密钥有效性");
+            }
 
             // 检查私钥是否存在且需要轮换
             if (!File.Exists(jwtConfig.RsaPrivateKeyPath) || IsKeyRotationNeeded(jwtConfig.RsaPrivateKeyPath))
             {
-                logger.LogInformation("私钥不存在或需要轮换，生成新密钥对");
+                if (logger.IsEnabled(LogLevel.Information))
+                {
+                    logger.LogInformation("私钥不存在或需要轮换，生成新密钥对");
+                }
                 RotateKeys();
             }
 
             // 检查公钥是否存在
             if (!File.Exists(jwtConfig.RsaPublicKeyPath))
             {
-                logger.LogWarning("公钥不存在，重新生成密钥对");
+                if (logger.IsEnabled(LogLevel.Warning))
+                {
+                    logger.LogWarning("公钥不存在，重新生成密钥对");
+                }
                 RotateKeys();
             }
 
-            logger.LogInformation("密钥有效性检查完成，密钥有效");
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("密钥有效性检查完成，密钥有效");
+            }
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "检查密钥有效性失败");
+            if (logger.IsEnabled(LogLevel.Error))
+            {
+                logger.LogError(ex, "检查密钥有效性失败");
+            }
             throw;
         }
     }

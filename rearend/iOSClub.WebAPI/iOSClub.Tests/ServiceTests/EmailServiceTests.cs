@@ -3,7 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 
-namespace iOSClub.Tests;
+namespace iOSClub.Tests.ServiceTests;
 
 public class EmailServiceTests
 {

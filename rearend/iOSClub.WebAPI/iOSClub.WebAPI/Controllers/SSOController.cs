@@ -106,7 +106,10 @@ public class SSOController(
             (rsaKey.Rsa ?? throw new InvalidOperationException("RSA key not found"))
             .ExportParameters(false); // false = 只导出公钥
 
-        // logger.LogInformation("JWKS request received");
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation("JWKS request received");
+        }
 
         if (rsaParameters.Modulus == null || rsaParameters.Exponent == null)
         {
@@ -172,7 +175,10 @@ public class SSOController(
         [FromQuery(Name = "scope")] string? scope = null,
         [FromQuery(Name = "nonce")] string? nonce = null)
     {
-        // logger.LogInformation("OAuth authorization request received for client {ClientId}", clientId);
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation("OAuth authorization request received for client {ClientId}", clientId);
+        }
 
         // 验证clientId是否有效
         var clientApp = await clientAppRepository.GetByClientIdAsync(clientId);
@@ -362,7 +368,7 @@ public class SSOController(
         }
         catch (Exception ex)
         {
-            if (logger.IsEnabled(LogLevel.Error))
+            if (logger.IsEnabled(LogLevel.Information))
             {
                 logger.LogInformation(ex, "Failed to decrypt or deserialize state parameter");
             }
@@ -470,7 +476,7 @@ public class SSOController(
 
             if (string.IsNullOrEmpty(idToken))
             {
-                if (logger.IsEnabled(LogLevel.Error))
+                if (logger.IsEnabled(LogLevel.Information))
                 {
                     logger.LogInformation("Failed to generate ID token for user {UserId} and client {ClientId}", userId,
                         authState.ClientId);
@@ -499,7 +505,10 @@ public class SSOController(
             }
         }
 
-        logger.LogWarning("Callback failed: unsupported response type {ResponseType}", authState.ResponseType);
+        if (logger.IsEnabled(LogLevel.Warning))
+        {
+            logger.LogWarning("Callback failed: unsupported response type {ResponseType}", authState.ResponseType);
+        }
         return BadRequest("不支持的响应类型");
     }
 
@@ -536,7 +545,10 @@ public class SSOController(
                 var body = await reader.ReadToEndAsync();
                 if (!string.IsNullOrEmpty(body))
                 {
-                    logger.LogDebug("Received JSON request body: {Body}", body);
+                    if (logger.IsEnabled(LogLevel.Debug))
+                    {
+                        logger.LogDebug("Received JSON request body: {Body}", body);
+                    }
                     request = System.Text.Json.JsonSerializer.Deserialize<TokenRequest>(body) ??
                               throw new InvalidOperationException("无法反序列化请求体");
                 }
