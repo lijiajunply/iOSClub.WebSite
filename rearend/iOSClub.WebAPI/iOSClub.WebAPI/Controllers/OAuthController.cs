@@ -13,7 +13,7 @@ namespace iOSClub.WebAPI.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class OAuthController(ILoginService loginService, IConnectionMultiplexer redis, IConfiguration configuration)
+public class OAuthController(ILoginService loginService, IConnectionMultiplexer redis, IConfiguration configuration, ILogger<OAuthController> logger)
     : ControllerBase
 {
     private readonly IDatabase _db = redis.GetDatabase();
@@ -110,6 +110,10 @@ public class OAuthController(ILoginService loginService, IConnectionMultiplexer 
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "获取令牌失败，用户ID: {UserId}", request.UserId);
+            }
             return Ok(ApiResponse<object>.Fail(ErrorCode.InternalServerError, "获取令牌失败"));
         }
     }

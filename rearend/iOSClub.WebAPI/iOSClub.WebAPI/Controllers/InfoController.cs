@@ -12,7 +12,8 @@ namespace iOSClub.WebAPI.Controllers;
 [Route("[controller]")]
 public class InfoController(
     IDbContextFactory<ClubContext> factory,
-    IHttpContextAccessor httpContextAccessor)
+    IHttpContextAccessor httpContextAccessor,
+    ILogger<InfoController> logger)
     : ControllerBase
 {
     /// <summary>
@@ -28,6 +29,11 @@ public class InfoController(
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "获取学院列表失败");
+            }
+
             return Ok(ApiResponse<string[]>.Fail(ErrorCode.InternalServerError, "获取学院列表失败"));
         }
     }
@@ -60,7 +66,7 @@ public class InfoController(
 
             if (member.Identity == "Member")
             {
-                return Ok(ApiResponse<object>.Success(null, "获取用户信息成功"));
+                return Ok(ApiResponse.Success("获取用户信息成功"));
             }
 
             if (member.Identity == "Department")
@@ -107,6 +113,11 @@ public class InfoController(
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "获取用户信息失败");
+            }
+
             return Ok(ApiResponse<object>.Fail(ErrorCode.InternalServerError, "获取用户信息失败"));
         }
     }

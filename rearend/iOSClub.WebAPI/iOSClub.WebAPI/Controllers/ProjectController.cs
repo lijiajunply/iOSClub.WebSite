@@ -13,7 +13,8 @@ namespace iOSClub.WebAPI.Controllers;
 public class ProjectController(
     IProjectRepository projectRepository,
     IStaffRepository staffRepository,
-    IHttpContextAccessor httpContextAccessor)
+    IHttpContextAccessor httpContextAccessor,
+    ILogger<ProjectController> logger)
     : ControllerBase
 {
     #region GetValue
@@ -33,6 +34,10 @@ public class ProjectController(
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "获取所有项目数据失败");
+            }
             return Ok(ApiResponse<List<ProjectModel>>.Fail(ErrorCode.InternalServerError, "获取所有项目数据失败"));
         }
     }
@@ -58,6 +63,10 @@ public class ProjectController(
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "获取用户项目列表失败");
+            }
             return Ok(ApiResponse<List<ProjectModel>>.Fail(ErrorCode.InternalServerError, "获取用户项目列表失败"));
         }
     }
@@ -93,6 +102,10 @@ public class ProjectController(
                 if (newProject == null) 
                     return Ok(ApiResponse<ProjectModel>.Fail(ErrorCode.OperationFailed, "创建项目失败"));
                     
+                if (logger.IsEnabled(LogLevel.Information))
+                {
+                    logger.LogInformation("创建项目成功，项目ID: {ProjectId}", newProject.Id);
+                }
                 return CreatedAtAction(nameof(GetAllData), ApiResponse<ProjectModel>.Success(newProject, "创建项目成功"));
             }
 
@@ -101,10 +114,18 @@ public class ProjectController(
             if (result == null) 
                 return Ok(ApiResponse<ProjectModel>.Fail(ErrorCode.OperationFailed, "更新项目失败"));
                 
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("更新项目成功，项目ID: {ProjectId}", model.Id);
+            }
             return Ok(ApiResponse<ProjectModel>.Success(model, "更新项目成功"));
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "创建或更新项目失败，项目ID: {ProjectId}", model.Id);
+            }
             return Ok(ApiResponse<ProjectModel>.Fail(ErrorCode.InternalServerError, "创建或更新项目失败"));
         }
     }
@@ -132,10 +153,18 @@ public class ProjectController(
             if (!result)
                 return Ok(ApiResponse<object>.Fail(ErrorCode.ResourceNotFound, "项目不存在或删除失败"));
 
-            return Ok(ApiResponse<object>.Success(null, "删除项目成功"));
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("删除项目成功，项目ID: {ProjectId}", id);
+            }
+            return Ok(ApiResponse.Success("删除项目成功"));
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "删除项目失败，项目ID: {ProjectId}", id);
+            }
             return Ok(ApiResponse<object>.Fail(ErrorCode.InternalServerError, "删除项目失败"));
         }
     }
@@ -180,10 +209,18 @@ public class ProjectController(
             if (!result)
                 return Ok(ApiResponse<object>.Fail(ErrorCode.OperationFailed, "操作失败"));
 
-            return Ok(ApiResponse<object>.Success(null, actionMessage));
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("{ActionMessage}，项目ID: {ProjectId}，成员ID: {StaffId}", actionMessage, projId, id);
+            }
+            return Ok(ApiResponse.Success(actionMessage));
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "操作项目成员失败，项目ID: {ProjectId}，成员ID: {StaffId}", projId, id);
+            }
             return Ok(ApiResponse<object>.Fail(ErrorCode.InternalServerError, "操作失败"));
         }
     }

@@ -10,7 +10,8 @@ namespace iOSClub.WebAPI.Controllers;
 [ApiController]
 [Route("[controller]")]
 [Authorize(Roles = "Founder, President, Minister")]
-public class ClientAppController(IClientApplicationRepository clientAppRepository) : ControllerBase
+public class ClientAppController(IClientApplicationRepository clientAppRepository, ILogger<ClientAppController> logger)
+    : ControllerBase
 {
     /// <summary>
     /// 获取所有客户端应用
@@ -22,10 +23,21 @@ public class ClientAppController(IClientApplicationRepository clientAppRepositor
         try
         {
             var clientApps = await clientAppRepository.GetAllAsync();
-            return Ok(ApiResponse<IEnumerable<ClientApplication>>.Success(clientApps));
+            var clientApplications = clientApps as ClientApplication[] ?? clientApps.ToArray();
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("获取客户端应用列表成功，应用数量: {Count}", clientApplications.Length);
+            }
+
+            return Ok(ApiResponse<IEnumerable<ClientApplication>>.Success(clientApplications));
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "获取客户端应用列表失败");
+            }
+
             return Ok(ApiResponse<IEnumerable<ClientApplication>>.Fail(ErrorCode.InternalServerError, "获取客户端应用列表失败"));
         }
     }
@@ -42,12 +54,29 @@ public class ClientAppController(IClientApplicationRepository clientAppRepositor
         {
             var clientApp = await clientAppRepository.GetByClientIdAsync(clientId);
             if (clientApp == null)
+            {
+                if (logger.IsEnabled(LogLevel.Information))
+                {
+                    logger.LogInformation("获取客户端应用失败，客户端不存在，ID: {ClientId}", clientId);
+                }
+
                 return Ok(ApiResponse<ClientApplication>.Fail(ErrorCode.ResourceNotFound, "客户端应用不存在"));
+            }
+
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("获取客户端应用成功，ID: {ClientId}, 名称: {Name}", clientId, clientApp.ApplicationName);
+            }
 
             return Ok(ApiResponse<ClientApplication>.Success(clientApp));
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "获取客户端应用失败，ID: {ClientId}", clientId);
+            }
+
             return Ok(ApiResponse<ClientApplication>.Fail(ErrorCode.InternalServerError, "获取客户端应用失败"));
         }
     }
@@ -58,7 +87,8 @@ public class ClientAppController(IClientApplicationRepository clientAppRepositor
     /// <param name="clientAppModel">客户端应用信息</param>
     /// <returns>创建的客户端应用</returns>
     [HttpPost]
-    public async Task<ActionResult<ApiResponse<ClientAppResultModel>>> CreateClientApplication(CreateClientAppModel clientAppModel)
+    public async Task<ActionResult<ApiResponse<ClientAppResultModel>>> CreateClientApplication(
+        CreateClientAppModel clientAppModel)
     {
         try
         {
@@ -73,7 +103,7 @@ public class ClientAppController(IClientApplicationRepository clientAppRepositor
                 ApplicationName = clientAppModel.ApplicationName,
                 Description = clientAppModel.Description,
                 HomepageUrl = clientAppModel.HomepageUrl,
-                RedirectUris = string.Join(";", clientAppModel.RedirectUris),
+                RedirectUris = string.Join("; ", clientAppModel.RedirectUris),
                 LogoUrl = clientAppModel.LogoUrl,
                 IsActive = true,
                 IsNeedEMail = clientAppModel.IsNeedEMail,
@@ -85,7 +115,14 @@ public class ClientAppController(IClientApplicationRepository clientAppRepositor
 
             var result = await clientAppRepository.CreateAsync(clientApp);
             if (!result)
+            {
+                if (logger.IsEnabled(LogLevel.Information))
+                {
+                    logger.LogInformation("创建客户端应用失败，名称: {Name}", clientAppModel.ApplicationName);
+                }
+
                 return Ok(ApiResponse<ClientAppResultModel>.Fail(ErrorCode.OperationFailed, "创建客户端应用失败"));
+            }
 
             // 返回包含密钥的信息（只在创建时显示）
             var resultModel = new ClientAppResultModel
@@ -103,10 +140,21 @@ public class ClientAppController(IClientApplicationRepository clientAppRepositor
                 SupportsPkce = clientApp.SupportsPkce
             };
 
-            return CreatedAtAction(nameof(GetClientApplication), new { clientId = clientApp.ClientId }, ApiResponse<ClientAppResultModel>.Success(resultModel, "创建客户端应用成功"));
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("创建客户端应用成功，ID: {ClientId}, 名称: {Name}", clientId, clientApp.ApplicationName);
+            }
+
+            return CreatedAtAction(nameof(GetClientApplication), new { clientId = clientApp.ClientId },
+                ApiResponse<ClientAppResultModel>.Success(resultModel, "创建客户端应用成功"));
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "创建客户端应用失败，名称: {Name}", clientAppModel.ApplicationName);
+            }
+
             return Ok(ApiResponse<ClientAppResultModel>.Fail(ErrorCode.InternalServerError, "创建客户端应用失败"));
         }
     }
@@ -118,18 +166,26 @@ public class ClientAppController(IClientApplicationRepository clientAppRepositor
     /// <param name="clientAppModel">客户端应用信息</param>
     /// <returns>更新结果</returns>
     [HttpPut("{clientId}")]
-    public async Task<ActionResult<ApiResponse>> UpdateClientApplication(string clientId, UpdateClientAppModel clientAppModel)
+    public async Task<ActionResult<ApiResponse>> UpdateClientApplication(string clientId,
+        UpdateClientAppModel clientAppModel)
     {
         try
         {
             var existingClientApp = await clientAppRepository.GetByClientIdAsync(clientId);
             if (existingClientApp == null)
+            {
+                if (logger.IsEnabled(LogLevel.Information))
+                {
+                    logger.LogInformation("更新客户端应用失败，客户端不存在，ID: {ClientId}", clientId);
+                }
+
                 return Ok(ApiResponse.Fail(ErrorCode.ResourceNotFound, "客户端应用不存在"));
+            }
 
             existingClientApp.ApplicationName = clientAppModel.ApplicationName;
             existingClientApp.Description = clientAppModel.Description;
             existingClientApp.HomepageUrl = clientAppModel.HomepageUrl;
-            existingClientApp.RedirectUris = string.Join(";", clientAppModel.RedirectUris);
+            existingClientApp.RedirectUris = string.Join("; ", clientAppModel.RedirectUris);
             existingClientApp.LogoUrl = clientAppModel.LogoUrl;
             existingClientApp.IsActive = clientAppModel.IsActive;
             existingClientApp.UpdatedAt = DateTime.UtcNow;
@@ -138,12 +194,31 @@ public class ClientAppController(IClientApplicationRepository clientAppRepositor
 
             var result = await clientAppRepository.UpdateAsync(existingClientApp);
             if (!result)
+            {
+                if (logger.IsEnabled(LogLevel.Information))
+                {
+                    logger.LogInformation("更新客户端应用失败，ID: {ClientId}, 名称: {Name}", clientId,
+                        clientAppModel.ApplicationName);
+                }
+
                 return Ok(ApiResponse.Fail(ErrorCode.OperationFailed, "更新客户端应用失败"));
+            }
+
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("更新客户端应用成功，ID: {ClientId}, 名称: {Name}", clientId, clientAppModel.ApplicationName);
+            }
 
             return Ok(ApiResponse.Success("更新客户端应用成功"));
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "更新客户端应用失败，ID: {ClientId}, 名称: {Name}", clientId,
+                    clientAppModel.ApplicationName);
+            }
+
             return Ok(ApiResponse.Fail(ErrorCode.InternalServerError, "更新客户端应用失败"));
         }
     }
@@ -160,12 +235,29 @@ public class ClientAppController(IClientApplicationRepository clientAppRepositor
         {
             var result = await clientAppRepository.DeleteAsync(clientId);
             if (!result)
+            {
+                if (logger.IsEnabled(LogLevel.Information))
+                {
+                    logger.LogInformation("删除客户端应用失败，客户端不存在，ID: {ClientId}", clientId);
+                }
+
                 return Ok(ApiResponse.Fail(ErrorCode.ResourceNotFound, "客户端应用不存在"));
+            }
+
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("删除客户端应用成功，ID: {ClientId}", clientId);
+            }
 
             return Ok(ApiResponse.Success("删除客户端应用成功"));
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "删除客户端应用失败，ID: {ClientId}", clientId);
+            }
+
             return Ok(ApiResponse.Fail(ErrorCode.InternalServerError, "删除客户端应用失败"));
         }
     }
@@ -182,7 +274,14 @@ public class ClientAppController(IClientApplicationRepository clientAppRepositor
         {
             var existingClientApp = await clientAppRepository.GetByClientIdAsync(clientId);
             if (existingClientApp == null)
+            {
+                if (logger.IsEnabled(LogLevel.Information))
+                {
+                    logger.LogInformation("重新生成客户端密钥失败，客户端不存在，ID: {ClientId}", clientId);
+                }
+
                 return Ok(ApiResponse<RegenerateSecretResult>.Fail(ErrorCode.ResourceNotFound, "客户端应用不存在"));
+            }
 
             var newSecret = GenerateClientSecret();
             // 保存原始密钥用于返回给客户端，但存储到数据库的是哈希值
@@ -191,13 +290,30 @@ public class ClientAppController(IClientApplicationRepository clientAppRepositor
 
             var result = await clientAppRepository.UpdateAsync(existingClientApp);
             if (!result)
+            {
+                if (logger.IsEnabled(LogLevel.Information))
+                {
+                    logger.LogInformation("重新生成客户端密钥失败，ID: {ClientId}", clientId);
+                }
+
                 return Ok(ApiResponse<RegenerateSecretResult>.Fail(ErrorCode.OperationFailed, "重新生成密钥失败"));
+            }
 
             var resultModel = new RegenerateSecretResult { ClientId = clientId, NewSecret = newSecret };
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("重新生成客户端密钥成功，ID: {ClientId}", clientId);
+            }
+
             return Ok(ApiResponse<RegenerateSecretResult>.Success(resultModel, "重新生成密钥成功"));
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "重新生成客户端密钥失败，ID: {ClientId}", clientId);
+            }
+
             return Ok(ApiResponse<RegenerateSecretResult>.Fail(ErrorCode.InternalServerError, "重新生成密钥失败"));
         }
     }
@@ -309,7 +425,7 @@ public class UpdateClientAppModel
     /// 是否需要邮箱验证
     /// </summary>
     public bool IsNeedEMail { get; set; }
-    
+
     /// <summary>
     /// 是否支持PKCE
     /// </summary>

@@ -15,7 +15,8 @@ namespace iOSClub.WebAPI.Controllers;
 [Route("[controller]")] // 使用C#推荐的API路径格式
 public class DataCentreController(
     IDbContextFactory<ClubContext> dbContextFactory,
-    IDataCentreService dataCentreService)
+    IDataCentreService dataCentreService,
+    ILogger<DataCentreController> logger)
     : ControllerBase
 {
     [HttpGet("year")]
@@ -28,6 +29,11 @@ public class DataCentreController(
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "获取年份数据失败");
+            }
+
             return Ok(ApiResponse<List<YearCount>>.Fail(ErrorCode.InternalServerError, "获取年份数据失败"));
         }
     }
@@ -42,6 +48,11 @@ public class DataCentreController(
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "获取学院数据失败");
+            }
+
             return Ok(ApiResponse<List<AcademyCount>>.Fail(ErrorCode.InternalServerError, "获取学院数据失败"));
         }
     }
@@ -56,6 +67,11 @@ public class DataCentreController(
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "获取年级数据失败");
+            }
+
             return Ok(ApiResponse<List<GradeCount>>.Fail(ErrorCode.InternalServerError, "获取年级数据失败"));
         }
     }
@@ -70,6 +86,11 @@ public class DataCentreController(
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "获取景观数据失败");
+            }
+
             return Ok(ApiResponse<List<LandscapeCount>>.Fail(ErrorCode.InternalServerError, "获取景观数据失败"));
         }
     }
@@ -84,6 +105,11 @@ public class DataCentreController(
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "获取性别数据失败");
+            }
+
             return Ok(ApiResponse<List<GenderCount>>.Fail(ErrorCode.InternalServerError, "获取性别数据失败"));
         }
     }
@@ -154,14 +180,24 @@ public class DataCentreController(
             await context.Articles.AddRangeAsync(allData.Articles);
             await context.SaveChangesAsync();
 
-            return Ok(ApiResponse<object>.Success(null, "数据更新成功"));
+            return Ok(ApiResponse.Success("数据更新成功"));
         }
         catch (JsonException ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "JSON解析错误: {Message}", ex.Message);
+            }
+
             return Ok(ApiResponse<object>.Fail(ErrorCode.ParameterFormatError, $"JSON解析错误: {ex.Message}"));
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "数据更新失败");
+            }
+
             return Ok(ApiResponse<object>.Fail(ErrorCode.InternalServerError, "数据更新失败"));
         }
     }
@@ -186,6 +222,11 @@ public class DataCentreController(
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "获取中心数据失败");
+            }
+
             return Ok(ApiResponse<object>.Fail(ErrorCode.InternalServerError, "获取中心数据失败"));
         }
     }
@@ -218,6 +259,11 @@ public class DataCentreController(
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "导出数据失败");
+            }
+
             // 对于文件下载，保持原有的IActionResult返回类型
             return StatusCode(500, "导出数据失败");
         }

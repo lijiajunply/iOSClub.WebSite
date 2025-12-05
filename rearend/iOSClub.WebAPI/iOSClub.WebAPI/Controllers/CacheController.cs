@@ -8,7 +8,8 @@ namespace iOSClub.WebAPI.Controllers;
 [ApiController]
 [Route("[controller]")]
 public class CacheController(
-    IConnectionMultiplexer redis) : ControllerBase
+    IConnectionMultiplexer redis,
+    ILogger<CacheController> logger) : ControllerBase
 {
     private readonly IDatabase _db = redis.GetDatabase();
 
@@ -39,10 +40,18 @@ public class CacheController(
             }
 
             var message = $"缓存已清除，共清理了 {deletedCount} 个缓存项 \n\r 清理的缓存项列表：\n\r {builder}";
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("缓存已清除，共清理了 {DeletedCount} 个缓存项", deletedCount);
+            }
             return Ok(ApiResponse<string>.Success(message, "缓存清除成功"));
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "清除缓存时出现问题");
+            }
             return Ok(ApiResponse<string>.Fail(ErrorCode.CacheOperationFailed, $"清除缓存时出现问题: {ex.Message}"));
         }
     }

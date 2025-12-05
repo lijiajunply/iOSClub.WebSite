@@ -28,7 +28,10 @@ public class ArticleController(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "获取文章列表时发生错误");
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "获取文章列表时发生错误");
+            }
             return Ok(ApiResponse<IEnumerable<ArticleModel>>.Fail(ErrorCode.InternalServerError, "获取文章列表失败"));
         }
     }
@@ -51,16 +54,16 @@ public class ArticleController(
             if (userJwt != null) userIdentity = userJwt.Identity;
 
             var article = await articleRepository.GetFromPath(path, userIdentity);
-            if (article == null)
-            {
-                return Ok(ApiResponse<ArticleModel>.Fail(ErrorCode.ArticleNotFound, $"未找到路径为 '{path}' 的文章"));
-            }
-
-            return Ok(ApiResponse<ArticleModel>.Success(article));
+            return Ok(article == null
+                ? ApiResponse<ArticleModel>.Fail(ErrorCode.ArticleNotFound, $"未找到路径为 '{path}' 的文章")
+                : ApiResponse<ArticleModel>.Success(article));
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "获取文章时发生错误，路径: {Path}", path);
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "获取文章时发生错误，路径: {Path}", path);
+            }
             return Ok(ApiResponse<ArticleModel>.Fail(ErrorCode.InternalServerError, "获取文章失败"));
         }
     }
@@ -86,7 +89,8 @@ public class ArticleController(
             var existingArticle = await articleRepository.GetFromPath(createDto.Path);
             if (existingArticle != null)
             {
-                return Ok(ApiResponse<ArticleModel>.Fail(ErrorCode.ResourceAlreadyExists, $"路径 '{createDto.Path}' 已存在"));
+                return Ok(ApiResponse<ArticleModel>.Fail(ErrorCode.ResourceAlreadyExists,
+                    $"路径 '{createDto.Path}' 已存在"));
             }
 
             var articleModel = new ArticleModel
@@ -113,11 +117,16 @@ public class ArticleController(
             {
                 return Ok(ApiResponse<ArticleModel>.Fail(ErrorCode.InternalServerError, "创建文章成功，但获取文章失败"));
             }
-            return CreatedAtAction(nameof(GetArticle), new { path = createDto.Path }, ApiResponse<ArticleModel>.Success(createdArticle, "文章创建成功"));
+
+            return CreatedAtAction(nameof(GetArticle), new { path = createDto.Path },
+                ApiResponse<ArticleModel>.Success(createdArticle, "文章创建成功"));
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "创建文章时发生错误");
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "创建文章时发生错误");
+            }
             return Ok(ApiResponse<ArticleModel>.Fail(ErrorCode.InternalServerError, "创建文章失败"));
         }
     }
@@ -162,11 +171,16 @@ public class ArticleController(
             existingArticle.LastWriteTime = DateTime.UtcNow;
 
             var success = await articleRepository.CreateOrUpdate(existingArticle);
-            return !success ? Ok(ApiResponse.Fail(ErrorCode.OperationFailed, "更新文章失败")) : Ok(ApiResponse.Success("文章更新成功"));
+            return !success
+                ? Ok(ApiResponse.Fail(ErrorCode.OperationFailed, "更新文章失败"))
+                : Ok(ApiResponse.Success("文章更新成功"));
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "更新文章时发生错误，路径: {Path}", path);
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "更新文章时发生错误，路径: {Path}", path);
+            }
             return Ok(ApiResponse.Fail(ErrorCode.InternalServerError, "更新文章失败"));
         }
     }
@@ -202,16 +216,20 @@ public class ArticleController(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "删除文章时发生错误，路径: {Path}", path);
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "删除文章时发生错误，路径: {Path}", path);
+            }
             return Ok(ApiResponse.Fail(ErrorCode.InternalServerError, "删除文章失败"));
         }
     }
-    
+
     /// <summary>
     /// 搜索文章并返回高亮片段（公开访问）
     /// </summary>
     [HttpGet("search/highlights")]
-    public async Task<ActionResult<ApiResponse<IEnumerable<ArticleSearchResult>>>> SearchArticlesWithHighlights([FromQuery] string keyword)
+    public async Task<ActionResult<ApiResponse<IEnumerable<ArticleSearchResult>>>> SearchArticlesWithHighlights(
+        [FromQuery] string keyword)
     {
         if (string.IsNullOrWhiteSpace(keyword))
         {
@@ -223,13 +241,17 @@ public class ArticleController(
             var userIdentity = "";
             var userJwt = HttpContext.User.GetUser();
             if (userJwt != null) userIdentity = userJwt.Identity;
-            
+
             var articles = await articleRepository.SearchArticlesWithHighlights(keyword, userIdentity);
-            return Ok(ApiResponse<IEnumerable<ArticleSearchResult>>.Success(articles.OrderByDescending(a => a.LastWriteTime)));
+            return Ok(ApiResponse<IEnumerable<ArticleSearchResult>>.Success(
+                articles.OrderByDescending(a => a.LastWriteTime)));
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "搜索文章时发生错误，关键词: {Keyword}", keyword);
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "搜索文章时发生错误，关键词: {Keyword}", keyword);
+            }
             return Ok(ApiResponse<IEnumerable<ArticleSearchResult>>.Fail(ErrorCode.InternalServerError, "搜索文章失败"));
         }
     }
@@ -251,7 +273,10 @@ public class ArticleController(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "获取文章分类列表时发生错误");
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "获取文章分类列表时发生错误");
+            }
             return Ok(ApiResponse<object>.Fail(ErrorCode.InternalServerError, "获取文章分类列表失败"));
         }
     }
@@ -280,7 +305,10 @@ public class ArticleController(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "批量更新文章顺序时发生错误");
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "批量更新文章顺序时发生错误");
+            }
             return Ok(ApiResponse.Fail(ErrorCode.InternalServerError, "文章顺序更新失败"));
         }
     }

@@ -15,7 +15,8 @@ namespace iOSClub.WebAPI.Controllers;
 public class UserController(
     ITodoRepository todoRepository,
     IStudentRepository studentRepository,
-    IHttpContextAccessor httpContextAccessor)
+    IHttpContextAccessor httpContextAccessor,
+    ILogger<UserController> logger)
     : ControllerBase
 {
     /// <summary>
@@ -31,7 +32,7 @@ public class UserController(
             var member = httpContextAccessor.HttpContext?.User.GetUser();
             if (member == null)
                 return Ok(ApiResponse<MemberModel>.Fail(ErrorCode.Unauthorized, "用户未认证"));
-            if (member.Identity == "Founder") 
+            if (member.Identity == "Founder")
                 return Ok(ApiResponse<MemberModel>.Success(member, "获取用户信息成功"));
 
             var student = await studentRepository.GetByIdAsync(member.UserId);
@@ -46,6 +47,11 @@ public class UserController(
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "获取用户信息时发生错误");
+            }
+
             return Ok(ApiResponse<MemberModel>.Fail(ErrorCode.InternalServerError, "获取用户信息失败"));
         }
     }
@@ -73,6 +79,11 @@ public class UserController(
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "获取用户待办事项时发生错误");
+            }
+
             return Ok(ApiResponse<List<TodoModel>>.Fail(ErrorCode.InternalServerError, "获取待办事项失败"));
         }
     }
@@ -104,10 +115,16 @@ public class UserController(
             if (!result)
                 return Ok(ApiResponse<TodoModel>.Fail(ErrorCode.OperationFailed, "添加待办事项失败"));
 
-            return CreatedAtAction(nameof(GetTodoById), new { id = todoModel.Id }, ApiResponse<TodoModel>.Success(todoModel, "添加待办事项成功"));
+            return CreatedAtAction(nameof(GetTodoById), new { id = todoModel.Id },
+                ApiResponse<TodoModel>.Success(todoModel, "添加待办事项成功"));
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "添加待办事项时发生错误");
+            }
+
             return Ok(ApiResponse<TodoModel>.Fail(ErrorCode.InternalServerError, "添加待办事项失败"));
         }
     }
@@ -135,10 +152,15 @@ public class UserController(
             if (!result)
                 return Ok(ApiResponse<object>.Fail(ErrorCode.ResourceNotFound, "待办事项不存在或删除失败"));
 
-            return Ok(ApiResponse<object>.Success(null, "待办事项删除成功"));
+            return Ok(ApiResponse.Success("待办事项删除成功"));
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "删除待办事项时发生错误，ID: {Id}", id);
+            }
+
             return Ok(ApiResponse<object>.Fail(ErrorCode.InternalServerError, "删除待办事项失败"));
         }
     }
@@ -167,6 +189,11 @@ public class UserController(
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "获取待办事项详情时发生错误，ID: {Id}", id);
+            }
+
             return Ok(ApiResponse<TodoModel>.Fail(ErrorCode.InternalServerError, "获取待办事项详情失败"));
         }
     }
@@ -194,10 +221,15 @@ public class UserController(
             if (!result)
                 return Ok(ApiResponse<object>.Fail(ErrorCode.ResourceNotFound, "待办事项不存在或更新失败"));
 
-            return Ok(ApiResponse<object>.Success(null, "待办事项更新成功"));
+            return Ok(ApiResponse.Success("待办事项更新成功"));
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "更新待办事项时发生错误，ID: {Id}", todoModel.Id);
+            }
+
             return Ok(ApiResponse<object>.Fail(ErrorCode.InternalServerError, "更新待办事项失败"));
         }
     }
@@ -221,10 +253,15 @@ public class UserController(
             if (!result)
                 return Ok(ApiResponse<object>.Fail(ErrorCode.OperationFailed, "更新用户资料失败"));
 
-            return Ok(ApiResponse<object>.Success(null, "更新用户资料成功"));
+            return Ok(ApiResponse.Success("更新用户资料成功"));
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "更新用户资料时发生错误，用户ID: {UserId}", memberModel.UserId);
+            }
+
             return Ok(ApiResponse<object>.Fail(ErrorCode.InternalServerError, "更新用户资料失败"));
         }
     }

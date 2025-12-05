@@ -2,7 +2,6 @@ using iOSClub.Data.DataModels;
 using iOSClub.Data.ShowModels;
 using iOSClub.DataApi.Repositories;
 using iOSClub.WebAPI.Common;
-using iOSClub.WebAPI.IdentityModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,10 +10,9 @@ namespace iOSClub.WebAPI.Controllers;
 [Authorize(Roles = "Founder, President, Minister")]
 [ApiController]
 [Route("[controller]")] // 使用C#推荐的API路径格式
-public class StaffController(IStaffRepository staffRepository)
+public class StaffController(IStaffRepository staffRepository, ILogger<StaffController> logger)
     : ControllerBase
 {
-
     /// <summary>
     /// 获取所有员工列表
     /// </summary>
@@ -25,10 +23,21 @@ public class StaffController(IStaffRepository staffRepository)
         try
         {
             var staffs = await staffRepository.GetAllStaffAsync();
-            return Ok(ApiResponse<IEnumerable<StaffModel>>.Success(staffs, "获取所有员工列表成功"));
+            var staffModels = staffs as StaffModel[] ?? staffs.ToArray();
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("获取所有员工列表成功，员工数量: {Count}", staffModels.Length);
+            }
+
+            return Ok(ApiResponse<IEnumerable<StaffModel>>.Success(staffModels, "获取所有员工列表成功"));
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "获取所有员工列表失败");
+            }
+
             return Ok(ApiResponse<IEnumerable<StaffModel>>.Fail(ErrorCode.InternalServerError, "获取所有员工列表失败"));
         }
     }
@@ -39,10 +48,21 @@ public class StaffController(IStaffRepository staffRepository)
         try
         {
             var staffs = await staffRepository.GetAllStaffToMembers();
-            return Ok(ApiResponse<IEnumerable<MemberModel>>.Success(staffs, "获取所有成员列表成功"));
+            var memberModels = staffs as MemberModel[] ?? staffs.ToArray();
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("获取所有成员列表成功，成员数量: {Count}", memberModels.Length);
+            }
+
+            return Ok(ApiResponse<IEnumerable<MemberModel>>.Success(memberModels, "获取所有成员列表成功"));
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "获取所有成员列表失败");
+            }
+
             return Ok(ApiResponse<IEnumerable<MemberModel>>.Fail(ErrorCode.InternalServerError, "获取所有成员列表失败"));
         }
     }
@@ -59,12 +79,29 @@ public class StaffController(IStaffRepository staffRepository)
         {
             var staff = await staffRepository.GetStaffByIdAsync(userId);
             if (staff == null)
+            {
+                if (logger.IsEnabled(LogLevel.Information))
+                {
+                    logger.LogInformation("获取员工信息失败，员工不存在，ID: {UserId}", userId);
+                }
+
                 return Ok(ApiResponse<StaffModel>.Fail(ErrorCode.UserNotFound, "员工不存在"));
+            }
+
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("获取员工信息成功，ID: {UserId}", userId);
+            }
 
             return Ok(ApiResponse<StaffModel>.Success(staff, "获取员工信息成功"));
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "获取员工信息失败，ID: {UserId}", userId);
+            }
+
             return Ok(ApiResponse<StaffModel>.Fail(ErrorCode.InternalServerError, "获取员工信息失败"));
         }
     }
@@ -81,12 +118,30 @@ public class StaffController(IStaffRepository staffRepository)
         {
             var result = await staffRepository.CreateStaffAsync(staff);
             if (!result)
-                return Ok(ApiResponse<StaffModel>.Fail(ErrorCode.OperationFailed, "创建成员失败"));
+            {
+                if (logger.IsEnabled(LogLevel.Information))
+                {
+                    logger.LogInformation("创建成员失败，ID: {UserId}, 名称: {Name}", staff.UserId, staff.Name);
+                }
 
-            return CreatedAtAction(nameof(GetStaff), new { userId = staff.UserId }, ApiResponse<StaffModel>.Success(staff, "创建成员成功"));
+                return Ok(ApiResponse<StaffModel>.Fail(ErrorCode.OperationFailed, "创建成员失败"));
+            }
+
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("创建成员成功，ID: {UserId}, 名称: {Name}", staff.UserId, staff.Name);
+            }
+
+            return CreatedAtAction(nameof(GetStaff), new { userId = staff.UserId },
+                ApiResponse<StaffModel>.Success(staff, "创建成员成功"));
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "创建成员失败，ID: {UserId}, 名称: {Name}", staff.UserId, staff.Name);
+            }
+
             return Ok(ApiResponse<StaffModel>.Fail(ErrorCode.InternalServerError, "创建成员失败"));
         }
     }
@@ -104,16 +159,40 @@ public class StaffController(IStaffRepository staffRepository)
             // 获取目标成员信息
             var targetStaff = await staffRepository.GetStaffByIdAsync(staff.UserId);
             if (targetStaff == null)
+            {
+                if (logger.IsEnabled(LogLevel.Information))
+                {
+                    logger.LogInformation("更新成员失败，员工不存在，ID: {UserId}", staff.UserId);
+                }
+
                 return Ok(ApiResponse<object>.Fail(ErrorCode.UserNotFound, "员工不存在"));
+            }
 
             var result = await staffRepository.UpdateStaffAsync(staff);
             if (!result)
-                return Ok(ApiResponse<object>.Fail(ErrorCode.OperationFailed, "更新成员失败"));
+            {
+                if (logger.IsEnabled(LogLevel.Information))
+                {
+                    logger.LogInformation("更新成员失败，ID: {UserId}, 名称: {Name}", staff.UserId, staff.Name);
+                }
 
-            return Ok(ApiResponse<object>.Success(null, "更新成员成功"));
+                return Ok(ApiResponse<object>.Fail(ErrorCode.OperationFailed, "更新成员失败"));
+            }
+
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("更新成员成功，ID: {UserId}, 名称: {Name}", staff.UserId, staff.Name);
+            }
+
+            return Ok(ApiResponse.Success("更新成员成功"));
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "更新成员失败，ID: {UserId}, 名称: {Name}", staff.UserId, staff.Name);
+            }
+
             return Ok(ApiResponse<object>.Fail(ErrorCode.InternalServerError, "更新成员失败"));
         }
     }
@@ -131,16 +210,40 @@ public class StaffController(IStaffRepository staffRepository)
             // 获取目标成员信息
             var targetStaff = await staffRepository.GetStaffByIdAsync(userId);
             if (targetStaff == null)
+            {
+                if (logger.IsEnabled(LogLevel.Information))
+                {
+                    logger.LogInformation("删除成员失败，员工不存在，ID: {UserId}", userId);
+                }
+
                 return Ok(ApiResponse<object>.Fail(ErrorCode.UserNotFound, "员工不存在"));
+            }
 
             var result = await staffRepository.DeleteStaffAsync(userId);
             if (!result)
-                return Ok(ApiResponse<object>.Fail(ErrorCode.OperationFailed, "删除成员失败"));
+            {
+                if (logger.IsEnabled(LogLevel.Information))
+                {
+                    logger.LogInformation("删除成员失败，ID: {UserId}", userId);
+                }
 
-            return Ok(ApiResponse<object>.Success(null, "删除成员成功"));
+                return Ok(ApiResponse<object>.Fail(ErrorCode.OperationFailed, "删除成员失败"));
+            }
+
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("删除成员成功，ID: {UserId}", userId);
+            }
+
+            return Ok(ApiResponse.Success("删除成员成功"));
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "删除成员失败，ID: {UserId}", userId);
+            }
+
             return Ok(ApiResponse<object>.Fail(ErrorCode.InternalServerError, "删除成员失败"));
         }
     }
@@ -156,10 +259,21 @@ public class StaffController(IStaffRepository staffRepository)
         try
         {
             var staffs = await staffRepository.GetStaffsByIdentitiesAsync(identity);
-            return Ok(ApiResponse<IEnumerable<StaffModel>>.Success(staffs, "根据身份获取员工列表成功"));
+            var staffModels = staffs as StaffModel[] ?? staffs.ToArray();
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("根据身份获取员工列表成功，身份: {Identity}, 员工数量: {Count}", identity, staffModels.Length);
+            }
+
+            return Ok(ApiResponse<IEnumerable<StaffModel>>.Success(staffModels, "根据身份获取员工列表成功"));
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "根据身份获取员工列表失败，身份: {Identity}", identity);
+            }
+
             return Ok(ApiResponse<IEnumerable<StaffModel>>.Fail(ErrorCode.InternalServerError, "根据身份获取员工列表失败"));
         }
     }
@@ -171,18 +285,36 @@ public class StaffController(IStaffRepository staffRepository)
     /// <param name="departmentName">部门名称，为null时表示移除部门</param>
     /// <returns>修改结果</returns>
     [HttpPost("change-department/{userId}")]
-    public async Task<ActionResult<ApiResponse<object>>> ChangeStaffDepartment(string userId, [FromQuery] string? departmentName)
+    public async Task<ActionResult<ApiResponse<object>>> ChangeStaffDepartment(string userId,
+        [FromQuery] string? departmentName)
     {
         try
         {
             var result = await staffRepository.ChangeStaffDepartmentAsync(userId, departmentName);
             if (!result)
-                return Ok(ApiResponse<object>.Fail(ErrorCode.OperationFailed, "修改部门失败"));
+            {
+                if (logger.IsEnabled(LogLevel.Information))
+                {
+                    logger.LogInformation("修改部门失败，ID: {UserId}, 部门名称: {DepartmentName}", userId, departmentName);
+                }
 
-            return Ok(ApiResponse<object>.Success(null, "修改部门成功"));
+                return Ok(ApiResponse<object>.Fail(ErrorCode.OperationFailed, "修改部门失败"));
+            }
+
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("修改部门成功，ID: {UserId}, 部门名称: {DepartmentName}", userId, departmentName);
+            }
+
+            return Ok(ApiResponse.Success("修改部门成功"));
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "修改部门失败，ID: {UserId}, 部门名称: {DepartmentName}", userId, departmentName);
+            }
+
             return Ok(ApiResponse<object>.Fail(ErrorCode.InternalServerError, "修改部门失败"));
         }
     }

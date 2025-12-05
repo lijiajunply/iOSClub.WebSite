@@ -40,7 +40,10 @@ public class AuthController(
         }
         catch (Exception ex)
         {
-            logger.LogInformation(ex, "注册失败");
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "注册失败");
+            }
             return Ok(ApiResponse<string>.Fail(ErrorCode.InternalServerError, "注册失败"));
         }
     }
@@ -74,7 +77,10 @@ public class AuthController(
         }
         catch (Exception ex)
         {
-            logger.LogInformation(ex, "登录失败");
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "登录失败");
+            }
             return Ok(ApiResponse<string>.Fail(ErrorCode.InternalServerError, "登录失败"));
         }
     }
@@ -98,7 +104,10 @@ public class AuthController(
         }
         catch (Exception ex)
         {
-            logger.LogInformation(ex, "登出失败");
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "登出失败");
+            }
             return Ok(ApiResponse<bool>.Fail(ErrorCode.InternalServerError, "登出失败"));
         }
     }
@@ -124,7 +133,10 @@ public class AuthController(
         }
         catch (Exception ex)
         {
-            logger.LogInformation(ex, "验证令牌失败");
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "验证令牌失败");
+            }
             return Ok(ApiResponse<bool>.Fail(ErrorCode.InternalServerError, "验证令牌失败"));
         }
     }
@@ -161,7 +173,10 @@ public class AuthController(
         }
         catch (Exception ex)
         {
-            logger.LogInformation(ex, "修改密码失败");
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "修改密码失败");
+            }
             return Ok(ApiResponse<bool>.Fail(ErrorCode.InternalServerError, "修改密码失败"));
         }
     }
@@ -189,7 +204,10 @@ public class AuthController(
         }
         catch (Exception ex)
         {
-            logger.LogInformation(ex, "请求重置密码验证码失败");
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "请求重置密码验证码失败");
+            }
             return Ok(ApiResponse<bool>.Fail(ErrorCode.InternalServerError, "请求重置密码验证码失败"));
         }
     }
@@ -214,7 +232,10 @@ public class AuthController(
         }
         catch (Exception ex)
         {
-            logger.LogInformation(ex, "密码重置失败");
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "密码重置失败");
+            }
             return Ok(ApiResponse<bool>.Fail(ErrorCode.InternalServerError, "密码重置失败"));
         }
     }

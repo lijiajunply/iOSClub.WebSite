@@ -25,7 +25,10 @@ public class CategoryController(ICategoryRepository categoryRepository, ILogger<
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "获取分类列表时发生错误");
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "获取分类列表时发生错误");
+            }
             return Ok(ApiResponse<IEnumerable<CategoryModel>>.Fail(ErrorCode.InternalServerError, "获取分类列表失败"));
         }
     }
@@ -53,7 +56,10 @@ public class CategoryController(ICategoryRepository categoryRepository, ILogger<
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "获取分类时发生错误，名称: {Name}", name);
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "获取分类时发生错误，名称: {Name}", name);
+            }
             return Ok(ApiResponse<CategoryModel>.Fail(ErrorCode.InternalServerError, "获取分类失败"));
         }
     }
@@ -73,7 +79,10 @@ public class CategoryController(ICategoryRepository categoryRepository, ILogger<
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "获取分类时发生错误，ID: {Id}", id);
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "获取分类时发生错误，ID: {Id}", id);
+            }
             return Ok(ApiResponse<CategoryModel>.Fail(ErrorCode.InternalServerError, "获取分类失败"));
         }
     }
@@ -88,7 +97,10 @@ public class CategoryController(ICategoryRepository categoryRepository, ILogger<
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "获取分类下的文章时发生错误，ID: {Id}", id);
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "获取分类下的文章时发生错误，ID: {Id}", id);
+            }
             return Ok(ApiResponse<IEnumerable<ArticleModel>>.Fail(ErrorCode.InternalServerError, "获取分类下的文章失败"));
         }
     }
@@ -120,7 +132,10 @@ public class CategoryController(ICategoryRepository categoryRepository, ILogger<
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "创建或更新分类时发生错误");
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "创建或更新分类时发生错误");
+            }
             return Ok(ApiResponse<string>.Fail(ErrorCode.InternalServerError, "创建或更新分类失败"));
         }
     }
@@ -149,7 +164,10 @@ public class CategoryController(ICategoryRepository categoryRepository, ILogger<
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "删除分类时发生错误，名称: {Name}", name);
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "删除分类时发生错误，名称: {Name}", name);
+            }
             return Ok(ApiResponse<string>.Fail(ErrorCode.InternalServerError, "删除分类失败"));
         }
     }
@@ -178,7 +196,10 @@ public class CategoryController(ICategoryRepository categoryRepository, ILogger<
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "更新分类顺序时发生错误，名称: {Name}, 顺序: {Order}", name, order);
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "更新分类顺序时发生错误，名称: {Name}, 顺序: {Order}", name, order);
+            }
             return Ok(ApiResponse<string>.Fail(ErrorCode.InternalServerError, "更新分类顺序失败"));
         }
     }
@@ -207,7 +228,10 @@ public class CategoryController(ICategoryRepository categoryRepository, ILogger<
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "批量更新分类顺序时发生错误");
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "批量更新分类顺序时发生错误");
+            }
             return Ok(ApiResponse<string>.Fail(ErrorCode.InternalServerError, "批量更新分类顺序失败"));
         }
     }

@@ -11,11 +11,12 @@ namespace iOSClub.WebAPI.Controllers;
 
 [Authorize]
 [ApiController]
-[Route("[controller]")]  // 使用C#推荐的API路径格式
+[Route("[controller]")] // 使用C#推荐的API路径格式
 public class ResourceController(
     IDbContextFactory<ClubContext> factory,
     IHttpContextAccessor httpContextAccessor,
-    IResourceRepository resourceRepository)
+    IResourceRepository resourceRepository,
+    ILogger<ResourceController> logger)
     : ControllerBase
 {
     /// <summary>
@@ -42,6 +43,11 @@ public class ResourceController(
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "获取所有资源失败");
+            }
+
             return Ok(ApiResponse<List<ResourceModel>>.Fail(ErrorCode.InternalServerError, "获取所有资源失败"));
         }
     }
@@ -73,6 +79,11 @@ public class ResourceController(
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "获取资源失败，资源ID: {ResourceId}", id);
+            }
+
             return Ok(ApiResponse<ResourceModel>.Fail(ErrorCode.InternalServerError, "获取资源失败"));
         }
     }
@@ -101,6 +112,11 @@ public class ResourceController(
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "根据标签获取资源失败，标签: {Tag}", tag);
+            }
+
             return Ok(ApiResponse<List<ResourceModel>>.Fail(ErrorCode.InternalServerError, "根据标签获取资源失败"));
         }
     }
@@ -129,6 +145,11 @@ public class ResourceController(
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "搜索资源失败，搜索关键词: {Name}", name);
+            }
+
             return Ok(ApiResponse<List<ResourceModel>>.Fail(ErrorCode.InternalServerError, "搜索资源失败"));
         }
     }
@@ -149,7 +170,7 @@ public class ResourceController(
             // 双重验证：除了角色授权外，再检查用户身份
             await using var context = await factory.CreateDbContextAsync();
             var user = await context.Staffs.FirstOrDefaultAsync(x => x.UserId == userJwt.UserId);
-            
+
             if (user == null || !IsAdmin(user.Identity))
                 return Ok(ApiResponse<ResourceModel>.Fail(ErrorCode.InsufficientPermission, "权限不足，需要管理员身份"));
 
@@ -157,10 +178,21 @@ public class ResourceController(
             if (!result)
                 return Ok(ApiResponse<ResourceModel>.Fail(ErrorCode.OperationFailed, "添加资源失败"));
 
-            return CreatedAtAction(nameof(GetResourceById), new { id = resource.Id }, ApiResponse<ResourceModel>.Success(resource, "添加资源成功"));
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("添加资源成功，资源ID: {ResourceId}", resource.Id);
+            }
+
+            return CreatedAtAction(nameof(GetResourceById), new { id = resource.Id },
+                ApiResponse<ResourceModel>.Success(resource, "添加资源成功"));
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "添加资源失败");
+            }
+
             return Ok(ApiResponse<ResourceModel>.Fail(ErrorCode.InternalServerError, "添加资源失败"));
         }
     }
@@ -181,7 +213,7 @@ public class ResourceController(
             // 双重验证
             await using var context = await factory.CreateDbContextAsync();
             var user = await context.Staffs.FirstOrDefaultAsync(x => x.UserId == userJwt.UserId);
-            
+
             if (user == null || !IsAdmin(user.Identity))
                 return Ok(ApiResponse<object>.Fail(ErrorCode.InsufficientPermission, "权限不足，需要管理员身份"));
 
@@ -194,10 +226,20 @@ public class ResourceController(
             if (!result)
                 return Ok(ApiResponse<object>.Fail(ErrorCode.OperationFailed, "更新资源失败"));
 
-            return Ok(ApiResponse<object>.Success(null, "资源更新成功"));
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("更新资源成功，资源ID: {ResourceId}", resource.Id);
+            }
+
+            return Ok(ApiResponse.Success("资源更新成功"));
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "更新资源失败，资源ID: {ResourceId}", resource.Id);
+            }
+
             return Ok(ApiResponse<object>.Fail(ErrorCode.InternalServerError, "更新资源失败"));
         }
     }
@@ -218,7 +260,7 @@ public class ResourceController(
             // 双重验证
             await using var context = await factory.CreateDbContextAsync();
             var user = await context.Staffs.FirstOrDefaultAsync(x => x.UserId == userJwt.UserId);
-            
+
             if (user == null || !IsAdmin(user.Identity))
                 return Ok(ApiResponse<object>.Fail(ErrorCode.InsufficientPermission, "权限不足，需要管理员身份"));
 
@@ -231,10 +273,20 @@ public class ResourceController(
             if (!result)
                 return Ok(ApiResponse<object>.Fail(ErrorCode.OperationFailed, "删除资源失败"));
 
-            return Ok(ApiResponse<object>.Success(null, "资源删除成功"));
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("删除资源成功，资源ID: {ResourceId}", id);
+            }
+
+            return Ok(ApiResponse.Success("资源删除成功"));
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "删除资源失败，资源ID: {ResourceId}", id);
+            }
+
             return Ok(ApiResponse<object>.Fail(ErrorCode.InternalServerError, "删除资源失败"));
         }
     }
@@ -257,12 +309,17 @@ public class ResourceController(
             // 检查用户身份：必须是社团成员及以上
             if (user == null || !IsClubMember(user.Identity))
                 return Ok(ApiResponse<List<string>>.Fail(ErrorCode.InsufficientPermission, "权限不足，需要社团成员身份"));
-            
+
             var tags = await resourceRepository.GetAllTagsAsync();
             return Ok(ApiResponse<List<string>>.Success(tags, "获取所有标签成功"));
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "获取所有标签失败");
+            }
+
             return Ok(ApiResponse<List<string>>.Fail(ErrorCode.InternalServerError, "获取所有标签失败"));
         }
     }
@@ -300,6 +357,11 @@ public class ResourceController(
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "获取资源统计失败");
+            }
+
             return Ok(ApiResponse<object>.Fail(ErrorCode.InternalServerError, "获取资源统计失败"));
         }
     }

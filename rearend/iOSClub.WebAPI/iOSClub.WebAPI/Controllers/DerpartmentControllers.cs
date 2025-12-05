@@ -14,7 +14,8 @@ namespace iOSClub.WebAPI.Controllers;
 public class DepartmentController(
     IDepartmentRepository departmentRepository,
     IStaffRepository staffRepository,
-    IHttpContextAccessor httpContextAccessor)
+    IHttpContextAccessor httpContextAccessor,
+    ILogger<DepartmentController> logger)
     : ControllerBase
 {
     /// <summary>
@@ -65,10 +66,20 @@ public class DepartmentController(
                 return Ok(ApiResponse<DepartmentModel>.Fail(ErrorCode.InsufficientPermission, "只能查看自己部门的信息"));
 
             var userDept = await departmentRepository.GetDepartmentByNameAsync(name);
+            if (userDept == null)
+            {
+                return NotFound(ApiResponse<DepartmentModel>.Fail(ErrorCode.ResourceNotFound, "部门不存在"));
+            }
+
             return Ok(ApiResponse<DepartmentModel>.Success(userDept));
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "获取部门信息失败，部门名称: {Name}", name);
+            }
+
             return Ok(ApiResponse<DepartmentModel>.Fail(ErrorCode.InternalServerError, $"服务器错误: {ex.Message}"));
         }
     }
@@ -87,6 +98,11 @@ public class DepartmentController(
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "获取所有部门信息失败");
+            }
+
             return Ok(ApiResponse<List<DepartmentModel>>.Fail(ErrorCode.InternalServerError, $"服务器错误: {ex.Message}"));
         }
     }
@@ -117,6 +133,11 @@ public class DepartmentController(
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "更新部门信息失败，部门名称: {Name}", model.Name);
+            }
+
             return Ok(ApiResponse<string>.Fail(ErrorCode.InternalServerError, $"服务器错误: {ex.Message}"));
         }
     }
@@ -139,10 +160,16 @@ public class DepartmentController(
             if (!result)
                 return Ok(ApiResponse<DepartmentModel>.Fail(ErrorCode.OperationFailed, "创建失败"));
 
-            return CreatedAtAction(nameof(GetDepartment), new { name = model.Name }, ApiResponse<DepartmentModel>.Success(model, "部门创建成功"));
+            return CreatedAtAction(nameof(GetDepartment), new { name = model.Name },
+                ApiResponse<DepartmentModel>.Success(model, "部门创建成功"));
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "创建部门失败，部门名称: {Name}", model.Name);
+            }
+
             return Ok(ApiResponse<DepartmentModel>.Fail(ErrorCode.InternalServerError, $"创建失败: {ex.Message}"));
         }
     }
@@ -169,12 +196,17 @@ public class DepartmentController(
                 return Ok(ApiResponse<string>.Fail(ErrorCode.InvalidStatusForOperation, "无法删除包含项目的部门"));
 
             var result = await departmentRepository.DeleteDepartmentAsync(name);
-            if (!result) 
+            if (!result)
                 return Ok(ApiResponse<string>.Fail(ErrorCode.OperationFailed, "删除失败"));
             return Ok(ApiResponse<string>.Success("部门删除成功"));
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "删除部门失败，部门名称: {Name}", name);
+            }
+
             return Ok(ApiResponse<string>.Fail(ErrorCode.InternalServerError, $"删除失败: {ex.Message}"));
         }
     }
@@ -203,6 +235,11 @@ public class DepartmentController(
         }
         catch (Exception ex)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "导出部员数据失败");
+            }
+
             return StatusCode(500, $"导出失败: {ex.Message}");
         }
     }
