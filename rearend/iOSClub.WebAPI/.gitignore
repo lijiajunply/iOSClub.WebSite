@@ -12,3 +12,6 @@ logs/
 
 appsettings.Development.json
 rsa-key.xml
+
+coverage-report/
+TestResults/
