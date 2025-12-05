@@ -1,5 +1,6 @@
 using System.IO.Compression;
 using System.Security.Cryptography;
+using FluentValidation.AspNetCore;
 using iOSClub.Data;
 using iOSClub.Data.DataModels;
 using iOSClub.DataApi.Repositories;
@@ -11,7 +12,9 @@ using iOSClub.WebAPI.Common.Security;
 using iOSClub.WebAPI.IdentityModels;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.IdentityModel.Tokens;
@@ -24,7 +27,31 @@ var builder = WebApplication.CreateBuilder(args);
 
 #region 控制器基本设置
 
-builder.Services.AddControllers(options => { options.Filters.Add<GlobalAuthorizationFilter>(); });
+// 配置请求大小限制
+builder.Services.Configure<FormOptions>(options =>
+{
+    // 设置请求体大小上限为10MB
+    options.MultipartBodyLengthLimit = 10 * 1024 * 1024;
+    options.ValueLengthLimit = 10 * 1024 * 1024;
+    options.BufferBodyLengthLimit = 10 * 1024 * 1024;
+});
+
+// 配置Kestrel服务器的请求大小限制
+builder.Services.Configure<KestrelServerOptions>(options =>
+{
+    options.Limits.MaxRequestBodySize = 10 * 1024 * 1024; // 10MB
+});
+
+// 注册FluentValidation服务（使用旧版API，抑制警告）
+#pragma warning disable CS0618
+var mvcBuilder = builder.Services.AddControllers(options => { options.Filters.Add<GlobalAuthorizationFilter>(); });
+mvcBuilder.AddFluentValidation(fv =>
+{
+    fv.RegisterValidatorsFromAssemblyContaining<Program>();
+    fv.DisableDataAnnotationsValidation = false;
+});
+#pragma warning restore CS0618
+
 builder.Services.AddOpenApi(opt => { opt.AddDocumentTransformer<BearerSecuritySchemeTransformer>(); });
 
 #endregion
@@ -300,6 +327,36 @@ app.UseMiddleware<GlobalExceptionMiddleware>();
 
 // 注册请求频率限制中间件
 app.UseMiddleware<RateLimitMiddleware>();
+
+// 配置安全响应头
+app.Use(async (context, next) =>
+{
+    // 添加内容安全策略，防止XSS攻击
+    context.Response.Headers.Append("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; object-src 'none'; frame-ancestors 'none';");
+    
+    // 添加X-XSS-Protection头
+    context.Response.Headers.Append("X-XSS-Protection", "1; mode=block");
+    
+    // 添加X-Content-Type-Options头，防止MIME嗅探
+    context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+    
+    // 添加X-Frame-Options头，防止点击劫持
+    context.Response.Headers.Append("X-Frame-Options", "DENY");
+    
+    // 添加Referrer-Policy头
+    context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+    
+    // 添加Permissions-Policy头
+    context.Response.Headers.Append("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=(), fullscreen=*");
+    
+    // 添加Strict-Transport-Security头（生产环境建议启用）
+    if (!app.Environment.IsDevelopment())
+    {
+        context.Response.Headers.Append("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+    }
+    
+    await next();
+});
 
 // 创建数据库
 using (var scope = app.Services.CreateScope())

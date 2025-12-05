@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using FluentValidation;
 using iOSClub.WebAPI.Common.Exceptions;
 
 namespace iOSClub.WebAPI.Common;
@@ -113,6 +114,14 @@ public class GlobalExceptionMiddleware
                 response.Code = (int)HttpStatusCode.Unauthorized;
                 response.ErrorCode = ErrorCode.InvalidToken;
                 response.Message = "认证失败";
+                break;
+            
+            // 处理验证异常
+            case FluentValidation.ValidationException validationException:
+                response.Code = (int)HttpStatusCode.BadRequest;
+                response.ErrorCode = ErrorCode.ParameterValidationFailed;
+                response.Message = "请求参数验证失败";
+                response.Detail = string.Join(", ", validationException.Errors.Select(e => e.ErrorMessage));
                 break;
             
             // 处理数据库异常
