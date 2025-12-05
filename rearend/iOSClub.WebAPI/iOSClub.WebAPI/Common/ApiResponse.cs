@@ -20,6 +20,11 @@ public class ApiResponse<T>
     /// 响应消息
     /// </summary>
     public string Message { get; set; }
+    
+    /// <summary>
+    /// 详细描述
+    /// </summary>
+    public string? Detail { get; set; }
 
     /// <summary>
     /// 响应数据
@@ -41,14 +46,16 @@ public class ApiResponse<T>
     /// </summary>
     /// <param name="data">响应数据</param>
     /// <param name="message">响应消息</param>
+    /// <param name="detail">详细描述</param>
     /// <returns>成功响应模型</returns>
-    public static ApiResponse<T> Success(T data, string message = "Success")
+    public static ApiResponse<T> Success(T data, string message = "Success", string? detail = null)
     {
         return new ApiResponse<T>
         {
             Code = 200,
             ErrorCode = 0,
             Message = message,
+            Detail = detail,
             Data = data
         };
     }
@@ -58,14 +65,35 @@ public class ApiResponse<T>
     /// </summary>
     /// <param name="errorCode">业务错误码</param>
     /// <param name="message">错误消息</param>
+    /// <param name="detail">详细描述</param>
     /// <returns>失败响应模型</returns>
-    public static ApiResponse<T> Fail(int errorCode, string message)
+    public static ApiResponse<T> Fail(int errorCode, string message, string? detail = null)
     {
         return new ApiResponse<T>
         {
             Code = GetHttpStatusCodeFromErrorCode(errorCode),
             ErrorCode = errorCode,
-            Message = message
+            Message = message,
+            Detail = detail
+        };
+    }
+    
+    /// <summary>
+    /// 失败响应
+    /// </summary>
+    /// <param name="httpStatusCode">HTTP状态码</param>
+    /// <param name="errorCode">业务错误码</param>
+    /// <param name="message">错误消息</param>
+    /// <param name="detail">详细描述</param>
+    /// <returns>失败响应模型</returns>
+    public static ApiResponse<T> Fail(int httpStatusCode, int errorCode, string message, string? detail = null)
+    {
+        return new ApiResponse<T>
+        {
+            Code = httpStatusCode,
+            ErrorCode = errorCode,
+            Message = message,
+            Detail = detail
         };
     }
 
@@ -102,14 +130,16 @@ public class ApiResponse : ApiResponse<object>
     /// 成功响应
     /// </summary>
     /// <param name="message">响应消息</param>
+    /// <param name="detail">详细描述</param>
     /// <returns>成功响应模型</returns>
-    public static ApiResponse Success(string message = "Success")
+    public static ApiResponse Success(string message = "Success", string? detail = null)
     {
         return new ApiResponse
         {
             Code = 200,
             ErrorCode = 0,
-            Message = message
+            Message = message,
+            Detail = detail
         };
     }
 
@@ -118,14 +148,35 @@ public class ApiResponse : ApiResponse<object>
     /// </summary>
     /// <param name="errorCode">业务错误码</param>
     /// <param name="message">错误消息</param>
+    /// <param name="detail">详细描述</param>
     /// <returns>失败响应模型</returns>
-    public new static ApiResponse Fail(int errorCode, string message)
+    public new static ApiResponse Fail(int errorCode, string message, string? detail = null)
     {
         return new ApiResponse
         {
             Code = GetHttpStatusCodeFromErrorCode(errorCode),
             ErrorCode = errorCode,
-            Message = message
+            Message = message,
+            Detail = detail
+        };
+    }
+    
+    /// <summary>
+    /// 失败响应
+    /// </summary>
+    /// <param name="httpStatusCode">HTTP状态码</param>
+    /// <param name="errorCode">业务错误码</param>
+    /// <param name="message">错误消息</param>
+    /// <param name="detail">详细描述</param>
+    /// <returns>失败响应模型</returns>
+    public new static ApiResponse Fail(int httpStatusCode, int errorCode, string message, string? detail = null)
+    {
+        return new ApiResponse
+        {
+            Code = httpStatusCode,
+            ErrorCode = errorCode,
+            Message = message,
+            Detail = detail
         };
     }
 }
