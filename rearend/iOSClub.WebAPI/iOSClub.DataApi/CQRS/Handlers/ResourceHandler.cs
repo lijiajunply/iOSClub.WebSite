@@ -2,12 +2,13 @@ using iOSClub.Data.DataModels;
 using iOSClub.DataApi.CQRS.Commands;
 using iOSClub.DataApi.CQRS.Queries;
 using iOSClub.DataApi.Repositories;
+using iOSClub.DataApi.Services;
 using Microsoft.Extensions.Caching.Distributed;
 using Newtonsoft.Json;
 
 namespace iOSClub.DataApi.CQRS.Handlers;
 
-public class ResourceQueryHandler(IResourceRepository resourceRepository, IDistributedCache distributedCache) : 
+public class ResourceQueryHandler(IResourceRepository resourceRepository, IDistributedCache distributedCache, IDataAccessStatisticsService statisticsService) : 
     IQueryHandler<GetResourcesQuery, IEnumerable<ResourceModel>>,
     IQueryHandler<GetResourceByIdQuery, ResourceModel?>,
     IQueryHandler<GetResourcesByTagQuery, IEnumerable<ResourceModel>>,
@@ -23,20 +24,27 @@ public class ResourceQueryHandler(IResourceRepository resourceRepository, IDistr
     {
         // 尝试从缓存获取
         var cachedResources = await distributedCache.GetStringAsync(ResourcesCacheKey, cancellationToken);
+        IEnumerable<ResourceModel> resources;
+        
         if (!string.IsNullOrEmpty(cachedResources))
         {
-            return JsonConvert.DeserializeObject<IEnumerable<ResourceModel>>(cachedResources)!;
+            resources = JsonConvert.DeserializeObject<IEnumerable<ResourceModel>>(cachedResources)!;
         }
+        else
+        {
+            // 缓存不存在，从数据库获取
+            resources = await resourceRepository.GetAllResourcesAsync();
 
-        // 缓存不存在，从数据库获取
-        var resources = await resourceRepository.GetAllResourcesAsync();
-
-        // 存入缓存
-        await distributedCache.SetStringAsync(
-            ResourcesCacheKey,
-            JsonConvert.SerializeObject(resources),
-            new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(CacheExpirationMinutes) },
-            cancellationToken);
+            // 存入缓存
+            await distributedCache.SetStringAsync(
+                ResourcesCacheKey,
+                JsonConvert.SerializeObject(resources),
+                new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(CacheExpirationMinutes) },
+                cancellationToken);
+        }
+        
+        // 记录访问统计
+        await statisticsService.RecordDataAccessAsync("resource", "all", "read", cancellationToken);
 
         return resources;
     }
@@ -47,23 +55,30 @@ public class ResourceQueryHandler(IResourceRepository resourceRepository, IDistr
         
         // 尝试从缓存获取
         var cachedResource = await distributedCache.GetStringAsync(cacheKey, cancellationToken);
+        ResourceModel? resource;
+        
         if (!string.IsNullOrEmpty(cachedResource))
         {
-            return JsonConvert.DeserializeObject<ResourceModel>(cachedResource);
+            resource = JsonConvert.DeserializeObject<ResourceModel>(cachedResource);
         }
-
-        // 缓存不存在，从数据库获取
-        var resource = await resourceRepository.GetResourceByIdAsync(query.Id);
-
-        if (resource != null)
+        else
         {
-            // 存入缓存
-            await distributedCache.SetStringAsync(
-                cacheKey,
-                JsonConvert.SerializeObject(resource),
-                new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(CacheExpirationMinutes) },
-                cancellationToken);
+            // 缓存不存在，从数据库获取
+            resource = await resourceRepository.GetResourceByIdAsync(query.Id);
+
+            if (resource != null)
+            {
+                // 存入缓存
+                await distributedCache.SetStringAsync(
+                    cacheKey,
+                    JsonConvert.SerializeObject(resource),
+                    new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(CacheExpirationMinutes) },
+                    cancellationToken);
+            }
         }
+        
+        // 记录访问统计
+        await statisticsService.RecordDataAccessAsync("resource", query.Id, "read", cancellationToken);
 
         return resource;
     }
@@ -74,20 +89,27 @@ public class ResourceQueryHandler(IResourceRepository resourceRepository, IDistr
         
         // 尝试从缓存获取
         var cachedResources = await distributedCache.GetStringAsync(cacheKey, cancellationToken);
+        IEnumerable<ResourceModel> resources;
+        
         if (!string.IsNullOrEmpty(cachedResources))
         {
-            return JsonConvert.DeserializeObject<IEnumerable<ResourceModel>>(cachedResources)!;
+            resources = JsonConvert.DeserializeObject<IEnumerable<ResourceModel>>(cachedResources)!;
         }
+        else
+        {
+            // 缓存不存在，从数据库获取
+            resources = await resourceRepository.GetResourcesByTagAsync(query.Tag);
 
-        // 缓存不存在，从数据库获取
-        var resources = await resourceRepository.GetResourcesByTagAsync(query.Tag);
-
-        // 存入缓存
-        await distributedCache.SetStringAsync(
-            cacheKey,
-            JsonConvert.SerializeObject(resources),
-            new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(CacheExpirationMinutes) },
-            cancellationToken);
+            // 存入缓存
+            await distributedCache.SetStringAsync(
+                cacheKey,
+                JsonConvert.SerializeObject(resources),
+                new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(CacheExpirationMinutes) },
+                cancellationToken);
+        }
+        
+        // 记录访问统计
+        await statisticsService.RecordDataAccessAsync("resource", $"tag:{query.Tag}", "read", cancellationToken);
 
         return resources;
     }
@@ -98,26 +120,33 @@ public class ResourceQueryHandler(IResourceRepository resourceRepository, IDistr
         
         // 尝试从缓存获取
         var cachedResources = await distributedCache.GetStringAsync(cacheKey, cancellationToken);
+        IEnumerable<ResourceModel> resources;
+        
         if (!string.IsNullOrEmpty(cachedResources))
         {
-            return JsonConvert.DeserializeObject<IEnumerable<ResourceModel>>(cachedResources)!;
+            resources = JsonConvert.DeserializeObject<IEnumerable<ResourceModel>>(cachedResources)!;
         }
+        else
+        {
+            // 缓存不存在，从数据库获取
+            resources = await resourceRepository.SearchResourcesByNameAsync(query.Name);
 
-        // 缓存不存在，从数据库获取
-        var resources = await resourceRepository.SearchResourcesByNameAsync(query.Name);
-
-        // 存入缓存，搜索结果缓存时间较短
-        await distributedCache.SetStringAsync(
-            cacheKey,
-            JsonConvert.SerializeObject(resources),
-            new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10) },
-            cancellationToken);
+            // 存入缓存，搜索结果缓存时间较短
+            await distributedCache.SetStringAsync(
+                cacheKey,
+                JsonConvert.SerializeObject(resources),
+                new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10) },
+                cancellationToken);
+        }
+        
+        // 记录访问统计
+        await statisticsService.RecordDataAccessAsync("resource", $"search:{query.Name}", "read", cancellationToken);
 
         return resources;
     }
 }
 
-public class ResourceCommandHandler(IResourceRepository resourceRepository, IDistributedCache distributedCache) : 
+public class ResourceCommandHandler(IResourceRepository resourceRepository, IDistributedCache distributedCache, IDataAccessStatisticsService statisticsService) : 
     ICommandHandler<CreateResourceCommand, bool>,
     ICommandHandler<UpdateResourceCommand, bool>,
     ICommandHandler<DeleteResourceCommand, bool>
@@ -135,6 +164,9 @@ public class ResourceCommandHandler(IResourceRepository resourceRepository, IDis
         {
             // 清除相关缓存
             await ClearResourceCache(command.Resource.Id, cancellationToken);
+            
+            // 记录变化统计
+            await statisticsService.RecordDataAccessAsync("resource", command.Resource.Id, "create", cancellationToken);
         }
         
         return result;
@@ -148,6 +180,9 @@ public class ResourceCommandHandler(IResourceRepository resourceRepository, IDis
         {
             // 清除相关缓存
             await ClearResourceCache(command.Resource.Id, cancellationToken);
+            
+            // 记录变化统计
+            await statisticsService.RecordDataAccessAsync("resource", command.Resource.Id, "update", cancellationToken);
         }
         
         return result;
@@ -161,6 +196,9 @@ public class ResourceCommandHandler(IResourceRepository resourceRepository, IDis
         {
             // 清除相关缓存
             await ClearResourceCache(command.Id, cancellationToken);
+            
+            // 记录变化统计
+            await statisticsService.RecordDataAccessAsync("resource", command.Id, "delete", cancellationToken);
         }
         
         return result;

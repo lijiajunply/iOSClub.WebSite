@@ -19,6 +19,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.IdentityModel.Tokens;
 using NpgsqlDataProtection;
+using Prometheus;
 using Scalar.AspNetCore;
 using Serilog;
 using StackExchange.Redis;
@@ -334,6 +335,19 @@ builder.Services.Configure<GzipCompressionProviderOptions>(options => { options.
 
 #endregion
 
+#region Prometheus 监控
+
+// 添加 Prometheus 指标收集器
+builder.Services.AddMetricServer(option =>
+{
+    if (builder.Environment.IsDevelopment())
+    {
+        option.Url = "/metrics";
+    }
+});
+
+#endregion
+
 var app = builder.Build();
 
 // 注册全局异常处理中间件
@@ -446,7 +460,14 @@ app.UseHttpsRedirection();
 app.UseAuthentication(); // 添加这行以启用身份验证中间件
 app.UseAuthorization();
 app.UseCors();
+
+// 添加 Prometheus HTTP 请求指标收集中间件
+app.UseHttpMetrics();
+
 app.MapControllers();
 app.MapScalarApiReference();
+
+// 暴露 Prometheus 指标端点
+app.MapMetrics();
 
 app.Run();

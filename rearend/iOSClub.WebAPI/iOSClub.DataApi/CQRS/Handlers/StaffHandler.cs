@@ -3,12 +3,13 @@ using iOSClub.Data.ShowModels;
 using iOSClub.DataApi.CQRS.Commands;
 using iOSClub.DataApi.CQRS.Queries;
 using iOSClub.DataApi.Repositories;
+using iOSClub.DataApi.Services;
 using Microsoft.Extensions.Caching.Distributed;
 using Newtonsoft.Json;
 
 namespace iOSClub.DataApi.CQRS.Handlers;
 
-public class StaffQueryHandler(IStaffRepository staffRepository, IDistributedCache distributedCache) : 
+public class StaffQueryHandler(IStaffRepository staffRepository, IDistributedCache distributedCache, IDataAccessStatisticsService statisticsService) : 
     IQueryHandler<GetStaffsQuery, IEnumerable<StaffModel>>,
     IQueryHandler<GetStaffsAsMembersQuery, IEnumerable<MemberModel>>,
     IQueryHandler<GetStaffByIdQuery, StaffModel?>,
@@ -26,20 +27,27 @@ public class StaffQueryHandler(IStaffRepository staffRepository, IDistributedCac
     {
         // 尝试从缓存获取
         var cachedStaffs = await distributedCache.GetStringAsync(StaffsCacheKey, cancellationToken);
+        IEnumerable<StaffModel> staffs;
+        
         if (!string.IsNullOrEmpty(cachedStaffs))
         {
-            return JsonConvert.DeserializeObject<IEnumerable<StaffModel>>(cachedStaffs)!;
+            staffs = JsonConvert.DeserializeObject<IEnumerable<StaffModel>>(cachedStaffs)!;
         }
+        else
+        {
+            // 缓存不存在，从数据库获取
+            staffs = await staffRepository.GetAllStaffAsync();
 
-        // 缓存不存在，从数据库获取
-        var staffs = await staffRepository.GetAllStaffAsync();
-
-        // 存入缓存
-        await distributedCache.SetStringAsync(
-            StaffsCacheKey,
-            JsonConvert.SerializeObject(staffs),
-            new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(CacheExpirationMinutes) },
-            cancellationToken);
+            // 存入缓存
+            await distributedCache.SetStringAsync(
+                StaffsCacheKey,
+                JsonConvert.SerializeObject(staffs),
+                new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(CacheExpirationMinutes) },
+                cancellationToken);
+        }
+        
+        // 记录访问统计
+        await statisticsService.RecordDataAccessAsync("staff", "all", "read", cancellationToken);
 
         return staffs;
     }
@@ -48,20 +56,27 @@ public class StaffQueryHandler(IStaffRepository staffRepository, IDistributedCac
     {
         // 尝试从缓存获取
         var cachedMembers = await distributedCache.GetStringAsync(StaffsAsMembersCacheKey, cancellationToken);
+        IEnumerable<MemberModel> members;
+        
         if (!string.IsNullOrEmpty(cachedMembers))
         {
-            return JsonConvert.DeserializeObject<IEnumerable<MemberModel>>(cachedMembers)!;
+            members = JsonConvert.DeserializeObject<IEnumerable<MemberModel>>(cachedMembers)!;
         }
+        else
+        {
+            // 缓存不存在，从数据库获取
+            members = await staffRepository.GetAllStaffIdentity();
 
-        // 缓存不存在，从数据库获取
-        var members = await staffRepository.GetAllStaffIdentity();
-
-        // 存入缓存
-        await distributedCache.SetStringAsync(
-            StaffsAsMembersCacheKey,
-            JsonConvert.SerializeObject(members),
-            new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(CacheExpirationMinutes) },
-            cancellationToken);
+            // 存入缓存
+            await distributedCache.SetStringAsync(
+                StaffsAsMembersCacheKey,
+                JsonConvert.SerializeObject(members),
+                new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(CacheExpirationMinutes) },
+                cancellationToken);
+        }
+        
+        // 记录访问统计
+        await statisticsService.RecordDataAccessAsync("staff", "members", "read", cancellationToken);
 
         return members;
     }
@@ -72,23 +87,30 @@ public class StaffQueryHandler(IStaffRepository staffRepository, IDistributedCac
         
         // 尝试从缓存获取
         var cachedStaff = await distributedCache.GetStringAsync(cacheKey, cancellationToken);
+        StaffModel? staff;
+        
         if (!string.IsNullOrEmpty(cachedStaff))
         {
-            return JsonConvert.DeserializeObject<StaffModel>(cachedStaff);
+            staff = JsonConvert.DeserializeObject<StaffModel>(cachedStaff);
         }
-
-        // 缓存不存在，从数据库获取
-        var staff = await staffRepository.GetStaffByIdAsync(query.UserId);
-
-        if (staff != null)
+        else
         {
-            // 存入缓存
-            await distributedCache.SetStringAsync(
-                cacheKey,
-                JsonConvert.SerializeObject(staff),
-                new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(CacheExpirationMinutes) },
-                cancellationToken);
+            // 缓存不存在，从数据库获取
+            staff = await staffRepository.GetStaffByIdAsync(query.UserId);
+
+            if (staff != null)
+            {
+                // 存入缓存
+                await distributedCache.SetStringAsync(
+                    cacheKey,
+                    JsonConvert.SerializeObject(staff),
+                    new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(CacheExpirationMinutes) },
+                    cancellationToken);
+            }
         }
+        
+        // 记录访问统计
+        await statisticsService.RecordDataAccessAsync("staff", query.UserId, "read", cancellationToken);
 
         return staff;
     }
@@ -99,23 +121,30 @@ public class StaffQueryHandler(IStaffRepository staffRepository, IDistributedCac
         
         // 尝试从缓存获取
         var cachedStaff = await distributedCache.GetStringAsync(cacheKey, cancellationToken);
+        StaffModel? staff;
+        
         if (!string.IsNullOrEmpty(cachedStaff))
         {
-            return JsonConvert.DeserializeObject<StaffModel>(cachedStaff);
+            staff = JsonConvert.DeserializeObject<StaffModel>(cachedStaff);
         }
-
-        // 缓存不存在，从数据库获取
-        var staff = await staffRepository.GetStaffByIdWithoutOtherData(query.UserId);
-
-        if (staff != null)
+        else
         {
-            // 存入缓存
-            await distributedCache.SetStringAsync(
-                cacheKey,
-                JsonConvert.SerializeObject(staff),
-                new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(CacheExpirationMinutes) },
-                cancellationToken);
+            // 缓存不存在，从数据库获取
+            staff = await staffRepository.GetStaffByIdWithoutOtherData(query.UserId);
+
+            if (staff != null)
+            {
+                // 存入缓存
+                await distributedCache.SetStringAsync(
+                    cacheKey,
+                    JsonConvert.SerializeObject(staff),
+                    new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(CacheExpirationMinutes) },
+                    cancellationToken);
+            }
         }
+        
+        // 记录访问统计
+        await statisticsService.RecordDataAccessAsync("staff", $"withoutdata:{query.UserId}", "read", cancellationToken);
 
         return staff;
     }
@@ -128,26 +157,34 @@ public class StaffQueryHandler(IStaffRepository staffRepository, IDistributedCac
         
         // 尝试从缓存获取
         var cachedStaffs = await distributedCache.GetStringAsync(cacheKey, cancellationToken);
+        IEnumerable<StaffModel> staffs;
+        
         if (!string.IsNullOrEmpty(cachedStaffs))
         {
-            return JsonConvert.DeserializeObject<IEnumerable<StaffModel>>(cachedStaffs)!;
+            staffs = JsonConvert.DeserializeObject<IEnumerable<StaffModel>>(cachedStaffs)!;
         }
+        else
+        {
+            // 缓存不存在，从数据库获取
+            staffs = await staffRepository.GetStaffsByIdentitiesAsync(query.Identities);
 
-        // 缓存不存在，从数据库获取
-        var staffs = await staffRepository.GetStaffsByIdentitiesAsync(query.Identities);
-
-        // 存入缓存
-        await distributedCache.SetStringAsync(
-            cacheKey,
-            JsonConvert.SerializeObject(staffs),
-            new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(CacheExpirationMinutes) },
-            cancellationToken);
+            // 存入缓存
+            await distributedCache.SetStringAsync(
+                cacheKey,
+                JsonConvert.SerializeObject(staffs),
+                new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(CacheExpirationMinutes) },
+                cancellationToken);
+        }
+        
+        // 记录访问统计
+        var identitiesValue = string.Join(",", query.Identities);
+        await statisticsService.RecordDataAccessAsync("staff", $"identities:{identitiesValue}", "read", cancellationToken);
 
         return staffs;
     }
 }
 
-public class StaffCommandHandler(IStaffRepository staffRepository, IDistributedCache distributedCache) : 
+public class StaffCommandHandler(IStaffRepository staffRepository, IDistributedCache distributedCache, IDataAccessStatisticsService statisticsService) : 
     ICommandHandler<CreateStaffCommand, bool>,
     ICommandHandler<UpdateStaffCommand, bool>,
     ICommandHandler<DeleteStaffCommand, bool>,
@@ -167,6 +204,9 @@ public class StaffCommandHandler(IStaffRepository staffRepository, IDistributedC
         {
             // 清除相关缓存
             await ClearStaffCache(command.Staff.UserId, cancellationToken);
+            
+            // 记录变化统计
+            await statisticsService.RecordDataAccessAsync("staff", command.Staff.UserId, "create", cancellationToken);
         }
         
         return result;
@@ -180,6 +220,9 @@ public class StaffCommandHandler(IStaffRepository staffRepository, IDistributedC
         {
             // 清除相关缓存
             await ClearStaffCache(command.Staff.UserId, cancellationToken);
+            
+            // 记录变化统计
+            await statisticsService.RecordDataAccessAsync("staff", command.Staff.UserId, "update", cancellationToken);
         }
         
         return result;
@@ -193,6 +236,9 @@ public class StaffCommandHandler(IStaffRepository staffRepository, IDistributedC
         {
             // 清除相关缓存
             await ClearStaffCache(command.UserId, cancellationToken);
+            
+            // 记录变化统计
+            await statisticsService.RecordDataAccessAsync("staff", command.UserId, "delete", cancellationToken);
         }
         
         return result;
@@ -206,6 +252,9 @@ public class StaffCommandHandler(IStaffRepository staffRepository, IDistributedC
         {
             // 清除相关缓存
             await ClearStaffCache(command.UserId, cancellationToken);
+            
+            // 记录变化统计
+            await statisticsService.RecordDataAccessAsync("staff", command.UserId, "update", cancellationToken);
         }
         
         return result;

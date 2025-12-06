@@ -2,12 +2,13 @@ using iOSClub.Data.DataModels;
 using iOSClub.DataApi.CQRS.Commands;
 using iOSClub.DataApi.CQRS.Queries;
 using iOSClub.DataApi.Repositories;
+using iOSClub.DataApi.Services;
 using Microsoft.Extensions.Caching.Distributed;
 using Newtonsoft.Json;
 
 namespace iOSClub.DataApi.CQRS.Handlers;
 
-public class ProjectQueryHandler(IProjectRepository projectRepository, IDistributedCache distributedCache) : 
+public class ProjectQueryHandler(IProjectRepository projectRepository, IDistributedCache distributedCache, IDataAccessStatisticsService statisticsService) : 
     IQueryHandler<GetProjectsQuery, IEnumerable<ProjectModel>>,
     IQueryHandler<GetProjectByIdQuery, ProjectModel?>
 {
@@ -19,20 +20,27 @@ public class ProjectQueryHandler(IProjectRepository projectRepository, IDistribu
     {
         // 尝试从缓存获取
         var cachedProjects = await distributedCache.GetStringAsync(ProjectsCacheKey, cancellationToken);
+        IEnumerable<ProjectModel> projects;
+        
         if (!string.IsNullOrEmpty(cachedProjects))
         {
-            return JsonConvert.DeserializeObject<IEnumerable<ProjectModel>>(cachedProjects)!;
+            projects = JsonConvert.DeserializeObject<IEnumerable<ProjectModel>>(cachedProjects)!;
         }
+        else
+        {
+            // 缓存不存在，从数据库获取
+            projects = await projectRepository.GetAllProjectsAsync();
 
-        // 缓存不存在，从数据库获取
-        var projects = await projectRepository.GetAllProjectsAsync();
-
-        // 存入缓存
-        await distributedCache.SetStringAsync(
-            ProjectsCacheKey,
-            JsonConvert.SerializeObject(projects),
-            new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(CacheExpirationMinutes) },
-            cancellationToken);
+            // 存入缓存
+            await distributedCache.SetStringAsync(
+                ProjectsCacheKey,
+                JsonConvert.SerializeObject(projects),
+                new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(CacheExpirationMinutes) },
+                cancellationToken);
+        }
+        
+        // 记录访问统计
+        await statisticsService.RecordDataAccessAsync("project", "all", "read", cancellationToken);
 
         return projects;
     }
@@ -43,29 +51,36 @@ public class ProjectQueryHandler(IProjectRepository projectRepository, IDistribu
         
         // 尝试从缓存获取
         var cachedProject = await distributedCache.GetStringAsync(cacheKey, cancellationToken);
+        ProjectModel? project;
+        
         if (!string.IsNullOrEmpty(cachedProject))
         {
-            return JsonConvert.DeserializeObject<ProjectModel>(cachedProject);
+            project = JsonConvert.DeserializeObject<ProjectModel>(cachedProject);
         }
-
-        // 缓存不存在，从数据库获取
-        var project = await projectRepository.GetProjectByIdAsync(query.Id);
-
-        if (project != null)
+        else
         {
-            // 存入缓存
-            await distributedCache.SetStringAsync(
-                cacheKey,
-                JsonConvert.SerializeObject(project),
-                new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(CacheExpirationMinutes) },
-                cancellationToken);
+            // 缓存不存在，从数据库获取
+            project = await projectRepository.GetProjectByIdAsync(query.Id);
+
+            if (project != null)
+            {
+                // 存入缓存
+                await distributedCache.SetStringAsync(
+                    cacheKey,
+                    JsonConvert.SerializeObject(project),
+                    new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(CacheExpirationMinutes) },
+                    cancellationToken);
+            }
         }
+        
+        // 记录访问统计
+        await statisticsService.RecordDataAccessAsync("project", query.Id, "read", cancellationToken);
 
         return project;
     }
 }
 
-public class ProjectCommandHandler(IProjectRepository projectRepository, IDistributedCache distributedCache) : 
+public class ProjectCommandHandler(IProjectRepository projectRepository, IDistributedCache distributedCache, IDataAccessStatisticsService statisticsService) : 
     ICommandHandler<CreateProjectCommand, bool>,
     ICommandHandler<UpdateProjectCommand, bool>,
     ICommandHandler<DeleteProjectCommand, bool>
@@ -83,6 +98,9 @@ public class ProjectCommandHandler(IProjectRepository projectRepository, IDistri
         {
             // 清除相关缓存
             await ClearProjectCache(result.Id, cancellationToken);
+            
+            // 记录变化统计
+            await statisticsService.RecordDataAccessAsync("project", result.Id, "create", cancellationToken);
             return true;
         }
         
@@ -98,6 +116,9 @@ public class ProjectCommandHandler(IProjectRepository projectRepository, IDistri
         {
             // 清除相关缓存
             await ClearProjectCache(command.Project.Id, cancellationToken);
+            
+            // 记录变化统计
+            await statisticsService.RecordDataAccessAsync("project", command.Project.Id, "update", cancellationToken);
         }
         
         return result;
@@ -112,6 +133,9 @@ public class ProjectCommandHandler(IProjectRepository projectRepository, IDistri
         {
             // 清除相关缓存
             await ClearProjectCache(command.Id, cancellationToken);
+            
+            // 记录变化统计
+            await statisticsService.RecordDataAccessAsync("project", command.Id, "delete", cancellationToken);
         }
         
         return result;

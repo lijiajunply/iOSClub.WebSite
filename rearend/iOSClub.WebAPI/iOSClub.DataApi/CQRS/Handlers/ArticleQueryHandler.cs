@@ -1,12 +1,13 @@
 using iOSClub.Data.DataModels;
 using iOSClub.DataApi.CQRS.Queries;
 using iOSClub.DataApi.Repositories;
+using iOSClub.DataApi.Services;
 using Microsoft.Extensions.Caching.Distributed;
 using Newtonsoft.Json;
 
 namespace iOSClub.DataApi.CQRS.Handlers;
 
-public class ArticleQueryHandler(IArticleRepository articleRepository, IDistributedCache distributedCache) :
+public class ArticleQueryHandler(IArticleRepository articleRepository, IDistributedCache distributedCache, IDataAccessStatisticsService statisticsService) :
     IQueryHandler<GetArticlesQuery, IEnumerable<ArticleModel>>,
     IQueryHandler<GetArticleByIdQuery, ArticleModel?>,
     IQueryHandler<GetArticlesByCategoryQuery, IEnumerable<ArticleModel>>
@@ -20,20 +21,27 @@ public class ArticleQueryHandler(IArticleRepository articleRepository, IDistribu
     {
         // 尝试从缓存获取
         var cachedArticles = await distributedCache.GetStringAsync(ArticlesCacheKey, cancellationToken);
+        IEnumerable<ArticleModel> articles;
+        
         if (!string.IsNullOrEmpty(cachedArticles))
         {
-            return JsonConvert.DeserializeObject<IEnumerable<ArticleModel>>(cachedArticles)!;
+            articles = JsonConvert.DeserializeObject<IEnumerable<ArticleModel>>(cachedArticles)!;
         }
+        else
+        {
+            // 缓存不存在，从数据库获取
+            articles = await articleRepository.GetAll();
 
-        // 缓存不存在，从数据库获取
-        var articles = await articleRepository.GetAll();
-
-        // 存入缓存
-        await distributedCache.SetStringAsync(
-            ArticlesCacheKey,
-            JsonConvert.SerializeObject(articles),
-            new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(CacheExpirationMinutes) },
-            cancellationToken);
+            // 存入缓存
+            await distributedCache.SetStringAsync(
+                ArticlesCacheKey,
+                JsonConvert.SerializeObject(articles),
+                new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(CacheExpirationMinutes) },
+                cancellationToken);
+        }
+        
+        // 记录访问统计
+        await statisticsService.RecordDataAccessAsync("article", "all", "read", cancellationToken);
 
         return articles;
     }
@@ -44,23 +52,30 @@ public class ArticleQueryHandler(IArticleRepository articleRepository, IDistribu
         
         // 尝试从缓存获取
         var cachedArticle = await distributedCache.GetStringAsync(cacheKey, cancellationToken);
+        ArticleModel? article;
+        
         if (!string.IsNullOrEmpty(cachedArticle))
         {
-            return JsonConvert.DeserializeObject<ArticleModel>(cachedArticle);
+            article = JsonConvert.DeserializeObject<ArticleModel>(cachedArticle);
         }
-
-        // 缓存不存在，从数据库获取
-        var article = await articleRepository.GetFromPath(query.Id);
-
-        if (article != null)
+        else
         {
-            // 存入缓存
-            await distributedCache.SetStringAsync(
-                cacheKey,
-                JsonConvert.SerializeObject(article),
-                new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(CacheExpirationMinutes) },
-                cancellationToken);
+            // 缓存不存在，从数据库获取
+            article = await articleRepository.GetFromPath(query.Id);
+
+            if (article != null)
+            {
+                // 存入缓存
+                await distributedCache.SetStringAsync(
+                    cacheKey,
+                    JsonConvert.SerializeObject(article),
+                    new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(CacheExpirationMinutes) },
+                    cancellationToken);
+            }
         }
+        
+        // 记录访问统计
+        await statisticsService.RecordDataAccessAsync("article", query.Id, "read", cancellationToken);
 
         return article;
     }
@@ -71,21 +86,28 @@ public class ArticleQueryHandler(IArticleRepository articleRepository, IDistribu
         
         // 尝试从缓存获取
         var cachedArticles = await distributedCache.GetStringAsync(cacheKey, cancellationToken);
+        IEnumerable<ArticleModel> categoryArticles;
+        
         if (!string.IsNullOrEmpty(cachedArticles))
         {
-            return JsonConvert.DeserializeObject<IEnumerable<ArticleModel>>(cachedArticles)!;
+            categoryArticles = JsonConvert.DeserializeObject<IEnumerable<ArticleModel>>(cachedArticles)!;
         }
+        else
+        {
+            // 缓存不存在，从数据库获取
+            var articles = await articleRepository.GetAll();
+            categoryArticles = articles.Where(a => a.Category?.Name == query.CategoryId || a.CategoryId == query.CategoryId);
 
-        // 缓存不存在，从数据库获取
-        var articles = await articleRepository.GetAll();
-        var categoryArticles = articles.Where(a => a.Category?.Name == query.CategoryId || a.CategoryId == query.CategoryId);
-
-        // 存入缓存
-        await distributedCache.SetStringAsync(
-            cacheKey,
-            JsonConvert.SerializeObject(categoryArticles),
-            new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(CacheExpirationMinutes) },
-            cancellationToken);
+            // 存入缓存
+            await distributedCache.SetStringAsync(
+                cacheKey,
+                JsonConvert.SerializeObject(categoryArticles),
+                new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(CacheExpirationMinutes) },
+                cancellationToken);
+        }
+        
+        // 记录访问统计
+        await statisticsService.RecordDataAccessAsync("article", $"category:{query.CategoryId}", "read", cancellationToken);
 
         return categoryArticles;
     }

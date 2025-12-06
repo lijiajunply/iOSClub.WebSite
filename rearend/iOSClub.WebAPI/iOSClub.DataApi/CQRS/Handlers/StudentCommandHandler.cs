@@ -1,11 +1,12 @@
 using iOSClub.Data.DataModels;
 using iOSClub.DataApi.CQRS.Commands;
 using iOSClub.DataApi.Repositories;
+using iOSClub.DataApi.Services;
 using Microsoft.Extensions.Caching.Distributed;
 
 namespace iOSClub.DataApi.CQRS.Handlers;
 
-public class StudentCommandHandler(IStudentRepository studentRepository, IDistributedCache distributedCache) :
+public class StudentCommandHandler(IStudentRepository studentRepository, IDistributedCache distributedCache, IDataAccessStatisticsService statisticsService) :
     ICommandHandler<CreateStudentCommand, StudentModel?>,
     ICommandHandler<UpdateStudentCommand, bool>,
     ICommandHandler<DeleteStudentCommand, bool>,
@@ -24,6 +25,9 @@ public class StudentCommandHandler(IStudentRepository studentRepository, IDistri
         {
             // 清除相关缓存
             await ClearStudentCache(student.UserId, cancellationToken);
+            
+            // 记录变化统计
+            await statisticsService.RecordDataAccessAsync("student", student.UserId, "create", cancellationToken);
         }
         
         return student;
@@ -37,6 +41,9 @@ public class StudentCommandHandler(IStudentRepository studentRepository, IDistri
         {
             // 清除相关缓存
             await ClearStudentCache(command.Student.UserId, cancellationToken);
+            
+            // 记录变化统计
+            await statisticsService.RecordDataAccessAsync("student", command.Student.UserId, "update", cancellationToken);
         }
         
         return success;
@@ -50,6 +57,9 @@ public class StudentCommandHandler(IStudentRepository studentRepository, IDistri
         {
             // 清除相关缓存
             await ClearStudentCache(command.Id, cancellationToken);
+            
+            // 记录变化统计
+            await statisticsService.RecordDataAccessAsync("student", command.Id, "delete", cancellationToken);
         }
         
         return success;
@@ -64,10 +74,11 @@ public class StudentCommandHandler(IStudentRepository studentRepository, IDistri
             // 批量更新时，清除所有学生缓存
             await distributedCache.RemoveAsync(StudentsCacheKey, cancellationToken);
             
-            // 清除每个学生的单独缓存
+            // 清除每个学生的单独缓存并记录变化统计
             foreach (var student in command.Students)
             {
                 await distributedCache.RemoveAsync($"{StudentCacheKeyPrefix}{student.UserId}", cancellationToken);
+                await statisticsService.RecordDataAccessAsync("student", student.UserId, "update", cancellationToken);
             }
         }
         
@@ -76,8 +87,15 @@ public class StudentCommandHandler(IStudentRepository studentRepository, IDistri
 
     public async Task<bool> Handle(StudentLoginCommand command, CancellationToken cancellationToken = default)
     {
-        // 登录操作不需要缓存
-        return await studentRepository.Login(command.UserId, command.Password);
+        var success = await studentRepository.Login(command.UserId, command.Password);
+        
+        if (success)
+        {
+            // 记录访问统计
+            await statisticsService.RecordDataAccessAsync("student", command.UserId, "read", cancellationToken);
+        }
+        
+        return success;
     }
 
     // 清除学生相关缓存的辅助方法

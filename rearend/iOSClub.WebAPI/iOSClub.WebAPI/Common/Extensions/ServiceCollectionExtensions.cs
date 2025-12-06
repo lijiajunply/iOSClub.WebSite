@@ -106,6 +106,7 @@ public static class ServiceCollectionExtensions
             services.AddScoped<IClientApplicationRepository, ClientApplicationRepository>();
             services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<ILoginService, LoginService>();
+            services.AddScoped<IDataAccessStatisticsService, DataAccessStatisticsService>();
         }
 
         /// <summary>

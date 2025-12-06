@@ -2,12 +2,13 @@ using iOSClub.Data.DataModels;
 using iOSClub.Data.ShowModels;
 using iOSClub.DataApi.CQRS.Queries;
 using iOSClub.DataApi.Repositories;
+using iOSClub.DataApi.Services;
 using Microsoft.Extensions.Caching.Distributed;
 using Newtonsoft.Json;
 
 namespace iOSClub.DataApi.CQRS.Handlers;
 
-public class StudentQueryHandler(IStudentRepository studentRepository, IDistributedCache distributedCache) :
+public class StudentQueryHandler(IStudentRepository studentRepository, IDistributedCache distributedCache, IDataAccessStatisticsService statisticsService) :
     IQueryHandler<GetStudentsQuery, List<StudentModel>>,
     IQueryHandler<GetStudentByIdQuery, StudentModel?>,
     IQueryHandler<GetStudentsPagedQuery, (List<MemberModel>, int)>
@@ -22,20 +23,27 @@ public class StudentQueryHandler(IStudentRepository studentRepository, IDistribu
     {
         // 尝试从缓存获取
         var cachedStudents = await distributedCache.GetStringAsync(StudentsCacheKey, cancellationToken);
+        List<StudentModel> students;
+        
         if (!string.IsNullOrEmpty(cachedStudents))
         {
-            return JsonConvert.DeserializeObject<List<StudentModel>>(cachedStudents)!;
+            students = JsonConvert.DeserializeObject<List<StudentModel>>(cachedStudents)!;
         }
+        else
+        {
+            // 缓存不存在，从数据库获取
+            students = await studentRepository.GetAll();
 
-        // 缓存不存在，从数据库获取
-        var students = await studentRepository.GetAll();
-
-        // 存入缓存
-        await distributedCache.SetStringAsync(
-            StudentsCacheKey,
-            JsonConvert.SerializeObject(students),
-            new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(CacheExpirationMinutes) },
-            cancellationToken);
+            // 存入缓存
+            await distributedCache.SetStringAsync(
+                StudentsCacheKey,
+                JsonConvert.SerializeObject(students),
+                new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(CacheExpirationMinutes) },
+                cancellationToken);
+        }
+        
+        // 记录访问统计
+        await statisticsService.RecordDataAccessAsync("student", "all", "read", cancellationToken);
 
         return students;
     }
@@ -46,23 +54,30 @@ public class StudentQueryHandler(IStudentRepository studentRepository, IDistribu
         
         // 尝试从缓存获取
         var cachedStudent = await distributedCache.GetStringAsync(cacheKey, cancellationToken);
+        StudentModel? student;
+        
         if (!string.IsNullOrEmpty(cachedStudent))
         {
-            return JsonConvert.DeserializeObject<StudentModel>(cachedStudent);
+            student = JsonConvert.DeserializeObject<StudentModel>(cachedStudent);
         }
-
-        // 缓存不存在，从数据库获取
-        var student = await studentRepository.GetByIdAsync(query.Id);
-
-        if (student != null)
+        else
         {
-            // 存入缓存
-            await distributedCache.SetStringAsync(
-                cacheKey,
-                JsonConvert.SerializeObject(student),
-                new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(CacheExpirationMinutes) },
-                cancellationToken);
+            // 缓存不存在，从数据库获取
+            student = await studentRepository.GetByIdAsync(query.Id);
+
+            if (student != null)
+            {
+                // 存入缓存
+                await distributedCache.SetStringAsync(
+                    cacheKey,
+                    JsonConvert.SerializeObject(student),
+                    new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(CacheExpirationMinutes) },
+                    cancellationToken);
+            }
         }
+        
+        // 记录访问统计
+        await statisticsService.RecordDataAccessAsync("student", query.Id, "read", cancellationToken);
 
         return student;
     }
@@ -74,20 +89,27 @@ public class StudentQueryHandler(IStudentRepository studentRepository, IDistribu
         
         // 尝试从缓存获取
         var cachedResult = await distributedCache.GetStringAsync(cacheKey, cancellationToken);
+        (List<MemberModel>, int) result;
+        
         if (!string.IsNullOrEmpty(cachedResult))
         {
-            return JsonConvert.DeserializeObject<(List<MemberModel>, int)>(cachedResult)!;
+            result = JsonConvert.DeserializeObject<(List<MemberModel>, int)>(cachedResult)!;
         }
+        else
+        {
+            // 缓存不存在，从数据库获取
+            result = await studentRepository.GetMembersPagedAsync(query.PageNum, query.PageSize, query.SearchTerm, query.SearchCondition);
 
-        // 缓存不存在，从数据库获取
-        var result = await studentRepository.GetMembersPagedAsync(query.PageNum, query.PageSize, query.SearchTerm, query.SearchCondition);
-
-        // 存入缓存，设置较短的过期时间
-        await distributedCache.SetStringAsync(
-            cacheKey,
-            JsonConvert.SerializeObject(result),
-            new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(PagedCacheExpirationMinutes) },
-            cancellationToken);
+            // 存入缓存，设置较短的过期时间
+            await distributedCache.SetStringAsync(
+                cacheKey,
+                JsonConvert.SerializeObject(result),
+                new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(PagedCacheExpirationMinutes) },
+                cancellationToken);
+        }
+        
+        // 记录访问统计
+        await statisticsService.RecordDataAccessAsync("student", "paged", "read", cancellationToken);
 
         return result;
     }

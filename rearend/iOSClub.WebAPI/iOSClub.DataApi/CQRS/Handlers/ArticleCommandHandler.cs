@@ -1,11 +1,12 @@
 using iOSClub.Data.DataModels;
 using iOSClub.DataApi.CQRS.Commands;
 using iOSClub.DataApi.Repositories;
+using iOSClub.DataApi.Services;
 using Microsoft.Extensions.Caching.Distributed;
 
 namespace iOSClub.DataApi.CQRS.Handlers;
 
-public class ArticleCommandHandler(IArticleRepository articleRepository, IDistributedCache distributedCache) : 
+public class ArticleCommandHandler(IArticleRepository articleRepository, IDistributedCache distributedCache, IDataAccessStatisticsService statisticsService) :
     ICommandHandler<CreateArticleCommand, bool>,
     ICommandHandler<UpdateArticleCommand, bool>,
     ICommandHandler<DeleteArticleCommand, bool>,
@@ -24,6 +25,9 @@ public class ArticleCommandHandler(IArticleRepository articleRepository, IDistri
         {
             // 清除相关缓存
             await ClearArticleCache(command.Article.Path, command.Article.CategoryId, cancellationToken);
+            
+            // 记录变化统计
+            await statisticsService.RecordDataAccessAsync("article", command.Article.Path, "create", cancellationToken);
         }
         
         return result;
@@ -38,6 +42,9 @@ public class ArticleCommandHandler(IArticleRepository articleRepository, IDistri
         {
             // 清除相关缓存
             await ClearArticleCache(command.Article.Path, command.Article.CategoryId, cancellationToken);
+            
+            // 记录变化统计
+            await statisticsService.RecordDataAccessAsync("article", command.Article.Path, "update", cancellationToken);
         }
         
         return result;
@@ -52,6 +59,9 @@ public class ArticleCommandHandler(IArticleRepository articleRepository, IDistri
         {
             // 清除相关缓存
             await ClearArticleCache(command.Id, null, cancellationToken);
+            
+            // 记录变化统计
+            await statisticsService.RecordDataAccessAsync("article", command.Id, "delete", cancellationToken);
         }
         
         return result;
@@ -68,10 +78,11 @@ public class ArticleCommandHandler(IArticleRepository articleRepository, IDistri
             // 清除所有文章缓存
             await distributedCache.RemoveAsync(ArticlesCacheKey, cancellationToken);
             
-            // 清除每个文章的单独缓存和分类缓存
+            // 清除每个文章的单独缓存和分类缓存并记录变化统计
             foreach (var article in command.Articles)
             {
                 await ClearArticleCache(article.Path, article.CategoryId, cancellationToken);
+                await statisticsService.RecordDataAccessAsync("article", article.Path, "update", cancellationToken);
             }
         }
         

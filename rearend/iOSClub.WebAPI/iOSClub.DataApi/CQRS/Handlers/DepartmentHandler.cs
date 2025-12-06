@@ -2,12 +2,13 @@ using iOSClub.Data.DataModels;
 using iOSClub.DataApi.CQRS.Commands;
 using iOSClub.DataApi.CQRS.Queries;
 using iOSClub.DataApi.Repositories;
+using iOSClub.DataApi.Services;
 using Microsoft.Extensions.Caching.Distributed;
 using Newtonsoft.Json;
 
 namespace iOSClub.DataApi.CQRS.Handlers;
 
-public class DepartmentQueryHandler(IDepartmentRepository departmentRepository, IDistributedCache distributedCache) : 
+public class DepartmentQueryHandler(IDepartmentRepository departmentRepository, IDistributedCache distributedCache, IDataAccessStatisticsService statisticsService) : 
     IQueryHandler<GetDepartmentsQuery, IEnumerable<DepartmentModel>>,
     IQueryHandler<GetDepartmentByNameQuery, DepartmentModel?>,
     IQueryHandler<GetDepartmentByKeyQuery, DepartmentModel?>
@@ -22,20 +23,27 @@ public class DepartmentQueryHandler(IDepartmentRepository departmentRepository, 
     {
         // 尝试从缓存获取
         var cachedDepartments = await distributedCache.GetStringAsync(DepartmentsCacheKey, cancellationToken);
+        IEnumerable<DepartmentModel> departments;
+        
         if (!string.IsNullOrEmpty(cachedDepartments))
         {
-            return JsonConvert.DeserializeObject<IEnumerable<DepartmentModel>>(cachedDepartments)!;
+            departments = JsonConvert.DeserializeObject<IEnumerable<DepartmentModel>>(cachedDepartments)!;
         }
+        else
+        {
+            // 缓存不存在，从数据库获取
+            departments = await departmentRepository.GetAllDepartmentsAsync();
 
-        // 缓存不存在，从数据库获取
-        var departments = await departmentRepository.GetAllDepartmentsAsync();
-
-        // 存入缓存
-        await distributedCache.SetStringAsync(
-            DepartmentsCacheKey,
-            JsonConvert.SerializeObject(departments),
-            new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(CacheExpirationMinutes) },
-            cancellationToken);
+            // 存入缓存
+            await distributedCache.SetStringAsync(
+                DepartmentsCacheKey,
+                JsonConvert.SerializeObject(departments),
+                new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(CacheExpirationMinutes) },
+                cancellationToken);
+        }
+        
+        // 记录访问统计
+        await statisticsService.RecordDataAccessAsync("department", "all", "read", cancellationToken);
 
         return departments;
     }
@@ -46,23 +54,30 @@ public class DepartmentQueryHandler(IDepartmentRepository departmentRepository, 
         
         // 尝试从缓存获取
         var cachedDepartment = await distributedCache.GetStringAsync(cacheKey, cancellationToken);
+        DepartmentModel? department;
+        
         if (!string.IsNullOrEmpty(cachedDepartment))
         {
-            return JsonConvert.DeserializeObject<DepartmentModel>(cachedDepartment);
+            department = JsonConvert.DeserializeObject<DepartmentModel>(cachedDepartment);
         }
-
-        // 缓存不存在，从数据库获取
-        var department = await departmentRepository.GetDepartmentByNameAsync(query.Name);
-
-        if (department != null)
+        else
         {
-            // 存入缓存
-            await distributedCache.SetStringAsync(
-                cacheKey,
-                JsonConvert.SerializeObject(department),
-                new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(CacheExpirationMinutes) },
-                cancellationToken);
+            // 缓存不存在，从数据库获取
+            department = await departmentRepository.GetDepartmentByNameAsync(query.Name);
+
+            if (department != null)
+            {
+                // 存入缓存
+                await distributedCache.SetStringAsync(
+                    cacheKey,
+                    JsonConvert.SerializeObject(department),
+                    new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(CacheExpirationMinutes) },
+                    cancellationToken);
+            }
         }
+        
+        // 记录访问统计
+        await statisticsService.RecordDataAccessAsync("department", $"name:{query.Name}", "read", cancellationToken);
 
         return department;
     }
@@ -73,29 +88,36 @@ public class DepartmentQueryHandler(IDepartmentRepository departmentRepository, 
         
         // 尝试从缓存获取
         var cachedDepartment = await distributedCache.GetStringAsync(cacheKey, cancellationToken);
+        DepartmentModel? department;
+        
         if (!string.IsNullOrEmpty(cachedDepartment))
         {
-            return JsonConvert.DeserializeObject<DepartmentModel>(cachedDepartment);
+            department = JsonConvert.DeserializeObject<DepartmentModel>(cachedDepartment);
         }
-
-        // 缓存不存在，从数据库获取
-        var department = await departmentRepository.GetDepartmentByKeyAsync(query.Key);
-
-        if (department != null)
+        else
         {
-            // 存入缓存
-            await distributedCache.SetStringAsync(
-                cacheKey,
-                JsonConvert.SerializeObject(department),
-                new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(CacheExpirationMinutes) },
-                cancellationToken);
+            // 缓存不存在，从数据库获取
+            department = await departmentRepository.GetDepartmentByKeyAsync(query.Key);
+
+            if (department != null)
+            {
+                // 存入缓存
+                await distributedCache.SetStringAsync(
+                    cacheKey,
+                    JsonConvert.SerializeObject(department),
+                    new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(CacheExpirationMinutes) },
+                    cancellationToken);
+            }
         }
+        
+        // 记录访问统计
+        await statisticsService.RecordDataAccessAsync("department", $"key:{query.Key}", "read", cancellationToken);
 
         return department;
     }
 }
 
-public class DepartmentCommandHandler(IDepartmentRepository departmentRepository, IDistributedCache distributedCache) : 
+public class DepartmentCommandHandler(IDepartmentRepository departmentRepository, IDistributedCache distributedCache, IDataAccessStatisticsService statisticsService) : 
     ICommandHandler<CreateDepartmentCommand, bool>,
     ICommandHandler<UpdateDepartmentCommand, bool>,
     ICommandHandler<DeleteDepartmentCommand, bool>
@@ -114,6 +136,9 @@ public class DepartmentCommandHandler(IDepartmentRepository departmentRepository
         {
             // 清除相关缓存
             await ClearDepartmentCache(command.Department, cancellationToken);
+            
+            // 记录变化统计
+            await statisticsService.RecordDataAccessAsync("department", command.Department.Name, "create", cancellationToken);
         }
         
         return result;
@@ -128,6 +153,9 @@ public class DepartmentCommandHandler(IDepartmentRepository departmentRepository
         {
             // 清除相关缓存
             await ClearDepartmentCache(command.Department, cancellationToken);
+            
+            // 记录变化统计
+            await statisticsService.RecordDataAccessAsync("department", command.Department.Name, "update", cancellationToken);
         }
         
         return result;
@@ -142,6 +170,9 @@ public class DepartmentCommandHandler(IDepartmentRepository departmentRepository
         {
             // 清除相关缓存
             await ClearDepartmentCacheByName(command.Name, cancellationToken);
+            
+            // 记录变化统计
+            await statisticsService.RecordDataAccessAsync("department", command.Name, "delete", cancellationToken);
         }
         
         return result;
