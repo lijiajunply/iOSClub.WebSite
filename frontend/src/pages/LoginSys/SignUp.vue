@@ -105,7 +105,8 @@
               </n-form-item>
 
               <n-form-item path="email"
-                           :rule="[{ required: true, message: '' }, { validator: emailValidator, trigger: 'blur' }]" class="apple-input">
+                           :rule="[{ required: true, message: '' }, { validator: emailValidator, trigger: 'blur' }]"
+                           class="apple-input">
                 <n-input v-model:value="form.email" placeholder="电子邮箱">
                   <template #prefix>
                     <Icon icon="ion:mail-outline" class="input-icon"/>
@@ -116,7 +117,7 @@
 
             <!-- 步骤 3: 账号设置 -->
             <div v-else-if="currentStep === 3" key="step3" class="space-y-4">
-              <n-form-item path="password" :rule="{ required: true, message: '', trigger: 'blur' }">
+              <n-form-item path="password" :rule="[{ required: true, message: '请设置密码', trigger: 'blur' }, { validator: passwordValidator, trigger: ['blur', 'input'] }]">
                 <n-input
                     v-model:value="form.password"
                     type="password"
@@ -132,7 +133,7 @@
 
               <n-form-item
                   path="confirmPassword"
-                  :rule="[{ required: true, message: '' }, { validator: (r, v) => v === form.password || '', trigger: 'blur' }]"
+                  :rule="[{ required: true, message: '' }, { validator: (_, v) => v === form.password || new Error('Passwords do not match'), trigger: 'blur' }]"
               >
                 <n-input
                     v-model:value="form.confirmPassword"
@@ -306,7 +307,16 @@ const academyOptions = [
 const emailValidator = (_rule: any, value: string) => {
   if (!value) return true
   const emailReg = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  return emailReg.test(value) || '请输入有效的邮箱地址'
+  if (emailReg.test(value)) return true
+  return new Error('请输入有效的邮箱地址')
+}
+
+const passwordValidator = (_rule: any, value: string) => {
+  if (!value) return true
+  // 密码至少8个字符，包含一个大写字母和一个数字
+  const passwordReg = /^(?=.*[A-Z])(?=.*\d).{8,}$/
+  if (passwordReg.test(value)) return true
+  return new Error('密码至少8个字符，包含一个大写字母和一个数字')
 }
 
 const validateCurrentStep = async (): Promise<boolean> => {
@@ -342,7 +352,7 @@ const validateCurrentStep = async (): Promise<boolean> => {
           // 过滤掉非当前步骤的错误
           // 这里简单处理：如果 validate 抛出 throw，catch 会捕获
         },
-        (rule) => {
+        (_) => {
           // 简单判断 key 是否在当前 step 范围内，这里简化处理，依靠 try catch
           return true
         }
@@ -505,6 +515,7 @@ const submitRegistration = async () => {
   font-size: 20px;
   margin-right: 4px;
 }
+
 .dark .input-icon {
   color: #98989d;
 }
@@ -518,13 +529,16 @@ const submitRegistration = async () => {
 .slide-fade-enter-active {
   transition: all 0.3s ease-out;
 }
+
 .slide-fade-leave-active {
   transition: all 0.2s cubic-bezier(1, 0.5, 0.8, 1);
 }
+
 .slide-fade-enter-from {
   transform: translateX(20px);
   opacity: 0;
 }
+
 .slide-fade-leave-to {
   transform: translateX(-20px);
   opacity: 0;
@@ -532,32 +546,58 @@ const submitRegistration = async () => {
 
 /* 自定义关键帧动画 */
 @keyframes blob {
-  0% { transform: translate(0px, 0px) scale(1); }
-  33% { transform: translate(30px, -50px) scale(1.1); }
-  66% { transform: translate(-20px, 20px) scale(0.9); }
-  100% { transform: translate(0px, 0px) scale(1); }
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(30px, -50px) scale(1.1);
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.9);
+  }
+  100% {
+    transform: translate(0px, 0px) scale(1);
+  }
 }
+
 .animate-blob {
   animation: blob 7s infinite;
 }
+
 .animation-delay-2000 {
   animation-delay: 2s;
 }
 
 @keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
-  20%, 40%, 60%, 80% { transform: translateX(4px); }
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-4px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(4px);
+  }
 }
+
 .animate-shake {
-  animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+  animation: shake 0.4s cubic-bezier(.36, .07, .19, .97) both;
 }
 
 @keyframes scaleIn {
-  0% { transform: scale(0); opacity: 0; }
-  60% { transform: scale(1.2); opacity: 1; }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
 }
+
 .animate-scale-in {
   animation: scaleIn 0.5s ease-out forwards;
 }

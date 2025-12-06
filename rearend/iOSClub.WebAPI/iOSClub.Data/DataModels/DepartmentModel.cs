@@ -20,10 +20,17 @@ public class DepartmentModel : DataModel
     /// <summary>
     /// 部员
     /// </summary>
-    public List<StaffModel> Staffs { get; init; } = [];
+    public List<StaffModel> Staffs { get; set; } = [];
 
     /// <summary>
     /// 项目
     /// </summary>
-    public List<ProjectModel> Projects { get; init; } = [];
+    public List<ProjectModel> Projects { get; set; } = [];
+
+    public DepartmentModel OutputWhenOtherList()
+    {
+        Staffs = Staffs.Select(x => x.OutputWhenOtherList()).ToList();
+        Projects = Projects.Select(x => x.OutputWhenOtherList()).ToList();
+        return this;
+    }
 }

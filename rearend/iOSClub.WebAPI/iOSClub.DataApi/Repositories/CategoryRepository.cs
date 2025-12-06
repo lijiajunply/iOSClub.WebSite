@@ -4,6 +4,68 @@ using Microsoft.EntityFrameworkCore;
 
 namespace iOSClub.DataApi.Repositories;
 
+/// <summary>
+/// 分类仓库接口，提供分类数据的CRUD操作和查询功能
+/// </summary>
+public interface ICategoryRepository
+{
+    /// <summary>
+    /// 获取所有分类
+    /// </summary>
+    /// <returns>分类列表</returns>
+    public Task<IEnumerable<CategoryModel>> GetAll();
+    
+    /// <summary>
+    /// 根据名称获取分类
+    /// </summary>
+    /// <param name="name">分类名称</param>
+    /// <returns>分类模型，如果找不到则返回null</returns>
+    public Task<CategoryModel?> GetByName(string name);
+    
+    /// <summary>
+    /// 创建或更新分类
+    /// </summary>
+    /// <param name="model">分类模型</param>
+    /// <returns>是否操作成功</returns>
+    public Task<bool> CreateOrUpdate(CategoryModel model);
+    
+    /// <summary>
+    /// 删除分类
+    /// </summary>
+    /// <param name="name">分类名称</param>
+    /// <returns>是否删除成功</returns>
+    public Task<bool> Delete(string name);
+    
+    /// <summary>
+    /// 更新分类顺序
+    /// </summary>
+    /// <param name="name">分类名称</param>
+    /// <param name="order">新的顺序</param>
+    /// <returns>是否更新成功</returns>
+    public Task<bool> UpdateCategoryOrder(string name, int order);
+    
+    /// <summary>
+    /// 批量更新分类顺序
+    /// </summary>
+    /// <param name="categoryOrders">分类ID和顺序的字典，可为null</param>
+    /// <returns>是否更新成功</returns>
+    public Task<bool> UpdateCategoryOrders(Dictionary<string, int>? categoryOrders);
+    
+    /// <summary>
+    /// 根据ID获取分类
+    /// </summary>
+    /// <param name="id">分类ID</param>
+    /// <returns>分类模型，如果找不到则返回null</returns>
+    Task<CategoryModel?> GetById(string id);
+    
+    /// <summary>
+    /// 根据分类ID获取文章列表
+    /// </summary>
+    /// <param name="id">分类ID</param>
+    /// <returns>文章数组</returns>
+    public Task<ArticleModel[]> GetArticlesById(string id);
+}
+
 public class CategoryRepository(IDbContextFactory<ClubContext> factory) : ICategoryRepository
 {
     public async Task<IEnumerable<CategoryModel>> GetAll()
@@ -36,7 +98,7 @@ public class CategoryRepository(IDbContextFactory<ClubContext> factory) : ICateg
                 model.Id = Guid.NewGuid().ToString();
             }
 
-            model.Order = context.Categories.Count() + 1;
+            model.Order = await context.Categories.CountAsync() + 1;
 
             context.Categories.Add(model);
         }

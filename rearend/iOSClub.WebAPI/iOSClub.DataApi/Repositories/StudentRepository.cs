@@ -5,91 +5,270 @@ using Microsoft.EntityFrameworkCore;
 
 namespace iOSClub.DataApi.Repositories;
 
+/// <summary>
+/// 学生仓库接口，提供学生数据的CRUD操作和查询功能
+/// </summary>
 public interface IStudentRepository
 {
+    /// <summary>
+    /// 获取所有学生
+    /// </summary>
+    /// <returns>学生列表</returns>
     public Task<List<StudentModel>> GetAll();
-    public Task<StudentModel?> Get(string id);
+    
+    /// <summary>
+    /// 根据ID获取学生
+    /// </summary>
+    /// <param name="id">学生ID</param>
+    /// <returns>学生模型，如果找不到则返回null</returns>
+    public Task<StudentModel?> Get(string id) => GetByIdAsync(id);
+    
+    /// <summary>
+    /// 创建学生
+    /// </summary>
+    /// <param name="model">学生模型</param>
+    /// <returns>创建的学生模型，如果创建失败则返回null</returns>
+    /// <exception cref="ArgumentException">当输入参数无效时抛出</exception>
     public Task<StudentModel?> Create(StudentModel model);
+    
+    /// <summary>
+    /// 更新学生
+    /// </summary>
+    /// <param name="model">学生模型</param>
+    /// <returns>是否更新成功</returns>
     public Task<bool> Update(StudentModel model);
-    public Task<bool> Delete(string id);
+    
+    /// <summary>
+    /// 删除学生
+    /// </summary>
+    /// <param name="id">学生ID</param>
+    /// <returns>是否删除成功</returns>
+    public Task<bool> Delete(string id) => DeleteAsync(id);
+    
+    /// <summary>
+    /// 学生登录验证
+    /// </summary>
+    /// <param name="userId">学生ID</param>
+    /// <param name="password">密码</param>
+    /// <returns>是否登录成功</returns>
     public Task<bool> Login(string userId, string password);
 
-    // 新增方法
+    /// <summary>
+    /// 根据ID异步获取学生
+    /// </summary>
+    /// <param name="id">学生ID</param>
+    /// <returns>学生模型，如果找不到则返回null</returns>
     public Task<StudentModel?> GetByIdAsync(string id);
+    
+    /// <summary>
+    /// 异步更新学生
+    /// </summary>
+    /// <param name="model">学生模型</param>
+    /// <returns>是否更新成功</returns>
     public Task<bool> UpdateAsync(StudentModel model);
+    
+    /// <summary>
+    /// 异步删除学生
+    /// </summary>
+    /// <param name="id">学生ID</param>
+    /// <returns>是否删除成功</returns>
     public Task<bool> DeleteAsync(string id);
+    
+    /// <summary>
+    /// 异步批量更新学生
+    /// </summary>
+    /// <param name="list">学生列表</param>
+    /// <returns>是否更新成功</returns>
     public Task<bool> UpdateManyAsync(List<StudentModel> list);
+    
+    /// <summary>
+    /// 异步获取所有成员
+    /// </summary>
+    /// <returns>成员列表</returns>
     public Task<List<MemberModel>> GetAllMembersAsync();
+    
+    /// <summary>
+    /// 异步分页获取成员
+    /// </summary>
+    /// <param name="pageNum">页码</param>
+    /// <param name="pageSize">每页大小</param>
+    /// <returns>成员列表和总记录数</returns>
     public Task<(List<MemberModel>, int)> GetMembersPagedAsync(int pageNum, int pageSize);
 
-    // 带搜索功能的分页方法
+    /// <summary>
+    /// 带搜索功能的异步分页获取成员
+    /// </summary>
+    /// <param name="pageNum">页码</param>
+    /// <param name="pageSize">每页大小</param>
+    /// <param name="searchTerm">搜索词</param>
+    /// <param name="searchCondition">搜索条件</param>
+    /// <returns>成员列表和总记录数</returns>
     public Task<(List<MemberModel>, int)> GetMembersPagedAsync(int pageNum, int pageSize, string? searchTerm,
         string? searchCondition);
 
+    /// <summary>
+    /// 搜索学生
+    /// </summary>
+    /// <param name="searchTerm">搜索词</param>
+    /// <param name="searchCondition">搜索条件</param>
+    /// <returns>学生列表</returns>
     public Task<List<StudentModel>> Search(string searchTerm, string searchCondition);
 }
 
-public class StudentRepository(ClubContext context) : IStudentRepository
+public class StudentRepository(IDbContextFactory<ClubContext> factory) : IStudentRepository
 {
+    // 使用EF Core编译查询，缓存查询计划，提高重复查询性能
+    private static readonly Func<ClubContext, string, Task<StudentModel?>> GetStudentByIdQuery =
+        EF.CompileAsyncQuery((ClubContext context, string id) =>
+            context.Students.AsNoTracking().FirstOrDefault(s => s.UserId == id));
+
+    private static readonly Func<ClubContext, string, string, Task<StudentModel?>> LoginQuery =
+        EF.CompileAsyncQuery((ClubContext context, string userId, string passwordHash) =>
+            context.Students.AsNoTracking()
+                .FirstOrDefault(s => s.UserId == userId && (string.IsNullOrEmpty(s.PasswordHash)
+                    ? passwordHash == s.PhoneNum
+                    : s.PasswordHash == passwordHash)));
+
     public async Task<List<StudentModel>> GetAll()
     {
-        var students = await context.Students.ToListAsync();
+        await using var context = await factory.CreateDbContextAsync();
+        var students = await context.Students.AsNoTracking().ToListAsync();
         return students;
     }
 
-    public async Task<StudentModel?> Get(string id)
+    public async Task<StudentModel?> GetByIdAsync(string id)
     {
-        var stu = await context.Students.FirstOrDefaultAsync(x => x.UserId == id);
-        return stu;
+        await using var context = await factory.CreateDbContextAsync();
+        return await GetStudentByIdQuery(context, id);
     }
 
     public async Task<bool> Update(StudentModel model)
     {
-        var stu = await Get(model.UserId);
-        if (stu == null) return false;
+        // 输入验证
+        if (string.IsNullOrWhiteSpace(model.UserId))
+        {
+            return false;
+        }
+
+        // 验证手机号格式
+        if (!string.IsNullOrWhiteSpace(model.PhoneNum) && !ValidationTool.IsValidPhoneNumber(model.PhoneNum))
+        {
+            return false;
+        }
+
+        // 验证邮箱格式
+        if (!string.IsNullOrEmpty(model.EMail) && !ValidationTool.IsValidEmail(model.EMail))
+        {
+            return false;
+        }
+
+        await using var context = await factory.CreateDbContextAsync();
+        var stu = await context.Students.FirstOrDefaultAsync(x => x.UserId == model.UserId);
+        if (stu == null)
+        {
+            return false;
+        }
+
         stu.Update(model);
-        return await context.SaveChangesAsync() == 1;
+        var result = await context.SaveChangesAsync();
+
+        return result == 1;
     }
 
     public async Task<StudentModel?> Create(StudentModel model)
     {
-        var stu = await Get(model.UserId);
-        if (stu != null) return null;
+        // 输入验证
+        if (string.IsNullOrWhiteSpace(model.UserId))
+        {
+            throw new ArgumentException("用户ID不能为空");
+        }
 
-        context.Students.Add(model);
-        return await context.SaveChangesAsync() == 1 ? model : null;
-    }
+        if (string.IsNullOrWhiteSpace(model.UserName))
+        {
+            throw new ArgumentException("用户名不能为空");
+        }
 
-    public async Task<bool> Delete(string id)
-    {
-        var stu = await Get(id);
-        if (stu == null) return false;
-        context.Students.Remove(stu);
-        return await context.SaveChangesAsync() == 1;
+        // 验证手机号格式
+        if (!ValidationTool.IsValidPhoneNumber(model.PhoneNum))
+        {
+            throw new ArgumentException("手机号格式错误");
+        }
+
+        // 验证邮箱格式
+        if (!string.IsNullOrEmpty(model.EMail) && !ValidationTool.IsValidEmail(model.EMail))
+        {
+            throw new ArgumentException("邮箱格式错误");
+        }
+
+        //如果密码不是哈希加密过的，则进行加密
+        if (!string.IsNullOrEmpty(model.PasswordHash) && !DataTool.IsValidHash(model.PasswordHash))
+        {
+            model.PasswordHash = DataTool.StringToHash(model.PasswordHash);
+        }
+
+        await using var context = await factory.CreateDbContextAsync();
+        var stu = await context.Students.FirstOrDefaultAsync(x => x.UserId == model.UserId);
+        if (stu != null)
+        {
+            return null;
+        }
+
+        await context.Students.AddAsync(model);
+        var result = await context.SaveChangesAsync();
+
+        return result == 1 ? model : null;
     }
 
     public async Task<bool> Login(string userId, string password)
     {
+        // 输入验证
+        if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(password))
+        {
+            return false;
+        }
+
+        await using var context = await factory.CreateDbContextAsync();
         var hash = DataTool.StringToHash(password);
 
-        return await context.Students.AnyAsync(x =>
-            x.UserId == userId && (string.IsNullOrEmpty(x.PasswordHash)
-                ? password == x.PhoneNum
-                : hash == x.PasswordHash));
+        // 使用编译查询提高性能
+        var student = await LoginQuery(context, userId, hash);
+
+        return student != null;
     }
 
-    // 新增方法实现
-    public async Task<StudentModel?> GetByIdAsync(string id)
-    {
-        return await context.Students.FirstOrDefaultAsync(x => x.UserId == id);
-    }
 
     public async Task<bool> UpdateAsync(StudentModel model)
     {
-        var stu = await GetByIdAsync(model.UserId);
+        // 输入验证
+        if (string.IsNullOrWhiteSpace(model.UserId))
+        {
+            return false;
+        }
+
+        // 验证手机号格式
+        if (!string.IsNullOrWhiteSpace(model.PhoneNum) && !ValidationTool.IsValidPhoneNumber(model.PhoneNum))
+        {
+            return false;
+        }
+
+        // 验证邮箱格式
+        if (!string.IsNullOrEmpty(model.EMail) && !ValidationTool.IsValidEmail(model.EMail))
+        {
+            return false;
+        }
+
+        await using var context = await factory.CreateDbContextAsync();
+        var stu = await context.Students.FirstOrDefaultAsync(x => x.UserId == model.UserId);
         if (stu == null)
         {
             model.Standardization();
+
+            // 确保PhoneNum作为默认密码
+            if (string.IsNullOrWhiteSpace(model.PasswordHash))
+            {
+                model.PasswordHash = DataTool.StringToHash(model.PhoneNum);
+            }
+
             await context.Students.AddAsync(model);
         }
         else
@@ -97,44 +276,105 @@ public class StudentRepository(ClubContext context) : IStudentRepository
             stu.Update(model);
         }
 
-        return await context.SaveChangesAsync() > 0;
+        var result = await context.SaveChangesAsync();
+
+        return result > 0;
     }
 
     public async Task<bool> DeleteAsync(string id)
     {
-        var stu = await GetByIdAsync(id);
-        if (stu == null) return false;
+        // 输入验证
+        if (string.IsNullOrWhiteSpace(id))
+        {
+            return false;
+        }
+
+        await using var context = await factory.CreateDbContextAsync();
+        var stu = await context.Students.FirstOrDefaultAsync(x => x.UserId == id);
+        if (stu == null)
+        {
+            return false;
+        }
+
         context.Students.Remove(stu);
-        return await context.SaveChangesAsync() > 0;
+        var result = await context.SaveChangesAsync();
+
+        return result > 0;
     }
 
     public async Task<bool> UpdateManyAsync(List<StudentModel> list)
     {
+        // 输入验证
+        if (list.Count == 0)
+        {
+            return true; // 返回true表示没有需要更新的内容
+        }
+
+        // 验证列表中的每个学生数据
+        var validStudents = list.Where(model => !string.IsNullOrWhiteSpace(model.UserId))
+            .Where(model =>
+                !string.IsNullOrWhiteSpace(model.PhoneNum) && ValidationTool.IsValidPhoneNumber(model.PhoneNum));
+
+        await using var context = await factory.CreateDbContextAsync();
         // 获取所有现有的学生ID
         var existingStudentIds = await context.Students
             .Select(s => s.UserId)
             .ToHashSetAsync();
 
-        // 过滤出只需要添加的学生
-        var newStudents = list
+        // 标准化所有学生数据
+        var standardizedStudents = validStudents.Select(model => model.Standardization()).ToList();
+
+        // 分离需要插入和更新的学生
+        var newStudents = standardizedStudents
             .Where(model => !existingStudentIds.Contains(model.UserId))
-            .Select(model => model.Standardization())
             .ToList();
+
+        var existingStudents = standardizedStudents
+            .Where(model => existingStudentIds.Contains(model.UserId))
+            .ToList();
+
+        // 批量操作：使用EF Core 7.0+的高效批量处理
+        var changes = false;
 
         // 批量添加新学生
         if (newStudents.Count > 0)
         {
+            // 为新学生设置默认密码
+            foreach (var student in newStudents.Where(student => string.IsNullOrWhiteSpace(student.PasswordHash)))
+            {
+                student.PasswordHash = DataTool.StringToHash(student.PhoneNum);
+            }
+
             await context.Students.AddRangeAsync(newStudents);
-            return await context.SaveChangesAsync() > 0;
+            changes = true;
         }
 
-        return true;
+        // 批量更新现有学生：使用ExecuteUpdateAsync进行高效的批量更新
+        if (existingStudents.Count > 0)
+        {
+            // 对于EF Core 7.0+，可以使用ExecuteUpdateAsync进行批量更新
+            // 这里为每个学生单独更新，因为需要调用Update方法处理复杂的更新逻辑
+            // 在实际应用中，可以根据具体情况选择更高效的批量更新方式
+            foreach (var student in existingStudents)
+            {
+                var existingStudent = await context.Students.FirstOrDefaultAsync(s => s.UserId == student.UserId);
+                if (existingStudent == null) continue;
+                existingStudent.Update(student);
+                changes = true;
+            }
+        }
+
+        // 只有在有变化时才调用SaveChangesAsync，减少数据库调用
+        if (!changes) return true;
+        var result = await context.SaveChangesAsync();
+        return result > 0;
     }
 
     public async Task<List<MemberModel>> GetAllMembersAsync()
     {
-        var query = from student in context.Students
-            join staff in context.Staffs
+        await using var context = await factory.CreateDbContextAsync();
+        var query = from student in context.Students.AsNoTracking()
+            join staff in context.Staffs.AsNoTracking()
                 on student.UserId equals staff.UserId into staffGroup
             from staff in staffGroup.DefaultIfEmpty() // LEFT JOIN
             select MemberModel.CopyFrom(student, staff != null ? staff.Identity : "Member");
@@ -152,6 +392,7 @@ public class StudentRepository(ClubContext context) : IStudentRepository
     public async Task<(List<MemberModel>, int)> GetMembersPagedAsync(int pageNum, int pageSize, string? searchTerm,
         string? searchCondition)
     {
+        await using var context = await factory.CreateDbContextAsync();
         // 构建基础查询
         var query = context.Students.AsQueryable();
 
@@ -172,39 +413,38 @@ public class StudentRepository(ClubContext context) : IStudentRepository
             };
         }
 
+        // 计算总记录数
+        var totalCount = await query.CountAsync();
         var skipCount = (pageNum - 1) * pageSize;
-        var studentIdsQuery = query
-            .OrderBy(s => s.UserId) // 确保结果一致性的排序
+
+        // 在数据库层面执行LEFT JOIN操作，避免内存中连接
+        var memberQuery = from student in query.AsNoTracking()
+            join staff in context.Staffs.AsNoTracking()
+                on student.UserId equals staff.UserId into staffGroup
+            from staff in staffGroup.DefaultIfEmpty() // LEFT JOIN
+            orderby student.UserId // 确保结果一致性的排序
+            select new
+            {
+                Student = student,
+                StaffIdentity = staff != null ? staff.Identity : "Member"
+            };
+
+        // 应用分页并执行查询
+        var memberData = await memberQuery
             .Skip(skipCount)
             .Take(pageSize)
-            .Select(s => s.UserId);
+            .ToListAsync();
 
-        var studentIds = await studentIdsQuery.ToListAsync();
-        var studentsQuery = context.Students
-            .Where(s => studentIds.Contains(s.UserId))
-            .AsNoTracking();
-        var staffQuery = context.Staffs
-            .Where(s => studentIds.Contains(s.UserId))
-            .AsNoTracking();
-
-        var totalCount = await query.CountAsync();
-        var students = await studentsQuery.ToListAsync();
-        var staffs = await staffQuery.ToListAsync();
-
-        // 在内存中执行连接操作
-        var staffMap = staffs.ToDictionary(s => s.UserId);
-
-        var results = students.Select(student =>
-        {
-            staffMap.TryGetValue(student.UserId, out var staff);
-            return MemberModel.CopyFrom(student, staff != null ? staff.Identity : "Member");
-        }).ToList();
+        // 转换为MemberModel列表
+        var results = memberData.Select(item =>
+            MemberModel.CopyFrom(item.Student, item.StaffIdentity)).ToList();
 
         return (results, totalCount);
     }
 
     public async Task<List<StudentModel>> Search(string searchTerm, string searchCondition)
     {
+        await using var context = await factory.CreateDbContextAsync();
         var query = context.Students.AsQueryable();
 
         // 如果提供了搜索词，则应用搜索条件
@@ -224,18 +464,9 @@ public class StudentRepository(ClubContext context) : IStudentRepository
             };
         }
 
-
-        var studentIdsQuery = query
-            .OrderBy(s => s.UserId) // 确保结
-            .Select(s => s.UserId);
-
-        var studentIds = await studentIdsQuery.ToListAsync();
-        var studentsQuery = context.Students
-            .Where(s => studentIds.Contains(s.UserId))
-            .AsNoTracking();
-
-        var students = await studentsQuery.ToListAsync();
-
-        return students;
+        // 直接返回结果，避免多余的查询和内存操作
+        return await query.AsNoTracking()
+            .OrderBy(s => s.UserId) // 确保结果一致性
+            .ToListAsync();
     }
 }

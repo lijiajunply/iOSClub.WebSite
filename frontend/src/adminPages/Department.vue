@@ -1,6 +1,6 @@
 <template>
   <div class="apple-container min-h-screen max-sm:p-0 p-6 md:p-8 transition-colors duration-300">
-    <div class="apple-card p-2 md:rounded-3xl">
+    <div class="p-4">
       <n-tabs
           type="segment"
           animated
@@ -232,7 +232,7 @@
                   </div>
                 </div>
 
-                <div class="apple-sub-card p-6 bg-gradient-to-br from-blue-500 to-indigo-600 text-white border-none">
+                <div class="apple-sub-card p-6 bg-linear-to-br from-blue-500 to-indigo-600 text-white border-none">
                   <h3 class="text-white/90 font-medium mb-1">项目统计</h3>
                   <div class="text-3xl font-bold mb-4">{{ department.projects?.length || 0 }}</div>
                   <button @click="addProject"
@@ -308,6 +308,7 @@
       v-model:show="showAddMemberModal"
       preset="card"
       class="apple-modal"
+      style="max-width: 500px"
       :title="`添加${addMemberType === 'minister' ? '部长' : '成员'}`"
       :bordered="false"
       size="huge"
@@ -348,6 +349,7 @@
       v-model:show="showDepartmentModal"
       preset="card"
       class="apple-modal"
+      style="max-width: 500px"
       :title="editingDepartment ? '编辑部门' : '新建部门'"
       :bordered="false"
   >
@@ -378,6 +380,7 @@
       v-model:show="showChangeDepartmentModalRef"
       preset="card"
       class="apple-modal"
+      style="max-width: 500px"
       title="人事调动"
       :bordered="false"
   >
@@ -390,7 +393,7 @@
         <div>
           <div class="font-medium text-gray-900 dark:text-white">{{ selectedStaff.name }}</div>
           <div class="text-sm text-gray-500">{{ selectedStaff.userId }} | {{
-              selectedStaff.department || '无部门'
+              selectedStaff.department!.name || '无部门'
             }}
           </div>
         </div>
@@ -407,7 +410,7 @@
         <button
             @click="handleChangeDepartment"
             class="apple-btn primary"
-            :disabled="!targetDepartment || targetDepartment === selectedStaff?.department"
+            :disabled="!targetDepartment || targetDepartment === selectedStaff?.department?.name"
         >确认调动
         </button>
       </div>
@@ -577,7 +580,7 @@ const openDepartment = (department: Department | null = null) => {
 
 const showChangeDepartmentModal = (staff: StaffModel) => {
   selectedStaff.value = staff
-  targetDepartment.value = staff.department || ''
+  targetDepartment.value = staff.department?.name || ''
   showChangeDepartmentModalRef.value = true
 }
 
@@ -702,14 +705,18 @@ const addMember = async (member: StudentModel) => {
       await StaffService.createStaff({
         ...commonData,
         identity: addMemberType.value === 'minister' ? 'Minister' : 'Department',
-        department: currentDepartment.value.name
+        department: {
+          key: currentDepartment.value.id,
+          name: currentDepartment.value.name,
+          description: currentDepartment.value.description
+        } as DepartmentModel
       } as StaffModel);
       message.success(`已添加至 ${currentDepartment.value.name}`)
     } else {
       await StaffService.createStaff({
         ...commonData,
         identity: 'President',
-        department: ''
+        department: null
       } as StaffModel);
       message.success(`已添加至领导层`)
     }
@@ -899,6 +906,10 @@ onBeforeUnmount(() => {
   background-color: #F1F4F9; /* iCloud light gray */
 }
 
+.apple-modal{
+  max-width: 500px !important;
+}
+
 .apple-card {
   background-color: rgba(255, 255, 255, 0.65);
   backdrop-filter: blur(20px);
@@ -1032,20 +1043,6 @@ onBeforeUnmount(() => {
   letter-spacing: -0.01em;
 }
 
-/* Table overrides */
-:deep(.apple-table .n-data-table-th) {
-  background-color: transparent;
-  border-bottom: 1px solid #f0f0f0;
-  font-weight: 600;
-  color: #86868b;
-}
-
-:deep(.apple-table .n-data-table-td) {
-  background-color: transparent;
-  border-bottom: 1px solid #f5f5f7;
-  padding: 16px 12px;
-}
-
 :deep(.apple-table .n-data-table-tr:last-child .n-data-table-td) {
   border-bottom: none;
 }
@@ -1149,5 +1146,13 @@ onBeforeUnmount(() => {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+:deep(.n-tabs .n-tabs-capsule) {
+  border-radius: 12px !important;
+}
+
+:deep(.n-tabs .n-tabs-rail) {
+  border-radius: 16px !important;
 }
 </style>

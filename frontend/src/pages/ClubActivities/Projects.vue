@@ -12,7 +12,7 @@
         </div>
 
         <div class="space-y-1 text-center sm:text-left">
-          <h1 class="text-4xl sm:text-5xl font-semibold bg-gradient-to-r from-orange-500 via-pink-500 to-pink-600 bg-clip-text text-transparent animate-gradient">
+          <h1 class="text-4xl sm:text-5xl font-semibold bg-linear-to-r from-orange-500 via-pink-500 to-pink-600 bg-clip-text text-transparent animate-gradient">
             iOS Club Projects
           </h1>
           <p class="text-lg text-gray-500 dark:text-gray-400 font-medium tracking-wide">
@@ -96,21 +96,21 @@ const projects: ProjectItem[] = [
     title: "Old8Lang",
     content: "西建大 iOS Club 出品的脚本语言解释器，探索编译原理的奥秘，使用 C# 精心打造。",
     url: "https://gitee.com/XAUATiOSClub/Old8Lang",
-    icon: "mdi:code-braces-box", //
+    icon: "mdi:code-braces-box", 
     tag: "C# / Language"
   },
   {
     title: "iOS Club 官网",
-    content: "社团的官方门户，展示社团风采与最新动态，基于 Blazor 框架构建的现代化 Web 应用。",
-    url: "https://gitee.com/XAUATiOSClub/iOSClub.Web",
+    content: "社团的官方门户，展示社团风采与最新动态，基于 Vue 3 + ASP.NET Core 框架构建的现代化 Web 应用。",
+    url: "https://gitee.com/XAUATiOSClub/iOSClub.WebSite",
     icon: "mdi:web",
-    tag: "Blazor"
+    tag: "Vue 3 + ASP.NET Core"
   },
   {
     title: "LetCoding 平台",
     content: "集成了在线编辑器、编译器与 OJ 系统的全能代码平台。FastApi + Vue 的完美结合。",
     url: "https://gitee.com/XAUATiOSClub/LetCoding",
-    icon: "mdi:laptop-code",
+    icon: "icon-park-outline:source-code",
     tag: "Vue + FastAPI"
   },
   {
@@ -118,7 +118,7 @@ const projects: ProjectItem[] = [
     content: "自动化文档生成解决方案。利用 WPF 和 ASP.NET WebAPI 强大的后端处理能力。",
     url: "https://gitee.com/XAUATiOSClub/DocumentMaking",
     icon: "mdi:file-document-multiple-outline",
-    tag: ".NET / WPF"
+    tag: ".NET / Avalonia"
   },
   {
     title: "滑稽账本",
@@ -129,10 +129,10 @@ const projects: ProjectItem[] = [
   },
   {
     title: "建大导航",
-    content: "专为西建大学子设计的校园导航服务，不仅是指路，更是连接校园生活的纽带。",
-    url: "https://gitee.com/XAUATiOSClub/XAUATNav",
+    content: "专为西建大学子设计的校园导航页服务",
+    url: "https://gitee.com/luckyfishisdashen/university_link_search",
     icon: "mdi:map-search-outline",
-    tag: "Utility"
+    tag: "Vue 3 + ASP.NET Core"
   }
 ];
 

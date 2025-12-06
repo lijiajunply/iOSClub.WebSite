@@ -210,7 +210,7 @@ const handleImageError = (e: Event) => {
 
 /* 滚动条样式 */
 .custom-scrollbar::-webkit-scrollbar {
-  width: 0px; /* 隐藏滚动条，保持像 iOS 一样简洁，或者设置极细 */
+  width: 0; /* 隐藏滚动条，保持像 iOS 一样简洁，或者设置极细 */
   background: transparent;
 }
 

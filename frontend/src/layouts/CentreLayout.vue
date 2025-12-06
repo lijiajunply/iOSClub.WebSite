@@ -55,7 +55,7 @@
                   class="group relative p-2 rounded-full transition-all duration-300 bg-gray-200/50 dark:bg-white/10 hover:bg-gray-300/50 dark:hover:bg-white/20"
                   aria-label="切换主题"
               >
-                <div class="relative w-5 h-5 overflow-hidden">
+                <span class="relative w-5 h-5 overflow-hidden block">
                   <Icon
                       v-if="!isDark"
                       icon="ph:sun-fill"
@@ -66,7 +66,7 @@
                       icon="ph:moon-stars-fill"
                       class="w-5 h-5 text-yellow-400 absolute transition-all duration-500 rotate-0 scale-100"
                   />
-                </div>
+                </span>
               </button>
               <!-- Custom Dropdown Menu -->
               <div

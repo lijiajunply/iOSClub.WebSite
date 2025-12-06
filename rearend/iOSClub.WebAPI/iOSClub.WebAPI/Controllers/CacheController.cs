@@ -1,4 +1,5 @@
 using System.Text;
+using iOSClub.WebAPI.Common;
 using Microsoft.AspNetCore.Mvc;
 using StackExchange.Redis;
 
@@ -7,41 +8,61 @@ namespace iOSClub.WebAPI.Controllers;
 [ApiController]
 [Route("[controller]")]
 public class CacheController(
-    IConnectionMultiplexer redis) : ControllerBase
+    IConnectionMultiplexer redis,
+    ILogger<CacheController> logger) : ControllerBase
 {
     private readonly IDatabase _db = redis.GetDatabase();
 
     [HttpGet("/clean")]
-    public async Task<IActionResult> CleanData()
+    public async Task<ActionResult<ApiResponse<string>>> CleanData()
     {
         try
         {
             // 获取Redis服务器实例
             var server = redis.GetServer(redis.GetEndPoints().First());
 
+            // 定义本项目使用的缓存键前缀
+            var projectKeyPrefixes = new[]
+            {
+                "token:",
+                "refresh:",
+                "user:",
+                "oauth:auth:",
+                "blacklist:refresh:"
+            };
+
             // 查找所有键
             var keys = server.Keys(pattern: "*", pageSize: 1000);
 
-            // 转换为数组
-            var keyArray = keys.ToArray();
+            // 过滤出本项目生成的缓存项
+            var projectKeys = keys.Where(key => projectKeyPrefixes.Any(prefix => key.ToString().StartsWith(prefix))).ToArray();
             var builder = new StringBuilder();
-            foreach (var key in keyArray)
+            foreach (var key in projectKeys)
             {
                 builder.AppendLine(key);
             }
 
-            // 删除所有键并获取删除的数量
+            // 删除所有本项目的缓存项并获取删除的数量
             long deletedCount = 0;
-            if (keyArray.Length > 0)
+            if (projectKeys.Length > 0)
             {
-                deletedCount = await _db.KeyDeleteAsync(keyArray);
+                deletedCount = await _db.KeyDeleteAsync(projectKeys);
             }
 
-            return Ok($"缓存已清除，共清理了 {deletedCount} 个缓存项 \n\r 清理的缓存项列表：\n\r {builder}");
+            var message = $"缓存已清除，共清理了 {deletedCount} 个缓存项 \n\r 清理的缓存项列表：\n\r {builder}";
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("缓存已清除，共清理了 {DeletedCount} 个缓存项", deletedCount);
+            }
+            return Ok(ApiResponse<string>.Success(message, "缓存清除成功"));
         }
         catch (Exception ex)
         {
-            return BadRequest($"清除缓存时出现问题: {ex.Message}");
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "清除缓存时出现问题");
+            }
+            return Ok(ApiResponse<string>.Fail(ErrorCode.CacheOperationFailed, $"清除缓存时出现问题: {ex.Message}"));
         }
     }
 }

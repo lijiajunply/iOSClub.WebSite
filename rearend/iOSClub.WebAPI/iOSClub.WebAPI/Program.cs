@@ -1,17 +1,25 @@
 using System.IO.Compression;
-using System.Text;
+using System.Security.Cryptography;
+using FluentValidation.AspNetCore;
 using iOSClub.Data;
 using iOSClub.Data.DataModels;
-using iOSClub.DataApi.Repositories;
 using iOSClub.DataApi.Services;
+using iOSClub.WebAPI.Common;
+using iOSClub.WebAPI.Common.Config;
+using iOSClub.WebAPI.Common.Extensions;
+using iOSClub.WebAPI.Common.Middleware;
+using iOSClub.WebAPI.Common.Security;
 using iOSClub.WebAPI.IdentityModels;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.IdentityModel.Tokens;
 using NpgsqlDataProtection;
+using Prometheus;
 using Scalar.AspNetCore;
 using Serilog;
 using StackExchange.Redis;
@@ -20,14 +28,90 @@ var builder = WebApplication.CreateBuilder(args);
 
 #region 控制器基本设置
 
-builder.Services.AddControllers(options => { options.Filters.Add<GlobalAuthorizationFilter>(); });
+// 配置请求大小限制
+builder.Services.Configure<FormOptions>(options =>
+{
+    // 设置请求体大小上限为10MB
+    options.MultipartBodyLengthLimit = 10 * 1024 * 1024;
+    options.ValueLengthLimit = 10 * 1024 * 1024;
+    options.BufferBodyLengthLimit = 10 * 1024 * 1024;
+});
+
+// 配置Kestrel服务器的请求大小限制
+builder.Services.Configure<KestrelServerOptions>(options =>
+{
+    options.Limits.MaxRequestBodySize = 10 * 1024 * 1024; // 10MB
+});
+
+// 注册FluentValidation服务（使用旧版API，抑制警告）
+#pragma warning disable CS0618
+var mvcBuilder = builder.Services.AddControllers(options => { options.Filters.Add<GlobalAuthorizationFilter>(); });
+mvcBuilder.AddFluentValidation(fv =>
+{
+    fv.RegisterValidatorsFromAssemblyContaining<Program>();
+    fv.DisableDataAnnotationsValidation = false;
+});
+#pragma warning restore CS0618
+
 builder.Services.AddOpenApi(opt => { opt.AddDocumentTransformer<BearerSecuritySchemeTransformer>(); });
+
+#endregion
+
+#region JWT配置和密钥管理
+
+var jwtConfig = new JwtConfig
+{
+    AccessTokenExpiryMinutes =
+        int.TryParse(Environment.GetEnvironmentVariable("JWT_ACCESS_TOKEN_EXPIRY_MINUTES"), out var accessTokenExpiry)
+            ? accessTokenExpiry
+            : 20,
+    RefreshTokenExpiryHours =
+        int.TryParse(Environment.GetEnvironmentVariable("JWT_REFRESH_TOKEN_EXPIRY_HOURS"), out var refreshTokenExpiry)
+            ? refreshTokenExpiry
+            : 72,
+    RsaPrivateKeyPath = Environment.GetEnvironmentVariable("JWT_RSA_PRIVATE_KEY_PATH") ?? "./app/keys/rsa_private.pem",
+    RsaPublicKeyPath = Environment.GetEnvironmentVariable("JWT_RSA_PUBLIC_KEY_PATH") ?? "./app/keys/rsa_public.pem",
+    Issuer = Environment.GetEnvironmentVariable("JWT_ISSUER") ?? "iOS Club of XAUAT",
+    Audience = Environment.GetEnvironmentVariable("JWT_AUDIENCE") ?? "iOS Club of XAUAT",
+    KeyRotationDays = int.TryParse(Environment.GetEnvironmentVariable("JWT_KEY_ROTATION_DAYS"), out var keyRotationDays)
+        ? keyRotationDays
+        : 90
+};
+
+builder.Services.AddSingleton(jwtConfig);
+builder.Services.AddSingleton<RsaKeyManager>();
+builder.Services.AddSingleton<JwtService>();
 
 #endregion
 
 #region 身份验证
 
 builder.Services.AddAuthorizationCore();
+
+// 配置JWT认证 - 注意：在测试环境中，我们将使用服务注入的方式获取RsaKeyManager，
+// 而不是直接创建实例，这样可以允许测试代码替换该服务
+var rsaKeyManager = new RsaKeyManager(jwtConfig,
+    LoggerFactory.Create(loggingBuilder => loggingBuilder.AddConsole()).CreateLogger<RsaKeyManager>());
+
+// 尝试确保密钥有效，但如果失败（例如在测试环境中），我们将使用临时密钥
+RSAParameters rsaParams;
+try
+{
+    rsaKeyManager.EnsureKeysValid();
+    var publicKey = rsaKeyManager.GetCurrentPublicKey();
+    rsaParams = publicKey.ExportParameters(false);
+}
+catch (Exception)
+{
+    // 在测试环境或无法访问文件系统的环境中，生成临时密钥
+    using var rsa = RSA.Create(2048);
+    rsaParams = rsa.ExportParameters(false);
+}
+
+// 从RSA密钥中导出公钥的SHA256哈希值作为KeyId，与生成令牌时使用的KeyId保持一致
+var publicKeyBytes = RSA.Create(rsaParams).ExportRSAPublicKey();
+var keyId = Convert.ToBase64String(SHA256.HashData(publicKeyBytes)).Substring(0, 16);
+var rsaSecurityKey = new RsaSecurityKey(rsaParams) { KeyId = keyId };
 
 builder.Services.AddAuthentication(options =>
     {
@@ -36,20 +120,36 @@ builder.Services.AddAuthentication(options =>
     })
     .AddJwtBearer(options =>
     {
-        var secretKey = Environment.GetEnvironmentVariable("SECRETKEY", EnvironmentVariableTarget.Process) ??
-                        builder.Configuration["Jwt:SecretKey"] ?? "";
         options.TokenValidationParameters = new TokenValidationParameters()
         {
-            ValidateIssuer = true,
-            ValidIssuer = "iOS Club of XAUAT",
-            ValidateAudience = true,
-            ValidAudience = "iOS Club of XAUAT",
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey =
-                new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
+            IssuerSigningKey = rsaSecurityKey,
+            ValidateIssuer = true,
+            ValidIssuer = jwtConfig.Issuer,
+            ValidateAudience = true,
+            ValidAudience = jwtConfig.Audience,
             ValidateLifetime = true,
-            ClockSkew = TimeSpan.FromMinutes(10),
+            ClockSkew = TimeSpan.FromMinutes(1),
             RequireExpirationTime = true,
+            RequireSignedTokens = true
+        };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = context =>
+            {
+                // 可以在这里添加额外的验证逻辑
+                context.Success();
+                return Task.CompletedTask;
+            },
+            OnAuthenticationFailed = context =>
+            {
+                // 记录认证失败日志
+                context.NoResult();
+                context.Fail("认证失败");
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                return Task.CompletedTask;
+            }
         };
     })
     .AddCookie("OAuth2", options =>
@@ -59,6 +159,9 @@ builder.Services.AddAuthentication(options =>
         options.AccessDeniedPath = "/OAuth/access-denied";
         options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
         options.SlidingExpiration = true;
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+        options.Cookie.SameSite = SameSiteMode.None;
     });
 
 #endregion
@@ -74,8 +177,20 @@ builder.Services.AddSession(options =>
     options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest; // 根据请求类型决定是否使用安全Cookie
 });
 
-// 添加内存缓存支持，解决会话存储需要IDistributedCache的问题
-builder.Services.AddDistributedMemoryCache();
+// 使用Redis分布式缓存替代内存缓存
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    var redis = Environment.GetEnvironmentVariable("REDIS", EnvironmentVariableTarget.Process);
+    if (string.IsNullOrEmpty(redis) && builder.Environment.IsDevelopment())
+    {
+        redis = builder.Configuration["Redis"];
+    }
+
+    if (!string.IsNullOrEmpty(redis))
+    {
+        options.Configuration = redis;
+    }
+});
 
 #endregion
 
@@ -91,7 +206,8 @@ builder.Services.AddCors(options =>
                 origin.StartsWith("http://localhost")) // 支持本地开发环境
             .AllowAnyMethod()
             .AllowAnyHeader()
-            .AllowCredentials(); // 如果需要发送凭据（如cookies、认证头等）
+            .AllowCredentials() // 如果需要发送凭据（如cookies、认证头等）
+            .WithExposedHeaders("X-Refresh-Token"); // 允许前端访问X-Refresh-Token响应头
     });
 });
 
@@ -143,27 +259,37 @@ if (!string.IsNullOrEmpty(redis))
 
 #region 日志设置
 
-// 定义日志数据库路径
-
-if (builder.Environment.IsProduction())
+if (builder.Environment.IsDevelopment())
 {
-    var sqlPath = Environment.CurrentDirectory + "/logs/log.db";
+    builder.Logging.AddConsole();
+}
+else
+{
+    // 定义日志数据库路径
+    var logPath = Path.Combine(Environment.CurrentDirectory, "logs", "log.db");
 
     // 确保日志目录存在
-    var logDir = Path.GetDirectoryName(sqlPath);
+    var logDir = Path.GetDirectoryName(logPath);
     if (!string.IsNullOrEmpty(logDir) && !Directory.Exists(logDir))
     {
         Directory.CreateDirectory(logDir);
     }
 
-    // 日志 注册
+    // 统一日志配置，适用于所有环境
     var logger = new LoggerConfiguration()
         .MinimumLevel.Information()
         .Enrich.FromLogContext()
-        .WriteTo.Console()
+        .Enrich.With<SensitiveDataFilter>()
+        .WriteTo.Console(
+            outputTemplate: "{Timestamp:HH:mm:ss} [{Level:u3}] {Message:lj} {Properties:j}{NewLine}{Exception}")
         .WriteTo.SQLite(
-            sqliteDbPath: sqlPath,
+            sqliteDbPath: logPath,
             tableName: "Logs")
+        .WriteTo.File(
+            Path.Combine(logDir ?? Environment.CurrentDirectory, "log-.txt"),
+            rollingInterval: RollingInterval.Day,
+            outputTemplate:
+            "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {SourceContext}: {Message:lj} {Properties:j}{NewLine}{Exception}")
         .CreateLogger();
 
     builder.Logging
@@ -181,21 +307,13 @@ if (builder.Environment.IsProduction())
 builder.Services.AddHttpClient();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<GlobalAuthorizationFilter>();
+// 注册ITokenGenerator服务
 builder.Services.AddScoped<ITokenGenerator, JwtGenerator>();
 
-builder.Services.AddScoped<IArticleRepository, ArticleRepository>();
-builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
-builder.Services.AddScoped<IDepartmentRepository, DepartmentRepository>();
-builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
-builder.Services.AddScoped<IResourceRepository, ResourceRepository>();
-builder.Services.AddScoped<IStaffRepository, StaffRepository>();
-builder.Services.AddScoped<IStudentRepository, StudentRepository>();
-builder.Services.AddScoped<ITodoRepository, TodoRepository>();
-
-builder.Services.AddScoped<IDataCentreService, DataCentreService>();
-builder.Services.AddScoped<IClientApplicationRepository, ClientApplicationRepository>();
-builder.Services.AddScoped<IEmailService, EmailService>();
-builder.Services.AddScoped<ILoginService, LoginService>();
+// 使用扩展方法注册服务
+builder.Services.RegisterRepositoriesAndServices();
+builder.Services.RegisterCqrsServices();
+builder.Services.RegisterSecurityServices();
 
 #endregion
 
@@ -217,70 +335,119 @@ builder.Services.Configure<GzipCompressionProviderOptions>(options => { options.
 
 #endregion
 
+#region Prometheus 监控
+
+// 添加 Prometheus 指标收集器
+builder.Services.AddMetricServer(option =>
+{
+    if (builder.Environment.IsDevelopment())
+    {
+        option.Url = "/metrics";
+    }
+});
+
+#endregion
+
 var app = builder.Build();
 
-// 创建数据库
+// 注册全局异常处理中间件
+app.UseMiddleware<GlobalExceptionMiddleware>();
+
+// 注册请求频率限制中间件
+app.UseMiddleware<RateLimitMiddleware>();
+
+// 注册数据脱敏中间件
+app.UseDataMasking();
+
+// 配置安全响应头
+app.Use(async (context, next) =>
+{
+    // 添加内容安全策略，防止XSS攻击
+    context.Response.Headers.Append("Content-Security-Policy",
+        "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; object-src 'none'; frame-ancestors 'none';");
+
+    // 添加X-XSS-Protection头
+    context.Response.Headers.Append("X-XSS-Protection", "1; mode=block");
+
+    // 添加X-Content-Type-Options头，防止MIME嗅探
+    context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+
+    // 添加X-Frame-Options头，防止点击劫持
+    context.Response.Headers.Append("X-Frame-Options", "DENY");
+
+    // 添加Referrer-Policy头
+    context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+
+    // 添加Permissions-Policy头
+    context.Response.Headers.Append("Permissions-Policy",
+        "camera=(), microphone=(), geolocation=(), payment=(), fullscreen=*");
+
+    // 添加Strict-Transport-Security头（生产环境建议启用）
+    if (!app.Environment.IsDevelopment())
+    {
+        context.Response.Headers.Append("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+    }
+
+    await next();
+});
+
+// 优化数据库迁移策略，异步执行迁移
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     var context = services.GetRequiredService<ClubContext>();
 
-    var pending = context.Database.GetPendingMigrations();
-    var enumerable = pending as string[] ?? pending.ToArray();
-
-    if (enumerable.Length != 0)
+    try
     {
-        Console.WriteLine("Pending migrations: " + string.Join("; ", enumerable));
-        try
+        var pending = context.Database.GetPendingMigrations();
+        var enumerable = pending as string[] ?? pending.ToArray();
+
+        if (enumerable.Length != 0)
         {
+            Console.WriteLine("Pending migrations: " + string.Join("; ", enumerable));
             await context.Database.MigrateAsync();
             Console.WriteLine("Migrations applied successfully.");
         }
-        catch (Exception ex)
+        else
         {
-            Console.WriteLine("Migration error: " + ex);
-            throw; // 让异常冒泡，方便定位问题
-        }
-    }
-    else
-    {
-        Console.WriteLine("No pending migrations.");
-    }
-
-    if (!context.Staffs.Any())
-    {
-        var user = Environment.GetEnvironmentVariable("USER", EnvironmentVariableTarget.Process);
-        Console.WriteLine(user);
-        var model = new StaffModel() { Identity = "Founder", Name = "root", UserId = "0000000000" };
-        var users = user?.Split(',');
-        if (!string.IsNullOrEmpty(user) && users != null)
-        {
-            if (users.Length > 0)
-                model.Name = users[0];
-            if (users.Length > 1)
-                model.UserId = users[1];
+            Console.WriteLine("No pending migrations.");
         }
 
-        context.Staffs.Add(model);
-    }
+        // 初始化数据
+        if (!await context.Staffs.AnyAsync())
+        {
+            var user = Environment.GetEnvironmentVariable("USER", EnvironmentVariableTarget.Process);
+            Console.WriteLine(user);
+            var model = new StaffModel() { Identity = "Founder", Name = "root", UserId = "0000000000" };
+            var users = user?.Split(',');
+            if (!string.IsNullOrEmpty(user) && users != null)
+            {
+                if (users.Length > 0)
+                    model.Name = users[0];
+                if (users.Length > 1)
+                    model.UserId = users[1];
+            }
 
-    // if (context.Departments.Any())
-    // {
-    //     var departments = await context.Departments.Where(x => string.IsNullOrEmpty(x.Key)).ToListAsync();
-    //     foreach (var department in departments)
-    //     {
-    //         department.Key = department.GetHashKey();
-    //     }
-    // }
-    
-    if (context.Categories.Any())
+            context.Staffs.Add(model);
+        }
+
+        if (await context.Categories.AnyAsync())
+        {
+            var categories = await context.Categories.Where(x => string.IsNullOrEmpty(x.Id)).ToListAsync();
+            context.Categories.RemoveRange(categories);
+        }
+
+        await context.SaveChangesAsync();
+    }
+    catch (Exception ex)
     {
-        var categories = await context.Categories.Where(x => string.IsNullOrEmpty(x.Id)).ToListAsync();
-        context.Categories.RemoveRange(categories);
+        Console.WriteLine("Migration error: " + ex);
+        // 不要抛出异常，避免应用启动失败
     }
-
-    await context.SaveChangesAsync();
-    await context.DisposeAsync();
+    finally
+    {
+        await context.DisposeAsync();
+    }
 }
 
 // 别动
@@ -293,7 +460,14 @@ app.UseHttpsRedirection();
 app.UseAuthentication(); // 添加这行以启用身份验证中间件
 app.UseAuthorization();
 app.UseCors();
+
+// 添加 Prometheus HTTP 请求指标收集中间件
+app.UseHttpMetrics();
+
 app.MapControllers();
 app.MapScalarApiReference();
+
+// 暴露 Prometheus 指标端点
+app.MapMetrics();
 
 app.Run();

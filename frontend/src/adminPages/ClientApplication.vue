@@ -200,10 +200,10 @@
     </n-modal>
 
     <!-- 模态框：详情 -->
-    <n-modal v-model:show="showDetailsModal" preset="card" :title="null" :bordered="false" size="huge" style="width: 550px; border-radius: 24px;" class="custom-modal details-modal">
+    <n-modal v-model:show="showDetailsModal" preset="card" :title="selectedApp?.applicationName" :bordered="false" size="huge" style="width: 550px; border-radius: 24px;" class="custom-modal details-modal">
       <div class="relative pt-6 pb-2">
         <div class="flex flex-col items-center mb-8">
-          <img v-if="selectedApp?.logoUrl" :src="selectedApp.logoUrl" class="w-24 h-24 rounded-3xl shadow-lg mb-4 object-cover bg-white" />
+          <img alt="" v-if="selectedApp?.logoUrl" :src="selectedApp.logoUrl" class="w-24 h-24 rounded-3xl shadow-lg mb-4 object-cover bg-white" />
           <div v-else class="w-24 h-24 rounded-3xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg mb-4 text-white">
             <Icon icon="lucide:app-window-mac" width="48" height="48" />
           </div>
@@ -442,7 +442,7 @@ const openDetailsModal = (app: ClientApplication) => {
   showSecret.value = false;
   showDetailsModal.value = true;
 };
-const handleDetailsModalClose = () => showDetailsModal.value = false;
+
 
 // 删除逻辑
 const confirmDelete = (app: ClientApplication) => {

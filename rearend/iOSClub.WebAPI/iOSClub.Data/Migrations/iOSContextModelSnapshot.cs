@@ -268,6 +268,11 @@ namespace iOSClub.Data.Migrations
 
                     b.HasIndex("DepartmentName");
 
+                    b.HasIndex("Identity");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
                     b.ToTable("Staffs");
                 });
 
@@ -320,6 +325,21 @@ namespace iOSClub.Data.Migrations
                         .HasColumnType("character varying(50)");
 
                     b.HasKey("UserId");
+
+                    b.HasIndex("Academy");
+
+                    b.HasIndex("ClassName");
+
+                    b.HasIndex("JoinTime");
+
+                    b.HasIndex("PhoneNum");
+
+                    b.HasIndex("PoliticalLandscape");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.HasIndex("UserName");
 
                     b.ToTable("Students");
                 });

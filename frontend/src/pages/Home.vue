@@ -9,7 +9,7 @@
 
     <!-- Hero Section -->
     <section class="relative z-10 flex flex-col items-center justify-center min-h-[calc(100vh-64px)] px-6 pt-20 pb-10">
-      <div class="max-w-7xl w-full mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+      <div class="container w-full mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
 
         <!-- Hero Text Content -->
         <div class="order-2 lg:order-1 text-center lg:text-left space-y-8">
@@ -79,7 +79,7 @@
 
     <!-- Bento Grid Section (About) -->
     <section id="about" class="relative z-10 py-24 px-6">
-      <div class="max-w-7xl mx-auto">
+      <div class="container mx-auto">
         <div class="flex flex-col items-center text-center mb-16">
           <h2 class="ml-3 text-3xl md:text-5xl font-bold text-slate-900 dark:text-white mb-6">
             不仅是社团，<br/>更是你的<span class="text-blue-600 dark:text-blue-400">创意实验室</span>。
@@ -104,9 +104,10 @@
             <div class="relative z-10 h-full flex flex-col justify-between p-6">
               <!-- Decorative Icon in Bottom Right -->
               <div class="absolute bottom-6 right-6 opacity-10 group-hover:opacity-15 transition-opacity duration-300">
-                <Icon :icon="card.iconName" class="text-6xl sm:text-7xl md:text-8xl lg:text-9xl transition-all" :style="{ color: card.color }"/>
+                <Icon :icon="card.iconName" class="text-6xl sm:text-7xl md:text-8xl lg:text-9xl transition-all"
+                      :style="{ color: card.color }"/>
               </div>
-              
+
               <div>
                 <h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-3 pr-4">
                   {{ card.title }}
@@ -116,8 +117,9 @@
                 </p>
               </div>
 
-              <div class="mt-8 flex items-center text-base font-semibold transition-all duration-300 group-hover:translate-x-1"
-                   :style="{ color: card.color }">
+              <div
+                  class="mt-8 flex items-center text-base font-semibold transition-all duration-300 group-hover:translate-x-1"
+                  :style="{ color: card.color }">
                 <span v-if="card.url">了解更多</span>
                 <Icon v-if="card.url" icon="fluent:arrow-right-20-filled" class="ml-2"/>
               </div>
@@ -145,7 +147,7 @@
     <footer
         class="relative z-10 border-t border-slate-200 dark:border-white/10 bg-white/50 dark:bg-black/20 backdrop-blur-xl">
       <div class="max-w-7xl mx-auto px-6 py-12 flex flex-col md:flex-row justify-between items-center gap-6">
-        <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">
+        <p class="text-[10px] md:text-xs text-slate-500 dark:text-slate-400 font-medium">
           Copyright © 2023 - {{ new Date().getFullYear() }} iOS Club of XAUAT. All rights reserved.
         </p>
 

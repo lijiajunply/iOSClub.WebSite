@@ -271,7 +271,7 @@ const performRegularLogin = async (params: any) => {
 
 // 组件挂载时加载客户端应用信息和检查JWT
 onMounted(async () => {
-  loadClientAppInfo()
+  await loadClientAppInfo()
   await checkMainSiteJwt()
 })
 

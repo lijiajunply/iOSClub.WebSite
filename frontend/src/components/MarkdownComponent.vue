@@ -24,6 +24,15 @@ import "prismjs/plugins/line-numbers/prism-line-numbers.css"
 import "prismjs/plugins/line-numbers/prism-line-numbers"
 import "prismjs/plugins/copy-to-clipboard/prism-copy-to-clipboard"
 
+// 图片放大相关状态
+const showImageModal = ref(false);
+const currentImageSrc = ref('');
+const currentImageAlt = ref('');
+const scale = ref(1);
+const isDragging = ref(false);
+const dragStart = ref({ x: 0, y: 0 });
+const position = ref({ x: 0, y: 0 });
+
 interface Content {
   title: string
   date: string
@@ -75,11 +84,13 @@ md.use(markdownItKatex, {
   errorColor: '#cc0000'
 });
 
-// Custom Containers (Alerts) - MacOS Style
+// Custom Containers (Alerts) - macOS Style
 const containerOptions = [
   { name: 'warning', icon: 'lucide:alert-triangle', color: 'text-amber-500', bg: 'bg-amber-50 dark:bg-amber-500/10', border: 'border-amber-200 dark:border-amber-500/20' },
   { name: 'danger', icon: 'lucide:x-circle', color: 'text-red-500', bg: 'bg-red-50 dark:bg-red-500/10', border: 'border-red-200 dark:border-red-500/20' },
-  { name: 'tip', icon: 'lucide:lightbulb', color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-500/10', border: 'border-blue-200 dark:border-blue-500/20' }
+  { name: 'tip', icon: 'lucide:lightbulb', color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-500/10', border: 'border-blue-200 dark:border-blue-500/20' },
+  { name: 'info', icon: 'lucide:info', color: 'text-sky-500', bg: 'bg-sky-50 dark:bg-sky-500/10', border: 'border-sky-200 dark:border-sky-500/20' },
+  { name: 'note', icon: 'lucide:book', color: 'text-emerald-500', bg: 'bg-emerald-50 dark:bg-emerald-500/10', border: 'border-emerald-200 dark:border-emerald-500/20' }
 ]
 
 containerOptions.forEach(opt => {
@@ -102,13 +113,13 @@ containerOptions.forEach(opt => {
 
 // Details Container for collapsible content
 md.use(markdownItContainer, 'details', {
-  validate: (params: string) => params.trim().match(/^details\\s+(.*)$/),
+  validate: (params: string) => params.trim().match(new RegExp(`^details\\s+(.*)$`)),
   render: (tokens: any[], idx: number) => {
-    const m = tokens[idx].info.trim().match(/^details\\s+(.*)$/)
+    const m = tokens[idx].info.trim().match(new RegExp(`^details\\s+(.*)$`))
     if (tokens[idx].nesting === 1) {
       return `<details class="my-6 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 overflow-hidden">
                 <summary class="px-4 py-3 cursor-pointer text-sm font-medium text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
-                  ${md.utils.escapeHtml(m[1] || 'Details')}
+                  ${md.utils.escapeHtml(m ? m[1] || 'Details' : 'Details')}
                 </summary>
                 <div class="px-4 py-3 pt-0 text-sm text-zinc-700 dark:text-zinc-300">`
     } else {
@@ -116,6 +127,101 @@ md.use(markdownItContainer, 'details', {
     }
   }
 })
+
+// Obsidian-style Callout Support
+// --- Obsidian-style Callout Support ---//
+// Add a custom rule to detect and handle callout blockquotes
+md.core.ruler.before('linkify', 'callout_detection', function(state: any) {
+  const tokens = state.tokens;
+  
+  for (let i = 0; i < tokens.length; i++) {
+    if (tokens[i].type === 'blockquote_open') {
+      // Look for the first paragraph in the blockquote
+      let j = i + 1;
+      while (j < tokens.length && tokens[j].type !== 'blockquote_close') {
+        if (tokens[j].type === 'paragraph_open' && 
+            j + 1 < tokens.length && tokens[j + 1].type === 'inline') {
+          
+          const inlineToken = tokens[j + 1];
+          const content = inlineToken.content;
+          const calloutMatch = content.match(/^\[!(\w+)\](?:\s+(.*))?$/);
+          
+          if (calloutMatch) {
+            const calloutType = calloutMatch[1].toLowerCase();
+            const calloutTitle = calloutMatch[2] || calloutType.toUpperCase();
+            
+            // Find the corresponding container option
+            const opt = containerOptions.find(o => o.name === calloutType);
+            
+            if (opt) {
+              // Store callout information in the blockquote open token
+              tokens[i].info = calloutType;
+              tokens[i].calloutTitle = calloutTitle;
+              tokens[i].calloutOptions = opt;
+              
+              // Remove the callout marker from the content
+              if (content.trim() === calloutMatch[0]) {
+                inlineToken.content = '';
+              } else {
+                inlineToken.content = content.replace(/^\[!(\w+)\](?:\s+(.*))?\s*/, '');
+              }
+              
+              // If the paragraph is now empty, remove it
+              if (inlineToken.content.trim() === '') {
+                // Remove paragraph_open, inline, paragraph_close
+                tokens.splice(j, 3);
+                j -= 3;
+              }
+            }
+            break;
+          }
+        }
+        j++;
+      }
+    }
+  }
+});
+
+// Override blockquote rendering
+const defaultRender = md.renderer.rules.blockquote_open || function(tokens: any[], idx: number, options: any, _: any, self: any) {
+  return self.renderToken(tokens, idx, options);
+};
+
+const defaultCloseRender = md.renderer.rules.blockquote_close || function(tokens: any[], idx: number, options: any, _: any, self: any) {
+  return self.renderToken(tokens, idx, options);
+};
+
+md.renderer.rules.blockquote_open = function(tokens: any[], idx: number, options: any, env: any, self: any) {
+  const token = tokens[idx];
+  
+  if (token.info && token.calloutOptions) {
+    const opt = token.calloutOptions;
+    const title = token.calloutTitle;
+    
+    return `<div class="${opt.bg} ${opt.border} border rounded-xl p-4 my-6 flex gap-3 shadow-sm">
+              <div class="min-w-0 flex-1">
+                <p class="font-semibold text-sm ${opt.color} mb-1 opacity-90">${md.utils.escapeHtml(title)}</p>
+                <div class="text-sm opacity-90 leading-relaxed">`;
+  }
+  
+  return defaultRender(tokens, idx, options, env, self);
+};
+
+md.renderer.rules.blockquote_close = function(tokens: any[], idx: number, options: any, env: any, self: any) {
+  // Find the corresponding blockquote_open token
+  let openIdx = idx - 1;
+  while (openIdx >= 0) {
+    if (tokens[openIdx].type === 'blockquote_open') {
+      if (tokens[openIdx].info && tokens[openIdx].calloutOptions) {
+        return '</div></div></div>\n';
+      }
+      break;
+    }
+    openIdx--;
+  }
+  
+  return defaultCloseRender(tokens, idx, options, env, self);
+};
 
 // --- Logic: Headings Extraction ---
 // Keep headings reactive
@@ -161,7 +267,7 @@ watch(() => props.content, async (newVal) => {
   }
 
   // Determine content string
-  const contentStr = typeof newVal === 'string' ? newVal : newVal.content
+  const contentStr = newVal.content
 
   // Extract Headings first
   headings.value = extractHeadings(contentStr)
@@ -187,6 +293,16 @@ watch(() => props.content, async (newVal) => {
     img.setAttribute('loading', 'lazy');
     // Add zoom capability
     img.classList.add('cursor-zoom-in', 'transition-transform', 'duration-300', 'hover:scale-[1.02]');
+    // Add click event for zoom
+    img.addEventListener('click', () => {
+      currentImageSrc.value = img.src;
+      currentImageAlt.value = img.alt || '';
+      scale.value = 1;
+      position.value = { x: 0, y: 0 };
+      showImageModal.value = true;
+      // Prevent body scroll when modal is open
+      document.body.style.overflow = 'hidden';
+    });
   });
   
   Prism.highlightAll()
@@ -245,7 +361,87 @@ watch(html, () => {
   nextTick(() => setTimeout(setupObserver, 200));
 });
 
-onBeforeUnmount(() => observer?.disconnect());
+// 图片放大模态框控制
+const closeImageModal = () => {
+  showImageModal.value = false;
+  // Restore body scroll
+  document.body.style.overflow = 'auto';
+};
+
+const handleImageClick = (_: MouseEvent) => {
+  // Click on image itself closes modal
+  closeImageModal();
+};
+
+const handleModalClick = (e: MouseEvent) => {
+  // Click on modal background closes modal
+  if (e.target === e.currentTarget) {
+    closeImageModal();
+  }
+};
+
+const handleZoomIn = (e: MouseEvent) => {
+  e.stopPropagation();
+  scale.value = Math.min(scale.value + 0.2, 3);
+};
+
+const handleZoomOut = (e: MouseEvent) => {
+  e.stopPropagation();
+  scale.value = Math.max(scale.value - 0.2, 0.5);
+};
+
+const handleReset = (e: MouseEvent) => {
+  e.stopPropagation();
+  scale.value = 1;
+  position.value = { x: 0, y: 0 };
+};
+
+// 鼠标拖动处理
+const handleMouseDown = (e: MouseEvent) => {
+  e.stopPropagation();
+  if (scale.value > 1) {
+    isDragging.value = true;
+    dragStart.value = { x: e.clientX - position.value.x, y: e.clientY - position.value.y };
+  }
+};
+
+const handleMouseMove = (e: MouseEvent) => {
+  if (isDragging.value) {
+    e.preventDefault();
+    position.value = { x: e.clientX - dragStart.value.x, y: e.clientY - dragStart.value.y };
+  }
+};
+
+const handleMouseUp = () => {
+  isDragging.value = false;
+};
+
+// 添加全局鼠标事件监听
+const setupDragEvents = () => {
+  document.addEventListener('mousemove', handleMouseMove);
+  document.addEventListener('mouseup', handleMouseUp);
+};
+
+const removeDragEvents = () => {
+  document.removeEventListener('mousemove', handleMouseMove);
+  document.removeEventListener('mouseup', handleMouseUp);
+};
+
+// 监听模态框显示状态
+watch(showImageModal, (newVal) => {
+  if (newVal) {
+    setupDragEvents();
+  } else {
+    removeDragEvents();
+  }
+});
+
+onBeforeUnmount(() => {
+  observer?.disconnect();
+  removeDragEvents();
+  // Ensure body scroll is restored
+  document.body.style.overflow = 'auto';
+});
 </script>
 
 <template>
@@ -304,18 +500,18 @@ onBeforeUnmount(() => observer?.disconnect());
 
         <nav class="relative">
           <!-- Decorative Line -->
-          <div class="absolute left-0 top-0 bottom-0 w-[1px] bg-zinc-200 dark:bg-zinc-800 pointer-events-none"></div>
+          <div class="absolute left-0 top-0 bottom-0 w-px bg-zinc-200 dark:bg-zinc-800 pointer-events-none"></div>
 
           <ul class="space-y-0.5 text-sm">
             <li v-for="heading in flatHeadings" :key="heading.id">
               <a
                   :href="`${route.path}#${heading.id}`"
                   @click="handleAnchorClick($event, heading.id)"
-                  class="group flex items-start py-1.5 pl-4 transition-colors border-l-2 -ml-[1px]"
+                  class="group flex items-start py-1.5 pl-4 transition-colors border-l-2 -ml-px"
                   :class="[
                   activeHeadingId === heading.id
-                    ? 'border-blue-500 text-blue-600 dark:text-blue-400 font-medium'
-                    : 'border-transparent text-zinc-500 hover:text-zinc-900 dark:text-zinc-500 dark:hover:text-zinc-300 hover:border-zinc-300 dark:hover:border-zinc-600'
+                    ? 'border-blue-500! text-blue-600! dark:text-blue-400! font-medium!'
+                    : 'border-transparent! text-zinc-500! hover:text-zinc-900! dark:text-zinc-500! dark:hover:text-zinc-300! hover:border-zinc-300! dark:hover:border-zinc-600!'
                 ]"
               >
                <span :class="heading.level === 3 ? 'pl-3' : ''" class="truncate block">
@@ -338,6 +534,54 @@ onBeforeUnmount(() => observer?.disconnect());
     <h3 class="text-lg font-medium text-zinc-900 dark:text-white">暂无内容</h3>
     <p class="mt-1 text-zinc-500 dark:text-zinc-400">请从左侧菜单选择要阅读的文档</p>
   </div>
+
+  <!-- 图片放大模态框 -->
+  <div
+    v-if="showImageModal"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+    @click="handleModalClick"
+    @wheel="(e) => e.deltaY > 0 ? handleZoomOut(e) : handleZoomIn(e)"
+  >
+    <div class="relative max-w-full max-h-full">
+      <!-- 控制面板 -->
+      <div class="absolute top-4 left-1/2 transform -translate-x-1/2 bg-black/70 rounded-full px-4 py-2 flex items-center gap-2 z-10">
+        <button @click="handleZoomOut" class="text-white hover:text-blue-300 transition-colors p-1">
+          <Icon icon="lucide:zoom-out" class="h-5 w-5" />
+        </button>
+        <button @click="handleReset" class="text-white hover:text-blue-300 transition-colors p-1">
+          <Icon icon="lucide:refresh-cw" class="h-5 w-5" />
+        </button>
+        <button @click="handleZoomIn" class="text-white hover:text-blue-300 transition-colors p-1">
+          <Icon icon="lucide:zoom-in" class="h-5 w-5" />
+        </button>
+      </div>
+      
+      <!-- 关闭按钮 -->
+      <button 
+        @click="closeImageModal" 
+        class="absolute top-4 right-4 bg-black/70 text-white hover:text-red-300 transition-colors p-2 rounded-full"
+      >
+        <Icon icon="lucide:x" class="h-6 w-6" />
+      </button>
+      
+      <!-- 放大图片 -->
+      <div 
+        class="relative inline-block cursor-move"
+        @mousedown="handleMouseDown"
+        :style="{
+          transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
+          transition: 'transform 0.1s ease'
+        }"
+      >
+        <img 
+          :src="currentImageSrc" 
+          :alt="currentImageAlt"
+          class="max-w-full max-h-[90vh] object-contain rounded-lg"
+          @click="handleImageClick"
+        />
+      </div>
+    </div>
+  </div>
 </template>
 
 <style scoped>
@@ -350,29 +594,30 @@ onBeforeUnmount(() => observer?.disconnect());
 }
 
 /* Enhancing code block visuals inside typography */
-:deep(pre) {
+.prose :deep(pre) {
   margin-top: 1.5em;
   margin-bottom: 1.5em;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 /* Style for blockquotes to match Apple Notes */
-:deep(blockquote) {
+.prose :deep(blockquote) {
   font-style: normal;
   border-left-width: 3px;
   border-color: #e4e4e7; /* zinc-200 */
   color: #71717a; /* zinc-500 */
-  background: transparent;
+  background: #f9fafb; /* zinc-50 */
   padding-left: 1rem;
 }
 
-.dark :deep(blockquote) {
+.dark .prose :deep(blockquote) {
   border-color: #3f3f46; /* zinc-700 */
   color: #a1a1aa; /* zinc-400 */
+  background: #1e1e20 !important; /* zinc-900 */
 }
 
 /* Table Styling */
-:deep(table) {
+.prose :deep(table) {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
@@ -381,52 +626,52 @@ onBeforeUnmount(() => observer?.disconnect());
   overflow: hidden;
   font-size: 0.875rem;
 }
-.dark :deep(table) {
+.dark .prose :deep(table) {
   border-color: #3f3f46;
 }
 
-:deep(thead tr) {
+.prose :deep(thead tr) {
   background-color: #f4f4f5; /* zinc-100 */
 }
-.dark :deep(thead tr) {
+.dark .prose :deep(thead tr) {
   background-color: #27272a; /* zinc-800 */
 }
 
-:deep(th), :deep(td) {
+.prose :deep(th), .prose :deep(td) {
   padding: 0.75rem 1rem;
   border-bottom: 1px solid #e4e4e7;
   text-align: left;
 }
-.dark :deep(th), .dark :deep(td) {
+.dark .prose :deep(th), .dark .prose :deep(td) {
   border-bottom-color: #3f3f46;
 }
 
-:deep(th) {
+.prose :deep(th) {
   font-weight: 600;
   color: #18181b;
 }
-.dark :deep(th) {
+.dark .prose :deep(th) {
   color: #f4f4f5;
 }
 
-:deep(tr:last-child td) {
+.prose :deep(tr:last-child td) {
   border-bottom: none;
 }
 
 /* Links */
-:deep(.prose a) {
+.prose :deep(a) {
   text-decoration-line: none;
   font-weight: 500;
   color: #3b82f6;
   transition: color 0.15s;
 }
-:deep(.prose a:hover) {
+.prose :deep(a:hover) {
   color: #2563eb;
   text-decoration-line: underline;
 }
 
 /* Mermaid Diagram Sizing */
-:deep(.mermaid) {
+.prose :deep(.mermaid) {
   display: flex;
   justify-content: center;
   margin: 2rem 0;
@@ -434,17 +679,35 @@ onBeforeUnmount(() => observer?.disconnect());
   padding: 1rem;
   border-radius: 0.5rem;
 }
-.dark :deep(.mermaid) {
+.dark .prose :deep(.mermaid) {
   background-color: #1a1a1a;
 }
 
 /* Image zoom effect */
-:deep(.prose img) {
+.prose :deep(img) {
   cursor: zoom-in;
   transition: transform 0.3s ease;
 }
 
-:deep(.prose img:hover) {
+.prose :deep(img:hover) {
   transform: scale(1.02);
+}
+
+/* 图片放大模态框样式 */
+.modal-backdrop {
+  backdrop-filter: blur(4px);
+}
+
+.modal-controls {
+  backdrop-filter: blur(8px);
+}
+
+/* 拖动时的鼠标样式 */
+.cursor-move {
+  cursor: move;
+}
+
+.cursor-move:active {
+  cursor: grabbing;
 }
 </style>

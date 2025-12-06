@@ -1,171 +1,86 @@
-import { url } from './Url';
-import { AuthService } from './AuthService';
+import {url} from './Url';
+import {AuthService} from './AuthService';
 import {DepartmentModel} from "../models";
+import {apiRequest} from './ApiService';
 
 /**
  * 部门服务类 - 处理部门相关的API调用
  */
 export class DepartmentService {
-  /**
-   * 获取部门信息
-   * @param name 部门名称（可选），不提供则返回当前用户所在部门
-   * @returns Promise<DepartmentModel> 部门信息
-   */
-  static async getDepartment(name?: string): Promise<DepartmentModel> {
-    const token = AuthService.getToken();
-    if (!token) {
-      throw new Error('未登录');
+    /**
+     * 获取部门信息
+     * @param name 部门名称（可选），不提供则返回当前用户所在部门
+     * @returns Promise<DepartmentModel> 部门信息
+     */
+    static async getDepartment(name?: string): Promise<DepartmentModel> {
+        const departmentUrl = name ? `${url}/Department/${name}` : `${url}/Department`;
+        return await apiRequest<DepartmentModel>({
+            url: departmentUrl,
+            method: 'GET'
+        });
     }
 
-    const departmentUrl = name ? `${url}/Department/${name}` : `${url}/Department`;
-    const response = await fetch(departmentUrl, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        AuthService.clearToken();
-        throw new Error('登录已过期，请重新登录');
-      }
-      if (response.status === 403) {
-        throw new Error('权限不足');
-      }
-      if (response.status === 404) {
-        throw new Error(name ? '部门不存在' : '用户未分配部门');
-      }
-      throw new Error('获取部门信息失败');
+    /**
+     * 获取所有部门（仅管理员）
+     * @returns Promise<DepartmentModel[]> 部门列表
+     */
+    static async getAllDepartments(): Promise<DepartmentModel[]> {
+        return await apiRequest<DepartmentModel[]>({
+            url: `${url}/Department/all`,
+            method: 'GET'
+        });
     }
 
-    return await response.json();
-  }
-
-  /**
-   * 获取所有部门（仅管理员）
-   * @returns Promise<DepartmentModel[]> 部门列表
-   */
-  static async getAllDepartments(): Promise<DepartmentModel[]> {
-    const token = AuthService.getToken();
-    if (!token) {
-      throw new Error('未登录');
+    static async createDepartment(department: DepartmentModel): Promise<void> {
+        await apiRequest<void>({
+            url: `${url}/Department/Create`,
+            method: 'POST',
+            body: JSON.stringify(department)
+        });
     }
 
-    const response = await fetch(`${url}/Department/all`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        AuthService.clearToken();
-        throw new Error('登录已过期，请重新登录');
-      }
-      if (response.status === 403) {
-        throw new Error('权限不足，需要管理员身份');
-      }
-      throw new Error('获取所有部门失败');
+    static async updateDepartment(department: DepartmentModel): Promise<void> {
+        await apiRequest<void>({
+            url: `${url}/Department/Update`,
+            method: 'POST',
+            body: JSON.stringify(department)
+        });
     }
 
-    return await response.json();
-  }
-
-  static async createDepartment(department: DepartmentModel): Promise<void> {
-    const token = AuthService.getToken();
-    if (!token) {
-      throw new Error('未登录');
+    static async deleteDepartment(name: string): Promise<void> {
+        await apiRequest<void>({
+            url: `${url}/Department/Delete/${name}`,
+            method: 'GET'
+        });
     }
 
-    const response = await fetch(`${url}/Department/Create`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(department),
-    });
+    static async exportJson(): Promise<Blob> {
+        // 对于文件下载，我们直接使用fetch而不是apiRequest，因为apiRequest只处理JSON响应
+        const token = AuthService.getToken();
+        if (!token) {
+            throw new Error('未登录');
+        }
 
-    if (!response.ok) {
-      if (response.status === 401) {
-        AuthService.clearToken();
-        throw new Error('登录已过期，请重新登录');
-      }
-      if (response.status === 403) {
-        throw new Error('权限不足，需要管理员身份');
-      }
-      throw new Error('创建部门失败');
+        const response = await fetch(`${url}/Department/export-json`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) {
+            // 尝试解析错误响应
+            let errorMessage = `HTTP error! status: ${response.status}`;
+            try {
+                const errorData = await response.json();
+                if (errorData.Message) {
+                    errorMessage = errorData.Message;
+                }
+            } catch {
+            }
+            throw new Error(errorMessage);
+        }
+
+        return await response.blob();
     }
-  }
-
-  static async updateDepartment(department: DepartmentModel): Promise<void> {
-    const token = AuthService.getToken();
-    if (!token) {
-      throw new Error('未登录');
-    }
-
-    const response = await fetch(`${url}/Department/Update`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(department),
-    });
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        AuthService.clearToken();
-        throw new Error('登录已过期，请重新登录');
-      }
-      if (response.status === 403) {
-        throw new Error('权限不足，需要管理员身份');
-      }
-      throw new Error('更新部门失败');
-    }
-  }
-
-  static async deleteDepartment(name: string): Promise<void> {
-    const token = AuthService.getToken();
-    if (!token) {
-      throw new Error('未登录');
-    }
-
-    const response = await fetch(`${url}/Department/Delete/${name}`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        AuthService.clearToken();
-        throw new Error('登录已过期，请重新登录');
-      }
-      if (response.status === 403) {
-        throw new Error('权限不足，需要管理员身份');
-      }
-      throw new Error('删除部门失败');
-    }
-  }
-
-  static async exportJson(): Promise<Blob> {
-      const token = AuthService.getToken();
-      if (!token) {
-          throw new Error('未登录');
-      }
-      return await fetch(`${url}/Department/export-json`, {
-          method: 'GET',
-          headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`,
-          },
-      }).then(response => response.blob());
-  }
 }

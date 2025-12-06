@@ -1,4 +1,6 @@
 // 项目模型接口
+import {DepartmentModel} from "./DepartmentModel";
+
 export interface ProjectModel {
   id: string;
   name: string;
@@ -15,7 +17,7 @@ export interface StaffModel {
   userId: string;
   name: string;
   identity: string;
-  department: string;
+  department: DepartmentModel | null;
   Projects?: ProjectModel[];
   Tasks?: TaskModel[];
 }

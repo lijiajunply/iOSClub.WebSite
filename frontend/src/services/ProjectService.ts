@@ -1,5 +1,5 @@
 import {url} from './Url';
-import {AuthService} from './AuthService';
+import {apiRequest} from './ApiService';
 import {ProjectModel, ResourceModel, TaskModel} from '../models';
 
 /**
@@ -11,31 +11,10 @@ export class ProjectService {
      * @returns Promise<ProjectModel[]> 项目列表
      */
     static async getAllProjects(): Promise<ProjectModel[]> {
-        const token = AuthService.getToken();
-        if (!token) {
-            throw new Error('未登录');
-        }
-
-        const response = await fetch(`${url}/Project`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
+        return apiRequest<ProjectModel[]>({
+            url: `${url}/Project`,
+            method: 'GET'
         });
-
-        if (!response.ok) {
-            if (response.status === 401) {
-                AuthService.clearToken();
-                throw new Error('登录已过期，请重新登录');
-            }
-            if (response.status === 403) {
-                throw new Error('权限不足，需要管理员身份');
-            }
-            throw new Error('获取项目列表失败');
-        }
-
-        return await response.json();
     }
 
     /**
@@ -43,28 +22,10 @@ export class ProjectService {
      * @returns Promise<ProjectModel[]> 用户参与的项目列表
      */
     static async getYourProjects(): Promise<ProjectModel[]> {
-        const token = AuthService.getToken();
-        if (!token) {
-            throw new Error('未登录');
-        }
-
-        const response = await fetch(`${url}/Project/your-projects`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
+        return apiRequest<ProjectModel[]>({
+            url: `${url}/Project/your-projects`,
+            method: 'GET'
         });
-
-        if (!response.ok) {
-            if (response.status === 401) {
-                AuthService.clearToken();
-                throw new Error('登录已过期，请重新登录');
-            }
-            throw new Error('获取用户项目列表失败');
-        }
-
-        return await response.json();
     }
 
     /**
@@ -72,28 +33,10 @@ export class ProjectService {
      * @returns Promise<TaskModel[]> 用户的任务列表
      */
     static async getYourTasks(): Promise<TaskModel[]> {
-        const token = AuthService.getToken();
-        if (!token) {
-            throw new Error('未登录');
-        }
-
-        const response = await fetch(`${url}/User/todos`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
+        return apiRequest<TaskModel[]>({
+            url: `${url}/User/todos`,
+            method: 'GET'
         });
-
-        if (!response.ok) {
-            if (response.status === 401) {
-                AuthService.clearToken();
-                throw new Error('登录已过期，请重新登录');
-            }
-            throw new Error('获取用户任务列表失败');
-        }
-
-        return await response.json();
     }
 
     /**
@@ -101,28 +44,10 @@ export class ProjectService {
      * @returns Promise<ResourceModel[]> 资源列表
      */
     static async getResources(): Promise<ResourceModel[]> {
-        const token = AuthService.getToken();
-        if (!token) {
-            throw new Error('未登录');
-        }
-
-        const response = await fetch(`${url}/Resource`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
+        return apiRequest<ResourceModel[]>({
+            url: `${url}/Resource`,
+            method: 'GET'
         });
-
-        if (!response.ok) {
-            if (response.status === 401) {
-                AuthService.clearToken();
-                throw new Error('登录已过期，请重新登录');
-            }
-            throw new Error('获取资源列表失败');
-        }
-
-        return await response.json();
     }
 
     /**
@@ -131,32 +56,11 @@ export class ProjectService {
      * @returns Promise<ProjectModel> 创建或更新后的项目信息
      */
     static async createOrUpdateProject(model: ProjectModel): Promise<ProjectModel> {
-        const token = AuthService.getToken();
-        if (!token) {
-            throw new Error('未登录');
-        }
-
-        const response = await fetch(`${url}/Project`, {
+        return apiRequest<ProjectModel>({
+            url: `${url}/Project`,
             method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(model),
+            body: model
         });
-
-        if (!response.ok) {
-            if (response.status === 401) {
-                AuthService.clearToken();
-                throw new Error('登录已过期，请重新登录');
-            }
-            if (response.status === 403) {
-                throw new Error('权限不足，需要管理员身份');
-            }
-            throw new Error('创建或更新项目失败');
-        }
-
-        return await response.json();
     }
 
     /**
@@ -165,29 +69,10 @@ export class ProjectService {
      * @returns Promise<void>
      */
     static async deleteProject(id: string): Promise<void> {
-        const token = AuthService.getToken();
-        if (!token) {
-            throw new Error('未登录');
-        }
-
-        const response = await fetch(`${url}/Project/delete/${id}`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
+        await apiRequest<void>({
+            url: `${url}/Project/delete/${id}`,
+            method: 'POST'
         });
-
-        if (!response.ok) {
-            if (response.status === 401) {
-                AuthService.clearToken();
-                throw new Error('登录已过期，请重新登录');
-            }
-            if (response.status === 403) {
-                throw new Error('权限不足，需要管理员身份');
-            }
-            throw new Error('删除项目失败');
-        }
     }
 
     /**
@@ -197,28 +82,9 @@ export class ProjectService {
      * @returns Promise<void>
      */
     static async changeMember(id: string, projId: string): Promise<void> {
-        const token = AuthService.getToken();
-        if (!token) {
-            throw new Error('未登录');
-        }
-
-        const response = await fetch(`${url}/Project/change-member/${id}/${projId}`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
+        await apiRequest<void>({
+            url: `${url}/Project/change-member/${id}/${projId}`,
+            method: 'POST'
         });
-
-        if (!response.ok) {
-            if (response.status === 401) {
-                AuthService.clearToken();
-                throw new Error('登录已过期，请重新登录');
-            }
-            if (response.status === 403) {
-                throw new Error('权限不足，需要管理员身份');
-            }
-            throw new Error('更改项目成员失败');
-        }
     }
 }

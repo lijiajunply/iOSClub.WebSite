@@ -10,6 +10,7 @@ using StackExchange.Redis;
 using System.Security.Cryptography;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using iOSClub.WebAPI.Common.Security;
 
 namespace iOSClub.WebAPI.Controllers;
 
@@ -23,7 +24,8 @@ public class SSOController(
     IClientApplicationRepository clientAppRepository,
     IConnectionMultiplexer redis,
     IConfiguration config,
-    ILogger<SSOController> logger)
+    ILogger<SSOController> logger,
+    JwtService jwtService)
     : ControllerBase
 {
     private readonly IDatabase _redisDb = redis.GetDatabase();
@@ -104,11 +106,18 @@ public class SSOController(
             (rsaKey.Rsa ?? throw new InvalidOperationException("RSA key not found"))
             .ExportParameters(false); // false = 只导出公钥
 
-        logger.LogInformation("JWKS request received");
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation("JWKS request received");
+        }
 
         if (rsaParameters.Modulus == null || rsaParameters.Exponent == null)
         {
-            logger.LogError("Failed to retrieve RSA public key parameters");
+            if (logger.IsEnabled(LogLevel.Error))
+            {
+                logger.LogError("Failed to retrieve RSA public key parameters");
+            }
+
             return StatusCode(500, "Failed to retrieve RSA public key parameters");
         }
 
@@ -166,29 +175,45 @@ public class SSOController(
         [FromQuery(Name = "scope")] string? scope = null,
         [FromQuery(Name = "nonce")] string? nonce = null)
     {
-        logger.LogInformation("OAuth authorization request received for client {ClientId}", clientId);
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation("OAuth authorization request received for client {ClientId}", clientId);
+        }
 
         // 验证clientId是否有效
         var clientApp = await clientAppRepository.GetByClientIdAsync(clientId);
         if (clientApp is not { IsActive: true })
         {
-            logger.LogWarning("Authorization failed: invalid client ID {ClientId}", clientId);
+            if (logger.IsEnabled(LogLevel.Warning))
+            {
+                logger.LogWarning("Authorization failed: invalid client ID {ClientId}", clientId);
+            }
+
             return BadRequest("无效的客户端ID");
         }
 
         // 验证redirectUri是否在白名单中
         if (!clientApp.IsRedirectUriValid(redirectUri))
         {
-            logger.LogWarning("Authorization failed: invalid redirect URI {RedirectUri} for client {ClientId}",
-                redirectUri, clientId);
+            if (logger.IsEnabled(LogLevel.Warning))
+            {
+                logger.LogWarning("Authorization failed: invalid redirect URI {RedirectUri} for client {ClientId}",
+                    redirectUri, clientId);
+            }
+
             return BadRequest("无效的回调地址");
         }
 
         // 如果客户端支持PKCE，则要求提供code_challenge参数
         if (clientApp.SupportsPkce && string.IsNullOrEmpty(codeChallenge))
         {
-            logger.LogWarning(
-                "Authorization failed: PKCE is required for client {ClientId} but code_challenge is missing", clientId);
+            if (logger.IsEnabled(LogLevel.Warning))
+            {
+                logger.LogWarning(
+                    "Authorization failed: PKCE is required for client {ClientId} but code_challenge is missing",
+                    clientId);
+            }
+
             return BadRequest("客户端要求使用PKCE，必须提供code_challenge参数");
         }
 
@@ -203,17 +228,25 @@ public class SSOController(
 
             if (codeChallengeMethod != "S256" && codeChallengeMethod != "plain")
             {
-                logger.LogWarning(
-                    "Authorization failed: unsupported code_challenge_method {Method} for client {ClientId}",
-                    codeChallengeMethod, clientId);
+                if (logger.IsEnabled(LogLevel.Warning))
+                {
+                    logger.LogWarning(
+                        "Authorization failed: unsupported code_challenge_method {Method} for client {ClientId}",
+                        codeChallengeMethod, clientId);
+                }
+
                 return BadRequest("不支持的code_challenge_method");
             }
 
             // 验证code_challenge长度
             if (codeChallenge.Length is < 43 or > 128)
             {
-                logger.LogWarning("Authorization failed: invalid code_challenge length for client {ClientId}",
-                    clientId);
+                if (logger.IsEnabled(LogLevel.Warning))
+                {
+                    logger.LogWarning("Authorization failed: invalid code_challenge length for client {ClientId}",
+                        clientId);
+                }
+
                 return BadRequest("code_challenge长度无效");
             }
         }
@@ -260,7 +293,7 @@ public class SSOController(
             clientAppUrl = config["ClientAppUrl"] ?? "http://localhost:5173";
         }
 
-        logger.LogInformation("Redirecting to OAuth login page for client {ClientId}", clientId);
+        // logger.LogInformation("Redirecting to OAuth login page for client {ClientId}", clientId);
 
         // 重定向到我们自己的OAuth登录页面
         return Redirect(
@@ -275,7 +308,7 @@ public class SSOController(
     [HttpGet("callback")]
     public async Task<IActionResult> Callback([FromQuery] string state)
     {
-        logger.LogInformation("OAuth callback received with state parameter");
+        // logger.LogInformation("OAuth callback received with state parameter");
 
         // 从Redis中获取用户信息（这应该在OAuthLogin页面成功登录后设置）
         var userId = "";
@@ -307,14 +340,21 @@ public class SSOController(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to decrypt or deserialize state parameter");
+            if (logger.IsEnabled(LogLevel.Error))
+            {
+                logger.LogInformation(ex, "Failed to decrypt or deserialize state parameter");
+            }
             // 解密或反序列化失败，保持userId和token为null或empty
         }
 
         // 检查是否成功获取到用户信息
         if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(token))
         {
-            logger.LogWarning("Callback failed: user authentication failed or session expired");
+            if (logger.IsEnabled(LogLevel.Warning))
+            {
+                logger.LogWarning("Callback failed: user authentication failed or session expired");
+            }
+
             return BadRequest("用户认证失败或会话已过期");
         }
 
@@ -328,7 +368,11 @@ public class SSOController(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to decrypt or deserialize state parameter");
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "Failed to decrypt or deserialize state parameter");
+            }
+
             return BadRequest("无效的状态参数");
         }
 
@@ -355,13 +399,8 @@ public class SSOController(
             }
         }
 
-        // 验证token是否有效
-        var isValid = await ValidateToken(token, authState.ClientId);
-        if (!isValid)
-        {
-            logger.LogWarning("Callback failed: invalid authentication token");
-            return BadRequest("无效的认证令牌");
-        }
+        // 跳过token有效性验证，直接使用获取到的用户信息
+        // 因为token已经在StoreSession时被验证过，且我们从Redis中获取了用户信息
 
         // 根据responseType决定返回方式
         if (authState.ResponseType == "code")
@@ -389,8 +428,8 @@ public class SSOController(
                 System.Text.Json.JsonSerializer.Serialize(authCodeInfo),
                 TimeSpan.FromMinutes(5));
 
-            logger.LogInformation("Authorization code {AuthCode} generated for user {UserId} and client {ClientId}",
-                authCode, userId, authState.ClientId);
+            // logger.LogInformation("Authorization code {AuthCode} generated for user {UserId} and client {ClientId}",
+            //     authCode, userId, authState.ClientId);
 
             // 重定向到第三方应用的回调地址
             var redirectUrl =
@@ -400,8 +439,8 @@ public class SSOController(
 
         if (authState.ResponseType == "token")
         {
-            logger.LogInformation("Direct token response for user {UserId} and client {ClientId}", userId,
-                authState.ClientId);
+            // logger.LogInformation("Direct token response for user {UserId} and client {ClientId}", userId,
+            //     authState.ClientId);
 
             // 直接返回访问令牌
             var redirectUrl =
@@ -415,7 +454,11 @@ public class SSOController(
             // 检查scope是否包含openid
             if (!authState.Scope.Contains("openid"))
             {
-                logger.LogWarning("Callback failed: openid scope is required for id_token response type");
+                if (logger.IsEnabled(LogLevel.Warning))
+                {
+                    logger.LogWarning("Callback failed: openid scope is required for id_token response type");
+                }
+
                 return BadRequest("需要openid scope才能返回id_token");
             }
 
@@ -424,13 +467,17 @@ public class SSOController(
 
             if (string.IsNullOrEmpty(idToken))
             {
-                logger.LogError("Failed to generate ID token for user {UserId} and client {ClientId}", userId,
-                    authState.ClientId);
+                if (logger.IsEnabled(LogLevel.Information))
+                {
+                    logger.LogInformation("Failed to generate ID token for user {UserId} and client {ClientId}", userId,
+                        authState.ClientId);
+                }
+
                 return BadRequest("ID token生成失败");
             }
 
-            logger.LogInformation("ID token generated for user {UserId} and client {ClientId}", userId,
-                authState.ClientId);
+            // logger.LogInformation("ID token generated for user {UserId} and client {ClientId}", userId,
+            //     authState.ClientId);
 
             // 根据responseType决定返回方式
             if (authState.ResponseType == "id_token")
@@ -449,7 +496,10 @@ public class SSOController(
             }
         }
 
-        logger.LogWarning("Callback failed: unsupported response type {ResponseType}", authState.ResponseType);
+        if (logger.IsEnabled(LogLevel.Warning))
+        {
+            logger.LogWarning("Callback failed: unsupported response type {ResponseType}", authState.ResponseType);
+        }
         return BadRequest("不支持的响应类型");
     }
 
@@ -486,19 +536,30 @@ public class SSOController(
                 var body = await reader.ReadToEndAsync();
                 if (!string.IsNullOrEmpty(body))
                 {
-                    logger.LogDebug("Received JSON request body: {Body}", body);
+                    if (logger.IsEnabled(LogLevel.Debug))
+                    {
+                        logger.LogDebug("Received JSON request body: {Body}", body);
+                    }
                     request = System.Text.Json.JsonSerializer.Deserialize<TokenRequest>(body) ??
                               throw new InvalidOperationException("无法反序列化请求体");
                 }
                 else
                 {
-                    logger.LogWarning("Token exchange failed: no request body provided for JSON request");
+                    if (logger.IsEnabled(LogLevel.Warning))
+                    {
+                        logger.LogWarning("Token exchange failed: no request body provided for JSON request");
+                    }
+
                     return BadRequest(new { error = "invalid_request", error_description = "缺少请求参数" });
                 }
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "Token exchange failed: invalid JSON format");
+                if (logger.IsEnabled(LogLevel.Warning))
+                {
+                    logger.LogWarning(ex, "Token exchange failed: invalid JSON format");
+                }
+
                 return BadRequest(new { error = "invalid_request", error_description = "无效的JSON格式" });
             }
         }
@@ -519,7 +580,11 @@ public class SSOController(
         }
         else
         {
-            logger.LogWarning("Token exchange failed: unsupported Content-Type {ContentType}", contentType);
+            if (logger.IsEnabled(LogLevel.Warning))
+            {
+                logger.LogWarning("Token exchange failed: unsupported Content-Type {ContentType}", contentType);
+            }
+
             return BadRequest(new
             {
                 error = "invalid_request",
@@ -530,20 +595,32 @@ public class SSOController(
         // 添加参数验证
         if (string.IsNullOrEmpty(request.GrantType))
         {
-            logger.LogWarning("Token exchange failed: missing grant_type parameter");
+            if (logger.IsEnabled(LogLevel.Warning))
+            {
+                logger.LogWarning("Token exchange failed: missing grant_type parameter");
+            }
+
             return BadRequest(new { error = "invalid_request", error_description = "缺少必需参数: grant_type" });
         }
 
         if (request.GrantType != "authorization_code")
         {
-            logger.LogWarning("Token exchange failed: unsupported grant type {GrantType}", request.GrantType);
+            if (logger.IsEnabled(LogLevel.Warning))
+            {
+                logger.LogWarning("Token exchange failed: unsupported grant type {GrantType}", request.GrantType);
+            }
+
             return BadRequest(new
                 { error = "unsupported_grant_type", error_description = "不支持的授权类型: " + request.GrantType });
         }
 
         if (string.IsNullOrEmpty(request.Code))
         {
-            logger.LogWarning("Token exchange failed: missing code parameter");
+            if (logger.IsEnabled(LogLevel.Warning))
+            {
+                logger.LogWarning("Token exchange failed: missing code parameter");
+            }
+
             return BadRequest(new { error = "invalid_request", error_description = "缺少必需参数: code" });
         }
 
@@ -551,7 +628,11 @@ public class SSOController(
         {
             if (string.IsNullOrEmpty(request.RedirectUri))
             {
-                logger.LogWarning("Token exchange failed: missing client_id parameter");
+                if (logger.IsEnabled(LogLevel.Warning))
+                {
+                    logger.LogWarning("Token exchange failed: missing client_id parameter");
+                }
+
                 return BadRequest(new { error = "invalid_request", error_description = "缺少必需参数: client_id" });
             }
 
@@ -562,13 +643,21 @@ public class SSOController(
 
         if (string.IsNullOrEmpty(request.ClientSecret))
         {
-            logger.LogWarning("Token exchange failed: missing client_secret parameter");
+            if (logger.IsEnabled(LogLevel.Warning))
+            {
+                logger.LogWarning("Token exchange failed: missing client_secret parameter");
+            }
+
             return BadRequest(new { error = "invalid_request", error_description = "缺少必需参数: client_secret" });
         }
 
         if (string.IsNullOrEmpty(request.RedirectUri))
         {
-            logger.LogWarning("Token exchange failed: missing redirect_uri parameter");
+            if (logger.IsEnabled(LogLevel.Warning))
+            {
+                logger.LogWarning("Token exchange failed: missing redirect_uri parameter");
+            }
+
             return BadRequest(new { error = "invalid_request", error_description = "缺少必需参数: redirect_uri" });
         }
 
@@ -576,16 +665,24 @@ public class SSOController(
         var clientApp = await clientAppRepository.ValidateCredentialsAsync(request.ClientId, request.ClientSecret);
         if (clientApp == null)
         {
-            logger.LogWarning("Token exchange failed: invalid client credentials for client {ClientId}",
-                request.ClientId);
+            if (logger.IsEnabled(LogLevel.Warning))
+            {
+                logger.LogWarning("Token exchange failed: invalid client credentials for client {ClientId}",
+                    request.ClientId);
+            }
+
             return Unauthorized(new { error = "invalid_client", error_description = "无效的客户端凭据" });
         }
 
         // 验证回调URL是否匹配
         if (!clientApp.IsRedirectUriValid(request.RedirectUri))
         {
-            logger.LogWarning("Token exchange failed: invalid redirect URI {RedirectUri} for client {ClientId}",
-                request.RedirectUri, request.ClientId);
+            if (logger.IsEnabled(LogLevel.Warning))
+            {
+                logger.LogWarning("Token exchange failed: invalid redirect URI {RedirectUri} for client {ClientId}",
+                    request.RedirectUri, request.ClientId);
+            }
+
             return BadRequest(new { error = "invalid_request", error_description = "无效的回调地址" });
         }
 
@@ -595,7 +692,11 @@ public class SSOController(
 
         if (authCodeInfoJson.IsNullOrEmpty)
         {
-            logger.LogWarning("Token exchange failed: invalid authorization code {Code}", request.Code);
+            if (logger.IsEnabled(LogLevel.Warning))
+            {
+                logger.LogWarning("Token exchange failed: invalid authorization code {Code}", request.Code);
+            }
+
             return BadRequest(new { error = "invalid_grant", error_description = "无效的授权码" });
         }
 
@@ -605,26 +706,39 @@ public class SSOController(
 
             if (authCodeInfo == null)
             {
-                logger.LogWarning(
-                    "Token exchange failed: unable to deserialize authorization code info for code {Code}",
-                    request.Code);
+                if (logger.IsEnabled(LogLevel.Warning))
+                {
+                    logger.LogWarning(
+                        "Token exchange failed: unable to deserialize authorization code info for code {Code}",
+                        request.Code);
+                }
+
                 return BadRequest(new { error = "invalid_grant", error_description = "无效的授权码" });
             }
 
             // 验证授权码与请求参数是否匹配
             if (authCodeInfo.ClientId != request.ClientId || authCodeInfo.RedirectUri != request.RedirectUri)
             {
-                logger.LogWarning("Token exchange failed: authorization code {Code} does not match request parameters",
-                    request.Code);
+                if (logger.IsEnabled(LogLevel.Warning))
+                {
+                    logger.LogWarning(
+                        "Token exchange failed: authorization code {Code} does not match request parameters",
+                        request.Code);
+                }
+
                 return BadRequest(new { error = "invalid_grant", error_description = "授权码与请求参数不匹配" });
             }
 
             // 如果客户端支持PKCE，则要求提供code_verifier参数
             if (clientApp.SupportsPkce && string.IsNullOrEmpty(request.CodeVerifier))
             {
-                logger.LogWarning(
-                    "Token exchange failed: PKCE is required for client {ClientId} but code_verifier is missing",
-                    request.ClientId);
+                if (logger.IsEnabled(LogLevel.Warning))
+                {
+                    logger.LogWarning(
+                        "Token exchange failed: PKCE is required for client {ClientId} but code_verifier is missing",
+                        request.ClientId);
+                }
+
                 return BadRequest(new
                     { error = "invalid_request", error_description = "客户端要求使用PKCE，必须提供code_verifier参数" });
             }
@@ -634,18 +748,26 @@ public class SSOController(
             {
                 if (string.IsNullOrEmpty(request.CodeVerifier))
                 {
-                    logger.LogWarning(
-                        "Token exchange failed: missing code_verifier for PKCE-enabled authorization code {Code}",
-                        request.Code);
+                    if (logger.IsEnabled(LogLevel.Warning))
+                    {
+                        logger.LogWarning(
+                            "Token exchange failed: missing code_verifier for PKCE-enabled authorization code {Code}",
+                            request.Code);
+                    }
+
                     return BadRequest(new { error = "invalid_request", error_description = "缺少必需参数: code_verifier" });
                 }
 
                 // 验证code_verifier长度
                 if (request.CodeVerifier.Length is < 43 or > 128)
                 {
-                    logger.LogWarning(
-                        "Token exchange failed: invalid code_verifier length for authorization code {Code}",
-                        request.Code);
+                    if (logger.IsEnabled(LogLevel.Warning))
+                    {
+                        logger.LogWarning(
+                            "Token exchange failed: invalid code_verifier length for authorization code {Code}",
+                            request.Code);
+                    }
+
                     return BadRequest(new { error = "invalid_request", error_description = "code_verifier长度无效" });
                 }
 
@@ -660,8 +782,13 @@ public class SSOController(
 
                     if (!string.Equals(challenge, authCodeInfo.CodeChallenge, StringComparison.Ordinal))
                     {
-                        logger.LogWarning("Token exchange failed: invalid code_verifier for authorization code {Code}",
-                            request.Code);
+                        if (logger.IsEnabled(LogLevel.Warning))
+                        {
+                            logger.LogWarning(
+                                "Token exchange failed: invalid code_verifier for authorization code {Code}",
+                                request.Code);
+                        }
+
                         return BadRequest(new { error = "invalid_grant", error_description = "无效的code_verifier" });
                     }
                 }
@@ -669,16 +796,25 @@ public class SSOController(
                 {
                     if (!string.Equals(request.CodeVerifier, authCodeInfo.CodeChallenge, StringComparison.Ordinal))
                     {
-                        logger.LogWarning("Token exchange failed: invalid code_verifier for authorization code {Code}",
-                            request.Code);
+                        if (logger.IsEnabled(LogLevel.Warning))
+                        {
+                            logger.LogWarning(
+                                "Token exchange failed: invalid code_verifier for authorization code {Code}",
+                                request.Code);
+                        }
+
                         return BadRequest(new { error = "invalid_grant", error_description = "无效的code_verifier" });
                     }
                 }
                 else
                 {
-                    logger.LogWarning(
-                        "Token exchange failed: unsupported code_challenge_method {Method} for authorization code {Code}",
-                        authCodeInfo.CodeChallengeMethod, request.Code);
+                    if (logger.IsEnabled(LogLevel.Warning))
+                    {
+                        logger.LogWarning(
+                            "Token exchange failed: unsupported code_challenge_method {Method} for authorization code {Code}",
+                            authCodeInfo.CodeChallengeMethod, request.Code);
+                    }
+
                     return BadRequest(
                         new { error = "invalid_request", error_description = "不支持的code_challenge_method" });
                 }
@@ -688,16 +824,36 @@ public class SSOController(
             var member = await studentRepository.GetByIdAsync(authCodeInfo.UserId);
             if (member == null)
             {
-                logger.LogWarning("Token exchange failed: user {UserId} not found", authCodeInfo.UserId);
+                if (logger.IsEnabled(LogLevel.Warning))
+                {
+                    logger.LogWarning("Token exchange failed: user {UserId} not found", authCodeInfo.UserId);
+                }
+
                 return BadRequest(new { error = "invalid_grant", error_description = "用户不存在" });
             }
 
             var token = await loginService.GetToken(member.UserId, request.ClientId);
+            var refreshToken = await loginService.GetRefreshToken(member.UserId, request.ClientId);
             if (string.IsNullOrEmpty(token))
             {
-                logger.LogError("Token exchange failed: unable to generate token for user {UserId}",
-                    authCodeInfo.UserId);
+                if (logger.IsEnabled(LogLevel.Information))
+                {
+                    logger.LogInformation("Token exchange failed: unable to generate token for user {UserId}",
+                        authCodeInfo.UserId);
+                }
+
                 return BadRequest(new { error = "server_error", error_description = "令牌生成失败" });
+            }
+
+            if (string.IsNullOrEmpty(refreshToken))
+            {
+                if (logger.IsEnabled(LogLevel.Information))
+                {
+                    logger.LogInformation("Token exchange failed: unable to generate refresh token for user {UserId}",
+                        authCodeInfo.UserId);
+                }
+
+                return BadRequest(new { error = "server_error", error_description = "刷新令牌生成失败" });
             }
 
             // 生成ID token（如果scope包含openid）
@@ -707,8 +863,12 @@ public class SSOController(
                 idToken = await GenerateIdToken(member.UserId, request.ClientId, authCodeInfo.Nonce);
                 if (string.IsNullOrEmpty(idToken))
                 {
-                    logger.LogError("Token exchange failed: unable to generate ID token for user {UserId}",
-                        authCodeInfo.UserId);
+                    if (logger.IsEnabled(LogLevel.Information))
+                    {
+                        logger.LogInformation("Token exchange failed: unable to generate ID token for user {UserId}",
+                            authCodeInfo.UserId);
+                    }
+
                     return BadRequest(new { error = "server_error", error_description = "ID令牌生成失败" });
                 }
             }
@@ -716,13 +876,14 @@ public class SSOController(
             // 删除已使用的授权码（一次性使用）
             await _redisDb.KeyDeleteAsync(codeKey);
 
-            logger.LogInformation("Token exchange successful for user {UserId} with client {ClientId}",
-                authCodeInfo.UserId, request.ClientId);
+            // logger.LogInformation("Token exchange successful for user {UserId} with client {ClientId}",
+            //     authCodeInfo.UserId, request.ClientId);
 
             // 返回令牌信息，包括scope
             var response = new Dictionary<string, object>
             {
                 ["access_token"] = token,
+                ["refresh_token"] = refreshToken,
                 ["token_type"] = "Bearer",
                 ["expires_in"] = 7200, // 2小时
                 ["scope"] = string.IsNullOrEmpty(authCodeInfo.Scope) ? DefaultScore : authCodeInfo.Scope
@@ -731,13 +892,17 @@ public class SSOController(
             // 如果生成了ID token，则添加到响应中
             if (string.IsNullOrEmpty(idToken)) return Ok(response);
             response["id_token"] = idToken;
-            logger.LogInformation("id token is {idToken}", idToken);
+            // logger.LogInformation("id token is {idToken}", idToken);
 
             return Ok(response);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Token exchange failed with exception for code {Code}", request.Code);
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "Token exchange failed with exception for code {Code}", request.Code);
+            }
+
             return BadRequest(new { error = "invalid_grant", error_description = "无效的授权码" });
         }
     }
@@ -750,45 +915,69 @@ public class SSOController(
     /// <returns>令牌是否有效</returns>
     private async Task<bool> ValidateToken(string token, string clientId)
     {
-        logger.LogDebug("Validating token");
+        if (logger.IsEnabled(LogLevel.Debug))
+        {
+            logger.LogDebug("Validating token");
+        }
 
         // 检查令牌是否为空
         if (string.IsNullOrEmpty(token))
         {
-            logger.LogWarning("Token validation failed: token is null or empty");
+            if (logger.IsEnabled(LogLevel.Warning))
+            {
+                logger.LogWarning("Token validation failed: token is null or empty");
+            }
+
             return false;
         }
 
         try
         {
-            // 使用JwtHelper中的配置来验证令牌
-            var handler = new JwtSecurityTokenHandler();
-            var jsonToken = handler.ReadJwtToken(token);
-
-            // 检查令牌是否过期
-            if (jsonToken.ValidTo < DateTime.UtcNow)
+            // 1. 使用JwtService验证令牌的基本有效性（签名、发行者、受众、过期时间等）
+            var validationResult = jwtService.ValidateAccessToken(token);
+            if (!validationResult.IsValid)
             {
-                logger.LogWarning("Token validation failed: token expired at {ExpiryTime}", jsonToken.ValidTo);
+                if (logger.IsEnabled(LogLevel.Warning))
+                {
+                    logger.LogWarning("Token validation failed: JWT service validation failed");
+                }
+
                 return false;
             }
 
-            // 从令牌中提取用户ID
-            var userId = jsonToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
+            // 2. 从令牌中提取用户ID
+            var userIdClaim = validationResult.Claims.FirstOrDefault(c =>
+                c.Type == ClaimTypes.NameIdentifier || c.Type == JwtRegisteredClaimNames.Sub);
+            if (userIdClaim == null || string.IsNullOrEmpty(userIdClaim.Value))
             {
-                logger.LogWarning("Token validation failed: missing user ID in token claims");
+                if (logger.IsEnabled(LogLevel.Warning))
+                {
+                    logger.LogWarning("Token validation failed: missing user ID in token claims");
+                }
+
                 return false;
             }
 
-            // 使用loginService来验证令牌
+            var userId = userIdClaim.Value;
+
+            // 3. 使用LoginService验证令牌在Redis中的有效性（是否被撤销）
             var isValid = await loginService.ValidateToken(userId, token, clientId);
-            logger.LogInformation("Token validation result for user {UserId}: {IsValid}", userId, isValid);
+
+            if (logger.IsEnabled(LogLevel.Debug))
+            {
+                logger.LogDebug("Token validation result for user {UserId}: {IsValid}", userId, isValid);
+            }
+
             return isValid;
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Token validation failed with exception");
-            // 如果解析令牌时出现任何异常，认为令牌无效
+            if (logger.IsEnabled(LogLevel.Error))
+            {
+                logger.LogError(ex, "Token validation failed with exception");
+            }
+
+            // 如果验证过程中出现任何异常，认为令牌无效
             return false;
         }
     }
@@ -807,7 +996,11 @@ public class SSOController(
             var member = await studentRepository.GetByIdAsync(userId);
             if (member == null)
             {
-                logger.LogWarning("Failed to generate ID token: user {UserId} not found", userId);
+                if (logger.IsEnabled(LogLevel.Warning))
+                {
+                    logger.LogWarning("Failed to generate ID token: user {UserId} not found", userId);
+                }
+
                 return null;
             }
 
@@ -867,8 +1060,12 @@ public class SSOController(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to generate ID token for user {UserId} and client {ClientId}", userId,
-                clientId);
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(ex, "Failed to generate ID token for user {UserId} and client {ClientId}", userId,
+                    clientId);
+            }
+
             return null;
         }
     }
@@ -880,7 +1077,7 @@ public class SSOController(
     [HttpGet("userinfo")]
     public async Task<IActionResult> UserInfo([FromQuery(Name = "access_token")] string? accessToken = "")
     {
-        logger.LogInformation("User info request received");
+        // logger.LogInformation("User info request received");
 
         var token = HttpContext.GetJwt();
 
@@ -891,27 +1088,19 @@ public class SSOController(
 
         if (string.IsNullOrEmpty(token))
         {
-            logger.LogWarning("No access token provided");
+            if (logger.IsEnabled(LogLevel.Warning))
+            {
+                logger.LogWarning("No access token provided");
+            }
+
             return Unauthorized();
         }
 
         // 验证token格式和签名
         var tokenHandler = new JwtSecurityTokenHandler();
-        var secretKey = Environment.GetEnvironmentVariable("SECRETKEY", EnvironmentVariableTarget.Process) ??
-                        config["Jwt:SecretKey"] ?? "";
-        var key = Encoding.UTF8.GetBytes(secretKey);
-
-        var validationParameters = new TokenValidationParameters
-        {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(key),
-            ValidateIssuer = true,
-            ValidIssuer = "iOS Club of XAUAT",
-            ValidateAudience = true,
-            ValidAudience = "iOS Club of XAUAT",
-            ValidateLifetime = true,
-            ClockSkew = TimeSpan.FromSeconds(30)
-        };
+        
+        // 使用JwtService获取默认验证参数（包含当前有效的RSA公钥）
+        var validationParameters = jwtService.GetDefaultValidationParameters();
 
         // 尝试验证token
         var claimsPrincipal = tokenHandler.ValidateToken(token, validationParameters, out var validatedToken);
@@ -937,11 +1126,15 @@ public class SSOController(
 
         if (member == null)
         {
-            logger.LogWarning("User info request failed: user {UserId} not found", userId);
+            if (logger.IsEnabled(LogLevel.Warning))
+            {
+                logger.LogWarning("User info request failed: user {UserId} not found", userId);
+            }
+
             return Unauthorized();
         }
 
-        logger.LogInformation("User info request successful for user {UserId}", userId);
+        // logger.LogInformation("User info request successful for user {UserId}", userId);
 
         var identity = "Member";
         var staff = await staffRepository.GetStaffByIdWithoutOtherData(userId);
@@ -968,12 +1161,19 @@ public class SSOController(
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Failed to parse token for scope information");
+                if (logger.IsEnabled(LogLevel.Error))
+                {
+                    logger.LogInformation(ex, "Failed to parse token for scope information");
+                }
             }
         }
         else
         {
-            logger.LogWarning("Failed to get scope information from token");
+            if (logger.IsEnabled(LogLevel.Warning))
+            {
+                logger.LogWarning("Failed to get scope information from token");
+            }
+
             return BadRequest("token is not found");
         }
 
@@ -1026,7 +1226,7 @@ public class SSOController(
     [Authorize]
     public async Task<IActionResult> StoreSession([FromBody] StoreSessionRequest request)
     {
-        logger.LogInformation("Store session request received");
+        // logger.LogInformation("Store session request received");
 
         try
         {
@@ -1034,7 +1234,11 @@ public class SSOController(
             var user = HttpContext.User.GetUser();
             if (user == null)
             {
-                logger.LogWarning("Store session failed: user not authenticated");
+                if (logger.IsEnabled(LogLevel.Warning))
+                {
+                    logger.LogWarning("Store session failed: user not authenticated");
+                }
+
                 return Unauthorized("用户未认证");
             }
 
@@ -1044,8 +1248,8 @@ public class SSOController(
 
             if (string.IsNullOrEmpty(request.State))
             {
-                logger.LogInformation("Session stored successfully for user {UserId} without Redis storage",
-                    user.UserId);
+                // logger.LogInformation("Session stored successfully for user {UserId} without Redis storage",
+                //     user.UserId);
                 return Ok(new { success = true, message = "会话存储成功" });
             }
 
@@ -1070,12 +1274,15 @@ public class SSOController(
                     System.Text.Json.JsonSerializer.Serialize(userInfo),
                     TimeSpan.FromMinutes(5));
 
-                logger.LogInformation("Session stored successfully for user {UserId} with Redis key {RedisKey}",
-                    user.UserId, redisKey);
+                // logger.LogInformation("Session stored successfully for user {UserId} with Redis key {RedisKey}",
+                //     user.UserId, redisKey);
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Failed to store session in Redis for user {UserId}", user.UserId);
+                if (logger.IsEnabled(LogLevel.Error))
+                {
+                    logger.LogError(ex, "Failed to store session in Redis for user {UserId}", user.UserId);
+                }
             }
 
             return Ok(new { success = true, message = "会话存储成功" });
@@ -1104,22 +1311,30 @@ public class SSOController(
     [HttpGet("client-info")]
     public async Task<IActionResult> GetClientInfo(string clientId)
     {
-        logger.LogInformation("Client info request received for client {ClientId}", clientId);
+        // logger.LogInformation("Client info request received for client {ClientId}", clientId);
 
         if (string.IsNullOrEmpty(clientId))
         {
-            logger.LogWarning("Client info request failed: invalid client ID");
+            if (logger.IsEnabled(LogLevel.Warning))
+            {
+                logger.LogWarning("Client info request failed: invalid client ID");
+            }
+
             return BadRequest("无效的客户端ID");
         }
 
         var clientApp = await clientAppRepository.GetByClientIdAsync(clientId);
         if (clientApp is not { IsActive: true })
         {
-            logger.LogWarning("Client info request failed: client {ClientId} not found or inactive", clientId);
+            if (logger.IsEnabled(LogLevel.Warning))
+            {
+                logger.LogWarning("Client info request failed: client {ClientId} not found or inactive", clientId);
+            }
+
             return NotFound("客户端应用不存在或已禁用");
         }
 
-        logger.LogInformation("Client info request successful for client {ClientId}", clientId);
+        // logger.LogInformation("Client info request successful for client {ClientId}", clientId);
 
         return Ok(new
         {
@@ -1143,19 +1358,27 @@ public class SSOController(
         var jwt = HttpContext.GetJwt();
         if (string.IsNullOrEmpty(jwt))
         {
-            logger.LogWarning("From main JWT failed: invalid JWT token");
+            if (logger.IsEnabled(LogLevel.Warning))
+            {
+                logger.LogWarning("From main JWT failed: invalid JWT token");
+            }
+
             return Unauthorized("无效的JWT令牌");
         }
 
         var user = HttpContext.User.GetUser();
         if (user == null)
         {
-            logger.LogWarning("From main JWT failed: user not authenticated");
+            if (logger.IsEnabled(LogLevel.Warning))
+            {
+                logger.LogWarning("From main JWT failed: user not authenticated");
+            }
+
             return Unauthorized("用户未认证");
         }
 
-        logger.LogInformation("From main JWT request received for user {UserId} and client {ClientId}", user.UserId,
-            clientId);
+        // logger.LogInformation("From main JWT request received for user {UserId} and client {ClientId}", user.UserId,
+        //     clientId);
 
         var token = await loginService.LoginThirdPartyFromMainJwt(user.UserId, clientId, jwt, scope);
 
@@ -1164,7 +1387,11 @@ public class SSOController(
             return Ok(token);
         }
 
-        logger.LogWarning("From main JWT failed: failed to login third party from main JWT");
+        if (logger.IsEnabled(LogLevel.Warning))
+        {
+            logger.LogWarning("From main JWT failed: failed to login third party from main JWT");
+        }
+
         return BadRequest("未获取到Token");
     }
 

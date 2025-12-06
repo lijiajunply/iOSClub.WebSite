@@ -1,5 +1,6 @@
 import {url} from './Url';
 import type {StudentModel, LoginModel} from '../models';
+import {apiRequest} from './ApiService';
 
 /**
  * 密码哈希函数
@@ -23,75 +24,90 @@ export class AuthService {
      * @param loginModel 登录信息
      * @param clientId 客户端ID
      * @param scope 授权范围
-     * @returns Promise<string> JWT令牌
+     * @returns Promise<{ accessToken: string, refreshToken: string }> 访问令牌和刷新令牌
      */
-    static async login(loginModel: LoginModel, clientId: string | null | undefined = '', scope: string | null | undefined = ''): Promise<string> {
+    static async login(loginModel: LoginModel, clientId: string | null | undefined = '', scope: string | null | undefined = ''): Promise<{ accessToken: string, refreshToken: string }> {
+        // 直接使用fetch获取完整响应，以便获取响应头中的刷新令牌
         const response = await fetch(`${url}/Auth/login?clientId=${clientId}&scope=${scope}`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
+                'Content-Type': 'application/json'
             },
-            body: JSON.stringify(loginModel),
+            body: JSON.stringify(loginModel)
         });
-
+        
         if (!response.ok) {
-            if (response.status === 404) {
-                throw new Error('用户不存在');
-            }
-            throw new Error('登录失败');
+            // 处理错误响应
+            const errorData = await response.json();
+            throw new Error(errorData.message || '登录失败');
         }
-
-        return await response.text();
+        
+        // 解析响应体
+        const responseData = await response.json();
+        const accessToken = responseData.data;
+        
+        // 从响应头中获取刷新令牌
+        const refreshToken = response.headers.get('X-Refresh-Token') || '';
+        
+        this.saveTokens(accessToken, refreshToken);
+        return { accessToken, refreshToken };
     }
 
     /**
      * 学生注册
      * @param model 学生注册信息
-     * @returns Promise<string> JWT令牌
+     * @returns Promise<{ accessToken: string, refreshToken: string }> 访问令牌和刷新令牌
      */
-    static async signup(model: StudentModel): Promise<string> {
+    static async signup(model: StudentModel): Promise<{ accessToken: string, refreshToken: string }> {
+        // 直接使用fetch获取完整响应，以便获取响应头中的刷新令牌
         const response = await fetch(`${url}/Auth/signup`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
+                'Content-Type': 'application/json'
             },
-            body: JSON.stringify(model),
+            body: JSON.stringify(model)
         });
-
+        
         if (!response.ok) {
-            if (response.status === 409) {
-                throw new Error('用户ID已存在');
-            }
-            throw new Error('注册失败');
+            // 处理错误响应
+            const errorData = await response.json();
+            throw new Error(errorData.message || '注册失败');
         }
-
-        return await response.text();
+        
+        // 解析响应体
+        const responseData = await response.json();
+        const accessToken = responseData.data;
+        
+        // 从响应头中获取刷新令牌
+        const refreshToken = response.headers.get('X-Refresh-Token') || '';
+        
+        this.saveTokens(accessToken, refreshToken);
+        return { accessToken, refreshToken };
     }
 
-    static async logout(userId: string, clientId: string | null | undefined = '') {
-        const token = AuthService.getToken();
-        const response = await fetch(`${url}/Auth/logout?userId=${userId}&clientId=${clientId}`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
-        });
-
-        return response.ok;
+    static async logout(userId: string, clientId: string | null | undefined = ''): Promise<boolean> {
+        try {
+            await apiRequest<boolean>({
+                url: `${url}/Auth/logout?userId=${userId}&clientId=${clientId}`,
+                method: 'POST'
+            });
+            this.clearTokens();
+            return true;
+        } catch (error) {
+            return false;
+        }
     }
 
     static async validate(userId: string, token: string, clientId: string | null | undefined = ''): Promise<boolean> {
         try {
-            const response = await fetch(`${url}/Auth/validate?userId=${userId}&clientId=${clientId}`, {
+            await apiRequest<boolean>({
+                url: `${url}/Auth/validate?userId=${userId}&clientId=${clientId}`,
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
+                    'Authorization': `Bearer ${token}`
+                }
             });
-
-            return response.ok;
+            return true;
         } catch (e) {
             console.error(e);
             return false;
@@ -99,26 +115,85 @@ export class AuthService {
     }
 
     /**
-     * 保存令牌到本地存储
-     * @param token JWT令牌
+     * 保存访问令牌和刷新令牌到本地存储
+     * @param accessToken 访问令牌
+     * @param refreshToken 刷新令牌
      */
-    static saveToken(token: string): void {
-        localStorage.setItem('Authorization', token);
+    static saveTokens(accessToken: string, refreshToken: string): void {
+        localStorage.setItem('accessToken', accessToken);
+        localStorage.setItem('refreshToken', refreshToken);
     }
 
     /**
-     * 从本地存储获取令牌
-     * @returns string | null JWT令牌或null
+     * 从本地存储获取访问令牌
+     * @returns string | null 访问令牌或null
      */
-    static getToken(): string | null {
-        return localStorage.getItem('Authorization');
+    static getAccessToken(): string | null {
+        return localStorage.getItem('accessToken');
+    }
+
+    /**
+     * 从本地存储获取刷新令牌
+     * @returns string | null 刷新令牌或null
+     */
+    static getRefreshToken(): string | null {
+        return localStorage.getItem('refreshToken');
+    }
+
+    /**
+     * 使用刷新令牌获取新的访问令牌
+     * @returns Promise<string> 新的访问令牌
+     */
+    static async refreshToken(): Promise<string> {
+        const refreshToken = this.getRefreshToken();
+        const userInfo = this.getCurrentUserInfo();
+        
+        if (!refreshToken || !userInfo?.sub) {
+            throw new Error('刷新令牌不存在或用户信息无效');
+        }
+        
+        // 调用后端刷新令牌API
+        const newAccessToken = await apiRequest<string>({
+            url: `${url}/Auth/refresh-token?userId=${userInfo.sub}&refreshToken=${refreshToken}`,
+            method: 'POST',
+            requiresAuth: false
+        });
+        
+        // 更新访问令牌
+        this.saveTokens(newAccessToken, refreshToken);
+        return newAccessToken;
     }
 
     /**
      * 清除本地存储的令牌
      */
+    static clearTokens(): void {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+    }
+
+    /**
+     * 获取当前令牌（兼容旧代码）
+     * @returns string | null 访问令牌或null
+     */
+    static getToken(): string | null {
+        return this.getAccessToken();
+    }
+
+    /**
+     * 保存令牌（兼容旧代码）
+     * @param token 访问令牌
+     */
+    static saveToken(token: string): void {
+        const refreshToken = this.getRefreshToken() || '';
+        this.saveTokens(token, refreshToken);
+    }
+
+    /**
+     * 清除令牌（兼容旧代码）
+     */
     static clearToken(): void {
-        localStorage.removeItem('Authorization');
+        this.clearTokens();
     }
 
     /**
@@ -174,20 +249,10 @@ export class AuthService {
      * @returns Promise<boolean> 是否修改成功
      */
     static async changePassword(userId: string, oldPassword: string, newPassword: string): Promise<boolean> {
-        const token = this.getToken();
-        const response = await fetch(`${url}/Auth/change-password?userId=${userId}&oldPassword=${oldPassword}&newPassword=${newPassword}`, {
-            method: 'PUT',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
+        return await apiRequest<boolean>({
+            url: `${url}/Auth/change-password?userId=${userId}&oldPassword=${oldPassword}&newPassword=${newPassword}`,
+            method: 'PUT'
         });
-
-        if (!response.ok) {
-            throw new Error('密码修改失败');
-        }
-
-        return true;
     }
 
     /**
@@ -196,21 +261,11 @@ export class AuthService {
      * @returns Promise<boolean> 是否发送成功
      */
     static async requestPasswordReset(userId: string): Promise<boolean> {
-        const response = await fetch(`${url}/Auth/request-password-reset?userId=${userId}`, {
+        return await apiRequest<boolean>({
+            url: `${url}/Auth/request-password-reset?userId=${userId}`,
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            requiresAuth: false
         });
-
-        if (!response.ok) {
-            if (response.status === 404) {
-                throw new Error('用户不存在');
-            }
-            throw new Error('请联系管理员进行密码更改');
-        }
-
-        return true;
     }
 
     /**
@@ -221,25 +276,18 @@ export class AuthService {
      * @returns Promise<boolean> 是否重置成功
      */
     static async resetPassword(userId: string, code: string, newPassword: string): Promise<boolean> {
-        const response = await fetch(`${url}/Auth/reset-password?userId=${userId}&code=${code}&newPassword=${newPassword}`, {
+        return await apiRequest<boolean>({
+            url: `${url}/Auth/reset-password?userId=${userId}&code=${code}&newPassword=${newPassword}`,
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            requiresAuth: false
         });
-
-        if (!response.ok) {
-            throw new Error('验证码无效或密码重置失败');
-        }
-
-        return true;
     }
 
     /**
      * 从主站JWT获取SSO会话
      * @param clientId 客户端ID
      * @param scope 权限范围
-     * @returns Promise<boolean> 是否成功
+     * @returns Promise<string> SSO令牌
      */
     static async loginFromMainJwt(clientId: string, scope: string = 'profile openid role'): Promise<string> {
         const token = this.getToken();

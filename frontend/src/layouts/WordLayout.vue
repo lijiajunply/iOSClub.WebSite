@@ -364,7 +364,7 @@ const handleSearch = async () => {
   isSearching.value = true
   searchError.value = ''
   try {
-    searchResults.value = await ArticleService.searchArticles(searchKeyword.value)
+    searchResults.value = (await ArticleService.searchArticles(searchKeyword.value))
   } catch (error: any) {
     searchError.value = error.message || '搜索请求失败'
   } finally {
