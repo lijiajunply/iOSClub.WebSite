@@ -41,17 +41,24 @@ public class GlobalExceptionMiddleware
         }
         catch (Exception ex)
         {
-            // 记录异常日志，包含请求上下文信息
-            _logger.LogError(ex,
-                "Unhandled exception occurred. Request: {Method} {Path}, UserAgent: {UserAgent}, RemoteIp: {RemoteIp}, RequestId: {RequestId}, CorrelationId: {CorrelationId}",
+            // 记录请求上下文信息
+            var requestInfo = new
+            {
                 context.Request.Method,
                 context.Request.Path,
-                context.Request.Headers.UserAgent.ToString(),
-                context.Connection.RemoteIpAddress?.ToString(),
-                requestId,
-                context.Request.Headers.TryGetValue("X-Correlation-ID", out var correlationId)
+                QueryString = context.Request.QueryString.ToString(),
+                UserAgent = context.Request.Headers.UserAgent.ToString(),
+                RemoteIp = context.Connection.RemoteIpAddress?.ToString(),
+                RequestId = requestId,
+                CorrelationId = context.Request.Headers.TryGetValue("X-Correlation-ID", out var correlationId)
                     ? correlationId.ToString()
-                    : "N/A");
+                    : "N/A",
+                context.Request.ContentType,
+                context.Request.ContentLength
+            };
+
+            // 记录异常日志，包含请求上下文信息
+            _logger.LogError(ex, "Unhandled exception occurred. Request: {@RequestInfo}", requestInfo);
 
             await HandleExceptionAsync(context, ex, requestId);
         }
@@ -103,6 +110,30 @@ public class GlobalExceptionMiddleware
                     response.Detail = validationException.Detail;
                 }
 
+                break;
+
+            // 处理访问权限不足异常
+            case ResourceAccessException accessEx:
+                response.Code = (int)HttpStatusCode.Forbidden;
+                response.ErrorCode = ErrorCode.InsufficientPermission;
+                response.Message = accessEx.Message;
+                response.Detail = accessEx.Detail;
+                break;
+
+            // 处理业务异常
+            case BusinessException businessEx:
+                response.Code = (int)HttpStatusCode.BadRequest;
+                response.ErrorCode = ErrorCode.OperationFailed;
+                response.Message = businessEx.Message;
+                response.Detail = businessEx.Detail;
+                break;
+
+            // 处理身份认证异常
+            case AuthException authEx:
+                response.Code = (int)HttpStatusCode.Unauthorized;
+                response.ErrorCode = ErrorCode.Unauthorized;
+                response.Message = authEx.Message;
+                response.Detail = authEx.Detail;
                 break;
 
             // 处理其他自定义异常
@@ -184,6 +215,40 @@ public class GlobalExceptionMiddleware
                 if (env.IsDevelopment())
                 {
                     response.Detail = dbUpdateEx.Message;
+                }
+
+                break;
+
+            // 处理其他异常
+            case HttpRequestException httpEx:
+                response.Code = (int)HttpStatusCode.ServiceUnavailable;
+                response.ErrorCode = ErrorCode.NetworkError;
+                response.Message = "网络请求失败";
+                if (env.IsDevelopment())
+                {
+                    response.Detail = httpEx.Message;
+                }
+
+                break;
+
+            case TimeoutException timeoutEx:
+                response.Code = (int)HttpStatusCode.RequestTimeout;
+                response.ErrorCode = ErrorCode.ExternalServiceTimeout;
+                response.Message = "操作超时";
+                if (env.IsDevelopment())
+                {
+                    response.Detail = timeoutEx.Message;
+                }
+
+                break;
+
+            case OperationCanceledException canceledEx:
+                response.Code = (int)HttpStatusCode.ServiceUnavailable;
+                response.ErrorCode = ErrorCode.OperationFailed;
+                response.Message = "操作被取消";
+                if (env.IsDevelopment())
+                {
+                    response.Detail = canceledEx.Message;
                 }
 
                 break;

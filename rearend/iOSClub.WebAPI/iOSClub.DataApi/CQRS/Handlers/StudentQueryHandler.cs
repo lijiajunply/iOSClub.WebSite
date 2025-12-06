@@ -16,6 +16,7 @@ public class StudentQueryHandler(IStudentRepository studentRepository, IDistribu
     private const string StudentCacheKeyPrefix = "students:";
     private const string StudentsPagedCacheKeyPrefix = "students:paged:";
     private const int CacheExpirationMinutes = 30;
+    private const int PagedCacheExpirationMinutes = 5;
 
     public async Task<List<StudentModel>> Handle(GetStudentsQuery query, CancellationToken cancellationToken = default)
     {
@@ -68,7 +69,26 @@ public class StudentQueryHandler(IStudentRepository studentRepository, IDistribu
 
     public async Task<(List<MemberModel>, int)> Handle(GetStudentsPagedQuery query, CancellationToken cancellationToken = default)
     {
-        // 分页查询不缓存，因为数据会频繁变化
-        return await studentRepository.GetMembersPagedAsync(query.PageNum, query.PageSize, query.SearchTerm, query.SearchCondition);
+        // 分页查询使用短期缓存，因为数据会频繁变化
+        var cacheKey = $"{StudentsPagedCacheKeyPrefix}{query.PageNum}_{query.PageSize}_{query.SearchTerm ?? ""}_{query.SearchCondition ?? ""}";
+        
+        // 尝试从缓存获取
+        var cachedResult = await distributedCache.GetStringAsync(cacheKey, cancellationToken);
+        if (!string.IsNullOrEmpty(cachedResult))
+        {
+            return JsonConvert.DeserializeObject<(List<MemberModel>, int)>(cachedResult)!;
+        }
+
+        // 缓存不存在，从数据库获取
+        var result = await studentRepository.GetMembersPagedAsync(query.PageNum, query.PageSize, query.SearchTerm, query.SearchCondition);
+
+        // 存入缓存，设置较短的过期时间
+        await distributedCache.SetStringAsync(
+            cacheKey,
+            JsonConvert.SerializeObject(result),
+            new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(PagedCacheExpirationMinutes) },
+            cancellationToken);
+
+        return result;
     }
 }

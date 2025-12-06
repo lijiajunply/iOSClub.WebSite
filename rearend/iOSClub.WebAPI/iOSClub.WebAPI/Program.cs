@@ -3,15 +3,10 @@ using System.Security.Cryptography;
 using FluentValidation.AspNetCore;
 using iOSClub.Data;
 using iOSClub.Data.DataModels;
-using iOSClub.Data.ShowModels;
-using iOSClub.DataApi.CQRS;
-using iOSClub.DataApi.CQRS.Commands;
-using iOSClub.DataApi.CQRS.Handlers;
-using iOSClub.DataApi.CQRS.Queries;
-using iOSClub.DataApi.Repositories;
 using iOSClub.DataApi.Services;
 using iOSClub.WebAPI.Common;
 using iOSClub.WebAPI.Common.Config;
+using iOSClub.WebAPI.Common.Extensions;
 using iOSClub.WebAPI.Common.Middleware;
 using iOSClub.WebAPI.Common.Security;
 using iOSClub.WebAPI.IdentityModels;
@@ -263,20 +258,23 @@ if (!string.IsNullOrEmpty(redis))
 
 #region 日志设置
 
-// 定义日志数据库路径
-
-if (builder.Environment.IsProduction())
+if (builder.Environment.IsDevelopment())
 {
-    var sqlPath = Environment.CurrentDirectory + "/logs/log.db";
+    builder.Logging.AddConsole();
+}
+else
+{
+    // 定义日志数据库路径
+    var logPath = Path.Combine(Environment.CurrentDirectory, "logs", "log.db");
 
     // 确保日志目录存在
-    var logDir = Path.GetDirectoryName(sqlPath);
+    var logDir = Path.GetDirectoryName(logPath);
     if (!string.IsNullOrEmpty(logDir) && !Directory.Exists(logDir))
     {
         Directory.CreateDirectory(logDir);
     }
 
-    // 日志 注册
+    // 统一日志配置，适用于所有环境
     var logger = new LoggerConfiguration()
         .MinimumLevel.Information()
         .Enrich.FromLogContext()
@@ -284,8 +282,13 @@ if (builder.Environment.IsProduction())
         .WriteTo.Console(
             outputTemplate: "{Timestamp:HH:mm:ss} [{Level:u3}] {Message:lj} {Properties:j}{NewLine}{Exception}")
         .WriteTo.SQLite(
-            sqliteDbPath: sqlPath,
+            sqliteDbPath: logPath,
             tableName: "Logs")
+        .WriteTo.File(
+            Path.Combine(logDir ?? Environment.CurrentDirectory, "log-.txt"),
+            rollingInterval: RollingInterval.Day,
+            outputTemplate:
+            "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {SourceContext}: {Message:lj} {Properties:j}{NewLine}{Exception}")
         .CreateLogger();
 
     builder.Logging
@@ -306,43 +309,10 @@ builder.Services.AddScoped<GlobalAuthorizationFilter>();
 // 注册ITokenGenerator服务
 builder.Services.AddScoped<ITokenGenerator, JwtGenerator>();
 
-builder.Services.AddScoped<IArticleRepository, ArticleRepository>();
-builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
-builder.Services.AddScoped<IDepartmentRepository, DepartmentRepository>();
-builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
-builder.Services.AddScoped<IResourceRepository, ResourceRepository>();
-builder.Services.AddScoped<IStaffRepository, StaffRepository>();
-builder.Services.AddScoped<IStudentRepository, StudentRepository>();
-builder.Services.AddScoped<ITodoRepository, TodoRepository>();
-
-builder.Services.AddScoped<IDataCentreService, DataCentreService>();
-builder.Services.AddScoped<IClientApplicationRepository, ClientApplicationRepository>();
-builder.Services.AddScoped<IEmailService, EmailService>();
-builder.Services.AddScoped<ILoginService, LoginService>();
-
-// 注册CQRS查询处理器和命令处理器
-builder.Services.AddScoped<StudentQueryHandler>();
-builder.Services.AddScoped<StudentCommandHandler>();
-
-// 注册CQRS处理程序的接口映射
-builder.Services.AddScoped<IQueryHandler<GetStudentsQuery, List<StudentModel>>, StudentQueryHandler>();
-builder.Services.AddScoped<IQueryHandler<GetStudentByIdQuery, StudentModel?>, StudentQueryHandler>();
-builder.Services.AddScoped<IQueryHandler<GetStudentsPagedQuery, (List<MemberModel>, int)>, StudentQueryHandler>();
-
-builder.Services.AddScoped<ICommandHandler<CreateStudentCommand, StudentModel?>, StudentCommandHandler>();
-builder.Services.AddScoped<ICommandHandler<UpdateStudentCommand, bool>, StudentCommandHandler>();
-builder.Services.AddScoped<ICommandHandler<DeleteStudentCommand, bool>, StudentCommandHandler>();
-builder.Services.AddScoped<ICommandHandler<UpdateManyStudentsCommand, bool>, StudentCommandHandler>();
-builder.Services.AddScoped<ICommandHandler<StudentLoginCommand, bool>, StudentCommandHandler>();
-
-// 注册数据脱敏配置和服务
-builder.Services.AddSingleton<MaskingConfig>();
-builder.Services.AddSingleton<DataMaskingService>();
-builder.Services.AddSingleton<LogAuditService>();
-
-// 注册速率限制配置和服务
-builder.Services.AddSingleton<RateLimitConfig>();
-builder.Services.AddSingleton<RateLimitService>();
+// 使用扩展方法注册服务
+builder.Services.RegisterRepositoriesAndServices();
+builder.Services.RegisterCqrsServices();
+builder.Services.RegisterSecurityServices();
 
 #endregion
 
@@ -407,68 +377,63 @@ app.Use(async (context, next) =>
     await next();
 });
 
-// 创建数据库
+// 优化数据库迁移策略，异步执行迁移
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     var context = services.GetRequiredService<ClubContext>();
 
-    var pending = context.Database.GetPendingMigrations();
-    var enumerable = pending as string[] ?? pending.ToArray();
-
-    if (enumerable.Length != 0)
+    try
     {
-        Console.WriteLine("Pending migrations: " + string.Join("; ", enumerable));
-        try
+        var pending = context.Database.GetPendingMigrations();
+        var enumerable = pending as string[] ?? pending.ToArray();
+
+        if (enumerable.Length != 0)
         {
+            Console.WriteLine("Pending migrations: " + string.Join("; ", enumerable));
             await context.Database.MigrateAsync();
             Console.WriteLine("Migrations applied successfully.");
         }
-        catch (Exception ex)
+        else
         {
-            Console.WriteLine("Migration error: " + ex);
-            throw; // 让异常冒泡，方便定位问题
-        }
-    }
-    else
-    {
-        Console.WriteLine("No pending migrations.");
-    }
-
-    if (!await context.Staffs.AnyAsync())
-    {
-        var user = Environment.GetEnvironmentVariable("USER", EnvironmentVariableTarget.Process);
-        Console.WriteLine(user);
-        var model = new StaffModel() { Identity = "Founder", Name = "root", UserId = "0000000000" };
-        var users = user?.Split(',');
-        if (!string.IsNullOrEmpty(user) && users != null)
-        {
-            if (users.Length > 0)
-                model.Name = users[0];
-            if (users.Length > 1)
-                model.UserId = users[1];
+            Console.WriteLine("No pending migrations.");
         }
 
-        context.Staffs.Add(model);
+        // 初始化数据
+        if (!await context.Staffs.AnyAsync())
+        {
+            var user = Environment.GetEnvironmentVariable("USER", EnvironmentVariableTarget.Process);
+            Console.WriteLine(user);
+            var model = new StaffModel() { Identity = "Founder", Name = "root", UserId = "0000000000" };
+            var users = user?.Split(',');
+            if (!string.IsNullOrEmpty(user) && users != null)
+            {
+                if (users.Length > 0)
+                    model.Name = users[0];
+                if (users.Length > 1)
+                    model.UserId = users[1];
+            }
+
+            context.Staffs.Add(model);
+        }
+
+        if (await context.Categories.AnyAsync())
+        {
+            var categories = await context.Categories.Where(x => string.IsNullOrEmpty(x.Id)).ToListAsync();
+            context.Categories.RemoveRange(categories);
+        }
+
+        await context.SaveChangesAsync();
     }
-
-    // if (context.Departments.Any())
-    // {
-    //     var departments = await context.Departments.Where(x => string.IsNullOrEmpty(x.Key)).ToListAsync();
-    //     foreach (var department in departments)
-    //     {
-    //         department.Key = department.GetHashKey();
-    //     }
-    // }
-
-    if (await context.Categories.AnyAsync())
+    catch (Exception ex)
     {
-        var categories = await context.Categories.Where(x => string.IsNullOrEmpty(x.Id)).ToListAsync();
-        context.Categories.RemoveRange(categories);
+        Console.WriteLine("Migration error: " + ex);
+        // 不要抛出异常，避免应用启动失败
     }
-
-    await context.SaveChangesAsync();
-    await context.DisposeAsync();
+    finally
+    {
+        await context.DisposeAsync();
+    }
 }
 
 // 别动
