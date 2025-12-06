@@ -154,13 +154,13 @@
         :show-icon="false"
         :show-header="false"
         transform-origin="center"
-        class="!bg-transparent !shadow-none box-border"
+        class="backdrop-blur-sm bg-black/10 dark:bg-black/70 box-border"
     >
       <div
-          class="spotlight-container w-[90vw] max-w-[600px] overflow-hidden rounded-2xl bg-white/90 shadow-2xl backdrop-blur-2xl ring-1 ring-black/5 dark:bg-[#2c2c2e]/90 dark:ring-white/10">
+          class="spotlight-container w-[90vw] max-w-[600px] overflow-hidden rounded-2xl bg-white shadow-xl dark:bg-[#1c1c1e]">
         <!-- 搜索输入框 -->
-        <div class="flex items-center gap-3 border-b border-zinc-200/50 px-4 py-4 dark:border-white/5">
-          <Icon icon="lucide:search" class="h-5 w-5 text-zinc-400"/>
+        <div class="flex items-center gap-3 border-b border-zinc-200/50 px-4 py-4 dark:border-white/10">
+          <Icon icon="lucide:search" class="h-5 w-5 text-zinc-500"/>
           <n-input
               v-model:value="searchKeyword"
               placeholder="搜索文章..."
@@ -168,20 +168,20 @@
               autofocus
               :bordered="false"
               @keyup.enter="handleSearch"
-              class="flex-1 !bg-transparent text-lg !p-0"
+              class="flex-1 bg-white text-lg !p-0 dark:bg-[#2c2c2e] search-input"
           >
             <template #suffix>
               <div v-if="isSearching" class="flex items-center">
                 <n-spin size="small"/>
               </div>
               <button v-else-if="searchKeyword" @click="searchKeyword = ''"
-                      class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200">
+                      class="text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200">
                 <Icon icon="lucide:x-circle" class="w-4 h-4"/>
               </button>
             </template>
           </n-input>
           <button
-              class="hidden text-xs font-medium text-zinc-400 sm:block rounded border border-zinc-200 px-1.5 py-0.5 dark:border-zinc-700"
+              class="hidden text-xs font-medium text-zinc-500 sm:block rounded border border-zinc-300 px-1.5 py-0.5 dark:border-zinc-600 dark:bg-zinc-700/50"
               @click="searchModalVisible = false"
           >
             ESC
@@ -194,7 +194,7 @@
           <div v-if="!searchKeyword && !searchResults.length" class="py-12 text-center">
             <div
                 class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-zinc-100 dark:bg-zinc-800">
-              <Icon icon="lucide:command" class="h-6 w-6 text-zinc-400"/>
+              <Icon icon="lucide:search" class="h-6 w-6 text-zinc-400"/>
             </div>
             <p class="text-sm text-zinc-500 dark:text-zinc-400">输入关键词开始搜索文档...</p>
           </div>
@@ -210,31 +210,40 @@
                 v-for="article in searchResults"
                 :key="article.path"
                 @click="handleResultClick(article.path)"
-                class="group flex cursor-pointer flex-col gap-1 rounded-xl p-3 transition-colors hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600"
+                class="group flex cursor-pointer flex-col gap-1 rounded-lg p-3 transition-colors hover:bg-blue-500 hover:text-white dark:hover:bg-blue-600"
             >
               <div class="flex items-center justify-between">
-                <h4 class="font-medium text-slate-900 group-hover:text-white dark:text-slate-100 text-sm"
+                <h4 class="font-medium text-slate-900 group-hover:text-white dark:text-slate-100 text-sm truncate"
                     v-html="article.highlightedTitle || article.title"></h4>
-                <span class="text-xs text-zinc-400 group-hover:text-blue-100">{{
+                <span class="text-xs text-zinc-500 group-hover:text-blue-100 dark:text-zinc-400 ml-2 flex-shrink-0">{{
                     new Date(article.lastWriteTime).toLocaleDateString()
                   }}</span>
               </div>
-              <p class="line-clamp-2 text-xs text-zinc-500 group-hover:text-blue-100 dark:text-zinc-400"
+              <p class="line-clamp-2 text-xs text-zinc-500 group-hover:text-blue-100 dark:text-zinc-400 mt-1"
                  v-html="article.highlightedContent || ''"></p>
             </div>
           </div>
 
           <!-- 无结果 -->
           <div v-else-if="searchKeyword && !isSearching" class="py-8 text-center">
-            <p class="text-zinc-500">未找到与 "{{ searchKeyword }}" 相关的文章</p>
+            <div class="flex justify-center mb-3">
+              <Icon icon="lucide:file-x" class="h-6 w-6 text-zinc-400" />
+            </div>
+            <p class="text-zinc-500 dark:text-zinc-400">未找到与 "{{ searchKeyword }}" 相关的文章</p>
           </div>
         </div>
 
         <!-- 底部提示 -->
         <div
-            class="border-t border-zinc-100 bg-zinc-50/50 px-4 py-2 text-[10px] text-zinc-400 dark:border-white/5 dark:bg-white/5 flex justify-between items-center">
-          <span>本地搜索支持</span>
-          <span class="font-mono">回车键确认搜索</span>
+            class="border-t border-zinc-200 bg-zinc-50 px-4 py-2 text-[10px] text-zinc-500 dark:border-white/10 dark:bg-zinc-800/50 dark:text-zinc-400 flex justify-between items-center">
+          <div class="flex items-center">
+            <Icon icon="lucide:info" class="h-3 w-3 mr-1" />
+            <span>本地搜索支持</span>
+          </div>
+          <div class="flex items-center">
+            <Icon icon="lucide:corner-down-left" class="h-3 w-3 mr-1" />
+            <span class="font-mono">回车键确认搜索</span>
+          </div>
         </div>
       </div>
     </n-modal>
@@ -449,10 +458,17 @@ onBeforeUnmount(() => {
   --n-border-hover: none !important;
   --n-border-focus: none !important;
   --n-box-shadow-focus: none !important;
-  background-color: transparent !important;
 }
 
 :deep(.n-input .n-input__input-el) {
   height: 2.5rem;
+}
+
+:deep(.search-input .n-input__wrapper) {
+  background-color: #ffffff !important;
+}
+
+:deep(.dark .search-input .n-input__wrapper) {
+  background-color: #2c2c2e !important;
 }
 </style>
