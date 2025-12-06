@@ -16,7 +16,7 @@ public interface IArticleRepository
     /// </summary>
     /// <returns>文章列表</returns>
     public Task<IEnumerable<ArticleModel>> GetAll();
-    
+
     /// <summary>
     /// 根据路径获取文章
     /// </summary>
@@ -24,35 +24,35 @@ public interface IArticleRepository
     /// <param name="identity">用户身份</param>
     /// <returns>文章模型，如果找不到或没有权限则返回null</returns>
     public Task<ArticleModel?> GetFromPath(string path, string identity = "");
-    
+
     /// <summary>
     /// 创建或更新文章
     /// </summary>
     /// <param name="model">文章模型</param>
     /// <returns>是否操作成功</returns>
     public Task<bool> CreateOrUpdate(ArticleModel model);
-    
+
     /// <summary>
     /// 删除文章
     /// </summary>
     /// <param name="key">文章路径</param>
     /// <returns>是否删除成功</returns>
     public Task<bool> Delete(string key);
-    
+
     /// <summary>
     /// 获取所有分类文章
     /// </summary>
     /// <param name="identity">用户身份</param>
     /// <returns>按分类分组的文章字典</returns>
     public Task<Dictionary<string, IEnumerable<ArticleModel>>> GetAllCategoryArticles(string identity);
-    
+
     /// <summary>
     /// 更新文章顺序
     /// </summary>
     /// <param name="articleOrders">文章路径和顺序的字典，可为null</param>
     /// <returns>是否更新成功</returns>
     public Task<bool> UpdateArticleOrders(Dictionary<string, int>? articleOrders);
-    
+
     /// <summary>
     /// 搜索文章并返回高亮结果
     /// </summary>
@@ -112,10 +112,12 @@ public class ArticleRepository(IDbContextFactory<ClubContext> factory, ICategory
         if (article == null)
             return null;
 
-        if (string.IsNullOrEmpty(identity) || IsIdentityExist(identity, article.Identity))
-            return article;
+        if (string.IsNullOrEmpty(identity))
+        {
+            identity = "Member";
+        }
 
-        return null;
+        return IsIdentityExist(identity, article.Identity) ? article : null;
     }
 
     public async Task<bool> CreateOrUpdate(ArticleModel model)
