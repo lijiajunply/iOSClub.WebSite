@@ -292,11 +292,9 @@ public class MonitoringController(IDataAccessStatisticsService statisticsService
             foreach (var metric in sumMetrics)
             {
                 var labels = (Dictionary<string, string>)metric["labels"];
-                if (labels.ContainsKey("status"))
+                if (labels.TryGetValue("status", out var status))
                 {
-                    var status = labels["status"];
-                    if (!sumByStatus.ContainsKey(status))
-                        sumByStatus[status] = 0;
+                    sumByStatus.TryAdd(status, 0);
                     sumByStatus[status] += (double)metric["value"];
                 }
             }
@@ -305,11 +303,9 @@ public class MonitoringController(IDataAccessStatisticsService statisticsService
             foreach (var metric in countMetrics)
             {
                 var labels = (Dictionary<string, string>)metric["labels"];
-                if (labels.ContainsKey("status"))
+                if (labels.TryGetValue("status", out var status))
                 {
-                    var status = labels["status"];
-                    if (!countByStatus.ContainsKey(status))
-                        countByStatus[status] = 0;
+                    countByStatus.TryAdd(status, 0);
                     countByStatus[status] += (double)metric["value"];
                 }
             }
@@ -343,11 +339,9 @@ public class MonitoringController(IDataAccessStatisticsService statisticsService
             foreach (var metric in requestMetrics)
             {
                 var labels = (Dictionary<string, string>)metric["labels"];
-                if (labels.ContainsKey("method"))
+                if (labels.TryGetValue("method", out var method))
                 {
-                    var method = labels["method"];
-                    if (!result.ContainsKey(method))
-                        result[method] = 0;
+                    result.TryAdd(method, 0);
                     result[method] += (long)(double)metric["value"];
                 }
             }
