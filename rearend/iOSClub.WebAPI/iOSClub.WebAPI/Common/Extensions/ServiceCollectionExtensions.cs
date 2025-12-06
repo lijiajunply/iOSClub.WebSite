@@ -28,6 +28,12 @@ public static class ServiceCollectionExtensions
             services.AddScoped<CategoryCommandHandler>();
             services.AddScoped<ProjectQueryHandler>();
             services.AddScoped<ProjectCommandHandler>();
+            services.AddScoped<DepartmentQueryHandler>();
+            services.AddScoped<DepartmentCommandHandler>();
+            services.AddScoped<ResourceQueryHandler>();
+            services.AddScoped<ResourceCommandHandler>();
+            services.AddScoped<StaffQueryHandler>();
+            services.AddScoped<StaffCommandHandler>();
 
             // 注册CQRS处理程序的接口映射
             services.AddScoped<IQueryHandler<GetStudentsQuery, List<StudentModel>>, StudentQueryHandler>();
@@ -35,13 +41,24 @@ public static class ServiceCollectionExtensions
             services.AddScoped<IQueryHandler<GetStudentsPagedQuery, (List<MemberModel>, int)>, StudentQueryHandler>();
             services.AddScoped<IQueryHandler<GetArticlesQuery, IEnumerable<ArticleModel>>, ArticleQueryHandler>();
             services.AddScoped<IQueryHandler<GetArticleByIdQuery, ArticleModel?>, ArticleQueryHandler>();
-            services
-                .AddScoped<IQueryHandler<GetArticlesByCategoryQuery, IEnumerable<ArticleModel>>, ArticleQueryHandler>();
+            services.AddScoped<IQueryHandler<GetArticlesByCategoryQuery, IEnumerable<ArticleModel>>, ArticleQueryHandler>();
             services.AddScoped<IQueryHandler<GetCategoriesQuery, IEnumerable<CategoryModel>>, CategoryQueryHandler>();
             services.AddScoped<IQueryHandler<GetCategoryByIdQuery, CategoryModel?>, CategoryQueryHandler>();
             services.AddScoped<IQueryHandler<GetCategoryByNameQuery, CategoryModel?>, CategoryQueryHandler>();
             services.AddScoped<IQueryHandler<GetProjectsQuery, IEnumerable<ProjectModel>>, ProjectQueryHandler>();
             services.AddScoped<IQueryHandler<GetProjectByIdQuery, ProjectModel?>, ProjectQueryHandler>();
+            services.AddScoped<IQueryHandler<GetDepartmentsQuery, IEnumerable<DepartmentModel>>, DepartmentQueryHandler>();
+            services.AddScoped<IQueryHandler<GetDepartmentByNameQuery, DepartmentModel?>, DepartmentQueryHandler>();
+            services.AddScoped<IQueryHandler<GetDepartmentByKeyQuery, DepartmentModel?>, DepartmentQueryHandler>();
+            services.AddScoped<IQueryHandler<GetResourcesQuery, IEnumerable<ResourceModel>>, ResourceQueryHandler>();
+            services.AddScoped<IQueryHandler<GetResourceByIdQuery, ResourceModel?>, ResourceQueryHandler>();
+            services.AddScoped<IQueryHandler<GetResourcesByTagQuery, IEnumerable<ResourceModel>>, ResourceQueryHandler>();
+            services.AddScoped<IQueryHandler<SearchResourcesByNameQuery, IEnumerable<ResourceModel>>, ResourceQueryHandler>();
+            services.AddScoped<IQueryHandler<GetStaffsQuery, IEnumerable<StaffModel>>, StaffQueryHandler>();
+            services.AddScoped<IQueryHandler<GetStaffsAsMembersQuery, IEnumerable<MemberModel>>, StaffQueryHandler>();
+            services.AddScoped<IQueryHandler<GetStaffByIdQuery, StaffModel?>, StaffQueryHandler>();
+            services.AddScoped<IQueryHandler<GetStaffByIdWithoutOtherDataQuery, StaffModel?>, StaffQueryHandler>();
+            services.AddScoped<IQueryHandler<GetStaffsByIdentitiesQuery, IEnumerable<StaffModel>>, StaffQueryHandler>();
 
             services.AddScoped<ICommandHandler<CreateStudentCommand, StudentModel?>, StudentCommandHandler>();
             services.AddScoped<ICommandHandler<UpdateStudentCommand, bool>, StudentCommandHandler>();
@@ -59,6 +76,16 @@ public static class ServiceCollectionExtensions
             services.AddScoped<ICommandHandler<CreateProjectCommand, bool>, ProjectCommandHandler>();
             services.AddScoped<ICommandHandler<UpdateProjectCommand, bool>, ProjectCommandHandler>();
             services.AddScoped<ICommandHandler<DeleteProjectCommand, bool>, ProjectCommandHandler>();
+            services.AddScoped<ICommandHandler<CreateDepartmentCommand, bool>, DepartmentCommandHandler>();
+            services.AddScoped<ICommandHandler<UpdateDepartmentCommand, bool>, DepartmentCommandHandler>();
+            services.AddScoped<ICommandHandler<DeleteDepartmentCommand, bool>, DepartmentCommandHandler>();
+            services.AddScoped<ICommandHandler<CreateResourceCommand, bool>, ResourceCommandHandler>();
+            services.AddScoped<ICommandHandler<UpdateResourceCommand, bool>, ResourceCommandHandler>();
+            services.AddScoped<ICommandHandler<DeleteResourceCommand, bool>, ResourceCommandHandler>();
+            services.AddScoped<ICommandHandler<CreateStaffCommand, bool>, StaffCommandHandler>();
+            services.AddScoped<ICommandHandler<UpdateStaffCommand, bool>, StaffCommandHandler>();
+            services.AddScoped<ICommandHandler<DeleteStaffCommand, bool>, StaffCommandHandler>();
+            services.AddScoped<ICommandHandler<ChangeStaffDepartmentCommand, bool>, StaffCommandHandler>();
         }
 
         /// <summary>
