@@ -153,11 +153,20 @@ export class AuthService {
         }
         
         // 调用后端刷新令牌API
-        const newAccessToken = await apiRequest<string>({
-            url: `${url}/Auth/refresh-token?userId=${userInfo.sub}&refreshToken=${refreshToken}`,
+        const res = await fetch(`${url}/Auth/refresh-token?userId=${userInfo.sub}&refreshToken=${refreshToken}`, {
             method: 'POST',
-            requiresAuth: false
-        });
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+
+        if (!res.ok) {
+            throw new Error('刷新令牌失败');
+        }
+
+        const data = await res.json();
+
+        const newAccessToken = data.data as string;
         
         // 更新访问令牌
         this.saveTokens(newAccessToken, refreshToken);
