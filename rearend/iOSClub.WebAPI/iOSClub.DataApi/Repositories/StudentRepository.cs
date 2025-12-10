@@ -15,14 +15,14 @@ public interface IStudentRepository
     /// </summary>
     /// <returns>学生列表</returns>
     public Task<List<StudentModel>> GetAll();
-    
+
     /// <summary>
     /// 根据ID获取学生
     /// </summary>
     /// <param name="id">学生ID</param>
     /// <returns>学生模型，如果找不到则返回null</returns>
     public Task<StudentModel?> Get(string id) => GetByIdAsync(id);
-    
+
     /// <summary>
     /// 创建学生
     /// </summary>
@@ -30,21 +30,21 @@ public interface IStudentRepository
     /// <returns>创建的学生模型，如果创建失败则返回null</returns>
     /// <exception cref="ArgumentException">当输入参数无效时抛出</exception>
     public Task<StudentModel?> Create(StudentModel model);
-    
+
     /// <summary>
     /// 更新学生
     /// </summary>
     /// <param name="model">学生模型</param>
     /// <returns>是否更新成功</returns>
     public Task<bool> Update(StudentModel model);
-    
+
     /// <summary>
     /// 删除学生
     /// </summary>
     /// <param name="id">学生ID</param>
     /// <returns>是否删除成功</returns>
     public Task<bool> Delete(string id) => DeleteAsync(id);
-    
+
     /// <summary>
     /// 学生登录验证
     /// </summary>
@@ -59,34 +59,34 @@ public interface IStudentRepository
     /// <param name="id">学生ID</param>
     /// <returns>学生模型，如果找不到则返回null</returns>
     public Task<StudentModel?> GetByIdAsync(string id);
-    
+
     /// <summary>
     /// 异步更新学生
     /// </summary>
     /// <param name="model">学生模型</param>
     /// <returns>是否更新成功</returns>
     public Task<bool> UpdateAsync(StudentModel model);
-    
+
     /// <summary>
     /// 异步删除学生
     /// </summary>
     /// <param name="id">学生ID</param>
     /// <returns>是否删除成功</returns>
     public Task<bool> DeleteAsync(string id);
-    
+
     /// <summary>
     /// 异步批量更新学生
     /// </summary>
     /// <param name="list">学生列表</param>
     /// <returns>是否更新成功</returns>
     public Task<bool> UpdateManyAsync(List<StudentModel> list);
-    
+
     /// <summary>
     /// 异步获取所有成员
     /// </summary>
     /// <returns>成员列表</returns>
     public Task<List<MemberModel>> GetAllMembersAsync();
-    
+
     /// <summary>
     /// 异步分页获取成员
     /// </summary>
@@ -122,12 +122,10 @@ public class StudentRepository(IDbContextFactory<ClubContext> factory) : IStuden
         EF.CompileAsyncQuery((ClubContext context, string id) =>
             context.Students.AsNoTracking().FirstOrDefault(s => s.UserId == id));
 
-    private static readonly Func<ClubContext, string, string, Task<StudentModel?>> LoginQuery =
-        EF.CompileAsyncQuery((ClubContext context, string userId, string passwordHash) =>
+    private static readonly Func<ClubContext, string, Task<StudentModel?>> LoginQuery =
+        EF.CompileAsyncQuery((ClubContext context, string userId) =>
             context.Students.AsNoTracking()
-                .FirstOrDefault(s => s.UserId == userId && (string.IsNullOrEmpty(s.PasswordHash)
-                    ? passwordHash == s.PhoneNum
-                    : s.PasswordHash == passwordHash)));
+                .FirstOrDefault(s => s.UserId == userId));
 
     public async Task<List<StudentModel>> GetAll()
     {
@@ -228,12 +226,21 @@ public class StudentRepository(IDbContextFactory<ClubContext> factory) : IStuden
         }
 
         await using var context = await factory.CreateDbContextAsync();
-        var hash = DataTool.StringToHash(password);
+
 
         // 使用编译查询提高性能
-        var student = await LoginQuery(context, userId, hash);
+        var student = await LoginQuery(context, userId);
+        if (student == null)
+        {
+            return false;
+        }
 
-        return student != null;
+        if (string.IsNullOrEmpty(student.PasswordHash))
+        {
+            return student.PhoneNum == password;
+        }
+
+        return DataTool.StringToHash(password) == student.PasswordHash;
     }
 
 
@@ -274,6 +281,7 @@ public class StudentRepository(IDbContextFactory<ClubContext> factory) : IStuden
         else
         {
             stu.Update(model);
+            stu.PasswordHash = model.PasswordHash;
         }
 
         var result = await context.SaveChangesAsync();
