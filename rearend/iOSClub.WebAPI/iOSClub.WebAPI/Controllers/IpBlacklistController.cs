@@ -10,7 +10,7 @@ namespace iOSClub.WebAPI.Controllers;
 /// </summary>
 [ApiController]
 [Route("[controller]")]
-[Authorize(Roles = "Admin,Founder")]
+[Authorize(Roles = "Founder, President, Minister")]
 public class IpBlacklistController(
     IIpBlacklistCacheService blacklistService,
     ILogger<IpBlacklistController> logger) : ControllerBase
