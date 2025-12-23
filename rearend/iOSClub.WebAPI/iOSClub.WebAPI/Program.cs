@@ -177,7 +177,7 @@ builder.Services.AddSession(options =>
     options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest; // 根据请求类型决定是否使用安全Cookie
 });
 
-// 使用Redis分布式缓存替代内存缓存
+// 使用Redis分布式缓存
 builder.Services.AddStackExchangeRedisCache(options =>
 {
     var redis = Environment.GetEnvironmentVariable("REDIS", EnvironmentVariableTarget.Process);
@@ -191,6 +191,9 @@ builder.Services.AddStackExchangeRedisCache(options =>
         options.Configuration = redis;
     }
 });
+
+// 添加内存缓存（用于本地缓存层）
+builder.Services.AddMemoryCache();
 
 #endregion
 

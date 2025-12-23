@@ -228,6 +228,12 @@ const routes = [
                 meta: { title: "日志查看 - 西建大 iOS Club" },
                 component: () => import('./adminPages/LogsViewer.vue'),
             },
+            {
+                path: 'IpBlacklist',
+                name: 'IpBlacklist',
+                meta: { title: "IP黑名单管理 - 西建大 iOS Club" },
+                component: () => import('./adminPages/IpBlacklist.vue'),
+            },
         ]
     }
 ];
