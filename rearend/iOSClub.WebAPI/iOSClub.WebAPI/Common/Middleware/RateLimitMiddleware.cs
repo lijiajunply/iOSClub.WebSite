@@ -9,13 +9,11 @@ namespace iOSClub.WebAPI.Common.Middleware;
 public class RateLimitMiddleware(
     RequestDelegate next,
     ILogger<RateLimitMiddleware> logger,
-    RateLimitService rateLimitService)
+    RateLimitService rateLimitService,
+    IIpBlacklistCacheService ipBlacklistService)
 {
-    // 请求来源黑名单（可从配置或数据库加载）
-    private readonly HashSet<string> _ipBlacklist = [];
-
     // 异常请求检测阈值
-    private const int SuspiciousRequestThreshold = 20; // 每分钟超过20个请求视为可疑
+    private const int SuspiciousRequestThreshold = 1000; // 每分钟超过20个请求视为可疑
 
     // 可疑请求计数器（IP -> 时间戳列表）
     private readonly Dictionary<string, List<DateTime>> _suspiciousRequestTracker = new();
@@ -25,8 +23,8 @@ public class RateLimitMiddleware(
         // 获取客户端IP地址
         var clientIp = GetClientIp(context);
 
-        // 1. 检查请求来源是否在黑名单中
-        if (IsIpBlacklisted(clientIp))
+        // 1. 检查请求来源是否在黑名单中（使用Redis缓存）
+        if (await ipBlacklistService.IsIpBlacklistedAsync(clientIp))
         {
             if (logger.IsEnabled(LogLevel.Warning))
             {
@@ -98,17 +96,6 @@ public class RateLimitMiddleware(
 
         // 直接从连接获取IP
         return context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-    }
-
-    /// <summary>
-    /// 检查IP是否在黑名单中
-    /// </summary>
-    /// <param name="clientIp">客户端IP</param>
-    /// <returns>是否在黑名单中</returns>
-    private bool IsIpBlacklisted(string clientIp)
-    {
-        // 实际项目中可以从配置或数据库加载黑名单
-        return _ipBlacklist.Contains(clientIp);
     }
 
     /// <summary>

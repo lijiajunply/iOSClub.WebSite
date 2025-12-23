@@ -123,6 +123,9 @@ public static class ServiceCollectionExtensions
 
             services.AddSingleton<JwtService>();
             services.AddSingleton<RsaKeyManager>();
+
+            // 注册IP黑名单缓存服务
+            services.AddSingleton<IIpBlacklistCacheService, IpBlacklistCacheService>();
         }
     }
 }
