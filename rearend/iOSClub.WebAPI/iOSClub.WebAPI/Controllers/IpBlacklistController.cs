@@ -9,7 +9,7 @@ namespace iOSClub.WebAPI.Controllers;
 /// IP黑名单管理控制器
 /// </summary>
 [ApiController]
-[Route("api/[controller]")]
+[Route("[controller]")]
 [Authorize(Roles = "Admin,Founder")]
 public class IpBlacklistController(
     IIpBlacklistCacheService blacklistService,

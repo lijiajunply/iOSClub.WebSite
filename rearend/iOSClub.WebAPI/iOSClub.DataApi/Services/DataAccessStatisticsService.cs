@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Caching.Distributed;
 using Newtonsoft.Json;
+using StackExchange.Redis;
 
 namespace iOSClub.DataApi.Services;
 
@@ -126,7 +127,9 @@ public class DataChangeStatistic
 /// <summary>
 /// 数据访问统计服务实现
 /// </summary>
-public class DataAccessStatisticsService(IDistributedCache distributedCache) : IDataAccessStatisticsService
+public class DataAccessStatisticsService(
+    IDistributedCache distributedCache,
+    IConnectionMultiplexer redis) : IDataAccessStatisticsService
 {
     private const string AccessStatsKeyPrefix = "stats:access:";
     private const string ChangeStatsKeyPrefix = "stats:changes:";
@@ -134,6 +137,8 @@ public class DataAccessStatisticsService(IDistributedCache distributedCache) : I
     private const string LastChangeKeyPrefix = "stats:lastchange:";
     private const string EntityTypesKey = "stats:entitytypes";
     private const int StatisticsExpirationDays = 30;
+
+    private readonly IDatabase _db = redis.GetDatabase();
 
     public async Task RecordDataAccessAsync(string entityType, string dataId, string operationType,
         CancellationToken cancellationToken = default)
@@ -172,15 +177,56 @@ public class DataAccessStatisticsService(IDistributedCache distributedCache) : I
             entityTypes = entityTypes.Where(t => t == entityType.ToLower()).ToList();
         }
 
+        // 获取Redis服务器实例
+        var server = redis.GetServer(redis.GetEndPoints().First());
+
         foreach (var type in entityTypes)
         {
-            // 获取该实体类型下的所有访问统计键
-            // 注意：这里使用的是简化实现，实际生产环境中可能需要使用Redis的SCAN命令或维护索引
-            // 为了简化，我们假设可以通过某种方式获取所有相关键
-            // 这里我们使用一个模拟的方式，实际实现时需要根据具体的缓存实现来调整
+            var statistics = new List<DataAccessStatistic>();
 
-            // 这里使用简化实现，直接返回空列表，后续会替换为实际实现
-            result.Statistics[type] = [];
+            // 使用SCAN命令扫描指定前缀的键
+            var pattern = $"{AccessStatsKeyPrefix}{type}:*";
+            var keys = server.Keys(pattern: pattern, pageSize: 1000);
+
+            foreach (var key in keys)
+            {
+                var keyStr = key.ToString();
+
+                // 解析数据ID（格式: stats:access:entityType:dataId）
+                var parts = keyStr.Split(':');
+                if (parts.Length < 4) continue;
+
+                var dataId = string.Join(":", parts.Skip(3));
+
+                // 获取访问计数
+                var countStr = await _db.StringGetAsync(keyStr);
+                if (!long.TryParse((string?)countStr, out var count))
+                {
+                    count = 0;
+                }
+
+                // 获取最后访问时间
+                var lastAccessKey = $"{LastAccessKeyPrefix}{type}:{dataId}";
+                var lastAccessStr = await _db.StringGetAsync(lastAccessKey);
+                DateTime? lastAccessedAt = null;
+                if (!string.IsNullOrEmpty(lastAccessStr) && DateTime.TryParse(lastAccessStr, out var parsedTime))
+                {
+                    lastAccessedAt = parsedTime;
+                }
+
+                statistics.Add(new DataAccessStatistic
+                {
+                    DataId = dataId,
+                    AccessCount = count,
+                    LastAccessedAt = lastAccessedAt
+                });
+            }
+
+            // 按访问次数降序排序并取前N条
+            result.Statistics[type] = statistics
+                .OrderByDescending(s => s.AccessCount)
+                .Take(top)
+                .ToList();
         }
 
         return result;
@@ -200,11 +246,56 @@ public class DataAccessStatisticsService(IDistributedCache distributedCache) : I
             entityTypes = entityTypes.Where(t => t == entityType.ToLower()).ToList();
         }
 
+        // 获取Redis服务器实例
+        var server = redis.GetServer(redis.GetEndPoints().First());
+
         foreach (var type in entityTypes)
         {
-            // 获取该实体类型下的所有变化统计键
-            // 同样使用简化实现
-            result.Statistics[type] = [];
+            var statistics = new List<DataChangeStatistic>();
+
+            // 使用SCAN命令扫描指定前缀的键
+            var pattern = $"{ChangeStatsKeyPrefix}{type}:*";
+            var keys = server.Keys(pattern: pattern, pageSize: 1000);
+
+            foreach (var key in keys)
+            {
+                var keyStr = key.ToString();
+
+                // 解析数据ID（格式: stats:changes:entityType:dataId）
+                var parts = keyStr.Split(':');
+                if (parts.Length < 4) continue;
+
+                var dataId = string.Join(":", parts.Skip(3));
+
+                // 获取变化计数
+                var countStr = await _db.StringGetAsync(keyStr);
+                if (!long.TryParse((string?)countStr, out var count))
+                {
+                    count = 0;
+                }
+
+                // 获取最后变化时间
+                var lastChangeKey = $"{LastChangeKeyPrefix}{type}:{dataId}";
+                var lastChangeStr = await _db.StringGetAsync(lastChangeKey);
+                DateTime? lastChangedAt = null;
+                if (!string.IsNullOrEmpty(lastChangeStr) && DateTime.TryParse(lastChangeStr, out var parsedTime))
+                {
+                    lastChangedAt = parsedTime;
+                }
+
+                statistics.Add(new DataChangeStatistic
+                {
+                    DataId = dataId,
+                    ChangeCount = count,
+                    LastChangedAt = lastChangedAt
+                });
+            }
+
+            // 按变化次数降序排序并取前N条
+            result.Statistics[type] = statistics
+                .OrderByDescending(s => s.ChangeCount)
+                .Take(top)
+                .ToList();
         }
 
         return result;
@@ -212,24 +303,71 @@ public class DataAccessStatisticsService(IDistributedCache distributedCache) : I
 
     public async Task ResetStatisticsAsync(string? entityType = null, CancellationToken cancellationToken = default)
     {
-        // 这里使用简化实现，实际生产环境中需要根据具体的缓存实现来调整
-        // 例如，在Redis中可以使用DEL命令删除相关键
+        // 获取Redis服务器实例
+        var server = redis.GetServer(redis.GetEndPoints().First());
+
         if (string.IsNullOrEmpty(entityType))
         {
-            // 删除所有统计数据
-            await distributedCache.RemoveAsync(EntityTypesKey, cancellationToken);
-            await distributedCache.RemoveAsync(AccessStatsKeyPrefix, cancellationToken);
-            await distributedCache.RemoveAsync(ChangeStatsKeyPrefix, cancellationToken);
-            await distributedCache.RemoveAsync(LastAccessKeyPrefix, cancellationToken);
-            await distributedCache.RemoveAsync(LastChangeKeyPrefix, cancellationToken);
+            // 删除所有统计数据 - 使用SCAN扫描所有相关键
+            var allPrefixes = new[]
+            {
+                AccessStatsKeyPrefix,
+                ChangeStatsKeyPrefix,
+                LastAccessKeyPrefix,
+                LastChangeKeyPrefix
+            };
+
+            foreach (var prefix in allPrefixes)
+            {
+                var keys = server.Keys(pattern: $"{prefix}*", pageSize: 1000).ToArray();
+                if (keys.Length > 0)
+                {
+                    await _db.KeyDeleteAsync(keys);
+                }
+            }
+
+            // 删除实体类型列表
+            await _db.KeyDeleteAsync(EntityTypesKey);
         }
         else
         {
             // 删除指定实体类型的统计数据
-            await distributedCache.RemoveAsync($"{AccessStatsKeyPrefix}{entityType}", cancellationToken);
-            await distributedCache.RemoveAsync($"{ChangeStatsKeyPrefix}{entityType}", cancellationToken);
-            await distributedCache.RemoveAsync($"{LastAccessKeyPrefix}{entityType}", cancellationToken);
-            await distributedCache.RemoveAsync($"{LastChangeKeyPrefix}{entityType}", cancellationToken);
+            entityType = entityType.ToLower();
+
+            var patterns = new[]
+            {
+                $"{AccessStatsKeyPrefix}{entityType}:*",
+                $"{ChangeStatsKeyPrefix}{entityType}:*",
+                $"{LastAccessKeyPrefix}{entityType}:*",
+                $"{LastChangeKeyPrefix}{entityType}:*"
+            };
+
+            foreach (var pattern in patterns)
+            {
+                var keys = server.Keys(pattern: pattern, pageSize: 1000).ToArray();
+                if (keys.Length > 0)
+                {
+                    await _db.KeyDeleteAsync(keys);
+                }
+            }
+
+            // 从实体类型列表中移除该类型
+            var entityTypesJson = await distributedCache.GetStringAsync(EntityTypesKey, cancellationToken);
+            if (!string.IsNullOrEmpty(entityTypesJson))
+            {
+                var entityTypes = JsonConvert.DeserializeObject<HashSet<string>>(entityTypesJson) ?? new HashSet<string>();
+                if (entityTypes.Remove(entityType))
+                {
+                    await distributedCache.SetStringAsync(
+                        EntityTypesKey,
+                        JsonConvert.SerializeObject(entityTypes),
+                        new DistributedCacheEntryOptions
+                        {
+                            AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(StatisticsExpirationDays)
+                        },
+                        cancellationToken);
+                }
+            }
         }
     }
 

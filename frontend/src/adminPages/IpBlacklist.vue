@@ -248,7 +248,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed, nextTick, watch } from 'vue';
-import { useMessage } from 'naive-ui';
+import { useMessage, NInput, NButton, NForm, NFormItem } from 'naive-ui';
 import { Icon } from '@iconify/vue';
 import * as echarts from 'echarts/core';
 import { PieChart } from 'echarts/charts';
@@ -258,8 +258,8 @@ import {
   LegendComponent
 } from 'echarts/components';
 import { CanvasRenderer } from 'echarts/renderers';
-import { IpBlacklistService, type BlacklistStats, type IpCheckResult } from '@/services/IpBlacklistService';
-import { useDark } from '@vueuse/core';
+import { IpBlacklistService, type BlacklistStats, type IpCheckResult } from '../services/IpBlacklistService';
+import { useThemeStore } from '../stores/theme';
 
 // 注册 ECharts 组件
 echarts.use([
@@ -271,7 +271,8 @@ echarts.use([
 ]);
 
 const message = useMessage();
-const isDark = useDark();
+const useDark = useThemeStore();
+const isDark = computed(() => useDark.isDark);
 
 // 数据
 const stats = ref<BlacklistStats | null>(null);
@@ -520,6 +521,8 @@ onMounted(() => {
 </script>
 
 <style scoped>
+@reference 'tailwindcss';
+
 /* 苹果风格卡片 */
 .apple-card {
   @apply bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-md
