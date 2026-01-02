@@ -52,11 +52,11 @@
             >
               <!-- 应用名称与Logo -->
               <div class="col-span-4 flex items-center gap-4">
-                <div class="flex-shrink-0 relative">
+                <div class="shrink-0 relative">
                   <img v-if="app.logoUrl" :src="app.logoUrl" :alt="app.applicationName"
                        class="h-12 w-12 rounded-2xl object-cover shadow-sm border border-gray-100 dark:border-gray-700"/>
                   <div v-else
-                       class="h-12 w-12 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center shadow-inner">
+                       class="h-12 w-12 rounded-2xl bg-linear-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center shadow-inner">
                     <Icon icon="lucide:app-window-mac" width="24" height="24"
                           class="text-gray-500 dark:text-gray-400"/>
                   </div>
@@ -143,7 +143,7 @@
         <div class="form-section">
           <label class="form-label">OAuth 设置</label>
           <div class="input-group">
-            <textarea v-model="redirectUrisText" required rows="3" class="apple-textarea rounded-t-xl !font-mono !text-sm border-b border-gray-200 dark:border-gray-700" placeholder="回调 URL (一行一个)"></textarea>
+            <textarea v-model="redirectUrisText" required rows="3" class="apple-textarea rounded-t-xl font-mono! text-sm! border-b border-gray-200 dark:border-gray-700" placeholder="回调 URL (一行一个)"></textarea>
             <div class="apple-checkbox-item rounded-b-xl flex justify-between items-center px-4 py-3 bg-gray-50 dark:bg-gray-800/50">
               <span class="text-sm text-gray-700 dark:text-gray-300">启用 PKCE 增强安全</span>
               <n-switch v-model:value="createForm.supportsPkce" size="small" />
@@ -175,7 +175,7 @@
         <div class="form-section">
           <label class="form-label">OAuth 设置</label>
           <div class="input-group">
-            <textarea v-model="editRedirectUrisText" required rows="3" class="apple-textarea rounded-t-xl !font-mono !text-sm border-b border-gray-200 dark:border-gray-700" placeholder="回调 URL"></textarea>
+            <textarea v-model="editRedirectUrisText" required rows="3" class="apple-textarea rounded-t-xl font-mono! text-sm! border-b border-gray-200 dark:border-gray-700" placeholder="回调 URL"></textarea>
             <!-- 开关组 -->
             <div class="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex justify-between items-center">
               <span class="text-sm text-gray-700 dark:text-gray-300">启用客户端</span>
@@ -204,7 +204,7 @@
       <div class="relative pt-6 pb-2">
         <div class="flex flex-col items-center mb-8">
           <img alt="" v-if="selectedApp?.logoUrl" :src="selectedApp.logoUrl" class="w-24 h-24 rounded-3xl shadow-lg mb-4 object-cover bg-white" />
-          <div v-else class="w-24 h-24 rounded-3xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg mb-4 text-white">
+          <div v-else class="w-24 h-24 rounded-3xl bg-linear-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg mb-4 text-white">
             <Icon icon="lucide:app-window-mac" width="48" height="48" />
           </div>
           <h2 class="text-2xl font-bold text-gray-900 dark:text-white">{{ selectedApp?.applicationName }}</h2>
@@ -215,7 +215,7 @@
 
         <div class="space-y-6">
           <div class="detail-group">
-            <label class="detail-label">Client Credentials</label>
+            <label class="detail-label">客户凭证</label>
             <div class="bg-gray-50 dark:bg-gray-800/50 rounded-xl overflow-hidden">
               <div class="p-3 border-b border-gray-100 dark:border-gray-700/50 flex justify-between items-center">
                 <div class="flex flex-col">
@@ -242,10 +242,10 @@
           </div>
 
           <div class="detail-group">
-            <label class="detail-label">Configuration</label>
+            <label class="detail-label">配置</label>
             <div class="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 space-y-3">
               <div v-for="(uri, idx) in selectedApp?.redirectUris.split(';')" :key="idx" class="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300 break-all">
-                <Icon icon="ion:link-outline" class="mt-0.5 text-gray-400 flex-shrink-0" />
+                <Icon icon="ion:link-outline" class="mt-0.5 text-gray-400 shrink-0" />
                 <span>{{ uri }}</span>
               </div>
               <div v-if="selectedApp?.supportsPkce" class="flex items-center gap-2 text-sm text-blue-600 bg-blue-50 dark:bg-blue-500/10 dark:text-blue-400 p-2 rounded-lg w-fit px-3">

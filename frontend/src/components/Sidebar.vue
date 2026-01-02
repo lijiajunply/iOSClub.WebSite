@@ -165,7 +165,7 @@ const menuItems = [
   {name: '公告文章', path: '/Centre/Article', icon: 'ph:article', requiresRole: 'Minister'},
   {name: '成员管理', path: '/Centre/MemberData', icon: 'ph:users', requiresRole: 'Minister'},
   {name: '系统设置', path: '/Centre/Admin', icon: 'ph:gear', requiresRole: 'Minister'},
-  {name: 'iP黑名单', path: '/Centre/IpBlacklist', icon: 'ph:lock-key', requiresRole: 'Minister'},
+  {name: 'IP黑名单', path: '/Centre/IpBlacklist', icon: 'ph:lock-key', requiresRole: 'Minister'},
   {name: 'OAuth2 接入', path: '/Centre/Client', icon: 'ph:key', requiresRole: 'Minister'},
   {name: '系统日志', path: '/Centre/Logs', icon: 'ph:scroll', requiresRole: 'Minister'},
 ]
