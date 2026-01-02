@@ -76,10 +76,9 @@ public class RateLimitConfig
     /// <summary>
     /// 限流策略列表
     /// </summary>
-    public List<RateLimitPolicy> Policies { get; set; } = new List<RateLimitPolicy>
-    {
-        // 默认策略
-        new RateLimitPolicy
+    public List<RateLimitPolicy> Policies { get; set; } =
+    [
+        new()
         {
             Name = "default",
             PathPattern = "*",
@@ -91,7 +90,8 @@ public class RateLimitConfig
             Priority = 100
         },
         // 登录接口策略（更严格）
-        new RateLimitPolicy
+
+        new()
         {
             Name = "login",
             PathPattern = "/api/auth/*",
@@ -103,7 +103,8 @@ public class RateLimitConfig
             Priority = 10
         },
         // 注册接口策略（更严格）
-        new RateLimitPolicy
+
+        new()
         {
             Name = "register",
             PathPattern = "/api/users/register",
@@ -115,7 +116,8 @@ public class RateLimitConfig
             Priority = 10
         },
         // 敏感操作接口策略
-        new RateLimitPolicy
+
+        new()
         {
             Name = "sensitive",
             PathPattern = "/api/admin/*",
@@ -126,7 +128,7 @@ public class RateLimitConfig
             Enabled = true,
             Priority = 50
         }
-    };
+    ];
 }
 
 /// <summary>

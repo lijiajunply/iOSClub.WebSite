@@ -13,7 +13,7 @@ public class RateLimitMiddleware(
     IIpBlacklistCacheService ipBlacklistService)
 {
     // 异常请求检测阈值
-    private const int SuspiciousRequestThreshold = 1000; // 每分钟超过20个请求视为可疑
+    private const int SuspiciousRequestThreshold = 1000; // 每分钟超过1000个请求视为可疑
 
     // 可疑请求计数器（IP -> 时间戳列表）
     private readonly Dictionary<string, List<DateTime>> _suspiciousRequestTracker = new();
@@ -33,6 +33,9 @@ public class RateLimitMiddleware(
             await ReturnRateLimitResponse(context);
             return;
         }
+        
+        await next(context);
+        return; // 先关闭
 
         // 2. 动态调整限流阈值
         rateLimitService.AdjustRateLimitsDynamically();
