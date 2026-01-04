@@ -189,6 +189,8 @@ builder.Services.AddStackExchangeRedisCache(options =>
     if (!string.IsNullOrEmpty(redis))
     {
         options.Configuration = redis;
+        // 设置实例名称为空，避免key前缀导致与IConnectionMultiplexer不一致
+        options.InstanceName = null;
     }
 });
 
@@ -340,14 +342,8 @@ builder.Services.Configure<GzipCompressionProviderOptions>(options => { options.
 
 #region Prometheus 监控
 
-// 添加 Prometheus 指标收集器
-builder.Services.AddMetricServer(option =>
-{
-    if (builder.Environment.IsDevelopment())
-    {
-        option.Url = "/metrics";
-    }
-});
+// Prometheus 指标收集不需要 AddMetricServer
+// 使用 UseHttpMetrics() 和 MapMetrics() 来配置指标端点
 
 #endregion
 

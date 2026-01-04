@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Caching.Distributed;
 using Newtonsoft.Json;
 using StackExchange.Redis;
 
@@ -127,9 +126,7 @@ public class DataChangeStatistic
 /// <summary>
 /// 数据访问统计服务实现
 /// </summary>
-public class DataAccessStatisticsService(
-    IDistributedCache distributedCache,
-    IConnectionMultiplexer redis) : IDataAccessStatisticsService
+public class DataAccessStatisticsService(IConnectionMultiplexer redis) : IDataAccessStatisticsService
 {
     private const string AccessStatsKeyPrefix = "stats:access:";
     private const string ChangeStatsKeyPrefix = "stats:changes:";
@@ -352,20 +349,16 @@ public class DataAccessStatisticsService(
             }
 
             // 从实体类型列表中移除该类型
-            var entityTypesJson = await distributedCache.GetStringAsync(EntityTypesKey, cancellationToken);
+            var entityTypesJson = await _db.StringGetAsync(EntityTypesKey);
             if (!string.IsNullOrEmpty(entityTypesJson))
             {
-                var entityTypes = JsonConvert.DeserializeObject<HashSet<string>>(entityTypesJson) ?? new HashSet<string>();
+                var entityTypes = JsonConvert.DeserializeObject<HashSet<string>>(entityTypesJson!) ?? new HashSet<string>();
                 if (entityTypes.Remove(entityType))
                 {
-                    await distributedCache.SetStringAsync(
+                    await _db.StringSetAsync(
                         EntityTypesKey,
                         JsonConvert.SerializeObject(entityTypes),
-                        new DistributedCacheEntryOptions
-                        {
-                            AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(StatisticsExpirationDays)
-                        },
-                        cancellationToken);
+                        TimeSpan.FromDays(StatisticsExpirationDays));
                 }
             }
         }
@@ -376,26 +369,11 @@ public class DataAccessStatisticsService(
     /// </summary>
     private async Task<long> IncrementCounterAsync(string key, CancellationToken cancellationToken = default)
     {
-        // 简化实现：实际生产环境中应该使用原子递增操作
-        // 这里使用分布式缓存的字符串操作来模拟
-        var currentValue = await distributedCache.GetStringAsync(key, cancellationToken);
-        long count = 0;
+        // 使用Redis的原子递增操作
+        var count = await _db.StringIncrementAsync(key);
 
-        if (long.TryParse(currentValue, out var value))
-        {
-            count = value;
-        }
-
-        count++;
-
-        await distributedCache.SetStringAsync(
-            key,
-            count.ToString(),
-            new DistributedCacheEntryOptions
-            {
-                AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(StatisticsExpirationDays)
-            },
-            cancellationToken);
+        // 设置过期时间（如果key是新创建的）
+        await _db.KeyExpireAsync(key, TimeSpan.FromDays(StatisticsExpirationDays));
 
         return count;
     }
@@ -406,14 +384,7 @@ public class DataAccessStatisticsService(
     private async Task UpdateTimestampAsync(string key, CancellationToken cancellationToken = default)
     {
         var now = DateTime.UtcNow;
-        await distributedCache.SetStringAsync(
-            key,
-            now.ToString("o"),
-            new DistributedCacheEntryOptions
-            {
-                AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(StatisticsExpirationDays)
-            },
-            cancellationToken);
+        await _db.StringSetAsync(key, now.ToString("o"), TimeSpan.FromDays(StatisticsExpirationDays));
     }
 
     /// <summary>
@@ -421,24 +392,20 @@ public class DataAccessStatisticsService(
     /// </summary>
     private async Task EnsureEntityTypeRecordedAsync(string entityType, CancellationToken cancellationToken = default)
     {
-        var entityTypesJson = await distributedCache.GetStringAsync(EntityTypesKey, cancellationToken);
+        var entityTypesJson = await _db.StringGetAsync(EntityTypesKey);
         var entityTypes = new HashSet<string>();
 
         if (!string.IsNullOrEmpty(entityTypesJson))
         {
-            entityTypes = JsonConvert.DeserializeObject<HashSet<string>>(entityTypesJson) ?? new HashSet<string>();
+            entityTypes = JsonConvert.DeserializeObject<HashSet<string>>(entityTypesJson!) ?? new HashSet<string>();
         }
 
         if (entityTypes.Add(entityType))
         {
-            await distributedCache.SetStringAsync(
+            await _db.StringSetAsync(
                 EntityTypesKey,
                 JsonConvert.SerializeObject(entityTypes),
-                new DistributedCacheEntryOptions
-                {
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(StatisticsExpirationDays)
-                },
-                cancellationToken);
+                TimeSpan.FromDays(StatisticsExpirationDays));
         }
     }
 
@@ -447,13 +414,13 @@ public class DataAccessStatisticsService(
     /// </summary>
     private async Task<List<string>> GetEntityTypesAsync(CancellationToken cancellationToken = default)
     {
-        var entityTypesJson = await distributedCache.GetStringAsync(EntityTypesKey, cancellationToken);
+        var entityTypesJson = await _db.StringGetAsync(EntityTypesKey);
         if (string.IsNullOrEmpty(entityTypesJson))
         {
             return [];
         }
 
-        var entityTypes = JsonConvert.DeserializeObject<HashSet<string>>(entityTypesJson) ?? new HashSet<string>();
+        var entityTypes = JsonConvert.DeserializeObject<HashSet<string>>(entityTypesJson!) ?? new HashSet<string>();
         return entityTypes.ToList();
     }
 }
