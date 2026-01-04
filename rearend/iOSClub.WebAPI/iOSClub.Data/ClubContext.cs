@@ -99,12 +99,9 @@ public static class DataTool
 {
     public static string StringToHash(string s)
     {
-        var data = Encoding.UTF8.GetBytes(s);
-        var hash = MD5.HashData(data);
-        var hashStringBuilder = new StringBuilder();
-        foreach (var t in hash)
-            hashStringBuilder.Append(t.ToString("x2"));
-        return hashStringBuilder.ToString();
+        return string.IsNullOrWhiteSpace(s)
+            ? throw new ArgumentException("密码不能为空", nameof(s))
+            : BCrypt.Net.BCrypt.HashPassword(s, workFactor: 12);
     }
 
     public static string ToHash(this object t) => StringToHash(t.ToString()!);
