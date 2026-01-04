@@ -82,35 +82,35 @@ public class RateLimitConfig
         {
             Name = "default",
             PathPattern = "*",
-            TokenLimit = 100,
+            TokenLimit = 200, // 从100提升到200，每个IP每分钟200次请求
             ReplenishmentPeriod = TimeSpan.FromMinutes(1),
-            TokensPerPeriod = 100,
+            TokensPerPeriod = 200,
             AutoReplenishment = true,
             Enabled = true,
             Priority = 100
         },
-        // 登录接口策略（更严格）
+        // 登录接口策略（防止暴力破解，但不影响正常用户）
 
         new()
         {
             Name = "login",
             PathPattern = "/api/auth/*",
-            TokenLimit = 10,
+            TokenLimit = 30, // 从10提升到30，每个IP每分钟30次登录尝试
             ReplenishmentPeriod = TimeSpan.FromMinutes(1),
-            TokensPerPeriod = 10,
+            TokensPerPeriod = 30,
             AutoReplenishment = true,
             Enabled = true,
             Priority = 10
         },
-        // 注册接口策略（更严格）
+        // 注册接口策略（防止批量注册）
 
         new()
         {
             Name = "register",
             PathPattern = "/api/users/register",
-            TokenLimit = 5,
+            TokenLimit = 10, // 从5提升到10，每个IP每5分钟10次注册
             ReplenishmentPeriod = TimeSpan.FromMinutes(5),
-            TokensPerPeriod = 5,
+            TokensPerPeriod = 10,
             AutoReplenishment = true,
             Enabled = true,
             Priority = 10
@@ -121,9 +121,9 @@ public class RateLimitConfig
         {
             Name = "sensitive",
             PathPattern = "/api/admin/*",
-            TokenLimit = 50,
+            TokenLimit = 100, // 从50提升到100，每个IP每分钟100次管理操作
             ReplenishmentPeriod = TimeSpan.FromMinutes(1),
-            TokensPerPeriod = 50,
+            TokensPerPeriod = 100,
             AutoReplenishment = true,
             Enabled = true,
             Priority = 50
@@ -154,15 +154,87 @@ public class RateLimitState
 }
 
 /// <summary>
+/// IP限流器包装类
+/// </summary>
+public class IpRateLimiterGroup
+{
+    private readonly Dictionary<string, TokenBucketRateLimiter> _limiters = new();
+    private readonly RateLimitPolicy _policy;
+    private readonly object _lock = new();
+
+    public IpRateLimiterGroup(RateLimitPolicy policy)
+    {
+        _policy = policy;
+    }
+
+    public TokenBucketRateLimiter GetOrCreateLimiter(string ipAddress)
+    {
+        lock (_lock)
+        {
+            if (_limiters.TryGetValue(ipAddress, out var limiter))
+            {
+                return limiter;
+            }
+
+            // 为该IP创建新的限流器
+            var newLimiter = new TokenBucketRateLimiter(new TokenBucketRateLimiterOptions
+            {
+                TokenLimit = _policy.TokenLimit,
+                ReplenishmentPeriod = _policy.ReplenishmentPeriod,
+                TokensPerPeriod = _policy.TokensPerPeriod,
+                AutoReplenishment = _policy.AutoReplenishment
+            });
+
+            _limiters[ipAddress] = newLimiter;
+
+            // 清理过期的限流器（保持字典大小在合理范围内）
+            if (_limiters.Count > 10000)
+            {
+                CleanupOldLimiters();
+            }
+
+            return newLimiter;
+        }
+    }
+
+    private void CleanupOldLimiters()
+    {
+        // 简单策略：移除一半的限流器（可以改进为基于LRU）
+        var toRemove = _limiters.Take(_limiters.Count / 2).ToList();
+        foreach (var kvp in toRemove)
+        {
+            kvp.Value.Dispose();
+            _limiters.Remove(kvp.Key);
+        }
+    }
+
+    public void Dispose()
+    {
+        lock (_lock)
+        {
+            foreach (var limiter in _limiters.Values)
+            {
+                limiter.Dispose();
+            }
+            _limiters.Clear();
+        }
+    }
+}
+
+/// <summary>
 /// 速率限制服务
 /// </summary>
-public class RateLimitService
+public class RateLimitService : IDisposable
 {
     private readonly RateLimitConfig _config;
     private readonly RateLimitState _state;
     private readonly ILogger<RateLimitService> _logger;
 
-    private readonly Dictionary<string, TokenBucketRateLimiter> _limiters = new();
+    // 保存原始配置，用于动态调整时计算
+    private readonly Dictionary<string, RateLimitPolicy> _originalPolicies = new();
+
+    // 按策略分组的IP限流器
+    private readonly Dictionary<string, IpRateLimiterGroup> _limiterGroups = new();
 
     public RateLimitService(RateLimitConfig config, ILogger<RateLimitService> logger)
     {
@@ -170,28 +242,36 @@ public class RateLimitService
         _logger = logger;
         _state = new RateLimitState();
 
-        // 初始化限流器
-        InitializeLimiters();
+        // 保存原始配置
+        foreach (var policy in _config.Policies)
+        {
+            _originalPolicies[policy.Name] = new RateLimitPolicy
+            {
+                Name = policy.Name,
+                PathPattern = policy.PathPattern,
+                TokenLimit = policy.TokenLimit,
+                ReplenishmentPeriod = policy.ReplenishmentPeriod,
+                TokensPerPeriod = policy.TokensPerPeriod,
+                AutoReplenishment = policy.AutoReplenishment,
+                Enabled = policy.Enabled,
+                Priority = policy.Priority
+            };
+        }
+
+        // 初始化限流器组
+        InitializeLimiterGroups();
     }
 
     /// <summary>
-    /// 初始化限流器
+    /// 初始化限流器组
     /// </summary>
-    private void InitializeLimiters()
+    private void InitializeLimiterGroups()
     {
         foreach (var policy in _config.Policies.OrderBy(p => p.Priority))
         {
-            if (policy.Enabled && !_limiters.ContainsKey(policy.Name))
+            if (policy.Enabled && !_limiterGroups.ContainsKey(policy.Name))
             {
-                var limiter = new TokenBucketRateLimiter(new TokenBucketRateLimiterOptions
-                {
-                    TokenLimit = policy.TokenLimit,
-                    ReplenishmentPeriod = policy.ReplenishmentPeriod,
-                    TokensPerPeriod = policy.TokensPerPeriod,
-                    AutoReplenishment = policy.AutoReplenishment
-                });
-
-                _limiters.Add(policy.Name, limiter);
+                _limiterGroups.Add(policy.Name, new IpRateLimiterGroup(policy));
                 _state.ActivePolicies[policy.Name] = policy;
             }
         }
@@ -235,25 +315,21 @@ public class RateLimitService
     /// 尝试获取令牌
     /// </summary>
     /// <param name="policy">速率限制策略</param>
+    /// <param name="ipAddress">客户端IP地址</param>
     /// <param name="cancellationToken">取消令牌</param>
     /// <returns>令牌租约</returns>
-    public async ValueTask<RateLimitLease> TryAcquireTokenAsync(RateLimitPolicy policy,
+    public async ValueTask<RateLimitLease> TryAcquireTokenAsync(RateLimitPolicy policy, string ipAddress,
         CancellationToken cancellationToken = default)
     {
-        if (!_limiters.TryGetValue(policy.Name, out var limiter))
+        if (!_limiterGroups.TryGetValue(policy.Name, out var limiterGroup))
         {
-            // 如果限流器不存在，创建一个
-            limiter = new TokenBucketRateLimiter(new TokenBucketRateLimiterOptions
-            {
-                TokenLimit = policy.TokenLimit,
-                ReplenishmentPeriod = policy.ReplenishmentPeriod,
-                TokensPerPeriod = policy.TokensPerPeriod,
-                AutoReplenishment = policy.AutoReplenishment
-            });
-
-            _limiters[policy.Name] = limiter;
+            // 如果限流器组不存在，创建一个
+            limiterGroup = new IpRateLimiterGroup(policy);
+            _limiterGroups[policy.Name] = limiterGroup;
         }
 
+        // 获取该IP的限流器
+        var limiter = limiterGroup.GetOrCreateLimiter(ipAddress);
         return await limiter.AcquireAsync(1, cancellationToken);
     }
 
@@ -272,54 +348,65 @@ public class RateLimitService
 
         try
         {
-            // 获取当前系统负载（这里使用模拟值，实际项目中可以从系统监控获取）
+            // 获取当前系统负载
             var currentLoad = GetCurrentSystemLoad();
             _state.CurrentSystemLoad = currentLoad;
+
+            // 只有在高负载时才调整
+            if (currentLoad < _config.SystemLoadThreshold)
+            {
+                if (_logger.IsEnabled(LogLevel.Debug))
+                {
+                    _logger.LogDebug("系统负载 {CurrentLoad:P2} 低于阈值 {Threshold:P2}，跳过动态调整",
+                        currentLoad, _config.SystemLoadThreshold);
+                }
+                _state.LastAdjustmentTime = DateTime.UtcNow;
+                return;
+            }
 
             if (_logger.IsEnabled(LogLevel.Information))
             {
                 _logger.LogInformation("动态调整限流阈值，当前系统负载: {CurrentLoad:P2}", currentLoad);
             }
 
-            // 根据系统负载调整限流阈值
-            foreach (var policy in _config.Policies.Where(policy => policy.Enabled))
+            // 根据系统负载调整限流阈值（基于原始配置）
+            foreach (var policyName in _originalPolicies.Keys)
             {
-                // 检查策略名称是否有效
-                if (string.IsNullOrEmpty(policy.Name))
-                {
-                    _logger.LogWarning("跳过无效的限流策略：策略名称为空");
+                if (!_originalPolicies.TryGetValue(policyName, out var originalPolicy))
                     continue;
+
+                if (!originalPolicy.Enabled)
+                    continue;
+
+                // 基于原始配置计算新的令牌限制
+                var loadFactor = Math.Min(currentLoad - _config.SystemLoadThreshold, 0.2) / 0.2; // 0-1之间
+                var newTokenLimit = (int)(originalPolicy.TokenLimit * (1 - loadFactor * 0.3)); // 最多降低30%
+                newTokenLimit = Math.Max(newTokenLimit, originalPolicy.TokenLimit / 2); // 确保不低于原限制的一半
+                newTokenLimit = Math.Max(newTokenLimit, 5); // 确保不低于5
+
+                // 更新当前策略配置（不修改原始配置）
+                var currentPolicy = _config.Policies.FirstOrDefault(p => p.Name == policyName);
+                if (currentPolicy != null)
+                {
+                    currentPolicy.TokenLimit = newTokenLimit;
+                    currentPolicy.TokensPerPeriod = newTokenLimit;
                 }
 
-                // 计算新的令牌限制（基于当前负载）
-                var newTokenLimit = (int)(policy.TokenLimit * (1 - currentLoad * 0.5));
-                newTokenLimit = Math.Max(newTokenLimit, policy.TokenLimit / 2); // 确保不低于原限制的一半
-                newTokenLimit = Math.Max(newTokenLimit, 10); // 确保不低于10
-
-                // 更新策略
-                policy.TokenLimit = newTokenLimit;
-                policy.TokensPerPeriod = newTokenLimit;
-
-                // 重新创建限流器
-                if (_limiters.TryGetValue(policy.Name, out var existingLimiter))
+                // 重新创建限流器组（清空现有的IP限流器）
+                if (_limiterGroups.TryGetValue(policyName, out var existingGroup))
                 {
-                    existingLimiter.Dispose();
-                    _limiters.Remove(policy.Name);
+                    existingGroup.Dispose();
+                    _limiterGroups.Remove(policyName);
                 }
 
-                var newLimiter = new TokenBucketRateLimiter(new TokenBucketRateLimiterOptions
-                {
-                    TokenLimit = policy.TokenLimit,
-                    ReplenishmentPeriod = policy.ReplenishmentPeriod,
-                    TokensPerPeriod = policy.TokensPerPeriod,
-                    AutoReplenishment = policy.AutoReplenishment
-                });
+                var updatedPolicy = currentPolicy ?? originalPolicy;
+                _limiterGroups[policyName] = new IpRateLimiterGroup(updatedPolicy);
+                _state.ActivePolicies[policyName] = updatedPolicy;
 
-                _limiters[policy.Name] = newLimiter;
-                _state.ActivePolicies[policy.Name] = policy;
                 if (_logger.IsEnabled(LogLevel.Information))
                 {
-                    _logger.LogInformation("更新策略 {PolicyName} 的限流阈值为 {NewTokenLimit}", policy.Name, newTokenLimit);
+                    _logger.LogInformation("更新策略 {PolicyName} 的限流阈值：{OriginalLimit} -> {NewLimit}",
+                        policyName, originalPolicy.TokenLimit, newTokenLimit);
                 }
             }
 
@@ -397,5 +484,14 @@ public class RateLimitService
         {
             _logger.LogDebug("请求统计: IP={ClientIp}, Path={Path}, Allowed={IsAllowed}", clientIp, path, isAllowed);
         }
+    }
+
+    public void Dispose()
+    {
+        foreach (var limiterGroup in _limiterGroups.Values)
+        {
+            limiterGroup.Dispose();
+        }
+        _limiterGroups.Clear();
     }
 }

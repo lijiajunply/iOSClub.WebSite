@@ -33,9 +33,6 @@ public class RateLimitMiddleware(
             await ReturnRateLimitResponse(context);
             return;
         }
-        
-        await next(context);
-        return; // 先关闭
 
         // 2. 动态调整限流阈值
         rateLimitService.AdjustRateLimitsDynamically();
@@ -44,8 +41,8 @@ public class RateLimitMiddleware(
         var path = context.Request.Path.Value ?? "";
         var policy = rateLimitService.GetMatchingPolicy(path);
 
-        // 4. 尝试获取令牌
-        var lease = await rateLimitService.TryAcquireTokenAsync(policy, CancellationToken.None);
+        // 4. 尝试获取令牌（按IP分组）
+        var lease = await rateLimitService.TryAcquireTokenAsync(policy, clientIp, CancellationToken.None);
 
         // 5. 记录请求统计
         rateLimitService.RecordRequest(clientIp, path, lease.IsAcquired);
