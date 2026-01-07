@@ -14,23 +14,3 @@ export const NavigateTo = (url: string, webUrl: string) => {
         window.open(url)
     }
 }
-
-// 保存文件
-export const jsSaveAsFile = (filename: string, byteBase64: string) => {
-    const link = document.createElement('a');
-    link.download = filename;
-    link.href = "data:application/octet-stream;base64," + byteBase64;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-}
-
-export const copyText = async (content: string) => {
-    try {
-        await navigator.clipboard.writeText(content);
-        return true;
-    } catch (err) {
-        console.error('复制失败: ', err);
-        return false;
-    }
-}

@@ -36,7 +36,3 @@ export const ErrorCodeMap: Record<number, string> = {
     7000: '请求频率过高',
     7001: '无效请求'
 }
-
-export function getErrorMessage(errorCode: number, defaultMessage?: string): string {
-    return ErrorCodeMap[errorCode] || defaultMessage || '未知错误'
-}

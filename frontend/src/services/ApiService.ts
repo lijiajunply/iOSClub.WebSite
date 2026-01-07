@@ -1,4 +1,5 @@
 import {AuthService} from './AuthService';
+import MessageService from './MessageService';
 
 /**
  * 标准化API响应接口
@@ -16,7 +17,11 @@ export interface ApiResponse<T> {
 export interface ApiRequestConfig extends Omit<RequestInit, 'body'> {
     url: string;
     requiresAuth?: boolean;
-    body?: any; // 允许任何类型的body，在函数内部会处理转换
+    body?: any;
+
+    showMessage?: boolean;
+    showSuccess?: boolean;
+    showError?: boolean;
 }
 
 /**
@@ -81,8 +86,11 @@ export async function apiRequest<T>(config: ApiRequestConfig): Promise<T> {
         };
     }
 
-    // 处理不同的错误情况
-    if (apiResponse.code !== 200) {
+        if (config.showMessage || config.showError) {
+            MessageService.handleResponse(apiResponse, config);
+        }
+
+        if (apiResponse.code !== 200) {
         // 根据HTTP状态码处理特殊情况
         // 当code为401或者errorCode为3001时触发令牌刷新逻辑
         if (apiResponse.code === 401 || apiResponse.errorCode === 3001) {
@@ -114,10 +122,13 @@ export async function apiRequest<T>(config: ApiRequestConfig): Promise<T> {
                         apiResponse = await retryResponse.json();
                     }
 
-                    // 如果重新请求成功，返回数据
-                    if (apiResponse.code === 200) {
-                        return apiResponse.data;
-                    }
+            // 如果重新请求成功，返回数据
+            if (apiResponse.code === 200) {
+                if (config.showMessage || config.showSuccess) {
+                    MessageService.handleResponse(apiResponse, config);
+                }
+                return apiResponse.data;
+            }
                     
                     // 如果重新请求还是失败，继续执行下面的错误处理逻辑
                 }
@@ -177,6 +188,10 @@ export async function apiRequest<T>(config: ApiRequestConfig): Promise<T> {
             default:
                 throw new Error(apiResponse.message || '请求失败');
         }
+    }
+
+    if (config.showMessage || config.showSuccess) {
+        MessageService.handleResponse(apiResponse, config);
     }
 
     return apiResponse.data;
