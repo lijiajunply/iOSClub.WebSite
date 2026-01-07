@@ -287,7 +287,7 @@
       <div class="space-y-4 pt-2">
         <n-form :model="passwordForm" :rules="passwordRules" ref="passwordFormRef">
           <div class="bg-gray-50 dark:bg-black/20 rounded-xl p-1 space-y-3">
-            <n-form-item path="oldPassword" label="旧密码">
+            <n-form-item path="oldPassword" label="旧密码" :show-label="false">
               <n-input
                   v-model:value="passwordForm.oldPassword"
                   type="password"
@@ -296,7 +296,7 @@
                   class="rounded-lg"
               />
             </n-form-item>
-            <n-form-item path="newPassword" label="新密码">
+            <n-form-item path="newPassword" label="新密码" :show-label="false">
               <n-input
                   v-model:value="passwordForm.newPassword"
                   type="password"
@@ -305,7 +305,7 @@
                   class="rounded-lg"
               />
             </n-form-item>
-            <n-form-item path="confirmPassword" label="确认密码">
+            <n-form-item path="confirmPassword" label="确认密码" :show-label="false">
               <n-input
                   v-model:value="passwordForm.confirmPassword"
                   type="password"

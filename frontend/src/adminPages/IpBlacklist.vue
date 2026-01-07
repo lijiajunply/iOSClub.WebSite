@@ -525,8 +525,12 @@ onMounted(() => {
 
 /* 苹果风格卡片 */
 .apple-card {
-  @apply bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-md
-         transition-all duration-300 border border-gray-100 dark:border-gray-700;
+  @apply bg-white rounded-2xl shadow-sm hover:shadow-md
+         transition-all duration-300 border border-gray-100 ;
+}
+
+.dark .apple-card {
+  @apply bg-gray-800 border-gray-700 ;
 }
 
 /* 苹果风格按钮 */

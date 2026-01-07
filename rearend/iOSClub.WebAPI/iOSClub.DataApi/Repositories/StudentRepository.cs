@@ -240,7 +240,7 @@ public class StudentRepository(IDbContextFactory<ClubContext> factory) : IStuden
             return student.PhoneNum == password;
         }
 
-        return DataTool.StringToHash(password) == student.PasswordHash;
+        return DataTool.IsOk(password, student.PasswordHash);
     }
 
 

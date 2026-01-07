@@ -152,7 +152,7 @@ public class MemberManagementController(
                 return Ok(ApiResponse<object>.Fail(ErrorCode.UserNotFound, "学生不存在"));
             }
 
-            student.PasswordHash = data.NewPassword.ToHash();
+            student.PasswordHash = DataTool.ToMd5Hash(data.NewPassword);
             var result = await studentRepository.UpdateAsync(student);
             if (!result)
             {

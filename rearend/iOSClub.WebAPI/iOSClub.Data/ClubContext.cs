@@ -97,7 +97,41 @@ public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<ClubContex
 
 public static class DataTool
 {
+    /// <summary>
+    /// 使用BCrypt进行密码加密
+    /// </summary>
+    /// <param name="s">密码</param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentException">s 为 null 或者空白时，触发错误</exception>
     public static string StringToHash(string s)
+    {
+        return string.IsNullOrWhiteSpace(s)
+            ? throw new ArgumentException("密码不能为空", nameof(s))
+            : BCrypt.Net.BCrypt.HashPassword(s, workFactor: 12); // 工作因子为 12 ，可自行调整
+    }
+
+    /// <summary>
+    /// 检测密码是否匹配，兼容老的 MD5 加密 和 新的 BCrypt 加密
+    /// </summary>
+    /// <param name="password">密码原文</param>
+    /// <param name="hashPassword">加密之后的密码，一般从数据库中提取出来</param>
+    /// <returns></returns>
+    public static bool IsOk(string password, string hashPassword)
+    {
+        if (hashPassword.Length > 32 || hashPassword.StartsWith("$2")) // 检测是否为 BCrypt 加密
+        {
+            return BCrypt.Net.BCrypt.Verify(password, hashPassword);
+        }
+
+        return ToMd5Hash(password) == hashPassword;
+    }
+
+    /// <summary>
+    /// 使用 MD5 进行加密，多使用于一般的Id生成
+    /// </summary>
+    /// <param name="s"></param>
+    /// <returns></returns>
+    public static string ToMd5Hash(string s)
     {
         var data = Encoding.UTF8.GetBytes(s);
         var hash = MD5.HashData(data);
@@ -105,13 +139,7 @@ public static class DataTool
         foreach (var t in hash)
             hashStringBuilder.Append(t.ToString("x2"));
         return hashStringBuilder.ToString();
-        
-        return string.IsNullOrWhiteSpace(s)
-            ? throw new ArgumentException("密码不能为空", nameof(s))
-            : BCrypt.Net.BCrypt.HashPassword(s, workFactor: 12);
     }
-
-    public static string ToHash(this object t) => StringToHash(t.ToString()!);
 
     public static string GetProperties<T>(T t)
     {
@@ -135,6 +163,11 @@ public static class DataTool
         return builder.ToString();
     }
 
+    /// <summary>
+    /// 检测是否为加密之后的数据
+    /// </summary>
+    /// <param name="modelPasswordHash"></param>
+    /// <returns></returns>
     public static bool IsValidHash(string modelPasswordHash)
     {
         return modelPasswordHash.Length >= 32;
@@ -144,5 +177,5 @@ public static class DataTool
 public abstract class DataModel
 {
     public override string ToString() => $"{GetType()} : {DataTool.GetProperties(this)}; Guid: {Guid.NewGuid():N}";
-    public string GetHashKey() => DataTool.StringToHash(ToString());
+    public string GetHashKey() => DataTool.ToMd5Hash(ToString());
 }
