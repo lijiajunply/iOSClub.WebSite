@@ -1,4 +1,5 @@
 import {AuthService} from './AuthService';
+import { showError } from '../utils/errorHandler';
 
 /**
  * 标准化API响应接口
@@ -132,27 +133,60 @@ export async function apiRequest<T>(config: ApiRequestConfig): Promise<T> {
 
         // 根据业务错误码处理
         switch (apiResponse.errorCode) {
-            case 1001: // 参数不能为空
-            case 1002: // 参数格式错误
+            case 1000: // 参数不能为空
+            case 1001: // 参数格式错误
+            case 1002: // 参数超出范围
             case 1003: // 参数验证失败
+                showError(apiResponse.errorCode, apiResponse.message);
                 throw new Error(apiResponse.message);
-            case 2001: // 业务逻辑错误
+            case 2000: // 资源已存在
+            case 2001: // 操作失败
+            case 2002: // 数据处理失败
+            case 2003: // 状态不允许该操作
+                showError(apiResponse.errorCode, apiResponse.message);
                 throw new Error(apiResponse.message);
-            case 3001: // 未授权
+            case 3000: // 未授权访问
+            case 3001: // 权限不足
             case 401: // HTTP 401 未授权
                 AuthService.clearToken();
+                showError(apiResponse.errorCode, apiResponse.message || '登录已过期，请重新登录');
                 throw new Error(apiResponse.message || '登录已过期，请重新登录');
-            case 3002: // 权限不足
-                throw new Error(apiResponse.message || '权限不足');
-            case 4001: // 资源不存在
-                throw new Error(apiResponse.message || '资源不存在');
-            case 4002: // 资源已存在
-                throw new Error(apiResponse.message || '资源已存在');
+            case 3002: // 登录已过期
+                AuthService.clearToken();
+                showError(apiResponse.errorCode, apiResponse.message);
+                throw new Error(apiResponse.message);
+            case 3003: // 无效的令牌
+                AuthService.clearToken();
+                showError(apiResponse.errorCode, apiResponse.message);
+                throw new Error(apiResponse.message);
+            case 4000: // 资源不存在
+            case 4001: // 文章不存在
+            case 4002: // 分类不存在
+            case 4003: // 用户不存在
+            case 4004: // 项目不存在
+            case 4005: // 文件不存在
+                showError(apiResponse.errorCode, apiResponse.message);
+                throw new Error(apiResponse.message);
             case 5000: // 内部服务器错误
+            case 5001: // 数据库操作失败
+            case 5002: // 缓存操作失败
+            case 5003: // 网络错误
+                showError(apiResponse.errorCode, apiResponse.message || '服务器内部错误');
                 throw new Error(apiResponse.message || '服务器内部错误');
+            case 6000: // 外部服务调用失败
+            case 6001: // 外部服务超时
+            case 6002: // 外部服务返回错误
+            case 6003: // 外部服务未配置
+                showError(apiResponse.errorCode, apiResponse.message);
+                throw new Error(apiResponse.message);
             case 7000: // 请求频率过高
+                showError(apiResponse.errorCode, apiResponse.message || '请求频率过高，请稍后再试');
                 throw new Error(apiResponse.message || '请求频率过高，请稍后再试');
+            case 7001: // 无效请求
+                showError(apiResponse.errorCode, apiResponse.message);
+                throw new Error(apiResponse.message);
             default:
+                showError(apiResponse.errorCode, apiResponse.message || '请求失败');
                 throw new Error(apiResponse.message || '请求失败');
         }
     }
