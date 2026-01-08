@@ -21,8 +21,9 @@
                 {{ stats?.totalIps || 0 }}
               </span>
             </div>
-            <div class="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-900/40 flex items-center justify-center shadow-sm transition-transform group-hover:scale-110">
-              <Icon icon="mdi:ip-network" class="w-6 h-6 text-red-600 dark:text-red-400" />
+            <div
+                class="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-900/40 flex items-center justify-center shadow-sm transition-transform group-hover:scale-110">
+              <Icon icon="mdi:ip-network" class="w-6 h-6 text-red-600 dark:text-red-400"/>
             </div>
           </div>
         </div>
@@ -38,8 +39,9 @@
                 {{ stats?.totalCidrRanges || 0 }}
               </span>
             </div>
-            <div class="w-10 h-10 rounded-xl bg-orange-100 dark:bg-orange-900/40 flex items-center justify-center shadow-sm transition-transform group-hover:scale-110">
-              <Icon icon="mdi:ip-network-outline" class="w-6 h-6 text-orange-600 dark:text-orange-400" />
+            <div
+                class="w-10 h-10 rounded-xl bg-orange-100 dark:bg-orange-900/40 flex items-center justify-center shadow-sm transition-transform group-hover:scale-110">
+              <Icon icon="mdi:ip-network-outline" class="w-6 h-6 text-orange-600 dark:text-orange-400"/>
             </div>
           </div>
         </div>
@@ -55,19 +57,20 @@
                 {{ formatNumber(stats?.blacklistHits || 0) }}
               </span>
             </div>
-            <div class="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center shadow-sm transition-transform group-hover:scale-110">
-              <Icon icon="mdi:shield-check" class="w-6 h-6 text-blue-600 dark:text-blue-400" />
+            <div
+                class="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center shadow-sm transition-transform group-hover:scale-110">
+              <Icon icon="mdi:shield-check" class="w-6 h-6 text-blue-600 dark:text-blue-400"/>
             </div>
           </div>
         </div>
       </div>
 
       <!-- 缓存性能图表 -->
-      <div v-if="!statsLoading && stats" class="apple-card p-6 mb-8">
-        <div class="flex items-center justify-between mb-6">
+      <div class="apple-card p-6 mb-8">
+        <div v-if="!statsLoading && stats" class="flex items-center justify-between mb-6">
           <div class="flex items-center gap-3">
             <div class="w-8 h-8 rounded-xl bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center">
-              <Icon icon="mdi:chart-line" class="w-5 h-5 text-purple-600 dark:text-purple-400" />
+              <Icon icon="mdi:chart-line" class="w-5 h-5 text-purple-600 dark:text-purple-400"/>
             </div>
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white">缓存性能</h3>
           </div>
@@ -84,7 +87,7 @@
         <div class="apple-card p-6">
           <div class="flex items-center gap-3 mb-4">
             <div class="w-8 h-8 rounded-xl bg-green-100 dark:bg-green-900/40 flex items-center justify-center">
-              <Icon icon="mdi:plus-circle" class="w-5 h-5 text-green-600 dark:text-green-400" />
+              <Icon icon="mdi:plus-circle" class="w-5 h-5 text-green-600 dark:text-green-400"/>
             </div>
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white">添加黑名单</h3>
           </div>
@@ -112,7 +115,7 @@
                 class="w-full apple-button"
             >
               <template #icon>
-                <Icon icon="mdi:shield-plus" />
+                <Icon icon="mdi:shield-plus"/>
               </template>
               添加到黑名单
             </n-button>
@@ -123,7 +126,7 @@
         <div class="apple-card p-6">
           <div class="flex items-center gap-3 mb-4">
             <div class="w-8 h-8 rounded-xl bg-red-100 dark:bg-red-900/40 flex items-center justify-center">
-              <Icon icon="mdi:minus-circle" class="w-5 h-5 text-red-600 dark:text-red-400" />
+              <Icon icon="mdi:minus-circle" class="w-5 h-5 text-red-600 dark:text-red-400"/>
             </div>
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white">移除黑名单</h3>
           </div>
@@ -150,7 +153,7 @@
                 class="w-full apple-button"
             >
               <template #icon>
-                <Icon icon="mdi:shield-minus" />
+                <Icon icon="mdi:shield-minus"/>
               </template>
               从黑名单移除
             </n-button>
@@ -162,7 +165,7 @@
       <div class="apple-card p-6 mb-8">
         <div class="flex items-center gap-3 mb-4">
           <div class="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center">
-            <Icon icon="mdi:magnify" class="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            <Icon icon="mdi:magnify" class="w-5 h-5 text-blue-600 dark:text-blue-400"/>
           </div>
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white">检查 IP</h3>
         </div>
@@ -181,7 +184,7 @@
               class="apple-button"
           >
             <template #icon>
-              <Icon icon="mdi:check-circle" />
+              <Icon icon="mdi:check-circle"/>
             </template>
             检查
           </n-button>
@@ -221,7 +224,7 @@
             class="apple-button"
         >
           <template #icon>
-            <Icon icon="mdi:refresh" />
+            <Icon icon="mdi:refresh"/>
           </template>
           刷新缓存
         </n-button>
@@ -232,7 +235,7 @@
             class="apple-button"
         >
           <template #icon>
-            <Icon icon="mdi:reload" />
+            <Icon icon="mdi:reload"/>
           </template>
           重新加载统计
         </n-button>
@@ -244,28 +247,12 @@
 
 <script setup lang="ts">
 import {ref, onMounted, computed, nextTick, watch} from 'vue';
-import { useMessage, NInput, NButton, NForm, NFormItem } from 'naive-ui';
-import { Icon } from '@iconify/vue';
-import * as echarts from 'echarts/core';
-import { PieChart } from 'echarts/charts';
-import {
-  TitleComponent,
-  TooltipComponent,
-  LegendComponent
-} from 'echarts/components';
-import { CanvasRenderer } from 'echarts/renderers';
-import { IpBlacklistService, type BlacklistStats, type IpCheckResult } from '../services/IpBlacklistService';
-import { useThemeStore } from '../stores/theme';
-import { useLayoutStore} from "../stores/LayoutStore";
-
-// 注册 ECharts 组件
-echarts.use([
-  TitleComponent,
-  TooltipComponent,
-  LegendComponent,
-  PieChart,
-  CanvasRenderer
-]);
+import {useMessage, NInput, NButton, NForm, NFormItem} from 'naive-ui';
+import {Icon} from '@iconify/vue';
+import * as echarts from 'echarts'
+import {IpBlacklistService, type BlacklistStats, type IpCheckResult} from '../services/IpBlacklistService';
+import {useThemeStore} from '../stores/theme';
+import {useLayoutStore} from "../stores/LayoutStore";
 
 const message = useMessage();
 const layoutStore = useLayoutStore();
@@ -279,8 +266,8 @@ const cacheChartRef = ref<HTMLElement>();
 let cacheChart: echarts.ECharts | null = null;
 
 // 表单
-const addForm = ref({ ip: '', reason: '' });
-const removeForm = ref({ ip: '', reason: '' });
+const addForm = ref({ip: '', reason: ''});
+const removeForm = ref({ip: '', reason: ''});
 const addFormRef = ref();
 const removeFormRef = ref();
 const addLoading = ref(false);
@@ -344,7 +331,6 @@ const loadStats = async () => {
     stats.value = await IpBlacklistService.getStats();
 
     // 渲染图表
-    await nextTick();
     renderCacheChart();
   } catch (error: any) {
     console.error('加载统计数据失败:', error);
@@ -356,13 +342,8 @@ const loadStats = async () => {
 
 // 渲染缓存性能图表
 const renderCacheChart = () => {
-  if (!cacheChartRef.value || !stats.value) return;
-
-  if (cacheChart) {
-    cacheChart.dispose();
-  }
-
-  cacheChart = echarts.init(cacheChartRef.value);
+  if (!cacheChartRef.value) return
+  cacheChart = echarts.init(cacheChartRef.value)
 
   const option = {
     backgroundColor: 'transparent',
@@ -405,14 +386,14 @@ const renderCacheChart = () => {
         },
         data: [
           {
-            value: stats.value.cacheHits,
+            value: stats.value!.cacheHits,
             name: '缓存命中',
-            itemStyle: { color: '#10b981' }
+            itemStyle: {color: '#10b981'}
           },
           {
-            value: stats.value.cacheMisses,
+            value: stats.value!.cacheMisses,
             name: '缓存未命中',
-            itemStyle: { color: '#ef4444' }
+            itemStyle: {color: '#ef4444'}
           }
         ]
       }
@@ -420,6 +401,8 @@ const renderCacheChart = () => {
   };
 
   cacheChart.setOption(option);
+  console.log(option)
+  console.log(stats.value)
 
   // 响应式调整
   window.addEventListener('resize', () => {
@@ -444,7 +427,7 @@ const handleAdd = async () => {
     message.success('添加成功');
 
     // 重置表单
-    addForm.value = { ip: '', reason: '' };
+    addForm.value = {ip: '', reason: ''};
 
     // 重新加载统计
     await loadStats();
@@ -467,7 +450,7 @@ const handleRemove = async () => {
     message.success('移除成功');
 
     // 重置表单
-    removeForm.value = { ip: '', reason: '' };
+    removeForm.value = {ip: '', reason: ''};
 
     // 重新加载统计
     await loadStats();
@@ -526,7 +509,7 @@ onMounted(() => {
 /* 苹果风格卡片 */
 .apple-card {
   @apply bg-white rounded-2xl shadow-sm hover:shadow-md
-         transition-all duration-300 border border-gray-100 ;
+  transition-all duration-300 border border-gray-100 ;
 }
 
 .dark .apple-card {
