@@ -18,6 +18,7 @@ public class ArticleController(
     /// <summary>
     /// 获取所有文章（公开访问）
     /// </summary>
+    [Authorize(Roles = "Founder,President,Minister,Department")]
     [HttpGet]
     public async Task<ActionResult<ApiResponse<IEnumerable<ArticleModel>>>> GetArticles()
     {
@@ -32,6 +33,7 @@ public class ArticleController(
             {
                 logger.LogInformation(ex, "获取文章列表时发生错误");
             }
+
             return Ok(ApiResponse<IEnumerable<ArticleModel>>.Fail(ErrorCode.InternalServerError, "获取文章列表失败"));
         }
     }
@@ -64,6 +66,7 @@ public class ArticleController(
             {
                 logger.LogInformation(ex, "获取文章时发生错误，路径: {Path}", path);
             }
+
             return Ok(ApiResponse<ArticleModel>.Fail(ErrorCode.InternalServerError, "获取文章失败"));
         }
     }
@@ -71,7 +74,7 @@ public class ArticleController(
     /// <summary>
     /// 创建新文章（需要社团成员身份）
     /// </summary>
-    [Authorize]
+    [Authorize(Roles = "Founder,President,Minister,Department")]
     [HttpPost]
     public async Task<ActionResult<ApiResponse<ArticleModel>>> CreateArticle([FromBody] ArticleCreateDto createDto)
     {
@@ -127,6 +130,7 @@ public class ArticleController(
             {
                 logger.LogInformation(ex, "创建文章时发生错误");
             }
+
             return Ok(ApiResponse<ArticleModel>.Fail(ErrorCode.InternalServerError, "创建文章失败"));
         }
     }
@@ -134,7 +138,7 @@ public class ArticleController(
     /// <summary>
     /// 更新文章（需要社团成员身份）- 使用POST更安全
     /// </summary>
-    [Authorize]
+    [Authorize(Roles = "Founder,President,Minister,Department")]
     [HttpPost("update/{path}")]
     public async Task<ActionResult<ApiResponse>> UpdateArticle(string path, [FromBody] ArticleUpdateDto updateDto)
     {
@@ -181,6 +185,7 @@ public class ArticleController(
             {
                 logger.LogInformation(ex, "更新文章时发生错误，路径: {Path}", path);
             }
+
             return Ok(ApiResponse.Fail(ErrorCode.InternalServerError, "更新文章失败"));
         }
     }
@@ -188,7 +193,7 @@ public class ArticleController(
     /// <summary>
     /// 删除文章（需要管理员身份）
     /// </summary>
-    [Authorize]
+    [Authorize(Roles = "Founder,President,Minister,Department")]
     [HttpPost("delete/{path}")]
     public async Task<ActionResult<ApiResponse>> DeleteArticle(string path)
     {
@@ -220,6 +225,7 @@ public class ArticleController(
             {
                 logger.LogInformation(ex, "删除文章时发生错误，路径: {Path}", path);
             }
+
             return Ok(ApiResponse.Fail(ErrorCode.InternalServerError, "删除文章失败"));
         }
     }
@@ -252,6 +258,7 @@ public class ArticleController(
             {
                 logger.LogInformation(ex, "搜索文章时发生错误，关键词: {Keyword}", keyword);
             }
+
             return Ok(ApiResponse<IEnumerable<ArticleSearchResult>>.Fail(ErrorCode.InternalServerError, "搜索文章失败"));
         }
     }
@@ -277,6 +284,7 @@ public class ArticleController(
             {
                 logger.LogInformation(ex, "获取文章分类列表时发生错误");
             }
+
             return Ok(ApiResponse<object>.Fail(ErrorCode.InternalServerError, "获取文章分类列表失败"));
         }
     }
@@ -284,7 +292,7 @@ public class ArticleController(
     /// <summary>
     /// 批量更新文章顺序（需要社团成员身份）
     /// </summary>
-    [Authorize]
+    [Authorize(Roles = "Founder,President,Minister,Department")]
     [HttpPost("update-orders")]
     public async Task<ActionResult<ApiResponse>> UpdateArticleOrders([FromBody] Dictionary<string, int>? articleOrders)
     {
@@ -309,6 +317,7 @@ public class ArticleController(
             {
                 logger.LogInformation(ex, "批量更新文章顺序时发生错误");
             }
+
             return Ok(ApiResponse.Fail(ErrorCode.InternalServerError, "文章顺序更新失败"));
         }
     }
