@@ -13,7 +13,7 @@ interface PolicySection {
 }
 
 // --- 数据配置 ---
-const lastUpdated = '2024年5月20日'
+const lastUpdated = '2026年1月8日'
 const router = useRouter()
 
 const sections: PolicySection[] = [
@@ -23,8 +23,7 @@ const sections: PolicySection[] = [
     icon: 'ion:file-tray-full',
     iconColor: 'bg-blue-500',
     content: [
-      '我们收集的信息仅限于为您提供服务所必需的内容。这包括您的账户基本信息（如电子邮件地址、用户名）以及您在使用服务过程中产生的数据。',
-      '当您访问我们的网站时，我们会自动收集某些技术信息，例如您的 IP 地址、浏览器类型和操作系统，以优化您的浏览体验。'
+      '我们收集的信息仅限于为您提供服务所必需的内容。这包括您的账户基本信息（如电子邮件地址、用户名）以及您在使用服务过程中产生的数据。'
     ]
   },
   {
@@ -39,10 +38,10 @@ const sections: PolicySection[] = [
   },
   {
     id: 'cookies',
-    title: 'Cookie 与追踪',
-    icon: 'ion:radio-button-on', // 模拟 Cookie 形状
+    title: 'Jwt 与追踪',
+    icon: 'ion:radio-button-on',
     iconColor: 'bg-orange-500',
-    content: '我们使用 Cookie 和类似技术来记住您的偏好并在各个会话中保持您的登录状态。您可以通过浏览器设置拒绝 Cookie，但这可能会影响部分功能的使用。'
+    content: '我们使用 Jwt 和类似技术，以在各个会话中保持您的登录状态。'
   },
   {
     id: 'security',
@@ -56,7 +55,7 @@ const sections: PolicySection[] = [
     title: '联系我们',
     icon: 'ion:paper-plane',
     iconColor: 'bg-gray-500',
-    content: '如果您对本隐私政策有任何疑问，或希望行使您的数据权利，请通过 support@example.com 与我们联系。'
+    content: '如果您对本隐私政策有任何疑问，或希望行使您的数据权利，请通过 iosclubxauat@163.com 与我们联系。'
   }
 ]
 

@@ -20,11 +20,11 @@ interface FaqItem {
 
 // --- 数据 Mock ---
 const categories = ref<Category[]>([
-  {id: 'start', title: '快速开始', icon: 'ion:rocket-outline', desc: ''},
+  {id: 'start', title: '快速开始', icon: 'ion:rocket-outline', desc: '新手指南与入门教程'},
   {id: 'account', title: '账户管理', icon: 'ion:person-outline', desc: '设置、安全与隐私'},
-  {id: 'billing', title: '账单订阅', icon: 'ion:card-outline', desc: ''},
-  {id: 'tech', title: '技术支持', icon: 'ion:hammer-outline', desc: ''},
-  {id: 'community', title: '社区论坛', icon: 'ion:chatbubbles-outline', desc: ''},
+  {id: 'join', title: '加入我们', icon: 'ion:people-outline', desc: '招新信息与会员权益'},
+  {id: 'tech', title: '技术支持', icon: 'ion:hammer-outline', desc: '技术问题与开发指导'},
+  {id: 'community', title: '社区活动', icon: 'ion:chatbubbles-outline', desc: '活动交流与项目协作'},
   {id: 'contact', title: '联系我们', icon: 'ion:mail-outline', desc: '获取人工帮助'},
 ])
 
@@ -37,21 +37,51 @@ const faqs = ref<FaqItem[]>([
   },
   {
     id: '2',
-    category: 'billing',
-    question: '',
-    answer: ''
+    category: 'join',
+    question: '如何加入西安建筑科技大学 iOS Club？',
+    answer: '欢迎加入西安建筑科技大学 iOS Club！您可以通过以下方式加入：1. 在网站注册账号并完善个人信息；2. 关注我们的招新公告，参加招新面试；3. 通过现有会员推荐。俱乐部常年开放招新，具体时间请关注网站公告。'
   },
   {
     id: '3',
     category: 'account',
-    question: '？',
-    answer: ''
+    question: '如何更新我的个人资料信息？',
+    answer: '登录后，点击右上角头像进入个人中心，在"个人资料"页面可以修改昵称、联系方式等信息。如需修改绑定邮箱或密码，请在"账户安全"页面操作。'
   },
   {
     id: '4',
     category: 'tech',
-    question: '',
-    answer: ''
+    question: '俱乐部提供哪些iOS开发学习资源？',
+    answer: '我们提供丰富的学习资源：1. Swift/Objective-C基础教程；2. iOS开发框架学习资料；3. 苹果官方文档翻译；4. WWDC视频解析；5. 开源项目分析；6. 设计规范指南。所有资源均在俱乐部资源库中，会员可免费获取。'
+  },
+  {
+    id: '5',
+    category: 'join',
+    question: '加入俱乐部有什么要求？',
+    answer: '我们欢迎所有对编程数码感兴趣的同学加入，无论你是编程新手还是经验丰富的开发者。基本要求包括：1. 对编程开发或者数码设备有兴趣；2. 有学习热情和团队合作精神；3. 遵守俱乐部规章制度。'
+  },
+  {
+    id: '6',
+    category: 'community',
+    question: '俱乐部都有哪些活动？',
+    answer: '西安建筑科技大学 iOS Club 定期举办多种活动：1. 技术分享会：每周定期举行，分享最新技术动态；2. 项目工作坊：每月1-2次，实际动手开发项目；3. 技术讲座：邀请业界专家进行专题讲座；4. 编程马拉松：每年举办，激发创新思维。'
+  },
+  {
+    id: '7',
+    category: 'contact',
+    question: '如何联系西安建筑科技大学 iOS Club？',
+    answer: '您可以通过以下方式联系我们：1. 发送邮件至 iosclubxauat@163.com；2. 关注我们的官方微信公众号 "西建大iOS Club"；3. 加入官方QQ群。'
+  },
+  {
+    id: '8',
+    category: 'start',
+    question: '我是编程新手，该如何开始学习iOS开发？',
+    answer: '对于编程新手，我们建议：1. 先学习Swift基础语法；2. 了解Xcode开发环境；3. 完成简单的UI界面练习；4. 参加俱乐部的新手训练营；5. 跟着教程制作第一个App。俱乐部有完整的学习路线图和导师指导，不用担心起点低。'
+  },
+  {
+    id: '9',
+    category: 'account',
+    question: '忘记密码了怎么办？',
+    answer: '如果您忘记了密码：1. 在登录页面点击"忘记密码"；2. 输入注册时使用的邮箱；3. 查收邮件中的密码重置链接；4. 设置新密码。如果邮箱也忘记了，请联系管理员验证身份后重置。'
   },
 ])
 
