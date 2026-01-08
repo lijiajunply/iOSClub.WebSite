@@ -2,7 +2,6 @@
   <div class="dashboard-container min-h-screen transition-colors duration-300">
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-      <!-- 页面标题区域 (可选，如果 layoutStore 已经处理了可以更简化，这里做个视觉占位增强苹果感) -->
       <div class="mb-8 px-2">
         <h2 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white text-effect">
           概览

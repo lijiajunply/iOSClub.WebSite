@@ -2,14 +2,10 @@
   <div class="ip-blacklist-container min-h-screen transition-colors duration-300">
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-      <!-- 页面标题区域 -->
       <div class="mb-8 px-2">
         <h2 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white text-effect">
-          IP 黑名单管理
+          概览
         </h2>
-        <p class="mt-1 text-gray-500 dark:text-gray-400 text-sm">
-          管理和监控IP访问黑名单，保护系统安全
-        </p>
       </div>
 
       <!-- 统计概览卡片 -->
@@ -247,7 +243,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, nextTick, watch } from 'vue';
+import {ref, onMounted, computed, nextTick, watch} from 'vue';
 import { useMessage, NInput, NButton, NForm, NFormItem } from 'naive-ui';
 import { Icon } from '@iconify/vue';
 import * as echarts from 'echarts/core';
@@ -260,6 +256,7 @@ import {
 import { CanvasRenderer } from 'echarts/renderers';
 import { IpBlacklistService, type BlacklistStats, type IpCheckResult } from '../services/IpBlacklistService';
 import { useThemeStore } from '../stores/theme';
+import { useLayoutStore} from "../stores/LayoutStore";
 
 // 注册 ECharts 组件
 echarts.use([
@@ -271,6 +268,7 @@ echarts.use([
 ]);
 
 const message = useMessage();
+const layoutStore = useLayoutStore();
 const useDark = useThemeStore();
 const isDark = computed(() => useDark.isDark);
 
@@ -349,6 +347,7 @@ const loadStats = async () => {
     await nextTick();
     renderCacheChart();
   } catch (error: any) {
+    console.error('加载统计数据失败:', error);
     message.error(error.message || '加载统计数据失败');
   } finally {
     statsLoading.value = false;
@@ -517,6 +516,7 @@ const handleRefresh = async () => {
 // 组件挂载时加载数据
 onMounted(() => {
   loadStats();
+  layoutStore.setPageHeader('IP 黑名单管理', '管理和监控IP访问黑名单，保护系统安全');
 });
 </script>
 
