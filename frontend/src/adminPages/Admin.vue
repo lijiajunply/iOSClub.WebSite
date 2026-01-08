@@ -2,7 +2,6 @@
   <div class="dashboard-container min-h-screen transition-colors duration-300">
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-      <!-- 页面标题区域 (可选，如果 layoutStore 已经处理了可以更简化，这里做个视觉占位增强苹果感) -->
       <div class="mb-8 px-2">
         <h2 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white text-effect">
           概览
@@ -82,26 +81,26 @@
                 {{ formatDate(monitoringData.timestamp) }}
               </span>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-              <div class="space-y-1">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div class="space-y-1 space-x-1">
                 <span class="text-xs text-gray-500 dark:text-gray-400">总请求数</span>
                 <span class="text-2xl font-bold text-gray-900 dark:text-white">{{
                     monitoringData.http.totalRequests
                   }}</span>
               </div>
-              <div class="space-y-1">
+              <div class="space-y-1 space-x-1">
                 <span class="text-xs text-gray-500 dark:text-gray-400">每秒请求数</span>
                 <span class="text-2xl font-bold text-gray-900 dark:text-white">{{
                     monitoringData.http.requestsPerSecond.toFixed(2)
                   }}</span>
               </div>
-              <div class="space-y-1">
+              <div class="space-y-1 space-x-1">
                 <span class="text-xs text-gray-500 dark:text-gray-400">错误率</span>
                 <span class="text-2xl font-bold text-gray-900 dark:text-white">{{
                     monitoringData.http.errorRate.toFixed(2)
                   }}%</span>
               </div>
-              <div class="space-y-1">
+              <div class="space-y-1 space-x-1">
                 <span class="text-xs text-gray-500 dark:text-gray-400">平均响应时间</span>
                 <span class="text-2xl font-bold text-gray-900 dark:text-white">{{
                     monitoringData.http.averageResponseTime.toFixed(2)

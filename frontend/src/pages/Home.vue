@@ -151,15 +151,19 @@
           Copyright © 2023 - {{ new Date().getFullYear() }} iOS Club of XAUAT. All rights reserved.
         </p>
 
-        <div class="flex items-center gap-6 text-xs font-medium text-slate-600 dark:text-slate-300">
+         <div class="flex items-center gap-6 text-xs font-medium text-slate-600 dark:text-slate-300">
           <a href="https://cn.xauat.edu.cn/" target="_blank"
              class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">学校官网</a>
+          <router-link to="/PrivacyPolicy"
+             class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">隐私政策</router-link>
+          <router-link to="/HelpCenter"
+             class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">帮助中心</router-link>
           <a href="https://beian.miit.gov.cn/" target="_blank"
              class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">陕ICP备2024031872号</a>
           <a href="https://gitee.com/XAUATiOSClub" target="_blank"
              class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-1">
-            <Icon icon="simple-icons:gitee"/>
-            Gitee
+             <Icon icon="simple-icons:gitee"/>
+             Gitee
           </a>
         </div>
       </div>

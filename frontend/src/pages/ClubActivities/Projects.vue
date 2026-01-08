@@ -13,7 +13,7 @@
 
         <div class="space-y-1 text-center sm:text-left">
           <h1 class="text-4xl sm:text-5xl font-semibold bg-linear-to-r from-orange-500 via-pink-500 to-pink-600 bg-clip-text text-transparent animate-gradient">
-            iOS Club Projects
+            iOS Club 社团项目
           </h1>
           <p class="text-lg text-gray-500 dark:text-gray-400 font-medium tracking-wide">
             创造世界的新方式
@@ -93,11 +93,11 @@ interface ProjectItem {
 // 项目数据
 const projects: ProjectItem[] = [
   {
-    title: "Old8Lang",
-    content: "西建大 iOS Club 出品的脚本语言解释器，探索编译原理的奥秘，使用 C# 精心打造。",
-    url: "https://gitee.com/XAUATiOSClub/Old8Lang",
+    title: "建大百科小程序",
+    content: "可以在微信小程序等平台浏览建大百科",
+    url: "https://gitee.com/XAUATiOSClub/uniapp-ioswiki",
     icon: "mdi:code-braces-box", 
-    tag: "C# / Language"
+    tag: "UniApp + 微信小程序"
   },
   {
     title: "iOS Club 官网",

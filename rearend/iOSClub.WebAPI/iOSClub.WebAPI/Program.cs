@@ -177,7 +177,7 @@ builder.Services.AddSession(options =>
     options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest; // 根据请求类型决定是否使用安全Cookie
 });
 
-// 使用Redis分布式缓存替代内存缓存
+// 使用Redis分布式缓存
 builder.Services.AddStackExchangeRedisCache(options =>
 {
     var redis = Environment.GetEnvironmentVariable("REDIS", EnvironmentVariableTarget.Process);
@@ -189,8 +189,13 @@ builder.Services.AddStackExchangeRedisCache(options =>
     if (!string.IsNullOrEmpty(redis))
     {
         options.Configuration = redis;
+        // 设置实例名称为空，避免key前缀导致与IConnectionMultiplexer不一致
+        options.InstanceName = null;
     }
 });
+
+// 添加内存缓存（用于本地缓存层）
+builder.Services.AddMemoryCache();
 
 #endregion
 
@@ -337,14 +342,8 @@ builder.Services.Configure<GzipCompressionProviderOptions>(options => { options.
 
 #region Prometheus 监控
 
-// 添加 Prometheus 指标收集器
-builder.Services.AddMetricServer(option =>
-{
-    if (builder.Environment.IsDevelopment())
-    {
-        option.Url = "/metrics";
-    }
-});
+// Prometheus 指标收集不需要 AddMetricServer
+// 使用 UseHttpMetrics() 和 MapMetrics() 来配置指标端点
 
 #endregion
 

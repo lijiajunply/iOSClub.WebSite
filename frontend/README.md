@@ -1,97 +1,128 @@
 # iOS Club 官网前端
 
-## 整体架构
+## 项目简介
 
-assets: 静态资源
-components: 通用组件
-layout: 基础模板，这里放的是前台和个人中心的基础模板
-pages: 放前台的，个人中心的另起一个文件夹
-services: 那些和后端交互的服务
-stores: 一些需要长时间使用的东西，例如登录状态
-router: 的是路由
+本项目是西安建筑科技大学iOS Club社团官网的前端部分，采用 Vue 3 + TypeScript + Vite 构建，提供了现代化、响应式的社团展示和管理平台。
 
-## Markdown 解析
+## 技术栈
 
-这里使用 [markdown-it](https://github.com/markdown-it/markdown-it)
+- Vue 3
+- TypeScript
+- Vite (构建工具)
+- Vue Router (路由管理)
+- Pinia (状态管理)
+- markdown-it (Markdown解析)
+- Prism (代码高亮)
+- Mermaid (图表渲染)
 
-核心代码：
-```ts
-// 初始化 mermaid
-mermaid.initialize({startOnLoad: true})
+## 项目结构
 
-// 创建 markdown-it 实例
-const md = new MarkdownIt({
-    html: true,
-    linkify: true,
-    typographer: true
-})
-
-// 使用 anchor 插件
-md.use(markdownItAnchor, {
-    permalink: true,
-    permalinkBefore: true,
-    permalinkSymbol: '',
-})
-md.use(markdownitFootnote)
-md.use(markdownitTaskList, {label: false, labelAfter: false})
-md.use(markdownitAttrs, {
-    allowedAttributes: ['id', 'class', 'target']
-})
-
-md.use(mdExpandTabs)
-    .use(mdSup)
-    .use(mdSub)
-    .use(mdMark)
-
-// 配置自定义容器
-const containerOptions = [
-    {
-        name: 'warning',
-        className: 'warning'
-    },
-    {
-        name: 'danger',
-        className: 'danger'
-    },
-    {
-        name: 'tip',
-        className: 'tip'
-    }
-]
-
-containerOptions.forEach(({name, className}) => {
-    md.use(markdownItContainer, name, {
-        validate: (params) => {
-            return params.trim().match(new RegExp(`^${name}\\s+(.*)$`))
-        },
-        render: (tokens, idx) => {
-            const m = tokens[idx].info.trim().match(new RegExp(`^${name}\\s+(.*)$`))
-            if (tokens[idx].nesting === 1) {
-                return `<div class="${className} custom-block"><p style="font-weight: bold">${md.utils.escapeHtml(m[1])}</p>\n`
-            } else {
-                return '</div>\n'
-            }
-        }
-    })
-})
-
-// 渲染 markdown 的函数
-const render = async (markdown) => {
-    const html = md.render(markdown)
-
-    // 等待 DOM 更新
-    await nextTick()
-
-    // 初始化 mermaid 图表
-    await mermaid.run({
-        nodes: document.querySelectorAll('.language-mermaid'),
-    })
-
-    // 代码高亮
-    setTimeout(() => {
-        Prism.highlightAll()
-    }, 50)
-
-    return html
-}
 ```
+frontend/
+├── src/
+│   ├── adminPages/          # 后台管理页面
+│   │   ├── Article/         # 文章管理
+│   │   ├── Category/        # 分类管理
+│   │   ├── Project/         # 项目管理
+│   │   └── Admin.vue        # 管理首页
+│   ├── components/          # 通用组件
+│   │   ├── MarkdownComponent.vue  # Markdown渲染组件
+│   │   ├── Sidebar.vue             # 侧边栏组件
+│   │   └── SkeletonLoader.vue      # 骨架屏组件
+│   ├── layouts/             # 布局组件
+│   │   ├── MainLayout.vue   # 主布局
+│   │   ├── CentreLayout.vue # 个人中心布局
+│   │   └── WordLayout.vue   # 文档布局
+│   ├── pages/               # 前台页面
+│   │   ├── Articles/        # 文章相关
+│   │   ├── ClubActivities/  # 社团活动
+│   │   └── LoginSys/        # 登录系统
+│   ├── services/            # API服务
+│   │   ├── ApiService.ts    # 基础API服务
+│   │   ├── AuthService.ts   # 认证服务
+│   │   └── ArticleService.ts # 文章服务
+│   ├── stores/              # 状态管理
+│   │   ├── Authorization.ts # 授权状态
+│   │   └── theme.ts         # 主题设置
+│   └── main.ts              # 入口文件
+├── public/                  # 静态资源
+├── package.json             # 依赖配置
+├── vite.config.js           # Vite配置
+└── tsconfig.json            # TypeScript配置
+```
+
+## 核心功能
+
+### 前台功能
+- 社团介绍与展示
+- 活动公告与历史记录
+- 成员展示
+- 项目作品展示
+- 工具资源分享
+
+### 后台管理
+- 文章管理（发布、编辑、删除）
+- 分类管理
+- 成员管理
+- 项目管理
+- 客户端应用管理
+
+### 技术特性
+- 响应式设计，适配各种设备
+- Markdown支持，支持代码高亮和图表渲染
+- 骨架屏加载，提升用户体验
+- 权限控制，不同角色有不同访问权限
+- 状态管理，统一管理应用状态
+
+## 开发命令
+
+### 安装依赖
+```bash
+pnpm install
+```
+
+### 启动开发服务器
+```bash
+pnpm run dev
+```
+
+### 构建生产版本
+```bash
+pnpm run build
+```
+
+### 预览生产版本
+```bash
+pnpm run preview
+```
+
+### 类型检查
+```bash
+pnpm run typecheck
+```
+
+## Markdown 功能
+
+本项目使用 markdown-it 进行 Markdown 解析，支持以下特性：
+- 基本 Markdown 语法
+- 代码高亮（Prism）
+- 图表渲染（Mermaid）
+- 自定义容器（tip、warning、danger）
+- 脚注
+- 任务列表
+- 上标、下标、标记
+- 自动链接
+- 锚点链接
+
+## 贡献指南
+
+1. 确保安装了 Node.js 18+ 和 pnpm
+2. 克隆仓库并安装依赖
+3. 创建功能分支
+4. 开发功能
+5. 运行类型检查和构建
+6. 提交代码并创建 Pull Request
+
+## 许可证
+
+MIT License

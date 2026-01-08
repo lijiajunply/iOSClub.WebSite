@@ -158,11 +158,6 @@
               </n-button>
             </div>
           </div>
-
-          <!-- 高级过滤器折叠区域 -->
-          <n-collapse-transition v-show="false"> <!-- 这里可以根据需要绑定变量控制显示 -->
-            <!-- Expandable content if needed -->
-          </n-collapse-transition>
         </div>
 
         <!-- 表格内容区 -->
@@ -360,8 +355,7 @@
 <script setup lang="ts">
 import {ref, computed, onMounted, onBeforeUnmount, nextTick} from 'vue'
 import {
-  NSelect, NButton, NModal, NPagination, NInputNumber, NCollapseTransition,
-  useMessage
+  NSelect, NButton, NModal, NPagination, NInputNumber, useMessage
 } from 'naive-ui'
 import {Icon} from '@iconify/vue'
 import {LogsService, type LogEntry, type LogDistribution} from '../services/LogsService'
@@ -560,7 +554,7 @@ const confirmCleanup = async () => {
 }
 
 // ---------------------------------------------------------
-// ECharts Logic (模拟趋势数据，实际应从 API 获取)
+// ECharts Logic
 // ---------------------------------------------------------
 const initChart = () => {
   if (!chartDom.value) return

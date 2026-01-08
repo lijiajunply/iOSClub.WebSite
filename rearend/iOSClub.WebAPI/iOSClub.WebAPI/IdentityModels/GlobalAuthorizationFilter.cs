@@ -13,6 +13,19 @@ public class GlobalAuthorizationFilter(
 {
     public void OnAuthorization(AuthorizationFilterContext context)
     {
+        // 仅在请求的动作或控制器标注了 [Authorize] 且未标注 [AllowAnonymous] 时才执行校验
+        var endpointMetadata = context.ActionDescriptor.EndpointMetadata;
+        var hasAuthorize = endpointMetadata?.Any(m =>
+            m is Microsoft.AspNetCore.Authorization.AuthorizeAttribute
+                or Microsoft.AspNetCore.Authorization.IAuthorizeData) == true;
+        var hasAllowAnonymous =
+            endpointMetadata?.Any(m => m is Microsoft.AspNetCore.Authorization.AllowAnonymousAttribute) == true;
+
+        if (!hasAuthorize || hasAllowAnonymous)
+        {
+            return;
+        }
+
         var bearer = context.HttpContext.Request.Headers.Authorization.FirstOrDefault();
         if (string.IsNullOrEmpty(bearer) || !bearer.StartsWith("Bearer "))
         {

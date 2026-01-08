@@ -704,7 +704,7 @@ const addMember = async (member: StudentModel) => {
     if (currentDepartment.value) {
       await StaffService.createStaff({
         ...commonData,
-        identity: addMemberType.value === 'minister' ? 'Minister' : 'Department',
+        identity: addMemberType.value === 'Minister' ? 'Minister' : 'Department',
         department: {
           key: currentDepartment.value.id,
           name: currentDepartment.value.name,

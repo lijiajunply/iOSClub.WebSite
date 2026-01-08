@@ -88,6 +88,18 @@ const routes = [
                 component: () => import('./pages/LoginSys/QrCode.vue'),
             },
             {
+                path: 'PrivacyPolicy',
+                name: 'PrivacyPolicy',
+                meta: { title: "隐私政策 - 西建大 iOS Club" },
+                component: () => import('./pages/ClubActivities/PrivacyPolicy.vue'),
+            },
+            {
+                path: 'HelpCenter',
+                name: 'HelpCenter',
+                meta: { title: "帮助中心 - 西建大 iOS Club" },
+                component: () => import('./pages/ClubActivities/HelpCenter.vue'),
+            },
+            {
                 path: '/',
                 component: () => import('./layouts/WordLayout.vue'),
                 children: [
@@ -227,6 +239,12 @@ const routes = [
                 name: 'Logs',
                 meta: { title: "日志查看 - 西建大 iOS Club" },
                 component: () => import('./adminPages/LogsViewer.vue'),
+            },
+            {
+                path: 'IpBlacklist',
+                name: 'IpBlacklist',
+                meta: { title: "IP黑名单管理 - 西建大 iOS Club" },
+                component: () => import('./adminPages/IpBlacklist.vue'),
             },
         ]
     }

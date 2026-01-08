@@ -40,7 +40,7 @@
               v-model:value="form.studentId"
               placeholder="学号"
               size="large"
-              class="!rounded-xl !bg-white/60 focus:!bg-white dark:!bg-white/5 dark:focus:!bg-black/40"
+              class="rounded-xl! bg-white/60! focus:bg-white! dark:bg-white/5! dark:focus:bg-black/40!"
               @keyup.enter="handleLogin"
           >
             <template #prefix>
@@ -113,9 +113,9 @@
 
       <!-- 底部版权/链接 -->
       <div class="mt-8 flex justify-center gap-6 text-xs text-gray-400 dark:text-gray-600">
-        <a href="#" class="hover:text-gray-600 dark:hover:text-gray-400">隐私政策</a>
+        <a href="/PrivacyPolicy" class="hover:text-gray-600 dark:hover:text-gray-400">隐私政策</a>
         <span class="text-gray-300 dark:text-gray-700">|</span>
-        <a href="#" class="hover:text-gray-600 dark:hover:text-gray-400">帮助中心</a>
+        <a href="/HelpCenter" class="hover:text-gray-600 dark:hover:text-gray-400">帮助中心</a>
       </div>
 
     </div>

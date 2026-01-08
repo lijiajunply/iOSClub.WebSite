@@ -108,7 +108,7 @@ public class UserController(
                 return Ok(ApiResponse<TodoModel>.Fail(ErrorCode.UserNotFound, "用户不存在"));
 
             todoModel.StudentId = student.UserId;
-            todoModel.Id = todoModel.ToHash();
+            todoModel.Id = todoModel.ToString();
             todoModel.CreatedTime = DateTime.UtcNow;
 
             var result = await todoRepository.AddTodoAsync(todoModel);
