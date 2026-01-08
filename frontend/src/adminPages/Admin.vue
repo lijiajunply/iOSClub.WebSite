@@ -81,26 +81,26 @@
                 {{ formatDate(monitoringData.timestamp) }}
               </span>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-              <div class="space-y-1">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div class="space-y-1 space-x-1">
                 <span class="text-xs text-gray-500 dark:text-gray-400">总请求数</span>
                 <span class="text-2xl font-bold text-gray-900 dark:text-white">{{
                     monitoringData.http.totalRequests
                   }}</span>
               </div>
-              <div class="space-y-1">
+              <div class="space-y-1 space-x-1">
                 <span class="text-xs text-gray-500 dark:text-gray-400">每秒请求数</span>
                 <span class="text-2xl font-bold text-gray-900 dark:text-white">{{
                     monitoringData.http.requestsPerSecond.toFixed(2)
                   }}</span>
               </div>
-              <div class="space-y-1">
+              <div class="space-y-1 space-x-1">
                 <span class="text-xs text-gray-500 dark:text-gray-400">错误率</span>
                 <span class="text-2xl font-bold text-gray-900 dark:text-white">{{
                     monitoringData.http.errorRate.toFixed(2)
                   }}%</span>
               </div>
-              <div class="space-y-1">
+              <div class="space-y-1 space-x-1">
                 <span class="text-xs text-gray-500 dark:text-gray-400">平均响应时间</span>
                 <span class="text-2xl font-bold text-gray-900 dark:text-white">{{
                     monitoringData.http.averageResponseTime.toFixed(2)

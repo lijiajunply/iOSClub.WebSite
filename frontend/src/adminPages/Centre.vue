@@ -200,8 +200,8 @@
                   <Icon icon="solar:cloud-storage-bold-duotone" class="w-7 h-7"/>
                 </div>
                 <div>
-                  <h3 class="font-bold text-lg">资源云盘</h3>
-                  <p class="text-xs text-slate-500 dark:text-slate-400">共 {{ statistics.resources }} 个文件</p>
+                  <h3 class="font-bold text-lg">社团资源</h3>
+                  <p class="text-xs text-slate-500 dark:text-slate-400">共 {{ statistics.resources }} 个资源</p>
                 </div>
               </div>
               <div class="flex items-center text-sm font-medium text-purple-600 dark:text-purple-400 mt-4">
@@ -467,7 +467,7 @@ const fetchUserInfo = async () => {
       gender: userData.gender || '男'
     }
   } catch (error) {
-    userInfo.value = {name: 'luckyfish', id: '220202', role: 'Founder', isAdmin: true, gender: '男'}
+    userInfo.value = {name: 'iMember（未登录）', id: '2019202109', role: 'Member', isAdmin: false, gender: '男'}
   }
 }
 

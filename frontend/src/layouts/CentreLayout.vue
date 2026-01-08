@@ -115,17 +115,12 @@
 </template>
 
 <script setup lang="ts">
-import {onMounted} from 'vue'
-import {useRouter} from 'vue-router'
 import {Icon} from '@iconify/vue'
 import Sidebar from '../components/Sidebar.vue'
-import {useAuthorizationStore} from '../stores/Authorization'
 import {useThemeStore} from '../stores/theme'
 import {storeToRefs} from 'pinia'
 import {useLayoutStore} from "../stores/LayoutStore"
 
-const router = useRouter()
-const store = useAuthorizationStore()
 const themeStore = useThemeStore()
 const {isDark, userPreference} = storeToRefs(themeStore)
 const {setThemePreference} = themeStore
@@ -147,14 +142,6 @@ const handleThemeSelect = (key: string) => {
 const toggleSidebar = () => {
   layoutStore.showSidebar = !layoutStore.showSidebar
 }
-
-onMounted(async () => {
-  const isValid = await store.validate()
-  if (!isValid) {
-    await store.logout()
-    await router.push('/login')
-  }
-})
 </script>
 
 <style scoped>
