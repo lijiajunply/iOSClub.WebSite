@@ -88,6 +88,18 @@ const routes = [
                 component: () => import('./pages/LoginSys/QrCode.vue'),
             },
             {
+                path: 'PrivacyPolicy',
+                name: 'PrivacyPolicy',
+                meta: { title: "隐私政策 - 西建大 iOS Club" },
+                component: () => import('./pages/ClubActivities/PrivacyPolicy.vue'),
+            },
+            {
+                path: 'HelpCenter',
+                name: 'HelpCenter',
+                meta: { title: "帮助中心 - 西建大 iOS Club" },
+                component: () => import('./pages/ClubActivities/HelpCenter.vue'),
+            },
+            {
                 path: '/',
                 component: () => import('./layouts/WordLayout.vue'),
                 children: [
