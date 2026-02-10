@@ -118,11 +118,22 @@ public static class DataTool
     /// <returns></returns>
     public static bool IsOk(string password, string hashPassword)
     {
-        if (hashPassword.Length > 32 || hashPassword.StartsWith("$2")) // 检测是否为 BCrypt 加密
+        // 检测是否为 BCrypt 加密
+        // BCrypt 哈希格式: $2a$, $2b$, $2x$, $2y$ 开头，长度通常为 60 字符
+        if (hashPassword.StartsWith("$2") && hashPassword.Length >= 59)
         {
-            return BCrypt.Net.BCrypt.Verify(password, hashPassword);
+            try
+            {
+                return BCrypt.Net.BCrypt.Verify(password, hashPassword);
+            }
+            catch (BCrypt.Net.SaltParseException)
+            {
+                // 如果 BCrypt 验证失败，尝试 MD5 验证（兼容性处理）
+                return ToMd5Hash(password) == hashPassword;
+            }
         }
 
+        // 默认使用 MD5 验证
         return ToMd5Hash(password) == hashPassword;
     }
 
