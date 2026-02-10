@@ -162,7 +162,7 @@ const handleLogin = async () => {
       loading.value = true
       errorMsg.value = '' // 清空上次的错误
       try {
-        const res =await authorizationStore.login({
+        await authorizationStore.login({
           userId: form.value.studentId,
           password: form.value.password,
           rememberMe: form.value.rememberMe
