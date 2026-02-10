@@ -54,17 +54,13 @@ export const useAuthorizationStore = defineStore('AuthorizationId', {
             localStorage.removeItem('UserId');
         },
         async login(user: LoginModel, clientId: string | null | undefined = '', scope: string | null | undefined = ''): Promise<boolean> {
-            try {
-                const { accessToken } = await AuthService.login(user, clientId, scope);
-                if (!accessToken) {
-                    return false;
-                }
-                this.Authorization = accessToken;
-                localStorage.setItem('UserId', user.userId);
-                return true;
-            } catch (e) {
+            const { accessToken } = await AuthService.login(user, clientId, scope);
+            if (!accessToken) {
                 return false;
             }
+            this.Authorization = accessToken;
+            localStorage.setItem('UserId', user.userId);
+            return true;
         },
         async oauthLogin(user: LoginModel, clientId: string | null | undefined = '', scope: string | null | undefined = ''): Promise<string> {
             const { accessToken } = await AuthService.login(user, clientId, scope);

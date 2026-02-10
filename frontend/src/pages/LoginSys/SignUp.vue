@@ -15,7 +15,7 @@
       <!-- 顶部 Logo 区域 -->
       <div class="pt-10 pb-6 text-center">
         <div
-            class="mx-auto w-16 h-16 mb-4 bg-gradient-to-b from-gray-100 to-gray-300 dark:from-gray-700 dark:to-gray-800 rounded-[18px] shadow-inner flex items-center justify-center border border-white/20 icon-box">
+            class="mx-auto w-16 h-16 mb-4 bg-linear-to-b from-gray-100 to-gray-300 dark:from-gray-700 dark:to-gray-800 rounded-[18px] shadow-inner flex items-center justify-center border border-white/20 icon-box">
           <Icon icon="ion:person" class="text-3xl text-gray-600 dark:text-gray-200"/>
         </div>
         <h1 class="text-2xl font-semibold tracking-tight text-gray-900 dark:text-white">
@@ -210,7 +210,7 @@
 
         <!-- 底部链接 -->
         <div v-if="currentStep < 4" class="mt-8 text-center">
-          <a href="/LoginSys/Login"
+          <a href="/Login"
              class="text-sm text-[#0071e3] dark:text-[#2997ff] hover:underline font-medium inline-flex items-center gap-1">
             已有 iMember ID? 立即登录
             <Icon icon="ion:chevron-forward" class="text-xs"/>

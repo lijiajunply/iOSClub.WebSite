@@ -35,16 +35,16 @@ export class AuthService {
             },
             body: JSON.stringify(loginModel)
         });
-        
-        if (!response.ok) {
+
+        const data = await response.json();
+
+        if (!response.ok || data.code === 404 || data.errorCode !== 200) {
             // 处理错误响应
-            const errorData = await response.json();
-            throw new Error(errorData.message || '登录失败');
+            throw new Error(data.message || '登录失败');
         }
         
         // 解析响应体
-        const responseData = await response.json();
-        const accessToken = responseData.data;
+        const accessToken = data.data;
         
         // 从响应头中获取刷新令牌
         const refreshToken = response.headers.get('X-Refresh-Token') || '';
@@ -67,16 +67,15 @@ export class AuthService {
             },
             body: JSON.stringify(model)
         });
+
+        const data = await response.json();
         
-        if (!response.ok) {
-            // 处理错误响应
-            const errorData = await response.json();
-            throw new Error(errorData.message || '注册失败');
+        if (!response.ok || data.code === 404 || data.errorCode !== 200) {
+            throw new Error(data.message || '注册失败');
         }
         
         // 解析响应体
-        const responseData = await response.json();
-        const accessToken = responseData.data;
+        const accessToken = data.data;
         
         // 从响应头中获取刷新令牌
         const refreshToken = response.headers.get('X-Refresh-Token') || '';
