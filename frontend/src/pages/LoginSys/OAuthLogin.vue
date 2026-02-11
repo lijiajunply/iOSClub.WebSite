@@ -377,18 +377,16 @@ const handleMainJwtLogin = async () => {
 }
 
 /* Dark mode color adjustments for blobs via CSS variables or direct media query */
-@media (prefers-color-scheme: dark) {
-  .login-container .blob-1 {
-    background: #1e1b4b;
-  }
+.dark .login-container .blob-1 {
+  background: #1e1b4b;
+}
 
-  .login-container .blob-2 {
-    background: #172554;
-  }
+.dark .login-container .blob-2 {
+  background: #172554;
+}
 
-  .login-container .blob-3 {
-    background: #312e81;
-  }
+.dark .login-container .blob-3 {
+  background: #312e81;
 }
 
 @keyframes float {
