@@ -390,12 +390,6 @@ const submitRegistration = async () => {
   errorMsg.value = ''
 
   try {
-    const encoder = new TextEncoder()
-    const data = encoder.encode(form.password)
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data)
-    const hashArray = Array.from(new Uint8Array(hashBuffer))
-    const passwordHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
-
     await authorizationStore.signup({
       userName: form.name,
       userId: form.studentId,
@@ -405,7 +399,7 @@ const submitRegistration = async () => {
       className: form.className,
       phoneNum: form.phone,
       joinTime: new Date().toISOString(),
-      passwordHash: passwordHash,
+      passwordHash: form.password,
       eMail: form.email
     })
 

@@ -170,6 +170,7 @@ const handleLogin = async () => {
 
         await router.push('/Centre')
       } catch (err: any) {
+        console.error(err)
         errorMsg.value = err.message || '账号或密码错误，请重试'
       } finally {
         loading.value = false

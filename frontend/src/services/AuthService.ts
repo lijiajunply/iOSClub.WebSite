@@ -38,7 +38,7 @@ export class AuthService {
 
         const data = await response.json();
 
-        if (!response.ok || data.code === 404 || data.errorCode !== 200) {
+        if (!response.ok || data.code === 404 || data.errorCode !== 0) {
             // 处理错误响应
             throw new Error(data.message || '登录失败');
         }
@@ -70,7 +70,7 @@ export class AuthService {
 
         const data = await response.json();
         
-        if (!response.ok || data.code === 404 || data.errorCode !== 200) {
+        if (!response.ok || data.code === 404 || data.errorCode !== 0) {
             throw new Error(data.message || '注册失败');
         }
         
