@@ -396,7 +396,7 @@ const submitRegistration = async () => {
     const hashArray = Array.from(new Uint8Array(hashBuffer))
     const passwordHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
 
-    const res = await authorizationStore.signup({
+    await authorizationStore.signup({
       userName: form.name,
       userId: form.studentId,
       academy: form.major || '',
@@ -408,8 +408,6 @@ const submitRegistration = async () => {
       passwordHash: passwordHash,
       eMail: form.email
     })
-
-    if (!res) throw new Error('注册无响应')
 
     currentStep.value = 4
 
