@@ -275,7 +275,7 @@ const genderOptions = [
 const politicalOptions = [
   {label: '群众', value: '群众'},
   {label: '共青团员', value: '共青团员'},
-  {label: '中共预备党员', value: '中共预备党员'},
+  {label: '预备党员', value: '预备党员'},
   {label: '中共党员', value: '中共党员'},
 ]
 
