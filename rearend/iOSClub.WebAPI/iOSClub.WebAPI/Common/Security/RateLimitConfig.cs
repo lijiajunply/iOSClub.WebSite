@@ -94,7 +94,7 @@ public class RateLimitConfig
         new()
         {
             Name = "login",
-            PathPattern = "/api/auth/*",
+            PathPattern = "/auth/*",
             TokenLimit = 30, // 从10提升到30，每个IP每分钟30次登录尝试
             ReplenishmentPeriod = TimeSpan.FromMinutes(1),
             TokensPerPeriod = 30,
@@ -107,7 +107,7 @@ public class RateLimitConfig
         new()
         {
             Name = "register",
-            PathPattern = "/api/users/register",
+            PathPattern = "/users/register",
             TokenLimit = 10, // 从5提升到10，每个IP每5分钟10次注册
             ReplenishmentPeriod = TimeSpan.FromMinutes(5),
             TokensPerPeriod = 10,
@@ -120,7 +120,7 @@ public class RateLimitConfig
         new()
         {
             Name = "sensitive",
-            PathPattern = "/api/admin/*",
+            PathPattern = "/admin/*",
             TokenLimit = 100, // 从50提升到100，每个IP每分钟100次管理操作
             ReplenishmentPeriod = TimeSpan.FromMinutes(1),
             TokensPerPeriod = 100,
@@ -156,16 +156,10 @@ public class RateLimitState
 /// <summary>
 /// IP限流器包装类
 /// </summary>
-public class IpRateLimiterGroup
+public class IpRateLimiterGroup(RateLimitPolicy policy)
 {
     private readonly Dictionary<string, TokenBucketRateLimiter> _limiters = new();
-    private readonly RateLimitPolicy _policy;
-    private readonly object _lock = new();
-
-    public IpRateLimiterGroup(RateLimitPolicy policy)
-    {
-        _policy = policy;
-    }
+    private readonly Lock _lock = new();
 
     public TokenBucketRateLimiter GetOrCreateLimiter(string ipAddress)
     {
@@ -179,10 +173,10 @@ public class IpRateLimiterGroup
             // 为该IP创建新的限流器
             var newLimiter = new TokenBucketRateLimiter(new TokenBucketRateLimiterOptions
             {
-                TokenLimit = _policy.TokenLimit,
-                ReplenishmentPeriod = _policy.ReplenishmentPeriod,
-                TokensPerPeriod = _policy.TokensPerPeriod,
-                AutoReplenishment = _policy.AutoReplenishment
+                TokenLimit = policy.TokenLimit,
+                ReplenishmentPeriod = policy.ReplenishmentPeriod,
+                TokensPerPeriod = policy.TokensPerPeriod,
+                AutoReplenishment = policy.AutoReplenishment
             });
 
             _limiters[ipAddress] = newLimiter;
@@ -216,6 +210,7 @@ public class IpRateLimiterGroup
             {
                 limiter.Dispose();
             }
+
             _limiters.Clear();
         }
     }
@@ -360,6 +355,7 @@ public class RateLimitService : IDisposable
                     _logger.LogDebug("系统负载 {CurrentLoad:P2} 低于阈值 {Threshold:P2}，跳过动态调整",
                         currentLoad, _config.SystemLoadThreshold);
                 }
+
                 _state.LastAdjustmentTime = DateTime.UtcNow;
                 return;
             }
@@ -454,7 +450,7 @@ public class RateLimitService : IDisposable
             var currentTime = DateTime.Now;
             var totalTime = process.TotalProcessorTime;
             var elapsedTime = currentTime - startTime;
-            
+
             // Calculate CPU usage percentage
             var cpuUsage = (totalTime.TotalMilliseconds / elapsedTime.TotalMilliseconds) / Environment.ProcessorCount;
             return Math.Max(0.0, Math.Min(1.0, cpuUsage)); // Ensure value is between 0 and 1
@@ -492,6 +488,7 @@ public class RateLimitService : IDisposable
         {
             limiterGroup.Dispose();
         }
+
         _limiterGroups.Clear();
     }
 }
