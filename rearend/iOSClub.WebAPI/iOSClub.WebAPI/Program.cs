@@ -317,7 +317,6 @@ builder.Services.AddScoped<ITokenGenerator, JwtGenerator>();
 
 // 使用扩展方法注册服务
 builder.Services.RegisterRepositoriesAndServices();
-builder.Services.RegisterCqrsServices();
 builder.Services.RegisterSecurityServices();
 
 #endregion
