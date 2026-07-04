@@ -269,21 +269,24 @@ const performRegularLogin = async (params: any) => {
   })
 }
 
-// 组件挂载时加载客户端应用信息和检查JWT
-onMounted(async () => {
-  await loadClientAppInfo()
-  await checkMainSiteJwt()
+// 组件挂载时并行加载客户端应用信息和检查JWT
+onMounted(() => {
+  Promise.all([loadClientAppInfo(), checkMainSiteJwt()])
 })
 
-// 检查主站JWT并获取用户信息
+// 检查主站JWT并获取用户信息（客户端解析 JWT exp，避免不必要的网络请求）
 const checkMainSiteJwt = async () => {
-  if (await authorizationStore.validate()) {
-    const token = AuthService.getToken()
-    if (token) {
-      hasMainSiteJwt.value = true
-      // 获取并解析用户信息
-      currentUserInfo.value = AuthService.getCurrentUserInfo()
-    }
+  const token = AuthService.getToken()
+  if (!token) return
+
+  // 客户端解析 JWT 的 exp 字段判断是否过期，无需发起 API 请求
+  const userInfo = AuthService.parseJwtToken(token)
+  if (!userInfo?.exp) return
+
+  const nowSeconds = Math.floor(Date.now() / 1000)
+  if (userInfo.exp > nowSeconds) {
+    hasMainSiteJwt.value = true
+    currentUserInfo.value = userInfo
   }
 }
 

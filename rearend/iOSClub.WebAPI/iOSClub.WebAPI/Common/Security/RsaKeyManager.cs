@@ -9,6 +9,11 @@ namespace iOSClub.WebAPI.Common.Security;
 /// </summary>
 public class RsaKeyManager(JwtConfig jwtConfig, ILogger<RsaKeyManager> logger)
 {
+    private readonly Lock _privateKeyLock = new();
+    private readonly Lock _publicKeyLock = new();
+    private RSA? _cachedPrivateKey;
+    private RSA? _cachedPublicKey;
+
     /// <summary>
     /// 生成RSA密钥对
     /// </summary>
@@ -231,6 +236,9 @@ public class RsaKeyManager(JwtConfig jwtConfig, ILogger<RsaKeyManager> logger)
             // 存储新密钥
             StoreKeyPair(newRsa, jwtConfig.RsaPrivateKeyPath, jwtConfig.RsaPublicKeyPath);
 
+            // 清除内存缓存，下次请求会加载新密钥
+            ClearKeyCache();
+
             if (logger.IsEnabled(LogLevel.Information))
             {
                 logger.LogInformation("密钥轮换成功");
@@ -338,22 +346,58 @@ public class RsaKeyManager(JwtConfig jwtConfig, ILogger<RsaKeyManager> logger)
     }
 
     /// <summary>
-    /// 获取当前有效的RSA私钥
+    /// 获取当前有效的RSA私钥（带内存缓存，避免每次请求都读磁盘）
     /// </summary>
     /// <returns>RSA私钥对象</returns>
     public RSA GetCurrentPrivateKey()
     {
-        EnsureKeysValid();
-        return LoadPrivateKey(jwtConfig.RsaPrivateKeyPath);
+        if (_cachedPrivateKey is not null) return _cachedPrivateKey;
+
+        lock (_privateKeyLock)
+        {
+            if (_cachedPrivateKey is not null) return _cachedPrivateKey;
+            EnsureKeysValid();
+            _cachedPrivateKey = LoadPrivateKey(jwtConfig.RsaPrivateKeyPath);
+            return _cachedPrivateKey;
+        }
     }
 
     /// <summary>
-    /// 获取当前有效的RSA公钥
+    /// 获取当前有效的RSA公钥（带内存缓存，避免每次请求都读磁盘）
     /// </summary>
     /// <returns>RSA公钥对象</returns>
     public RSA GetCurrentPublicKey()
     {
-        EnsureKeysValid();
-        return LoadPublicKey(jwtConfig.RsaPublicKeyPath);
+        if (_cachedPublicKey is not null) return _cachedPublicKey;
+
+        lock (_publicKeyLock)
+        {
+            if (_cachedPublicKey is not null) return _cachedPublicKey;
+            EnsureKeysValid();
+            _cachedPublicKey = LoadPublicKey(jwtConfig.RsaPublicKeyPath);
+            return _cachedPublicKey;
+        }
+    }
+
+    /// <summary>
+    /// 清除密钥缓存（在密钥轮换后调用）
+    /// </summary>
+    public void ClearKeyCache()
+    {
+        lock (_privateKeyLock)
+        {
+            _cachedPrivateKey?.Dispose();
+            _cachedPrivateKey = null;
+        }
+        lock (_publicKeyLock)
+        {
+            _cachedPublicKey?.Dispose();
+            _cachedPublicKey = null;
+        }
+
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation("RSA密钥缓存已清除");
+        }
     }
 }

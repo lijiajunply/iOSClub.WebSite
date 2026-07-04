@@ -262,8 +262,8 @@ router.beforeEach((to, _from, next) => {
     // Set page title
     document.title = (to.meta.title as string) || "西建大 iOS Club";
 
-    // Check if route requires authentication
-    if (to.meta.requiresAuth && !authorizationStore.isAuthenticated) {
+    // Check if route requires authentication — also validate JWT expiry
+    if (to.meta.requiresAuth && !authorizationStore.isTokenValid) {
         next('/login');
     } else {
         next();

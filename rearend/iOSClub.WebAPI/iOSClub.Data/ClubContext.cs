@@ -107,7 +107,7 @@ public static class DataTool
     {
         return string.IsNullOrWhiteSpace(s)
             ? throw new ArgumentException("密码不能为空", nameof(s))
-            : BCrypt.Net.BCrypt.HashPassword(s, workFactor: 12); // 工作因子为 12 ，可自行调整
+            : BCrypt.Net.BCrypt.HashPassword(s, workFactor: 10); // 工作因子为 10，平衡安全性与性能（原 12 导致登录耗时 200-500ms）
     }
 
     /// <summary>

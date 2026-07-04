@@ -24,6 +24,33 @@ export interface ApiRequestConfig extends Omit<RequestInit, 'body'> {
     showError?: boolean;
 }
 
+// 正在进行的刷新 Promise，用于并发请求去重
+let refreshPromise: Promise<void> | null = null;
+
+/**
+ * 确保 Token 有效——如果即将过期则主动刷新。
+ * 同时通过共享 Promise 实现并发刷新去重。
+ */
+async function ensureValidToken(): Promise<void> {
+    const token = AuthService.getToken();
+    if (!token) return;
+
+    const userInfo = AuthService.parseJwtToken(token);
+    if (!userInfo?.exp) return;
+
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    // Token 在未来 60 秒内过期，主动刷新
+    if (userInfo.exp - nowSeconds > 60) return;
+
+    if (!refreshPromise) {
+        refreshPromise = AuthService.refreshToken().finally(() => {
+            refreshPromise = null;
+        });
+    }
+
+    await refreshPromise;
+}
+
 /**
  * 通用API请求处理函数
  * @param config 请求配置
@@ -38,10 +65,15 @@ export async function apiRequest<T>(config: ApiRequestConfig): Promise<T> {
         ...((headers as Record<string, string>) || {})
     };
 
-    // 如果需要认证且有令牌，添加Authorization头
+    // 如果需要认证且有令牌，添加Authorization头前先确保 Token 有效（主动刷新 + 并发去重）
     const token = AuthService.getToken();
     if (token) {
-        requestHeaders['Authorization'] = `Bearer ${token}`;
+        await ensureValidToken();
+        // 刷新后重新读取 Token（可能已被 ensureValidToken 更新）
+        const validToken = AuthService.getToken();
+        if (validToken) {
+            requestHeaders['Authorization'] = `Bearer ${validToken}`;
+        }
     }
 
     // 处理请求体：如果是对象且Content-Type为application/json，则转换为JSON字符串
@@ -95,8 +127,13 @@ export async function apiRequest<T>(config: ApiRequestConfig): Promise<T> {
         // 当code为401或者errorCode为3001时触发令牌刷新逻辑
         if (apiResponse.code === 401 || apiResponse.errorCode === 3001) {
             try {
-                // 尝试使用刷新令牌获取新的访问令牌
-                await AuthService.refreshToken();
+                // 使用共享 Promise 刷新令牌，避免并发 401 触发多次刷新
+                if (!refreshPromise) {
+                    refreshPromise = AuthService.refreshToken().finally(() => {
+                        refreshPromise = null;
+                    });
+                }
+                await refreshPromise;
 
                 // 更新请求头中的令牌
                 const newToken = AuthService.getToken();

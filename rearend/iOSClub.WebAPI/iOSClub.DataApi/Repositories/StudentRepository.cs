@@ -54,6 +54,14 @@ public interface IStudentRepository
     public Task<bool> Login(string userId, string password);
 
     /// <summary>
+    /// 登录验证并返回学生信息（一次数据库查询完成密码验证+获取学生数据）
+    /// </summary>
+    /// <param name="userId">学生ID</param>
+    /// <param name="password">密码</param>
+    /// <returns>学生模型，验证失败返回null</returns>
+    public Task<StudentModel?> LoginAndGetStudentAsync(string userId, string password);
+
+    /// <summary>
     /// 根据ID异步获取学生
     /// </summary>
     /// <param name="id">学生ID</param>
@@ -241,6 +249,27 @@ public class StudentRepository(IDbContextFactory<ClubContext> factory) : IStuden
         }
 
         return DataTool.IsOk(password, student.PasswordHash);
+    }
+
+
+    public async Task<StudentModel?> LoginAndGetStudentAsync(string userId, string password)
+    {
+        if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(password))
+        {
+            return null;
+        }
+
+        await using var context = await factory.CreateDbContextAsync();
+
+        var student = await LoginQuery(context, userId);
+        if (student == null) return null;
+
+        if (string.IsNullOrEmpty(student.PasswordHash))
+        {
+            return student.PhoneNum == password ? student : null;
+        }
+
+        return DataTool.IsOk(password, student.PasswordHash) ? student : null;
     }
 
 

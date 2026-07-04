@@ -9,6 +9,20 @@ export const useAuthorizationStore = defineStore('AuthorizationId', {
     getters: {
         getAuthorization: (state) => state.Authorization,
         isAuthenticated: (state) => !!state.Authorization && state.Authorization.length > 0,
+        // 检查 Token 是否存在且未过期（路由守卫应优先使用此 getter）
+        isTokenValid: (state): boolean => {
+            if (!state.Authorization || state.Authorization.length === 0) return false;
+            try {
+                const parts = state.Authorization.split('.');
+                if (parts.length !== 3) return false;
+                const payload = JSON.parse(atob(parts[1]));
+                const exp = payload.exp as number;
+                if (!exp) return false;
+                return exp > Math.floor(Date.now() / 1000);
+            } catch {
+                return false;
+            }
+        },
         getAuthorizationInfo: (state): any => {
             let strings = state.Authorization.split('.'); // 确保是 JWT 格式
             if (strings.length !== 3) return null; // 简单校验是否为合法 JWT

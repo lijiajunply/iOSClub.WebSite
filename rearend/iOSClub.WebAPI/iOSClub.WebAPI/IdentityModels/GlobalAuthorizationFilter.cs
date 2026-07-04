@@ -9,9 +9,9 @@ namespace iOSClub.WebAPI.IdentityModels;
 
 public class GlobalAuthorizationFilter(
     ILoginService loginService,
-    JwtService jwtService) : IAuthorizationFilter
+    JwtService jwtService) : IAsyncAuthorizationFilter
 {
-    public void OnAuthorization(AuthorizationFilterContext context)
+    public async Task OnAuthorizationAsync(AuthorizationFilterContext context)
     {
         // 仅在请求的动作或控制器标注了 [Authorize] 且未标注 [AllowAnonymous] 时才执行校验
         var endpointMetadata = context.ActionDescriptor.EndpointMetadata;
@@ -58,7 +58,7 @@ public class GlobalAuthorizationFilter(
 
             if (!string.IsNullOrEmpty(userId))
             {
-                var isValidInRedis = loginService.ValidateToken(userId, token, clientId).Result;
+                var isValidInRedis = await loginService.ValidateToken(userId, token, clientId);
                 if (!isValidInRedis)
                 {
                     return;

@@ -514,11 +514,11 @@ const fetchStatistics = async () => {
 }
 
 onMounted(async () => {
+  // 先获取用户信息（后续 fetchStatistics 依赖 isAdmin 判断）
+  await fetchUserInfo()
+  // fetchTools 和 fetchTasks 不依赖用户信息，与 fetchStatistics 并行加载
   await Promise.allSettled([
     fetchTools(),
-    fetchUserInfo(),
-  ])
-  await Promise.allSettled([
     fetchTasks(),
     fetchStatistics(),
   ])

@@ -135,7 +135,9 @@ public class LoginService(
 
     public async Task<string> Login(LoginModel model, string clientId = "", string scope = "")
     {
-        if (!await studentRepository.Login(model.UserId, model.Password)) return "";
+        // 一次查询完成密码验证+获取学生数据，消除原先 Login()+GetByIdAsync() 的重复 DB 查询
+        var stu = await studentRepository.LoginAndGetStudentAsync(model.UserId, model.Password);
+        if (stu == null) return "";
 
         var staff = await staffRepository.GetStaffByIdWithoutOtherData(model.UserId);
         var identity = "Member";
@@ -144,8 +146,6 @@ public class LoginService(
             identity = staff.Identity;
         }
 
-        var stu = await studentRepository.GetByIdAsync(model.UserId);
-        if (stu == null) return "";
         var name = stu.UserName;
         var isNotHasEMail = string.IsNullOrEmpty(stu.EMail);
 
@@ -170,20 +170,15 @@ public class LoginService(
         // 生成访问令牌和刷新令牌
         var (accessToken, refreshToken) = tokenGenerator.GetMemberToken(memberModel, model.RememberMe, scope, clientId);
 
-        // 将访问令牌存储到Redis中（可选，因为JWT本身包含过期时间）
-        await _db.StringSetAsync(redisKey, accessToken, TimeSpan.FromMinutes(20 * (model.RememberMe ? 24 : 1)));
-
-        // 将刷新令牌存储到Redis中，设置过期时间
+        // 使用 Redis Batch 合并 3 次 SET 为一次网络往返
         var refreshTokenKey = $"{RefreshTokenPrefix}{model.UserId}{s}";
-        await _db.StringSetAsync(
-            refreshTokenKey,
-            refreshToken,
-            TimeSpan.FromHours(RefreshTokenExpiryHours));
-
-        // 存储用户信息，便于后续验证
         var userInfoKey = $"user:{model.UserId}{s}";
-        await _db.StringSetAsync(userInfoKey, JsonSerializer.Serialize(memberModel),
+        var batch = _db.CreateBatch();
+        _ = batch.StringSetAsync(redisKey, accessToken, TimeSpan.FromMinutes(20 * (model.RememberMe ? 24 : 1)));
+        _ = batch.StringSetAsync(refreshTokenKey, refreshToken, TimeSpan.FromHours(RefreshTokenExpiryHours));
+        _ = batch.StringSetAsync(userInfoKey, JsonSerializer.Serialize(memberModel),
             TimeSpan.FromHours(RefreshTokenExpiryHours * (model.RememberMe ? 24 : 2)));
+        batch.Execute();
 
         return accessToken;
     }
