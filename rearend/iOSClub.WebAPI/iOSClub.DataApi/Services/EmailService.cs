@@ -102,6 +102,7 @@ public class EmailService(IConfiguration configuration, ILogger<EmailService> lo
             message.Body = bodyBuilder.ToMessageBody();
 
             using var client = new SmtpClient();
+            client.Timeout = 10000; // 10 秒超时，避免 SMTP 不可达时挂起太久
 
             // 根据端口选择安全选项
             var secureSocketOptions = port switch

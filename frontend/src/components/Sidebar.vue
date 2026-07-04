@@ -143,19 +143,6 @@ const closeSidebar = () => {
   }
 }
 
-// 模拟获取角色逻辑 (保留原逻辑)
-const getUserRole = () => {
-  const token = authorizationStore.getAuthorization
-  if (!token) return null
-  try {
-    const payload = atob(token.split('.')[1])
-    const userInfo = JSON.parse(payload)
-    return userInfo['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || userInfo.role || null
-  } catch (e) {
-    return null
-  }
-}
-
 // 更换了一组更现代的 Iconify 图标 (Phosphor Icons 系列，更贴近 Apple 风格)
 const menuItems = [
   {name: '概览', path: '/Centre', icon: 'ph:house'},
@@ -171,7 +158,7 @@ const menuItems = [
 ]
 
 const filteredMenuItems = computed(() => {
-  const userRole = getUserRole()
+  const userRole = authorizationStore.getRole
   const hierarchy: Record<string, number> = { 'Member': 1, 'Department': 2, 'Minister': 3, 'President': 4, 'Founder': 5 }
   const userLevel = hierarchy[userRole as string] || 0
 

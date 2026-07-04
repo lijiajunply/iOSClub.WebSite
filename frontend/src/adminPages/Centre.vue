@@ -143,7 +143,7 @@
               <div class="w-1.5 h-5 rounded-full bg-blue-500"></div>
               <h3 class="font-bold text-lg">提醒事项</h3>
             </div>
-            <n-tag size="small" round class="!bg-slate-100 dark:!bg-neutral-700 !text-slate-500">
+            <n-tag size="small" round class="bg-slate-100! dark:bg-neutral-700! text-slate-500!">
               {{ tasks.length }} 个待办
             </n-tag>
           </div>
@@ -193,7 +193,7 @@
               class="ios-card p-6 relative overflow-hidden group cursor-pointer hover:ring-2 ring-blue-500/30 transition-all"
           >
             <div
-                class="absolute right-[-20px] top-[-20px] w-32 h-32 bg-gradient-to-br from-purple-400/20 to-blue-400/20 blur-3xl rounded-full transition-transform group-hover:scale-150"></div>
+                class="absolute -right-5 -top-5 w-32 h-32 bg-linear-to-br from-purple-400/20 to-blue-400/20 blur-3xl rounded-full transition-transform group-hover:scale-150"></div>
             <div class="relative z-10 h-full flex flex-col justify-between">
               <div class="flex items-center gap-3">
                 <div class="p-2.5 bg-purple-100 dark:bg-purple-500/20 rounded-xl text-purple-600 dark:text-purple-300">
@@ -276,6 +276,7 @@ import {ToolService} from '../services/ToolService'
 import {UserService} from '../services/UserService'
 import {ProjectService} from '../services/ProjectService'
 import {DataCentreService} from "../services/DataCentreService"
+import {AuthService} from "../services/AuthService"
 import IconFont from "../components/IconFont.vue"
 import * as echarts from 'echarts'
 // @ts-ignore
@@ -467,7 +468,10 @@ const fetchUserInfo = async () => {
       gender: userData.gender || '男'
     }
   } catch (error) {
-    userInfo.value = {name: 'iMember（未登录）', id: '2019202109', role: 'Member', isAdmin: false, gender: '男'}
+    // 获取用户信息失败，清除过期令牌并重定向到登录页
+    AuthService.clearTokens()
+    router.push('/login')
+    return
   }
 }
 

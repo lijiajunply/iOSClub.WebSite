@@ -65,14 +65,15 @@ export async function apiRequest<T>(config: ApiRequestConfig): Promise<T> {
         ...((headers as Record<string, string>) || {})
     };
 
-    // 如果需要认证且有令牌，添加Authorization头前先确保 Token 有效（主动刷新 + 并发去重）
-    const token = AuthService.getToken();
-    if (token) {
-        await ensureValidToken();
-        // 刷新后重新读取 Token（可能已被 ensureValidToken 更新）
-        const validToken = AuthService.getToken();
-        if (validToken) {
-            requestHeaders['Authorization'] = `Bearer ${validToken}`;
+    // 如果配置要求认证且有令牌，添加Authorization头前先确保 Token 有效
+    if (config.requiresAuth !== false) {
+        const token = AuthService.getToken();
+        if (token) {
+            await ensureValidToken();
+            const validToken = AuthService.getToken();
+            if (validToken) {
+                requestHeaders['Authorization'] = `Bearer ${validToken}`;
+            }
         }
     }
 
