@@ -280,7 +280,8 @@ const politicalOptions = [
 ]
 
 const academyOptions = [
-  {label: '信息与控制工程学院', value: '信息与控制工程学院'},
+  {label: '人工智能与机器人学院', value: '人工智能与机器人学院'},
+  {label: '计算机和信息工程学院', value: '计算机和信息工程学院'},
   {label: '理学院', value: '理学院'},
   {label: '机电工程学院', value: '机电工程学院'},
   {label: '管理学院', value: '管理学院'},
