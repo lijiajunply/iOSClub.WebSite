@@ -1,5 +1,6 @@
 using FluentValidation;
 using iOSClub.Data.DataModels;
+using iOSClub.Data.ShowModels;
 
 namespace iOSClub.WebAPI.Validation;
 
@@ -14,7 +15,9 @@ public class StudentModelValidator : AbstractValidator<StudentModel>
 
         RuleFor(x => x.Academy)
             .NotEmpty().WithMessage("学院不能为空")
-            .MaximumLength(50).WithMessage("学院名称长度不能超过50个字符");
+            .MaximumLength(50).WithMessage("学院名称长度不能超过50个字符")
+            .Must(x => SignRecord.Academies.Contains(x))
+            .WithMessage("学院名称不在有效列表中");
 
         RuleFor(x => x.PoliticalLandscape)
             .NotEmpty().WithMessage("政治面貌不能为空")
