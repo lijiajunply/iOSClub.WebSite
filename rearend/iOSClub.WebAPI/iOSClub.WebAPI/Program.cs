@@ -1,3 +1,5 @@
+using System.Data;
+using System.Data.Common;
 using System.IO.Compression;
 using System.Security.Cryptography;
 using FluentValidation.AspNetCore;
@@ -23,6 +25,9 @@ using Prometheus;
 using Scalar.AspNetCore;
 using Serilog;
 using StackExchange.Redis;
+using DotEnv.Core;
+
+new EnvLoader().Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -411,6 +416,9 @@ using (var scope = app.Services.CreateScope())
             Console.WriteLine("No pending migrations.");
         }
 
+        // 数据迁移：信息与控制工程学院拆分 - 查看受影响学生数据
+        // await DataMigration_InfoControlEngineering(context);
+
         // 初始化数据
         if (!await context.Staffs.AnyAsync())
         {
@@ -469,3 +477,204 @@ app.MapScalarApiReference();
 app.MapMetrics();
 
 app.Run();
+
+#region 数据迁移方法
+
+/// <summary>
+/// 数据迁移：信息与控制工程学院拆分
+/// 按专业（ClassName）自动将23级及以后的学生拆分到两个新学院
+/// </summary>
+static async Task DataMigration_InfoControlEngineering(ClubContext context)
+{
+    try
+    {
+        // 仅在 PostgreSQL 环境下执行
+        if (context.Database.ProviderName != "Npgsql.EntityFrameworkCore.PostgreSQL")
+            return;
+
+        // 注意：此连接由 EF Core 管理生命周期，不要 dispose
+        var connection = context.Database.GetDbConnection();
+        if (connection.State != ConnectionState.Open)
+            await connection.OpenAsync();
+
+        Console.WriteLine("[数据迁移] ========== 信息与控制工程学院拆分 ==========");
+
+        // ========== 阶段0：诊断查询 ==========
+
+        // 查询1：查看受影响的学生数（UserId >= '23'）
+        await using var cmd1 = connection.CreateCommand();
+        cmd1.CommandText = """
+                           SELECT COUNT(*) AS affected_count
+                           FROM "Students"
+                           WHERE "Academy" = '信息与控制工程学院'
+                             AND LEFT("UserId", 2) >= '23';
+                           """;
+        var affectedCount = await cmd1.ExecuteScalarAsync();
+        Console.WriteLine($"[数据迁移] 受影响学生数 (UserId >= '23'): {affectedCount}");
+
+        // 查询2：查看受影响学生的明细（按班级分组，辅助判断拆分规则）
+        await using var cmd2 = connection.CreateCommand();
+        cmd2.CommandText = """
+                           SELECT LEFT("UserId", 2) AS grade, "ClassName", COUNT(*) AS cnt
+                           FROM "Students"
+                           WHERE "Academy" = '信息与控制工程学院'
+                             AND LEFT("UserId", 2) >= '23'
+                           GROUP BY LEFT("UserId", 2), "ClassName"
+                           ORDER BY grade, cnt DESC;
+                           """;
+        await using var reader2 = await cmd2.ExecuteReaderAsync();
+        Console.WriteLine("[数据迁移] 受影响学生明细 (按年级+班级分组):");
+        while (await reader2.ReadAsync())
+        {
+            Console.WriteLine($"  年级: {reader2["grade"]}, 班级: {reader2["ClassName"]}, 人数: {reader2["cnt"]}");
+        }
+        await reader2.DisposeAsync();
+
+        // 查询3：查看不受影响的学生（UserId < '23'，保留原学院）
+        await using var cmd3 = connection.CreateCommand();
+        cmd3.CommandText = """
+                           SELECT COUNT(*) AS keep_count
+                           FROM "Students"
+                           WHERE "Academy" = '信息与控制工程学院'
+                             AND LEFT("UserId", 2) < '23';
+                           """;
+        var keepCount = await cmd3.ExecuteScalarAsync();
+        Console.WriteLine($"[数据迁移] 保留原学院学生数 (UserId < '23'): {keepCount}");
+
+        if (affectedCount is 0L or 0)
+        {
+            Console.WriteLine("[数据迁移] 没有需要迁移的学生，跳过。");
+            return;
+        }
+
+        // ========== 阶段1：干跑 - 查看班级归属 ==========
+        await using var cmdDryRun = connection.CreateCommand();
+        cmdDryRun.CommandText = """
+                                SELECT "ClassName", COUNT(*) AS cnt,
+                                       CASE
+                                           WHEN "ClassName" LIKE '%人工智能%' OR "ClassName" LIKE '%自动化%'
+                                                OR "ClassName" LIKE '%机器人工程%'
+                                           THEN '人工智能与机器人学院'
+                                           WHEN "ClassName" LIKE '%计算机科学与技术%' OR "ClassName" LIKE '%通信工程%'
+                                           THEN '计算机和信息工程学院'
+                                           ELSE '未匹配，保留不动'
+                                       END AS target_academy
+                                FROM "Students"
+                                WHERE "Academy" = '信息与控制工程学院'
+                                  AND LEFT("UserId", 2) >= '23'
+                                GROUP BY "ClassName"
+                                ORDER BY target_academy, cnt DESC;
+                                """;
+        await using var readerDryRun = await cmdDryRun.ExecuteReaderAsync();
+        Console.WriteLine("[数据迁移] 班级归属映射 (干跑):");
+        var unmatchedClasses = new List<string>();
+        while (await readerDryRun.ReadAsync())
+        {
+            var className = readerDryRun["ClassName"].ToString()!;
+            var cnt = readerDryRun["cnt"];
+            var target = readerDryRun["target_academy"].ToString()!;
+            Console.WriteLine($"  {className} (人数: {cnt}) {target}");
+            if (target == "未匹配，保留不动")
+                unmatchedClasses.Add(className);
+        }
+        await readerDryRun.DisposeAsync();
+
+        if (unmatchedClasses.Count > 0)
+        {
+            Console.WriteLine($"[数据迁移] ⚠️ 警告：{unmatchedClasses.Count} 个班级未匹配到任何关键词，将被跳过:");
+            foreach (var c in unmatchedClasses)
+                Console.WriteLine($"  - {c}");
+        }
+
+        // ========== 阶段2：执行拆分 ==========
+
+        // 1: 划分到「人工智能与机器人学院」
+        //    人工智能、自动化、机器人工程 → 人工智能与机器人学院
+        await using var cmdUpdate1 = connection.CreateCommand();
+        cmdUpdate1.CommandText = """
+                                 UPDATE "Students"
+                                 SET "Academy" = '人工智能与机器人学院'
+                                 WHERE "Academy" = '信息与控制工程学院'
+                                   AND LEFT("UserId", 2) >= '23'
+                                   AND (
+                                     "ClassName" LIKE '%人工智能%'
+                                      OR "ClassName" LIKE '%自动化%'
+                                      OR "ClassName" LIKE '%机器人工程%'
+                                      OR "ClassName" LIKE '%机器人%'
+                                      OR "ClassName" LIKE '%人智%'
+                                   );
+                                 """;
+        var update1Count = await cmdUpdate1.ExecuteNonQueryAsync();
+        Console.WriteLine($"[数据迁移] 迁移到「人工智能与机器人学院」: {update1Count} 人");
+
+        // 2: 划分到「计算机和信息工程学院」
+        //    计算机科学与技术、通信工程 → 计算机和信息工程学院
+        await using var cmdUpdate2 = connection.CreateCommand();
+        cmdUpdate2.CommandText = """
+                                 UPDATE "Students"
+                                 SET "Academy" = '计算机和信息工程学院'
+                                 WHERE "Academy" = '信息与控制工程学院'
+                                   AND LEFT("UserId", 2) >= '23'
+                                   AND (
+                                     "ClassName" LIKE '%计算机科学与技术%'
+                                      OR "ClassName" LIKE '%通信工程%'
+                                      OR "ClassName" LIKE '%计算机%'
+                                      OR "ClassName" LIKE '%计科%'
+                                      OR "ClassName" LIKE '%通信%'
+                                   );
+                                 """;
+        var update2Count = await cmdUpdate2.ExecuteNonQueryAsync();
+        Console.WriteLine($"[数据迁移] 迁移到「计算机和信息工程学院」: {update2Count} 人");
+
+        // ========== 阶段3：检查漏网之鱼 ==========
+        await using var cmdLeak = connection.CreateCommand();
+        cmdLeak.CommandText = """
+                              SELECT "UserId", "UserName", "ClassName"
+                              FROM "Students"
+                              WHERE "Academy" = '信息与控制工程学院'
+                                AND LEFT("UserId", 2) >= '23';
+                              """;
+        await using var readerLeak = await cmdLeak.ExecuteReaderAsync();
+        var leakCount = 0;
+        while (await readerLeak.ReadAsync())
+        {
+            if (leakCount == 0)
+                Console.WriteLine("[数据迁移] ⚠️ 以下学生未被匹配，需人工处理:");
+            leakCount++;
+            Console.WriteLine($"  {readerLeak["UserId"]} | {readerLeak["UserName"]} | {readerLeak["ClassName"]}");
+        }
+        if (leakCount == 0)
+            Console.WriteLine("[数据迁移] ✅ 无漏网之鱼，所有23级后学生已迁移完毕。");
+        await readerLeak.DisposeAsync();
+
+        // ========== 阶段4：迁移后验证 ==========
+        await using var cmdVerify1 = connection.CreateCommand();
+        cmdVerify1.CommandText = """
+                                 SELECT COUNT(*) AS should_be_zero
+                                 FROM "Students"
+                                 WHERE "Academy" = '信息与控制工程学院'
+                                   AND LEFT("UserId", 2) >= '23';
+                                 """;
+        var shouldBeZero = await cmdVerify1.ExecuteScalarAsync();
+        Console.WriteLine($"[数据迁移] 验证 - 23级后仍保留在原学院的学生数 (应为0): {shouldBeZero}");
+
+        await using var cmdVerify2 = connection.CreateCommand();
+        cmdVerify2.CommandText = """
+                                 SELECT COUNT(*) AS old_students_kept
+                                 FROM "Students"
+                                 WHERE "Academy" = '信息与控制工程学院'
+                                   AND LEFT("UserId", 2) < '23';
+                                 """;
+        var oldKept = await cmdVerify2.ExecuteScalarAsync();
+        Console.WriteLine($"[数据迁移] 验证 - 22级及以前保留在原学院的学生数: {oldKept}");
+
+        Console.WriteLine("[数据迁移] ========== 拆分完成 ==========");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[数据迁移] 信息与控制工程学院拆分失败: {ex.Message}");
+        Console.WriteLine($"[数据迁移] 详细错误: {ex}");
+    }
+}
+
+#endregion

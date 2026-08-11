@@ -15,3 +15,5 @@ rsa-key.xml
 
 coverage-report/
 TestResults/
+
+.env
