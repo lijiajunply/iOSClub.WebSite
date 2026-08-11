@@ -1,6 +1,7 @@
 import {url} from './Url';
 import type {StudentModel, LoginModel} from '../models';
 import {apiRequest} from './ApiService';
+import type {ApiResponse} from './ApiService';
 
 /**
  * 密码哈希函数
@@ -151,8 +152,14 @@ export class AuthService {
             throw new Error('刷新令牌不存在或用户信息无效');
         }
         
-        // 调用后端刷新令牌API
-        const res = await fetch(`${url}/Auth/refresh-token?userId=${userInfo.sub}&refreshToken=${refreshToken}`, {
+        // 刷新令牌按 client_id 分区存储；沿用当前访问令牌的客户端和授权范围。
+        const query = new URLSearchParams({
+            userId: userInfo.sub,
+            refreshToken,
+            clientId: userInfo.client_id || '',
+            scope: userInfo.scope || ''
+        });
+        const res = await fetch(`${url}/Auth/refresh-token?${query.toString()}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -163,12 +170,17 @@ export class AuthService {
             throw new Error('刷新令牌失败');
         }
 
-        const data = await res.json();
+        const data = await res.json() as ApiResponse<string>;
+        const newAccessToken = data.data;
+        const newRefreshToken = res.headers.get('X-Refresh-Token');
 
-        const newAccessToken = data.data as string;
-        
-        // 更新访问令牌
-        this.saveTokens(newAccessToken, refreshToken);
+        // 刷新接口的业务失败当前会返回 HTTP 200；不能将空 data 写入本地存储。
+        if (data.code !== 200 || data.errorCode !== 0 || !newAccessToken || !newRefreshToken) {
+            throw new Error(data.message || '刷新令牌失败');
+        }
+
+        // 后端轮换了刷新令牌，两个令牌必须同时更新。
+        this.saveTokens(newAccessToken, newRefreshToken);
         return newAccessToken;
     }
 

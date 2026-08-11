@@ -10,8 +10,7 @@ export class ArticleService {
     static async getAllArticles(): Promise<ArticleModel[]> {
         return await apiRequest<ArticleModel[]>({
             url: `${url}/Article`,
-            method: 'GET',
-            requiresAuth: false
+            method: 'GET'
         });
     }
 
@@ -26,9 +25,10 @@ export class ArticleService {
         }
 
         return await apiRequest<ArticleModel>({
-            url: `${url}/Article/${path}`,
-            method: 'GET',
-            requiresAuth: false
+            // 详情接口会按当前用户身份过滤文章；apiRequest 在没有登录态时
+            // 仍可匿名请求，因此不应显式禁用 Authorization 头。
+            url: `${url}/Article/${encodeURIComponent(path)}`,
+            method: 'GET'
         });
     }
 

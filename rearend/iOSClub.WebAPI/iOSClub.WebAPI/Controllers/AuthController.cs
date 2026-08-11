@@ -270,6 +270,14 @@ public class AuthController(
             }
             
             var newToken = await loginService.RefreshToken(userId, refreshToken, clientId, scope);
+
+            // LoginService 会轮换刷新令牌。将新值随响应返回，避免客户端下次
+            // 刷新仍提交已被撤销的旧令牌。
+            if (!string.IsNullOrEmpty(newToken))
+            {
+                var newRefreshToken = await loginService.GetRefreshToken(userId, clientId);
+                Response.Headers.Append("X-Refresh-Token", newRefreshToken);
+            }
             
             return Ok(!string.IsNullOrEmpty(newToken)
                 ? ApiResponse<string>.Success(newToken, "刷新令牌成功")
