@@ -25,7 +25,7 @@ export interface ApiRequestConfig extends Omit<RequestInit, 'body'> {
 }
 
 // 正在进行的刷新 Promise，用于并发请求去重
-let refreshPromise: Promise<void> | null = null;
+let refreshPromise: Promise<string> | null = null;
 
 /**
  * 确保 Token 有效——如果即将过期则主动刷新。

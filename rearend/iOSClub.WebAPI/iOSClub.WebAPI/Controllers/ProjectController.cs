@@ -110,15 +110,16 @@ public class ProjectController(
             }
 
             // 更新现有项目
-            var result = await projectRepository.CreateProjectAsync(model, staff);
-            if (result == null) 
+            var updated = await projectRepository.UpdateProjectAsync(model);
+            if (!updated)
                 return Ok(ApiResponse<ProjectModel>.Fail(ErrorCode.OperationFailed, "更新项目失败"));
                 
             if (logger.IsEnabled(LogLevel.Information))
             {
                 logger.LogInformation("更新项目成功，项目ID: {ProjectId}", model.Id);
             }
-            return Ok(ApiResponse<ProjectModel>.Success(model, "更新项目成功"));
+            var updatedProject = await projectRepository.GetProjectByIdAsync(model.Id);
+            return Ok(ApiResponse<ProjectModel>.Success(updatedProject!, "更新项目成功"));
         }
         catch (Exception ex)
         {

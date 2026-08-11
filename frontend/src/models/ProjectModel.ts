@@ -3,11 +3,11 @@ import {DepartmentModel} from "./DepartmentModel";
 
 export interface ProjectModel {
   id: string;
-  name: string;
+  title: string;
   description: string;
-  startTime: Date | number;
-  endTime: Date | number;
-  department: string;
+  startTime: string | null;
+  endTime: string | null;
+  department: DepartmentModel | null;
   staffs?: StaffModel[];
   tasks?: TaskModel[];
 }
@@ -18,18 +18,18 @@ export interface StaffModel {
   name: string;
   identity: string;
   department: DepartmentModel | null;
-  Projects?: ProjectModel[];
-  Tasks?: TaskModel[];
+  projects?: ProjectModel[];
+  tasks?: TaskModel[];
 }
 
 // 任务模型接口
 export interface TaskModel {
   id: string;
-  name: string;
+  title: string;
   description: string;
-  status: string;
-  startTime: Date | number;
-  endTime: Date | number;
+  status: boolean;
+  startTime: string;
+  endTime: string;
   users?: StaffModel[];
 }
 

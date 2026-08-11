@@ -463,9 +463,10 @@ app.MapOpenApi();
 app.UseSession(); // 会话中间件应该在认证和跨域中间件之前
 
 app.UseHttpsRedirection();
+// CORS 必须在认证/授权之前运行，才能正确处理携带 Authorization 的跨域预检请求。
+app.UseCors();
 app.UseAuthentication(); // 添加这行以启用身份验证中间件
 app.UseAuthorization();
-app.UseCors();
 
 // 添加 Prometheus HTTP 请求指标收集中间件
 app.UseHttpMetrics();

@@ -8,6 +8,7 @@
     "baseUrl": ".",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
+    "skipLibCheck": true,
 
     /* Linting */
     "composite": true,

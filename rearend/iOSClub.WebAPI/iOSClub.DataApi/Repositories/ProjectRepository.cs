@@ -211,6 +211,14 @@ public class ProjectRepository(IDbContextFactory<ClubContext> factory) : IProjec
         await using var context = await factory.CreateDbContextAsync();
         try
         {
+            if (project.Department != null)
+            {
+                var department = await context.Departments
+                    .FirstOrDefaultAsync(x => x.Name == project.Department.Name);
+                if (department == null) return null;
+                project.Department = department;
+            }
+
             // 设置项目ID
             if (string.IsNullOrEmpty(project.Id))
             {
@@ -253,12 +261,20 @@ public class ProjectRepository(IDbContextFactory<ClubContext> factory) : IProjec
         try
         {
             var existingProject = await context.Projects
+                .Include(p => p.Department)
                 .FirstOrDefaultAsync(p => p.Id == project.Id);
 
             if (existingProject == null)
                 return false;
 
             existingProject.Update(project);
+            if (project.Department != null)
+            {
+                var department = await context.Departments
+                    .FirstOrDefaultAsync(x => x.Name == project.Department.Name);
+                if (department == null) return false;
+                existingProject.Department = department;
+            }
             context.Projects.Update(existingProject);
             await context.SaveChangesAsync();
             return true;

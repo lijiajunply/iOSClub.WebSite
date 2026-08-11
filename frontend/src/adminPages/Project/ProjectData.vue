@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useMessage } from 'naive-ui'
-import { NDatePicker, NSelect, NModal, NInput } from 'naive-ui'
+import { NDatePicker, NSwitch, NModal, NInput } from 'naive-ui'
 import { Icon } from '@iconify/vue'
 import { ProjectService } from '../../services/ProjectService'
 import type { ProjectModel, StaffModel, TaskModel } from '../../models'
@@ -29,11 +29,11 @@ const loadingTasks = ref(false)
 // 添加任务相关
 const showAddTaskDialog = ref(false)
 const taskForm = ref({
-  name: '',
+  title: '',
   description: '',
   startTime: Date.now(),
   endTime: Date.now() + 86400000, // 默认结束时间为明天
-  status: '未开始'
+  status: false
 })
 
 // 初始化数据
@@ -108,7 +108,7 @@ const loadProjectTasks = async () => {
 }
 
 // 格式化日期
-const formatDate = (date: Date | number) => {
+const formatDate = (date: string | null) => {
   if (!date) return ''
   const d = new Date(date)
   return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`
@@ -123,11 +123,11 @@ const getInitials = (name: string) => {
 // 打开添加任务对话框
 const openAddTaskDialog = () => {
   taskForm.value = {
-    name: '',
+    title: '',
     description: '',
     startTime: Date.now(),
     endTime: Date.now() + 86400000,
-    status: '未开始'
+    status: false
   }
   showAddTaskDialog.value = true
 }
@@ -135,7 +135,7 @@ const openAddTaskDialog = () => {
 // 添加任务
 const addTask = async () => {
   if (!projectId.value) return
-  if (!taskForm.value.name.trim()) {
+  if (!taskForm.value.title.trim()) {
     message.warning('任务名称不能为空')
     return
   }
@@ -148,8 +148,8 @@ const addTask = async () => {
     const newTask: TaskModel = {
       id: Date.now().toString(),
       ...taskForm.value,
-      startTime: Number(taskForm.value.startTime),
-      endTime: Number(taskForm.value.endTime)
+      startTime: new Date(taskForm.value.startTime).toISOString().slice(0, 19).replace('T', ' '),
+      endTime: new Date(taskForm.value.endTime).toISOString().slice(0, 19).replace('T', ' ')
     }
     projectTasks.value.push(newTask)
     showAddTaskDialog.value = false
@@ -192,12 +192,12 @@ const deleteTask = async (taskId: string) => {
             <div>
               <div class="flex items-center gap-3 mb-3">
                  <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-300">
-                   {{ project.department }}
+                   {{ project.department?.name || '未分配部门' }}
                  </span>
                 <span class="text-sm text-gray-500 dark:text-gray-400 font-medium tracking-wide">ID: {{ project.id }}</span>
               </div>
               <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white tracking-tight mb-3">
-                {{ project.name }}
+                {{ project.title }}
               </h1>
               <p class="text-lg text-gray-600 dark:text-gray-300 max-w-2xl leading-relaxed">
                 {{ project.description }}
@@ -310,14 +310,12 @@ const deleteTask = async (taskId: string) => {
                     class="task-item group relative bg-white dark:bg-white/5 border border-gray-100 dark:border-white/5 p-4 rounded-2xl transition-all hover:shadow-md hover:-translate-y-0.5"
                 >
                   <div class="flex justify-between items-start mb-2">
-                    <h3 class="font-semibold text-gray-900 dark:text-gray-100 pr-8">{{ task.name }}</h3>
+                    <h3 class="font-semibold text-gray-900 dark:text-gray-100 pr-8">{{ task.title }}</h3>
                     <!-- 状态胶囊 -->
                     <div :class="['status-pill',
-                        task.status === '完成' ? 'status-success' :
-                        task.status === '进行中' ? 'status-warning' :
-                        task.status === '延期' ? 'status-danger' : 'status-default'
+                        task.status ? 'status-success' : 'status-default'
                       ]">
-                      {{ task.status }}
+                      {{ task.status ? '完成' : '未完成' }}
                     </div>
                   </div>
 
@@ -366,7 +364,7 @@ const deleteTask = async (taskId: string) => {
         <div class="space-y-6 py-4">
           <div class="form-group">
             <label>任务名称</label>
-            <n-input v-model:value="taskForm.name" placeholder="例如：前端页面开发" size="large" />
+            <n-input v-model:value="taskForm.title" placeholder="例如：前端页面开发" size="large" />
           </div>
 
           <div class="form-group">
@@ -402,16 +400,7 @@ const deleteTask = async (taskId: string) => {
 
           <div class="form-group">
             <label>初始状态</label>
-            <n-select
-                v-model:value="taskForm.status"
-                size="large"
-                :options="[
-                { label: '未开始', value: '未开始' },
-                { label: '进行中', value: '进行中' },
-                { label: '完成', value: '完成' },
-                { label: '延期', value: '延期' }
-              ]"
-            />
+            <n-switch v-model:value="taskForm.status">完成</n-switch>
           </div>
         </div>
 

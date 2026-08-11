@@ -484,11 +484,11 @@ const fetchTasks = async () => {
     const todoData = await ProjectService.getYourTasks()
     tasks.value = todoData.map((task: any) => ({
       id: task.id,
-      title: task.name,
+      title: task.title,
       description: task.description,
       startTime: task.startTime,
       endTime: task.endTime,
-      status: task.status === 'Done'
+      status: task.status
     }))
   } catch (error) {
     tasks.value = [

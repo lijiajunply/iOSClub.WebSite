@@ -246,7 +246,7 @@
 </template>
 
 <script setup lang="ts">
-import {ref, onMounted, computed, nextTick, watch} from 'vue';
+import {ref, onMounted, computed, watch} from 'vue';
 import {useMessage, NInput, NButton, NForm, NFormItem} from 'naive-ui';
 import {Icon} from '@iconify/vue';
 import * as echarts from 'echarts'

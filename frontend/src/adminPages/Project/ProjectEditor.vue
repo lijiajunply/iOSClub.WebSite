@@ -28,7 +28,7 @@
                   </label>
                   <n-input
                       id="projectName"
-                      v-model:value="formData.name"
+                      v-model:value="formData.title"
                       type="text"
                       placeholder="例如：iOS 18系统适配"
                       class="ios-input"
@@ -64,7 +64,7 @@
                 </label>
                 <n-select
                     id="department"
-                    v-model:value="formData.department"
+                    v-model:value="formData.departmentName"
                     placeholder="选择部门"
                     :options="departmentOptions"
                     class="ios-select"
@@ -148,6 +148,7 @@ import { useMessage, NInput, NDatePicker, NSelect, NModal, NSpin } from 'naive-u
 import { Icon } from '@iconify/vue'
 // 假设这些引入路径是正确的，基于你提供的代码
 import { ProjectService } from '../../services/ProjectService'
+import { DepartmentService } from '../../services/DepartmentService'
 import type { ProjectModel } from '../../models'
 import { useLayoutStore } from '../../stores/LayoutStore'
 
@@ -161,13 +162,22 @@ const projectId = computed(() => route.params.id as string | undefined)
 const isEditing = computed(() => !!projectId.value && projectId.value !== 'new')
 
 // 表单数据
-const formData = ref<Omit<ProjectModel, 'staffs' | 'tasks'>>({
+interface ProjectFormData {
+  id: string
+  title: string
+  description: string
+  departmentName: string
+  startTime: number
+  endTime: number
+}
+
+const formData = ref<ProjectFormData>({
   id: '',
-  name: '',
+  title: '',
   description: '',
   startTime: Date.now(),
   endTime: Date.now(),
-  department: ''
+  departmentName: ''
 })
 
 const showLoadingModal = ref(false)
@@ -175,9 +185,9 @@ const departmentOptions = ref<{ label: string; value: string }[]>([])
 
 // 表单验证
 const isFormValid = computed(() => {
-  return formData.value.name.trim() !== '' &&
+  return formData.value.title.trim() !== '' &&
       formData.value.description.trim() !== '' &&
-      formData.value.department !== '' &&
+      formData.value.departmentName !== '' &&
       !!formData.value.startTime &&
       !!formData.value.endTime &&
       Number(formData.value.endTime) > Number(formData.value.startTime)
@@ -205,14 +215,11 @@ onBeforeUnmount(() => {
 // 逻辑方法
 const loadDepartmentOptions = async () => {
   try {
-    // 模拟数据
-    departmentOptions.value = [
-      {label: 'iOS 开发部', value: 'iOS开发部'},
-      {label: 'UI/UX 设计中心', value: 'UI/UX设计部'},
-      {label: '产品策划部', value: '产品策划部'},
-      {label: '市场运营部', value: '运营部'},
-      {label: '平台架构部', value: '技术支持部'}
-    ]
+    const departments = await DepartmentService.getAllDepartments()
+    departmentOptions.value = departments.map(department => ({
+      label: department.name,
+      value: department.name
+    }))
   } catch (error) {
     console.error(error)
     message.error('加载部门数据失败')
@@ -226,16 +233,14 @@ const loadProjectData = async () => {
     const projects = await ProjectService.getAllProjects()
     const project = projects.find(p => p.id === projectId.value)
     if (project) {
-      // 格式化时间戳
-      const formattedProject = {
-        ...project,
-        startTime: project.startTime instanceof Date ? project.startTime.getTime() : (project.startTime),
-        endTime: project.endTime instanceof Date ? project.endTime.getTime() : (project.endTime)
+      formData.value = {
+        id: project.id,
+        title: project.title,
+        description: project.description,
+        departmentName: project.department?.name || '',
+        startTime: project.startTime ? new Date(project.startTime).getTime() : Date.now(),
+        endTime: project.endTime ? new Date(project.endTime).getTime() : Date.now()
       }
-      // 移除复杂对象，避免表单干扰
-      delete (formattedProject as any).staffs
-      delete (formattedProject as any).tasks
-      formData.value = formattedProject
     } else {
       message.error('未找到项目')
       await router.push('/Centre/Admin')
@@ -252,11 +257,15 @@ const handleSubmit = async () => {
     showLoadingModal.value = true
 
     const submitData: ProjectModel = {
-      ...formData.value,
       id: isEditing.value ? formData.value.id : generateId(),
+      title: formData.value.title,
+      description: formData.value.description,
+      startTime: formatApiDate(formData.value.startTime),
+      endTime: formatApiDate(formData.value.endTime),
+      department: { key: '', name: formData.value.departmentName, description: '' },
       staffs: [],
       tasks: []
-    } as ProjectModel
+    }
 
     await ProjectService.createOrUpdateProject(submitData)
     message.success(isEditing.value ? '已保存更改' : '项目创建成功')
@@ -279,6 +288,9 @@ const handleCancel = () => {
 const generateId = () => {
   return Date.now().toString(36) + Math.random().toString(36).substr(2)
 }
+
+const formatApiDate = (timestamp: number): string =>
+  new Date(timestamp).toISOString().slice(0, 19).replace('T', ' ')
 </script>
 
 <style scoped>

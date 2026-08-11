@@ -2,10 +2,12 @@
 export interface TodoModel {
   id: string;
   studentId: string;
-  content: string;
-  completed: boolean;
-  createTime: Date;
-  lastUpdateTime: Date;
+  title: string;
+  description: string;
+  startTime: string;
+  endTime: string;
+  status: boolean;
+  createdTime: string;
 }
 
 // 待办事项统计接口

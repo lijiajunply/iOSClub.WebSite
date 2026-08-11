@@ -43,9 +43,10 @@ export class StaffService {
         });
     }
 
-    static async updateStaff(userId: string, staff: StaffModel): Promise<any> {
+    static async updateStaff(staff: StaffModel): Promise<any> {
         return apiRequest<any>({
-            url: `${url}/Staff/Update/${userId}`,
+            // 用户 ID 由请求体中的 staff.userId 绑定；后端路由不包含路径参数。
+            url: `${url}/Staff/Update`,
             method: 'POST',
             body: staff
         });

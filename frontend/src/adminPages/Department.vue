@@ -775,9 +775,9 @@ const fetchData = async () => {
       members: dept.staffs?.filter((staff: any) => staff.identity === 'Department') || [],
       projects: (dept.projects || []).map(project => ({
         id: project.id,
-        title: project.name,
+        title: project.title,
         description: project.description,
-        department: {id: 0, name: project.department}
+        department: {id: 0, name: project.department?.name || ''}
       }))
     } as Department))
 
@@ -788,9 +788,9 @@ const fetchData = async () => {
     const projectsData = await ProjectService.getAllProjects()
     projects.value = projectsData.map(project => ({
       id: project.id,
-      title: project.name,
+      title: project.title,
       description: project.description,
-      department: {id: 0, name: project.department}
+      department: {id: 0, name: project.department?.name || ''}
     })) as Project[]
 
   } catch (error: any) {
