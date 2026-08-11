@@ -58,10 +58,12 @@ async function ensureValidToken(): Promise<void> {
  */
 export async function apiRequest<T>(config: ApiRequestConfig): Promise<T> {
     const {url, headers = {}, body, ...rest} = config;
+    const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
 
     // 添加默认请求头
     const requestHeaders: Record<string, string> = {
-        'Content-Type': 'application/json',
+        // FormData 的 multipart boundary 必须由浏览器生成；手动设置会导致后端无法绑定文件。
+        ...(isFormData ? {} : {'Content-Type': 'application/json'}),
         ...((headers as Record<string, string>) || {})
     };
 
@@ -80,7 +82,7 @@ export async function apiRequest<T>(config: ApiRequestConfig): Promise<T> {
     // 处理请求体：如果是对象且Content-Type为application/json，则转换为JSON字符串
     let requestBody: BodyInit | null | undefined = body;
     const contentType = requestHeaders['Content-Type'];
-    if (body && typeof body === 'object' && contentType === 'application/json') {
+    if (!isFormData && body && typeof body === 'object' && contentType === 'application/json') {
         requestBody = JSON.stringify(body);
     }
 
