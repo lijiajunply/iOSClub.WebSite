@@ -1,7 +1,6 @@
 using FluentValidation;
 using iOSClub.Data.DataObjects;
 using iOSClub.Data.ShowModels;
-using iOSClub.Data.VOs;
 
 namespace iOSClub.WebAPI.Validation;
 

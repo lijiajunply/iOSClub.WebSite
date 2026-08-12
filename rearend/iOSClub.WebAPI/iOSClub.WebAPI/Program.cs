@@ -1,5 +1,4 @@
 using System.Data;
-using System.Data.Common;
 using System.IO.Compression;
 using System.Security.Cryptography;
 using FluentValidation.AspNetCore;

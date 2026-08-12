@@ -207,6 +207,11 @@ public class ResourceController(
     [Authorize(Roles = "Founder,President,Minister")]
     public async Task<ActionResult<ApiResponse<object>>> UpdateResource([FromBody] ResourceCreateUpdateDTO resource)
     {
+        if (string.IsNullOrEmpty(resource.Id))
+        {
+            return Ok(ApiResponse<object>.Fail(ErrorCode.ResourceNotFound, "资源不存在"));
+        }
+
         try
         {
             var userJwt = httpContextAccessor.HttpContext?.User.GetUser();

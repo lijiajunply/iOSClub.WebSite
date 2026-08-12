@@ -1,14 +1,8 @@
 using iOSClub.WebAPI.Common.Security;
-using Xunit;
-using System.IO;
-using System.Security.Cryptography;
-using System.Text;
 using iOSClub.WebAPI.Common.Config;
 using Microsoft.Extensions.Logging;
 using Moq;
 using iOSClub.Data.VOs;
-using Microsoft.IdentityModel.Tokens;
-using System.Security.Claims;
 using Bogus;
 
 namespace iOSClub.Tests.SecurityTests;

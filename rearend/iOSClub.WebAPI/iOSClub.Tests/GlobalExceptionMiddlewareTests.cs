@@ -3,7 +3,6 @@ using System.Net.Http.Json;
 using iOSClub.DataApi.Exceptions;
 using iOSClub.WebAPI.Common;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;

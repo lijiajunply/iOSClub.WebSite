@@ -1,8 +1,6 @@
 using iOSClub.Data;
-using iOSClub.Data.DataObjects;
 using iOSClub.DataApi.Repositories;
 using Microsoft.EntityFrameworkCore;
-using iOSClub.Tests;
 
 namespace iOSClub.Tests.RepositoryTests;
 

@@ -2,7 +2,6 @@ using iOSClub.Data;
 using iOSClub.Data.DataObjects;
 using iOSClub.DataApi.Services;
 using Microsoft.EntityFrameworkCore;
-using iOSClub.Tests;
 
 namespace iOSClub.Tests.ServiceTests;
 

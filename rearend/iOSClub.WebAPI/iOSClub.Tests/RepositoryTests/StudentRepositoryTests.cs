@@ -2,9 +2,6 @@ using iOSClub.Data;
 using iOSClub.Data.DataObjects;
 using iOSClub.DataApi.Repositories;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using Moq;
-using iOSClub.Tests;
 
 namespace iOSClub.Tests.RepositoryTests;
 

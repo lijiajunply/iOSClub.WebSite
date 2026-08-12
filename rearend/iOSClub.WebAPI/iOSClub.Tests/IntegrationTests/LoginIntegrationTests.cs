@@ -1,5 +1,4 @@
 using iOSClub.Data;
-using iOSClub.Data.DataObjects;
 using iOSClub.Data.DTOs;
 using iOSClub.Data.VOs;
 using iOSClub.DataApi.Repositories;
@@ -8,7 +7,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 using Moq;
-using iOSClub.Tests;
 
 namespace iOSClub.Tests.IntegrationTests;
 

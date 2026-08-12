@@ -1,4 +1,3 @@
-using System.Reflection;
 using iOSClub.Data.DataObjects;
 using iOSClub.Data.VOs;
 using Mapster;
@@ -55,7 +54,7 @@ public static class MapperConfig
 
         // DTO → DO 映射
         config.NewConfig<DTOs.StudentCreateDTO, StudentDO>()
-            .Map(dest => dest.PasswordHash, src => Data.DataTool.StringToHash(src.Password));
+            .Map(dest => dest.PasswordHash, src => DataTool.StringToHash(src.Password));
 
         config.NewConfig<DTOs.StudentUpdateDTO, StudentDO>()
             .Ignore(dest => dest.UserId)

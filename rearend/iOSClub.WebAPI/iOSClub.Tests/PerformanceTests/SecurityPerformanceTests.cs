@@ -4,8 +4,6 @@ using iOSClub.WebAPI.Common.Config;
 using Microsoft.Extensions.Logging;
 using Moq;
 using iOSClub.Data.VOs;
-using System.IO;
-using System.Security.Cryptography;
 
 namespace iOSClub.Tests.PerformanceTests;
 

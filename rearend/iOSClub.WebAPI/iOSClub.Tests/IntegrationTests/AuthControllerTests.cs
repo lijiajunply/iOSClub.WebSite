@@ -7,11 +7,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore; 
 using Moq; 
 using iOSClub.DataApi.Services; 
-using iOSClub.DataApi.Repositories; 
-using iOSClub.WebAPI.IdentityModels; 
+using iOSClub.DataApi.Repositories;
 using StackExchange.Redis; 
-using System.Net.Http.Headers; 
-using System.Text; 
+using System.Net.Http.Headers;
 using Newtonsoft.Json; 
 using System.Net.Http.Json; 
 
