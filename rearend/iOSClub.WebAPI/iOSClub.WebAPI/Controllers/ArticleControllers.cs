@@ -1,4 +1,4 @@
-using iOSClub.Data.DataModels;
+using iOSClub.Data.DataObjects;
 using iOSClub.DataApi.Repositories;
 using iOSClub.WebAPI.Common;
 using iOSClub.WebAPI.IdentityModels;
@@ -20,12 +20,12 @@ public class ArticleController(
     /// </summary>
     [Authorize(Roles = "Founder,President,Minister,Department")]
     [HttpGet]
-    public async Task<ActionResult<ApiResponse<IEnumerable<ArticleModel>>>> GetArticles()
+    public async Task<ActionResult<ApiResponse<IEnumerable<ArticleDO>>>> GetArticles()
     {
         try
         {
             var articles = await articleRepository.GetAll();
-            return Ok(ApiResponse<IEnumerable<ArticleModel>>.Success(articles.OrderByDescending(x => x.LastWriteTime)));
+            return Ok(ApiResponse<IEnumerable<ArticleDO>>.Success(articles.OrderByDescending(x => x.LastWriteTime)));
         }
         catch (Exception ex)
         {
@@ -34,7 +34,7 @@ public class ArticleController(
                 logger.LogInformation(ex, "获取文章列表时发生错误");
             }
 
-            return Ok(ApiResponse<IEnumerable<ArticleModel>>.Fail(ErrorCode.InternalServerError, "获取文章列表失败"));
+            return Ok(ApiResponse<IEnumerable<ArticleDO>>.Fail(ErrorCode.InternalServerError, "获取文章列表失败"));
         }
     }
 
@@ -42,11 +42,11 @@ public class ArticleController(
     /// 根据路径获取文章（公开访问）
     /// </summary>
     [HttpGet("{path}")]
-    public async Task<ActionResult<ApiResponse<ArticleModel>>> GetArticle(string path)
+    public async Task<ActionResult<ApiResponse<ArticleDO>>> GetArticle(string path)
     {
         if (string.IsNullOrWhiteSpace(path))
         {
-            return Ok(ApiResponse<ArticleModel>.Fail(ErrorCode.ParameterEmpty, "路径不能为空"));
+            return Ok(ApiResponse<ArticleDO>.Fail(ErrorCode.ParameterEmpty, "路径不能为空"));
         }
 
         try
@@ -57,8 +57,8 @@ public class ArticleController(
 
             var article = await articleRepository.GetFromPath(path, userIdentity);
             return Ok(article == null
-                ? ApiResponse<ArticleModel>.Fail(ErrorCode.ArticleNotFound, $"未找到路径为 '{path}' 的文章")
-                : ApiResponse<ArticleModel>.Success(article));
+                ? ApiResponse<ArticleDO>.Fail(ErrorCode.ArticleNotFound, $"未找到路径为 '{path}' 的文章")
+                : ApiResponse<ArticleDO>.Success(article));
         }
         catch (Exception ex)
         {
@@ -67,7 +67,7 @@ public class ArticleController(
                 logger.LogInformation(ex, "获取文章时发生错误，路径: {Path}", path);
             }
 
-            return Ok(ApiResponse<ArticleModel>.Fail(ErrorCode.InternalServerError, "获取文章失败"));
+            return Ok(ApiResponse<ArticleDO>.Fail(ErrorCode.InternalServerError, "获取文章失败"));
         }
     }
 
@@ -76,7 +76,7 @@ public class ArticleController(
     /// </summary>
     [Authorize(Roles = "Founder,President,Minister,Department")]
     [HttpPost]
-    public async Task<ActionResult<ApiResponse<ArticleModel>>> CreateArticle([FromBody] ArticleCreateDto createDto)
+    public async Task<ActionResult<ApiResponse<ArticleDO>>> CreateArticle([FromBody] ArticleCreateDto createDto)
     {
         try
         {
@@ -85,18 +85,18 @@ public class ArticleController(
             if (!Validator.TryValidateObject(createDto, new ValidationContext(createDto), validationResults, true))
             {
                 var errorMessage = string.Join(", ", validationResults.Select(v => v.ErrorMessage));
-                return Ok(ApiResponse<ArticleModel>.Fail(ErrorCode.ParameterValidationFailed, errorMessage));
+                return Ok(ApiResponse<ArticleDO>.Fail(ErrorCode.ParameterValidationFailed, errorMessage));
             }
 
             // 检查路径是否已存在
             var existingArticle = await articleRepository.GetFromPath(createDto.Path);
             if (existingArticle != null)
             {
-                return Ok(ApiResponse<ArticleModel>.Fail(ErrorCode.ResourceAlreadyExists,
+                return Ok(ApiResponse<ArticleDO>.Fail(ErrorCode.ResourceAlreadyExists,
                     $"路径 '{createDto.Path}' 已存在"));
             }
 
-            var articleModel = new ArticleModel
+            var articleModel = new ArticleDO
             {
                 Path = createDto.Path,
                 Title = createDto.Title,
@@ -104,7 +104,7 @@ public class ArticleController(
                 Identity = createDto.Identity,
                 Category = string.IsNullOrEmpty(createDto.Category)
                     ? null
-                    : new CategoryModel() { Name = createDto.Category },
+                    : new CategoryDO() { Name = createDto.Category },
                 ArticleOrder = createDto.ArticleOrder,
                 LastWriteTime = DateTime.UtcNow
             };
@@ -112,17 +112,17 @@ public class ArticleController(
             var success = await articleRepository.CreateOrUpdate(articleModel);
             if (!success)
             {
-                return Ok(ApiResponse<ArticleModel>.Fail(ErrorCode.OperationFailed, "创建文章失败"));
+                return Ok(ApiResponse<ArticleDO>.Fail(ErrorCode.OperationFailed, "创建文章失败"));
             }
 
             var createdArticle = await articleRepository.GetFromPath(createDto.Path);
             if (createdArticle == null)
             {
-                return Ok(ApiResponse<ArticleModel>.Fail(ErrorCode.InternalServerError, "创建文章成功，但获取文章失败"));
+                return Ok(ApiResponse<ArticleDO>.Fail(ErrorCode.InternalServerError, "创建文章成功，但获取文章失败"));
             }
 
             return CreatedAtAction(nameof(GetArticle), new { path = createDto.Path },
-                ApiResponse<ArticleModel>.Success(createdArticle, "文章创建成功"));
+                ApiResponse<ArticleDO>.Success(createdArticle, "文章创建成功"));
         }
         catch (Exception ex)
         {
@@ -131,7 +131,7 @@ public class ArticleController(
                 logger.LogInformation(ex, "创建文章时发生错误");
             }
 
-            return Ok(ApiResponse<ArticleModel>.Fail(ErrorCode.InternalServerError, "创建文章失败"));
+            return Ok(ApiResponse<ArticleDO>.Fail(ErrorCode.InternalServerError, "创建文章失败"));
         }
     }
 
@@ -170,7 +170,7 @@ public class ArticleController(
             existingArticle.Identity = updateDto.Identity;
             existingArticle.Category = string.IsNullOrEmpty(updateDto.Category)
                 ? null
-                : new CategoryModel() { Name = updateDto.Category };
+                : new CategoryDO() { Name = updateDto.Category };
             existingArticle.ArticleOrder = updateDto.ArticleOrder;
             existingArticle.LastWriteTime = DateTime.UtcNow;
 

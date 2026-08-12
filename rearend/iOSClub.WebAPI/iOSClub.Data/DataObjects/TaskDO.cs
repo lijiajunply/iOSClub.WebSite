@@ -1,9 +1,13 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
-namespace iOSClub.Data.DataModels;
+namespace iOSClub.Data.DataObjects;
 
-public class TodoModel : DataModel, ITodo
+[Table("Tasks")]
+public class TaskDO : DataObject, ITodo
 {
+    [JsonIgnore] public ProjectDO Project { get; set; } = new();
     [MaxLength(20)] public string Title { get; set; } = "";
     [MaxLength(200)] public string Description { get; set; } = "";
     [MaxLength(20)] public string StartTime { get; set; } = "";
@@ -11,14 +15,8 @@ public class TodoModel : DataModel, ITodo
 
     public bool Status { get; set; }
 
-    [Key]
-    [MaxLength(32)]
-    public string Id { get; set; } = "";
+    [Key] [MaxLength(32)] public string Id { get; set; } = "";
 
-    public StudentModel Student { get; set; } = new();
-
-    [MaxLength(10)] public string StudentId { get; set; } = "";
-    public DateTime CreatedTime { get; set; } = DateTime.UtcNow;
     public void Update(ITodo model)
     {
         if (!string.IsNullOrEmpty(model.Title)) Title = model.Title;
@@ -26,5 +24,14 @@ public class TodoModel : DataModel, ITodo
         if (!string.IsNullOrEmpty(model.StartTime)) StartTime = model.StartTime;
         if (!string.IsNullOrEmpty(model.EndTime)) EndTime = model.EndTime;
         Status = model.Status;
+    }
+
+    [JsonIgnore] public List<StaffDO> Users { get; set; } = [];
+
+    public TaskDO OutputWhenOtherList()
+    {
+        Users = Users.Select(x => x.OutputWhenOtherList()).ToList();
+        Project = Project.OutputWhenOtherList();
+        return this;
     }
 }

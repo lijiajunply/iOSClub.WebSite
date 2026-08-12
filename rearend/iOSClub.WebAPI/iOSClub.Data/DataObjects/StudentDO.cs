@@ -1,9 +1,11 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
 
-namespace iOSClub.Data.DataModels;
+namespace iOSClub.Data.DataObjects;
 
-public class StudentModel
+[Table("Students")]
+public class StudentDO
 {
     [MaxLength(50)] public string UserName { get; set; } = "";
 
@@ -23,14 +25,14 @@ public class StudentModel
         return $"{UserName},{UserId},{Gender},{Academy},{PoliticalLandscape},{ClassName},{PhoneNum}";
     }
 
-    public StudentModel Standardization()
+    public StudentDO Standardization()
     {
         UserId = UserId.Replace(" ", "");
         JoinTime = DateTime.SpecifyKind(JoinTime.Year == 0 ? DateTime.UtcNow : JoinTime, DateTimeKind.Utc);
         return this;
     }
 
-    public static string GetCsv(IEnumerable<StudentModel> models)
+    public static string GetCsv(IEnumerable<StudentDO> models)
     {
         var builder = new StringBuilder("姓名,学号,性别,学院,政治面貌,专业班级,电话号码,电子邮箱,密码(Hash)");
         foreach (var model in models)
@@ -39,7 +41,7 @@ public class StudentModel
         return builder.ToString();
     }
 
-    public void Update(StudentModel model)
+    public void Update(StudentDO model)
     {
         if (!string.IsNullOrEmpty(model.UserName)) UserName = model.UserName;
         if (!string.IsNullOrEmpty(model.Academy)) Academy = model.Academy;

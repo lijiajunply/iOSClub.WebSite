@@ -1,5 +1,5 @@
 using iOSClub.Data;
-using iOSClub.Data.DataModels;
+using iOSClub.Data.DataObjects;
 using iOSClub.DataApi.Repositories;
 using iOSClub.WebAPI.Common;
 using iOSClub.WebAPI.IdentityModels;
@@ -22,7 +22,7 @@ public class TodoController(
     /// 获取当前用户的所有待办事项
     /// </summary>
     [HttpGet]
-    public async Task<ActionResult<ApiResponse<List<TodoModel>>>> GetTodos()
+    public async Task<ActionResult<ApiResponse<List<TodoDO>>>> GetTodos()
     {
         try
         {
@@ -34,7 +34,7 @@ public class TodoController(
                     logger.LogInformation("获取待办事项失败，用户未认证");
                 }
 
-                return Ok(ApiResponse<List<TodoModel>>.Fail(ErrorCode.Unauthorized, "用户未认证"));
+                return Ok(ApiResponse<List<TodoDO>>.Fail(ErrorCode.Unauthorized, "用户未认证"));
             }
 
             var student = await studentRepository.GetByIdAsync(member.UserId);
@@ -45,7 +45,7 @@ public class TodoController(
                     logger.LogInformation("获取待办事项失败，学生信息不存在，ID: {UserId}", member.UserId);
                 }
 
-                return Ok(ApiResponse<List<TodoModel>>.Fail(ErrorCode.UserNotFound, "学生信息不存在"));
+                return Ok(ApiResponse<List<TodoDO>>.Fail(ErrorCode.UserNotFound, "学生信息不存在"));
             }
 
             var todos = await todoRepository.GetTodosByUserIdAsync(student.UserId);
@@ -54,7 +54,7 @@ public class TodoController(
                 logger.LogInformation("获取待办事项成功，ID: {UserId}, 待办事项数量: {Count}", student.UserId, todos.Count);
             }
 
-            return Ok(ApiResponse<List<TodoModel>>.Success(todos, "获取待办事项成功"));
+            return Ok(ApiResponse<List<TodoDO>>.Success(todos, "获取待办事项成功"));
         }
         catch (Exception ex)
         {
@@ -63,7 +63,7 @@ public class TodoController(
                 logger.LogInformation(ex, "获取待办事项失败");
             }
 
-            return Ok(ApiResponse<List<TodoModel>>.Fail(ErrorCode.InternalServerError, "获取待办事项失败"));
+            return Ok(ApiResponse<List<TodoDO>>.Fail(ErrorCode.InternalServerError, "获取待办事项失败"));
         }
     }
 
@@ -121,7 +121,7 @@ public class TodoController(
     /// 根据ID获取待办事项详情
     /// </summary>
     [HttpGet("{id}")]
-    public async Task<ActionResult<ApiResponse<TodoModel>>> GetTodoById(string id)
+    public async Task<ActionResult<ApiResponse<TodoDO>>> GetTodoById(string id)
     {
         try
         {
@@ -133,7 +133,7 @@ public class TodoController(
                     logger.LogInformation("获取待办事项详情失败，用户未认证");
                 }
 
-                return Ok(ApiResponse<TodoModel>.Fail(ErrorCode.Unauthorized, "用户未认证"));
+                return Ok(ApiResponse<TodoDO>.Fail(ErrorCode.Unauthorized, "用户未认证"));
             }
 
             var todo = await todoRepository.GetTodoByIdAsync(id);
@@ -144,7 +144,7 @@ public class TodoController(
                     logger.LogInformation("获取待办事项详情失败，待办事项不存在，ID: {Id}", id);
                 }
 
-                return Ok(ApiResponse<TodoModel>.Fail(ErrorCode.ResourceNotFound, "待办事项不存在"));
+                return Ok(ApiResponse<TodoDO>.Fail(ErrorCode.ResourceNotFound, "待办事项不存在"));
             }
 
             // 检查权限
@@ -155,7 +155,7 @@ public class TodoController(
                     logger.LogInformation("获取待办事项详情失败，无权访问此待办事项，待办事项ID: {Id}, 用户ID: {UserId}", id, member.UserId);
                 }
 
-                return Ok(ApiResponse<TodoModel>.Fail(ErrorCode.InsufficientPermission, "无权访问此待办事项"));
+                return Ok(ApiResponse<TodoDO>.Fail(ErrorCode.InsufficientPermission, "无权访问此待办事项"));
             }
 
             if (logger.IsEnabled(LogLevel.Information))
@@ -163,7 +163,7 @@ public class TodoController(
                 logger.LogInformation("获取待办事项详情成功，ID: {Id}", id);
             }
 
-            return Ok(ApiResponse<TodoModel>.Success(todo, "获取待办事项详情成功"));
+            return Ok(ApiResponse<TodoDO>.Success(todo, "获取待办事项详情成功"));
         }
         catch (Exception ex)
         {
@@ -172,7 +172,7 @@ public class TodoController(
                 logger.LogInformation(ex, "获取待办事项详情失败，ID: {Id}", id);
             }
 
-            return Ok(ApiResponse<TodoModel>.Fail(ErrorCode.InternalServerError, "获取待办事项详情失败"));
+            return Ok(ApiResponse<TodoDO>.Fail(ErrorCode.InternalServerError, "获取待办事项详情失败"));
         }
     }
 
@@ -180,7 +180,7 @@ public class TodoController(
     /// 添加新的待办事项
     /// </summary>
     [HttpPost]
-    public async Task<ActionResult<ApiResponse<string>>> AddTodo(TodoModel todoModel)
+    public async Task<ActionResult<ApiResponse<string>>> AddTodo(TodoDO todoModel)
     {
         try
         {
@@ -245,7 +245,7 @@ public class TodoController(
     /// 更新待办事项
     /// </summary>
     [HttpPut]
-    public async Task<ActionResult<ApiResponse<object>>> UpdateTodo(TodoModel todoModel)
+    public async Task<ActionResult<ApiResponse<object>>> UpdateTodo(TodoDO todoModel)
     {
         try
         {
@@ -369,7 +369,7 @@ public class TodoController(
     /// <param name="pageSize">每页大小，范围1-50</param>
     /// <returns>分页的待办事项列表</returns>
     [HttpGet("Page/{page}/{pageSize}")]
-    public async Task<ActionResult<ApiResponse<List<TodoModel>>>> GetTodosPaged(int page = 1, int pageSize = 10)
+    public async Task<ActionResult<ApiResponse<List<TodoDO>>>> GetTodosPaged(int page = 1, int pageSize = 10)
     {
         try
         {
@@ -381,7 +381,7 @@ public class TodoController(
                     logger.LogInformation("获取分页待办事项失败，用户未认证");
                 }
 
-                return Ok(ApiResponse<List<TodoModel>>.Fail(ErrorCode.Unauthorized, "用户未认证"));
+                return Ok(ApiResponse<List<TodoDO>>.Fail(ErrorCode.Unauthorized, "用户未认证"));
             }
 
             if (page < 1) page = 1;
@@ -394,7 +394,7 @@ public class TodoController(
                     member.UserId, page, pageSize, todos.Count);
             }
 
-            return Ok(ApiResponse<List<TodoModel>>.Success(todos, "获取分页待办事项成功"));
+            return Ok(ApiResponse<List<TodoDO>>.Success(todos, "获取分页待办事项成功"));
         }
         catch (Exception ex)
         {
@@ -403,7 +403,7 @@ public class TodoController(
                 logger.LogInformation(ex, "获取分页待办事项失败，页码: {Page}, 页大小: {PageSize}", page, pageSize);
             }
 
-            return Ok(ApiResponse<List<TodoModel>>.Fail(ErrorCode.InternalServerError, "获取分页待办事项失败"));
+            return Ok(ApiResponse<List<TodoDO>>.Fail(ErrorCode.InternalServerError, "获取分页待办事项失败"));
         }
     }
 }

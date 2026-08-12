@@ -1,6 +1,7 @@
 using iOSClub.Data;
-using iOSClub.Data.DataModels;
-using iOSClub.Data.ShowModels;
+using iOSClub.Data.DataObjects;
+using iOSClub.Data.DTOs;
+using iOSClub.Data.VOs;
 using iOSClub.DataApi.Repositories;
 using iOSClub.DataApi.Services;
 using Microsoft.Extensions.Logging;
@@ -51,14 +52,14 @@ public class LoginServiceTests
     public async Task Login_ValidCredentials_ReturnsToken()
     {
         // Arrange
-        var loginModel = new LoginModel { UserId = "1234567890", Password = "password123" };
-        var student = new StudentModel { UserId = loginModel.UserId, UserName = "Test Student", PasswordHash = DataTool.StringToHash(loginModel.Password) };
+        var loginModel = new LoginDTO { UserId = "1234567890", Password = "password123" };
+        var student = new StudentDO { UserId = loginModel.UserId, UserName = "Test Student", PasswordHash = DataTool.StringToHash(loginModel.Password) };
         var token = "mock-jwt-token";
 
         _studentRepoMock.Setup(s => s.Login(loginModel.UserId, loginModel.Password)).ReturnsAsync(true);
         _studentRepoMock.Setup(s => s.GetByIdAsync(loginModel.UserId)).ReturnsAsync(student);
-        _staffRepoMock.Setup(s => s.GetStaffByIdWithoutOtherData(loginModel.UserId)).ReturnsAsync((StaffModel?)null);
-        _tokenGeneratorMock.Setup(t => t.GetMemberToken(It.IsAny<MemberModel>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>())).Returns((token, "mock-refresh-token"));
+        _staffRepoMock.Setup(s => s.GetStaffByIdWithoutOtherData(loginModel.UserId)).ReturnsAsync((StaffDO?)null);
+        _tokenGeneratorMock.Setup(t => t.GetMemberToken(It.IsAny<MemberVO>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>())).Returns((token, "mock-refresh-token"));
         _redisDbMock.Setup(r => r.StringGetAsync(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>())).ReturnsAsync(RedisValue.Null);
 
         // Act
@@ -66,7 +67,7 @@ public class LoginServiceTests
 
         // Assert
         Assert.Equal(token, result);
-        _tokenGeneratorMock.Verify(t => t.GetMemberToken(It.IsAny<MemberModel>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+        _tokenGeneratorMock.Verify(t => t.GetMemberToken(It.IsAny<MemberVO>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
         // 移除对StringSetAsync的严格验证，因为我们已经验证了返回值和token生成
     }
 
@@ -74,7 +75,7 @@ public class LoginServiceTests
     public async Task Login_InvalidCredentials_ReturnsEmptyString()
     {
         // Arrange
-        var loginModel = new LoginModel { UserId = "1234567890", Password = "wrongpassword" };
+        var loginModel = new LoginDTO { UserId = "1234567890", Password = "wrongpassword" };
 
         _studentRepoMock.Setup(s => s.Login(loginModel.UserId, loginModel.Password)).ReturnsAsync(false);
 
@@ -140,7 +141,7 @@ public class LoginServiceTests
         var userId = "1234567890";
         var oldPassword = "oldpass";
         var newPassword = "newpass";
-        var student = new StudentModel { UserId = userId, PasswordHash = DataTool.StringToHash(oldPassword) };
+        var student = new StudentDO { UserId = userId, PasswordHash = DataTool.StringToHash(oldPassword) };
 
         _studentRepoMock.Setup(s => s.Login(userId, oldPassword)).ReturnsAsync(true);
         _studentRepoMock.Setup(s => s.GetByIdAsync(userId)).ReturnsAsync(student);
@@ -176,14 +177,14 @@ public class LoginServiceTests
     public async Task Login_StudentLogin_ReturnsToken()
     {
         // Arrange
-        var loginModel = new LoginModel { UserId = "20123456", Password = "password123" };
-        var student = new StudentModel { UserId = loginModel.UserId, UserName = "Test Student", PasswordHash = DataTool.StringToHash(loginModel.Password) };
+        var loginModel = new LoginDTO { UserId = "20123456", Password = "password123" };
+        var student = new StudentDO { UserId = loginModel.UserId, UserName = "Test Student", PasswordHash = DataTool.StringToHash(loginModel.Password) };
         var token = "mock-jwt-token";
 
         _studentRepoMock.Setup(s => s.Login(loginModel.UserId, loginModel.Password)).ReturnsAsync(true);
         _studentRepoMock.Setup(s => s.GetByIdAsync(loginModel.UserId)).ReturnsAsync(student);
-        _staffRepoMock.Setup(s => s.GetStaffByIdWithoutOtherData(loginModel.UserId)).ReturnsAsync((StaffModel?)null);
-        _tokenGeneratorMock.Setup(t => t.GetMemberToken(It.IsAny<MemberModel>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>())).Returns((token, "mock-refresh-token"));
+        _staffRepoMock.Setup(s => s.GetStaffByIdWithoutOtherData(loginModel.UserId)).ReturnsAsync((StaffDO?)null);
+        _tokenGeneratorMock.Setup(t => t.GetMemberToken(It.IsAny<MemberVO>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>())).Returns((token, "mock-refresh-token"));
         _redisDbMock.Setup(r => r.StringGetAsync(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>())).ReturnsAsync(RedisValue.Null);
 
         // Act
@@ -191,20 +192,20 @@ public class LoginServiceTests
 
         // Assert
         Assert.Equal(token, result);
-        _tokenGeneratorMock.Verify(t => t.GetMemberToken(It.IsAny<MemberModel>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+        _tokenGeneratorMock.Verify(t => t.GetMemberToken(It.IsAny<MemberVO>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
     }
 
     [Fact]
     public async Task Login_RedisAlreadyHasToken_ReturnsExistingToken()
     {
         // Arrange
-        var loginModel = new LoginModel { UserId = "1234567890", Password = "password123" };
+        var loginModel = new LoginDTO { UserId = "1234567890", Password = "password123" };
         var existingToken = "existing-jwt-token";
-        var student = new StudentModel { UserId = loginModel.UserId, UserName = "Test Student" };
+        var student = new StudentDO { UserId = loginModel.UserId, UserName = "Test Student" };
 
         _studentRepoMock.Setup(s => s.Login(loginModel.UserId, loginModel.Password)).ReturnsAsync(true);
         _studentRepoMock.Setup(s => s.GetByIdAsync(loginModel.UserId)).ReturnsAsync(student);
-        _staffRepoMock.Setup(s => s.GetStaffByIdWithoutOtherData(loginModel.UserId)).ReturnsAsync((StaffModel?)null);
+        _staffRepoMock.Setup(s => s.GetStaffByIdWithoutOtherData(loginModel.UserId)).ReturnsAsync((StaffDO?)null);
         _redisDbMock.Setup(r => r.StringGetAsync($"token:{loginModel.UserId}", It.IsAny<CommandFlags>())).ReturnsAsync(existingToken);
 
         // Act
@@ -212,7 +213,7 @@ public class LoginServiceTests
 
         // Assert
         Assert.Equal(existingToken, result);
-        _tokenGeneratorMock.Verify(t => t.GetMemberToken(It.IsAny<MemberModel>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        _tokenGeneratorMock.Verify(t => t.GetMemberToken(It.IsAny<MemberVO>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
     }
 
     [Fact]
@@ -251,7 +252,7 @@ public class LoginServiceTests
     public async Task Login_EmptyUserId_ReturnsEmptyString()
     {
         // Arrange
-        var loginModel = new LoginModel { UserId = "", Password = "password123" };
+        var loginModel = new LoginDTO { UserId = "", Password = "password123" };
 
         // Act
         var result = await _loginService.Login(loginModel);
@@ -264,7 +265,7 @@ public class LoginServiceTests
     public async Task Login_EmptyPassword_ReturnsEmptyString()
     {
         // Arrange
-        var loginModel = new LoginModel { UserId = "1234567890", Password = "" };
+        var loginModel = new LoginDTO { UserId = "1234567890", Password = "" };
 
         // Act
         var result = await _loginService.Login(loginModel);
@@ -282,7 +283,7 @@ public class LoginServiceTests
         var newPassword = "";
 
         _studentRepoMock.Setup(s => s.Login(userId, oldPassword)).ReturnsAsync(true);
-        _studentRepoMock.Setup(s => s.GetByIdAsync(userId)).ReturnsAsync(new StudentModel { UserId = userId });
+        _studentRepoMock.Setup(s => s.GetByIdAsync(userId)).ReturnsAsync(new StudentDO { UserId = userId });
 
         // Act
         var result = await _loginService.ChangePassword(userId, oldPassword, newPassword);
@@ -299,7 +300,7 @@ public class LoginServiceTests
         var password = "samepass";
 
         _studentRepoMock.Setup(s => s.Login(userId, password)).ReturnsAsync(true);
-        _studentRepoMock.Setup(s => s.GetByIdAsync(userId)).ReturnsAsync(new StudentModel { UserId = userId, PasswordHash = DataTool.StringToHash(password) });
+        _studentRepoMock.Setup(s => s.GetByIdAsync(userId)).ReturnsAsync(new StudentDO { UserId = userId, PasswordHash = DataTool.StringToHash(password) });
 
         // Act
         var result = await _loginService.ChangePassword(userId, password, password);

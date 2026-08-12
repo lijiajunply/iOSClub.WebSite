@@ -1,6 +1,6 @@
 using Bogus;
 using iOSClub.Data;
-using iOSClub.Data.DataModels;
+using iOSClub.Data.DataObjects;
 
 namespace iOSClub.Tests;
 
@@ -29,9 +29,9 @@ public static class BogusDataGenerator
     }
     
     /// <summary>
-    /// StudentModel的Bogus生成器
+    /// StudentDO的Bogus生成器
     /// </summary>
-    public static readonly Faker<StudentModel> StudentFaker = new Faker<StudentModel>()
+    public static readonly Faker<StudentDO> StudentFaker = new Faker<StudentDO>()
         .RuleFor(s => s.UserName, f => f.Name.FullName())
         .RuleFor(s => s.UserId, f => $"2023{NextId().ToString().PadLeft(6, '0')}")
         .RuleFor(s => s.Academy, f => f.PickRandom("计算机学院", "软件学院", "电子工程学院", "通信工程学院", "自动化学院"))
@@ -44,9 +44,9 @@ public static class BogusDataGenerator
         .RuleFor(s => s.EMail, f => f.Internet.Email());
     
     /// <summary>
-    /// ArticleModel的Bogus生成器
+    /// ArticleDO的Bogus生成器
     /// </summary>
-    public static readonly Faker<ArticleModel> ArticleFaker = new Faker<ArticleModel>()
+    public static readonly Faker<ArticleDO> ArticleFaker = new Faker<ArticleDO>()
         .RuleFor(a => a.Path, f => $"/articles/{f.Random.Guid()}")
         .RuleFor(a => a.Title, f => f.Lorem.Sentence(5, 3))
         .RuleFor(a => a.Content, f => f.Lorem.Paragraphs(3))
@@ -56,9 +56,9 @@ public static class BogusDataGenerator
         .RuleFor(a => a.ArticleOrder, f => f.Random.Int(0, 100));
     
     /// <summary>
-    /// CategoryModel的Bogus生成器
+    /// CategoryDO的Bogus生成器
     /// </summary>
-    public static readonly Faker<CategoryModel> CategoryFaker = new Faker<CategoryModel>()
+    public static readonly Faker<CategoryDO> CategoryFaker = new Faker<CategoryDO>()
         .RuleFor(c => c.Id, f => f.Random.Guid().ToString())
         .RuleFor(c => c.Name, f => f.Lorem.Word())
         .RuleFor(c => c.Order, f => f.Random.Int(0, 100));
@@ -66,7 +66,7 @@ public static class BogusDataGenerator
     /// <summary>
     /// ClientApplication的Bogus生成器
     /// </summary>
-    public static readonly Faker<ClientApplication> ClientApplicationFaker = new Faker<ClientApplication>()
+    public static readonly Faker<ClientApplicationDO> ClientApplicationFaker = new Faker<ClientApplicationDO>()
         .RuleFor(c => c.ClientId, f => f.Random.Guid().ToString())
         .RuleFor(c => c.ClientSecret, f => f.Random.AlphaNumeric(32))
         .RuleFor(c => c.ApplicationName, f => f.Company.CompanyName())
@@ -79,60 +79,60 @@ public static class BogusDataGenerator
         .RuleFor(c => c.IsNeedEMail, f => f.Random.Bool());
     
     /// <summary>
-    /// DepartmentModel的Bogus生成器
+    /// DepartmentDO的Bogus生成器
     /// </summary>
-    public static readonly Faker<DepartmentModel> DepartmentFaker = new Faker<DepartmentModel>()
+    public static readonly Faker<DepartmentDO> DepartmentFaker = new Faker<DepartmentDO>()
         .RuleFor(d => d.Key, f => f.Random.Guid().ToString())
         .RuleFor(d => d.Name, f => f.Lorem.Word())
         .RuleFor(d => d.Description, f => f.Lorem.Sentence());
     
     /// <summary>
-    /// ProjectModel的Bogus生成器
+    /// ProjectDO的Bogus生成器
     /// </summary>
-    public static readonly Faker<ProjectModel> ProjectFaker = new Faker<ProjectModel>()
+    public static readonly Faker<ProjectDO> ProjectFaker = new Faker<ProjectDO>()
         .RuleFor(p => p.Id, f => f.Random.Guid().ToString())
         .RuleFor(p => p.Title, f => f.Company.CatchPhrase())
         .RuleFor(p => p.Description, f => f.Lorem.Paragraphs(2))
         .RuleFor(p => p.StartTime, f => f.Date.Past(6).ToString("yyyy-MM-dd"))
         .RuleFor(p => p.EndTime, f => f.Date.Future(6).ToString("yyyy-MM-dd"))
-        .RuleFor(p => p.Staffs, _ => new List<StaffModel>())
-        .RuleFor(p => p.Tasks, _ => new List<TaskModel>());
+        .RuleFor(p => p.Staffs, _ => new List<StaffDO>())
+        .RuleFor(p => p.Tasks, _ => new List<TaskDO>());
     
     /// <summary>
-    /// ResourceModel的Bogus生成器
+    /// ResourceDO的Bogus生成器
     /// </summary>
-    public static readonly Faker<ResourceModel> ResourceFaker = new Faker<ResourceModel>()
+    public static readonly Faker<ResourceDO> ResourceFaker = new Faker<ResourceDO>()
         .RuleFor(r => r.Id, f => f.Random.Guid().ToString())
         .RuleFor(r => r.Name, f => f.Lorem.Word())
         .RuleFor(r => r.Description, f => f.Lorem.Sentence())
         .RuleFor(r => r.Tag, f => f.Lorem.Word());
     
     /// <summary>
-    /// StaffModel的Bogus生成器
+    /// StaffDO的Bogus生成器
     /// </summary>
-    public static readonly Faker<StaffModel> StaffFaker = new Faker<StaffModel>()
+    public static readonly Faker<StaffDO> StaffFaker = new Faker<StaffDO>()
         .RuleFor(s => s.UserId, f => $"2023{NextId().ToString().PadLeft(6, '0')}")
         .RuleFor(s => s.Name, f => f.Name.FullName())
         .RuleFor(s => s.Identity, f => f.PickRandom("Founder", "President", "Minister", "Department", "Member"))
-        .RuleFor(s => s.Projects, _ => new List<ProjectModel>())
-        .RuleFor(s => s.Tasks, _ => new List<TaskModel>());
+        .RuleFor(s => s.Projects, _ => new List<ProjectDO>())
+        .RuleFor(s => s.Tasks, _ => new List<TaskDO>());
     
     /// <summary>
-    /// TaskModel的Bogus生成器
+    /// TaskDO的Bogus生成器
     /// </summary>
-    public static readonly Faker<TaskModel> TaskFaker = new Faker<TaskModel>()
+    public static readonly Faker<TaskDO> TaskFaker = new Faker<TaskDO>()
         .RuleFor(t => t.Id, f => f.Random.Guid().ToString())
         .RuleFor(t => t.Title, f => f.Lorem.Sentence(3, 2))
         .RuleFor(t => t.Description, f => f.Lorem.Paragraph())
         .RuleFor(t => t.Status, f => f.Random.Bool())
         .RuleFor(t => t.StartTime, f => f.Date.Past(30).ToString("yyyy-MM-dd"))
         .RuleFor(t => t.EndTime, f => f.Date.Future(30).ToString("yyyy-MM-dd"))
-        .RuleFor(t => t.Users, _ => new List<StaffModel>());
+        .RuleFor(t => t.Users, _ => new List<StaffDO>());
     
     /// <summary>
-    /// TodoModel的Bogus生成器
+    /// TodoDO的Bogus生成器
     /// </summary>
-    public static readonly Faker<TodoModel> TodoFaker = new Faker<TodoModel>()
+    public static readonly Faker<TodoDO> TodoFaker = new Faker<TodoDO>()
         .RuleFor(t => t.Id, f => f.Random.Guid().ToString())
         .RuleFor(t => t.Title, f => f.Lorem.Sentence(3, 2))
         .RuleFor(t => t.Description, f => f.Lorem.Paragraph())
@@ -143,25 +143,25 @@ public static class BogusDataGenerator
         .RuleFor(t => t.StudentId, f => $"2023{NextId().ToString().PadLeft(6, '0')}");
     
     /// <summary>
-    /// 生成指定数量的StudentModel
+    /// 生成指定数量的StudentDO
     /// </summary>
-    public static List<StudentModel> GenerateStudents(int count)
+    public static List<StudentDO> GenerateStudents(int count)
     {
         return StudentFaker.Generate(count);
     }
     
     /// <summary>
-    /// 生成指定数量的ArticleModel
+    /// 生成指定数量的ArticleDO
     /// </summary>
-    public static List<ArticleModel> GenerateArticles(int count)
+    public static List<ArticleDO> GenerateArticles(int count)
     {
         return ArticleFaker.Generate(count);
     }
     
     /// <summary>
-    /// 生成指定数量的CategoryModel
+    /// 生成指定数量的CategoryDO
     /// </summary>
-    public static List<CategoryModel> GenerateCategories(int count)
+    public static List<CategoryDO> GenerateCategories(int count)
     {
         return CategoryFaker.Generate(count);
     }
@@ -169,55 +169,55 @@ public static class BogusDataGenerator
     /// <summary>
     /// 生成指定数量的ClientApplication
     /// </summary>
-    public static List<ClientApplication> GenerateClientApplications(int count)
+    public static List<ClientApplicationDO> GenerateClientApplications(int count)
     {
         return ClientApplicationFaker.Generate(count);
     }
     
     /// <summary>
-    /// 生成指定数量的DepartmentModel
+    /// 生成指定数量的DepartmentDO
     /// </summary>
-    public static List<DepartmentModel> GenerateDepartments(int count)
+    public static List<DepartmentDO> GenerateDepartments(int count)
     {
         return DepartmentFaker.Generate(count);
     }
     
     /// <summary>
-    /// 生成指定数量的ProjectModel
+    /// 生成指定数量的ProjectDO
     /// </summary>
-    public static List<ProjectModel> GenerateProjects(int count)
+    public static List<ProjectDO> GenerateProjects(int count)
     {
         return ProjectFaker.Generate(count);
     }
     
     /// <summary>
-    /// 生成指定数量的ResourceModel
+    /// 生成指定数量的ResourceDO
     /// </summary>
-    public static List<ResourceModel> GenerateResources(int count)
+    public static List<ResourceDO> GenerateResources(int count)
     {
         return ResourceFaker.Generate(count);
     }
     
     /// <summary>
-    /// 生成指定数量的StaffModel
+    /// 生成指定数量的StaffDO
     /// </summary>
-    public static List<StaffModel> GenerateStaffs(int count)
+    public static List<StaffDO> GenerateStaffs(int count)
     {
         return StaffFaker.Generate(count);
     }
     
     /// <summary>
-    /// 生成指定数量的TaskModel
+    /// 生成指定数量的TaskDO
     /// </summary>
-    public static List<TaskModel> GenerateTasks(int count)
+    public static List<TaskDO> GenerateTasks(int count)
     {
         return TaskFaker.Generate(count);
     }
     
     /// <summary>
-    /// 生成指定数量的TodoModel
+    /// 生成指定数量的TodoDO
     /// </summary>
-    public static List<TodoModel> GenerateTodos(int count)
+    public static List<TodoDO> GenerateTodos(int count)
     {
         return TodoFaker.Generate(count);
     }

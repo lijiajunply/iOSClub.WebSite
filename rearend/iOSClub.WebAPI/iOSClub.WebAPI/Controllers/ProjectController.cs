@@ -1,4 +1,4 @@
-using iOSClub.Data.DataModels;
+using iOSClub.Data.DataObjects;
 using iOSClub.DataApi.Repositories;
 using iOSClub.WebAPI.Common;
 using iOSClub.WebAPI.IdentityModels;
@@ -25,12 +25,12 @@ public class ProjectController(
     /// <returns>项目列表，包含关联的员工和任务信息</returns>
     [HttpGet]
     [Authorize(Roles = "Founder, President, Minister")]
-    public async Task<ActionResult<ApiResponse<List<ProjectModel>>>> GetAllData()
+    public async Task<ActionResult<ApiResponse<List<ProjectDO>>>> GetAllData()
     {
         try
         {
             var projects = await projectRepository.GetAllProjectsAsync();
-            return Ok(ApiResponse<List<ProjectModel>>.Success(projects, "获取所有项目数据成功"));
+            return Ok(ApiResponse<List<ProjectDO>>.Success(projects, "获取所有项目数据成功"));
         }
         catch (Exception ex)
         {
@@ -38,7 +38,7 @@ public class ProjectController(
             {
                 logger.LogInformation(ex, "获取所有项目数据失败");
             }
-            return Ok(ApiResponse<List<ProjectModel>>.Fail(ErrorCode.InternalServerError, "获取所有项目数据失败"));
+            return Ok(ApiResponse<List<ProjectDO>>.Fail(ErrorCode.InternalServerError, "获取所有项目数据失败"));
         }
     }
 
@@ -47,19 +47,19 @@ public class ProjectController(
     /// </summary>
     /// <returns>用户参与的项目列表，包含任务信息</returns>
     [HttpGet("your-projects")]
-    public async Task<ActionResult<ApiResponse<List<ProjectModel>>>> GetYourProjects()
+    public async Task<ActionResult<ApiResponse<List<ProjectDO>>>> GetYourProjects()
     {
         try
         {
             var member = httpContextAccessor.HttpContext?.User.GetUser();
             if (member == null) 
-                return Ok(ApiResponse<List<ProjectModel>>.Fail(ErrorCode.Unauthorized, "用户未认证"));
+                return Ok(ApiResponse<List<ProjectDO>>.Fail(ErrorCode.Unauthorized, "用户未认证"));
             
             if (member.Identity is "Founder" or "Member") 
-                return Ok(ApiResponse<List<ProjectModel>>.Success(new List<ProjectModel>(), "获取用户项目列表成功"));
+                return Ok(ApiResponse<List<ProjectDO>>.Success(new List<ProjectDO>(), "获取用户项目列表成功"));
 
             var projects = await projectRepository.GetProjectsByStaffAsync(member.UserId);
-            return Ok(ApiResponse<List<ProjectModel>>.Success(projects, "获取用户项目列表成功"));
+            return Ok(ApiResponse<List<ProjectDO>>.Success(projects, "获取用户项目列表成功"));
         }
         catch (Exception ex)
         {
@@ -67,7 +67,7 @@ public class ProjectController(
             {
                 logger.LogInformation(ex, "获取用户项目列表失败");
             }
-            return Ok(ApiResponse<List<ProjectModel>>.Fail(ErrorCode.InternalServerError, "获取用户项目列表失败"));
+            return Ok(ApiResponse<List<ProjectDO>>.Fail(ErrorCode.InternalServerError, "获取用户项目列表失败"));
         }
     }
 
@@ -82,17 +82,17 @@ public class ProjectController(
     /// <returns>创建或更新后的项目信息</returns>
     [HttpPost]
     [Authorize(Roles = "Founder, President, Minister")]
-    public async Task<ActionResult<ApiResponse<ProjectModel>>> CreateOrUpdateProject([FromBody] ProjectModel model)
+    public async Task<ActionResult<ApiResponse<ProjectDO>>> CreateOrUpdateProject([FromBody] ProjectDO model)
     {
         try
         {
             var member = httpContextAccessor.HttpContext?.User.GetUser();
             if (member == null || string.IsNullOrEmpty(member.UserId)) 
-                return Ok(ApiResponse<ProjectModel>.Fail(ErrorCode.Unauthorized, "用户未认证"));
+                return Ok(ApiResponse<ProjectDO>.Fail(ErrorCode.Unauthorized, "用户未认证"));
 
             var staff = await staffRepository.GetStaffByIdAsync(member.UserId);
             if (staff == null) 
-                return Ok(ApiResponse<ProjectModel>.Fail(ErrorCode.UserNotFound, "用户不存在"));
+                return Ok(ApiResponse<ProjectDO>.Fail(ErrorCode.UserNotFound, "用户不存在"));
 
             var project = await projectRepository.GetProjectByIdAsync(model.Id);
             if (project == null)
@@ -100,26 +100,26 @@ public class ProjectController(
                 // 创建新项目
                 var newProject = await projectRepository.CreateProjectAsync(model, staff);
                 if (newProject == null) 
-                    return Ok(ApiResponse<ProjectModel>.Fail(ErrorCode.OperationFailed, "创建项目失败"));
+                    return Ok(ApiResponse<ProjectDO>.Fail(ErrorCode.OperationFailed, "创建项目失败"));
                     
                 if (logger.IsEnabled(LogLevel.Information))
                 {
                     logger.LogInformation("创建项目成功，项目ID: {ProjectId}", newProject.Id);
                 }
-                return CreatedAtAction(nameof(GetAllData), ApiResponse<ProjectModel>.Success(newProject, "创建项目成功"));
+                return CreatedAtAction(nameof(GetAllData), ApiResponse<ProjectDO>.Success(newProject, "创建项目成功"));
             }
 
             // 更新现有项目
             var updated = await projectRepository.UpdateProjectAsync(model);
             if (!updated)
-                return Ok(ApiResponse<ProjectModel>.Fail(ErrorCode.OperationFailed, "更新项目失败"));
+                return Ok(ApiResponse<ProjectDO>.Fail(ErrorCode.OperationFailed, "更新项目失败"));
                 
             if (logger.IsEnabled(LogLevel.Information))
             {
                 logger.LogInformation("更新项目成功，项目ID: {ProjectId}", model.Id);
             }
             var updatedProject = await projectRepository.GetProjectByIdAsync(model.Id);
-            return Ok(ApiResponse<ProjectModel>.Success(updatedProject!, "更新项目成功"));
+            return Ok(ApiResponse<ProjectDO>.Success(updatedProject!, "更新项目成功"));
         }
         catch (Exception ex)
         {
@@ -127,7 +127,7 @@ public class ProjectController(
             {
                 logger.LogInformation(ex, "创建或更新项目失败，项目ID: {ProjectId}", model.Id);
             }
-            return Ok(ApiResponse<ProjectModel>.Fail(ErrorCode.InternalServerError, "创建或更新项目失败"));
+            return Ok(ApiResponse<ProjectDO>.Fail(ErrorCode.InternalServerError, "创建或更新项目失败"));
         }
     }
 

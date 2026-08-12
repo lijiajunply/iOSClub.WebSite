@@ -1,7 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
-using iOSClub.Data.ShowModels;
+using iOSClub.Data.VOs;
 using iOSClub.WebAPI.Common.Config;
 using Microsoft.IdentityModel.Tokens;
 
@@ -22,7 +22,7 @@ public class JwtService(
     /// <param name="scope">权限范围</param>
     /// <param name="clientId">客户端ID</param>
     /// <returns>访问令牌和刷新令牌</returns>
-    public (string AccessToken, string RefreshToken) GenerateTokens(MemberModel memberModel, string scope = "",
+    public (string AccessToken, string RefreshToken) GenerateTokens(MemberVO memberModel, string scope = "",
         string clientId = "")
     {
         try
@@ -61,7 +61,7 @@ public class JwtService(
     /// <param name="scope">权限范围</param>
     /// <param name="clientId">客户端ID</param>
     /// <returns>访问令牌</returns>
-    private string GenerateAccessToken(MemberModel memberModel, string scope = "", string clientId = "")
+    private string GenerateAccessToken(MemberVO memberModel, string scope = "", string clientId = "")
     {
         var now = DateTime.UtcNow;
         var jwtId = Guid.NewGuid().ToString(); // 用于防止重放攻击
@@ -186,7 +186,7 @@ public class JwtService(
     /// <param name="scope">权限范围</param>
     /// <param name="clientId">客户端ID</param>
     /// <returns>新的访问令牌</returns>
-    public string RefreshAccessToken(string refreshToken, MemberModel memberModel, string scope = "",
+    public string RefreshAccessToken(string refreshToken, MemberVO memberModel, string scope = "",
         string clientId = "")
     {
         try

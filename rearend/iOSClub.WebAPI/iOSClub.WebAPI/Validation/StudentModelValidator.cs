@@ -1,12 +1,13 @@
 using FluentValidation;
-using iOSClub.Data.DataModels;
+using iOSClub.Data.DataObjects;
 using iOSClub.Data.ShowModels;
+using iOSClub.Data.VOs;
 
 namespace iOSClub.WebAPI.Validation;
 
-public class StudentModelValidator : AbstractValidator<StudentModel>
+public class StudentDOValidator : AbstractValidator<StudentDO>
 {
-    public StudentModelValidator()
+    public StudentDOValidator()
     {
         RuleFor(x => x.UserId)
             .NotEmpty().WithMessage("学号不能为空")

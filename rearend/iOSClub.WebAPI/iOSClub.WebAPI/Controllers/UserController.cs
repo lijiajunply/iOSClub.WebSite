@@ -1,12 +1,13 @@
 using iOSClub.Data;
+using iOSClub.Data.VOs;
+using iOSClub.Data.DTOs;
+using iOSClub.Data.DataObjects;
 using iOSClub.DataApi.Repositories;
 using iOSClub.WebAPI.Common;
 using iOSClub.WebAPI.IdentityModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using TodoModel = iOSClub.Data.DataModels.TodoModel;
-using MemberModel = iOSClub.Data.ShowModels.MemberModel;
-using StudentModel = iOSClub.Data.DataModels.StudentModel;
+using Mapster;
 
 namespace iOSClub.WebAPI.Controllers;
 
@@ -25,25 +26,25 @@ public class UserController(
     /// <returns>用户信息对象</returns>
     [Authorize]
     [HttpGet("data")]
-    public async Task<ActionResult<ApiResponse<MemberModel>>> GetData()
+    public async Task<ActionResult<ApiResponse<MemberVO>>> GetData()
     {
         try
         {
             var member = httpContextAccessor.HttpContext?.User.GetUser();
             if (member == null)
-                return Ok(ApiResponse<MemberModel>.Fail(ErrorCode.Unauthorized, "用户未认证"));
+                return Ok(ApiResponse<MemberVO>.Fail(ErrorCode.Unauthorized, "用户未认证"));
             if (member.Identity == "Founder")
-                return Ok(ApiResponse<MemberModel>.Success(member, "获取用户信息成功"));
+                return Ok(ApiResponse<MemberVO>.Success(member, "获取用户信息成功"));
 
             var student = await studentRepository.GetByIdAsync(member.UserId);
             if (student == null)
-                return Ok(ApiResponse<MemberModel>.Fail(ErrorCode.UserNotFound, "用户不存在"));
+                return Ok(ApiResponse<MemberVO>.Fail(ErrorCode.UserNotFound, "用户不存在"));
 
             var id = member.Identity;
-            member = MemberModel.AutoCopy<StudentModel, MemberModel>(student);
+            member = student.Adapt<MemberVO>();
             member.Identity = id;
 
-            return Ok(ApiResponse<MemberModel>.Success(member, "获取用户信息成功"));
+            return Ok(ApiResponse<MemberVO>.Success(member, "获取用户信息成功"));
         }
         catch (Exception ex)
         {
@@ -52,7 +53,7 @@ public class UserController(
                 logger.LogInformation(ex, "获取用户信息时发生错误");
             }
 
-            return Ok(ApiResponse<MemberModel>.Fail(ErrorCode.InternalServerError, "获取用户信息失败"));
+            return Ok(ApiResponse<MemberVO>.Fail(ErrorCode.InternalServerError, "获取用户信息失败"));
         }
     }
 
@@ -62,20 +63,20 @@ public class UserController(
     /// <returns>待办事项列表</returns>
     [Authorize]
     [HttpGet("todos")]
-    public async Task<ActionResult<ApiResponse<List<TodoModel>>>> GetTodos()
+    public async Task<ActionResult<ApiResponse<List<TodoDO>>>> GetTodos()
     {
         try
         {
             var member = httpContextAccessor.HttpContext?.User.GetUser();
             if (member == null)
-                return Ok(ApiResponse<List<TodoModel>>.Fail(ErrorCode.Unauthorized, "用户未认证"));
+                return Ok(ApiResponse<List<TodoDO>>.Fail(ErrorCode.Unauthorized, "用户未认证"));
 
             var student = await studentRepository.GetByIdAsync(member.UserId);
             if (student == null)
-                return Ok(ApiResponse<List<TodoModel>>.Fail(ErrorCode.UserNotFound, "用户不存在"));
+                return Ok(ApiResponse<List<TodoDO>>.Fail(ErrorCode.UserNotFound, "用户不存在"));
 
             var todos = await todoRepository.GetTodosByUserIdAsync(student.UserId);
-            return Ok(ApiResponse<List<TodoModel>>.Success(todos, "获取待办事项成功"));
+            return Ok(ApiResponse<List<TodoDO>>.Success(todos, "获取待办事项成功"));
         }
         catch (Exception ex)
         {
@@ -84,7 +85,7 @@ public class UserController(
                 logger.LogInformation(ex, "获取用户待办事项时发生错误");
             }
 
-            return Ok(ApiResponse<List<TodoModel>>.Fail(ErrorCode.InternalServerError, "获取待办事项失败"));
+            return Ok(ApiResponse<List<TodoDO>>.Fail(ErrorCode.InternalServerError, "获取待办事项失败"));
         }
     }
 
@@ -95,17 +96,17 @@ public class UserController(
     /// <returns>添加后的待办事项</returns>
     [Authorize]
     [HttpPost("todos")]
-    public async Task<ActionResult<ApiResponse<TodoModel>>> AddTodo(TodoModel todoModel)
+    public async Task<ActionResult<ApiResponse<TodoDO>>> AddTodo(TodoDO todoModel)
     {
         try
         {
             var member = httpContextAccessor.HttpContext?.User.GetUser();
             if (member == null)
-                return Ok(ApiResponse<TodoModel>.Fail(ErrorCode.Unauthorized, "用户未认证"));
+                return Ok(ApiResponse<TodoDO>.Fail(ErrorCode.Unauthorized, "用户未认证"));
 
             var student = await studentRepository.GetByIdAsync(member.UserId);
             if (student == null)
-                return Ok(ApiResponse<TodoModel>.Fail(ErrorCode.UserNotFound, "用户不存在"));
+                return Ok(ApiResponse<TodoDO>.Fail(ErrorCode.UserNotFound, "用户不存在"));
 
             todoModel.StudentId = student.UserId;
             todoModel.Id = todoModel.ToString();
@@ -113,10 +114,10 @@ public class UserController(
 
             var result = await todoRepository.AddTodoAsync(todoModel);
             if (!result)
-                return Ok(ApiResponse<TodoModel>.Fail(ErrorCode.OperationFailed, "添加待办事项失败"));
+                return Ok(ApiResponse<TodoDO>.Fail(ErrorCode.OperationFailed, "添加待办事项失败"));
 
             return CreatedAtAction(nameof(GetTodoById), new { id = todoModel.Id },
-                ApiResponse<TodoModel>.Success(todoModel, "添加待办事项成功"));
+                ApiResponse<TodoDO>.Success(todoModel, "添加待办事项成功"));
         }
         catch (Exception ex)
         {
@@ -125,7 +126,7 @@ public class UserController(
                 logger.LogInformation(ex, "添加待办事项时发生错误");
             }
 
-            return Ok(ApiResponse<TodoModel>.Fail(ErrorCode.InternalServerError, "添加待办事项失败"));
+            return Ok(ApiResponse<TodoDO>.Fail(ErrorCode.InternalServerError, "添加待办事项失败"));
         }
     }
 
@@ -169,23 +170,23 @@ public class UserController(
     /// 根据ID获取待办事项详情
     /// </summary>
     [HttpGet("todos/{id}")]
-    public async Task<ActionResult<ApiResponse<TodoModel>>> GetTodoById(string id)
+    public async Task<ActionResult<ApiResponse<TodoDO>>> GetTodoById(string id)
     {
         try
         {
             var member = httpContextAccessor.HttpContext?.User.GetUser();
             if (member == null)
-                return Ok(ApiResponse<TodoModel>.Fail(ErrorCode.Unauthorized, "用户未认证"));
+                return Ok(ApiResponse<TodoDO>.Fail(ErrorCode.Unauthorized, "用户未认证"));
 
             var todo = await todoRepository.GetTodoByIdAsync(id);
             if (todo == null)
-                return Ok(ApiResponse<TodoModel>.Fail(ErrorCode.ResourceNotFound, "待办事项不存在"));
+                return Ok(ApiResponse<TodoDO>.Fail(ErrorCode.ResourceNotFound, "待办事项不存在"));
 
             // 检查权限
             if (todo.StudentId != member.UserId)
-                return Ok(ApiResponse<TodoModel>.Fail(ErrorCode.InsufficientPermission, "无权访问此待办事项"));
+                return Ok(ApiResponse<TodoDO>.Fail(ErrorCode.InsufficientPermission, "无权访问此待办事项"));
 
-            return Ok(ApiResponse<TodoModel>.Success(todo, "获取待办事项详情成功"));
+            return Ok(ApiResponse<TodoDO>.Success(todo, "获取待办事项详情成功"));
         }
         catch (Exception ex)
         {
@@ -194,7 +195,7 @@ public class UserController(
                 logger.LogInformation(ex, "获取待办事项详情时发生错误，ID: {Id}", id);
             }
 
-            return Ok(ApiResponse<TodoModel>.Fail(ErrorCode.InternalServerError, "获取待办事项详情失败"));
+            return Ok(ApiResponse<TodoDO>.Fail(ErrorCode.InternalServerError, "获取待办事项详情失败"));
         }
     }
 
@@ -205,7 +206,7 @@ public class UserController(
     /// <returns>操作结果</returns>
     [Authorize]
     [HttpPut("todos")]
-    public async Task<ActionResult<ApiResponse<object>>> UpdateTodo(TodoModel todoModel)
+    public async Task<ActionResult<ApiResponse<object>>> UpdateTodo(TodoDO todoModel)
     {
         try
         {
@@ -241,7 +242,7 @@ public class UserController(
     /// <returns>操作结果</returns>
     [Authorize]
     [HttpPut("profile")]
-    public async Task<ActionResult<ApiResponse<object>>> UpdateProfile(StudentModel memberModel)
+    public async Task<ActionResult<ApiResponse<object>>> UpdateProfile(StudentDO memberModel)
     {
         try
         {

@@ -1,7 +1,8 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using iOSClub.Data.ShowModels;
+using iOSClub.Data.DTOs;
+using iOSClub.Data.VOs;
 using iOSClub.DataApi.Services;
 using iOSClub.WebAPI.Common;
 using iOSClub.WebAPI.IdentityModels;
@@ -85,8 +86,8 @@ public class OAuthController(ILoginService loginService, IConnectionMultiplexer 
             if (string.IsNullOrEmpty(request.UserId) || string.IsNullOrEmpty(request.UserName))
                 return Ok(ApiResponse<object>.Fail(ErrorCode.ParameterEmpty, "用户ID和用户名不能为空"));
 
-            // 创建LoginModel用于传递RememberMe参数
-            var loginModel = new LoginModel
+            // 创建LoginDTO用于传递RememberMe参数
+            var loginModel = new LoginDTO
             {
                 UserId = request.UserId,
                 Password = request.Password ?? request.UserId, // 如果没有提供密码，则使用UserId作为默认密码

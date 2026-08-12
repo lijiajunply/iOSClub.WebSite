@@ -1,6 +1,6 @@
-﻿namespace iOSClub.Data.ShowModels;
+namespace iOSClub.Data.DTOs;
 
-public class LoginModel
+public class LoginDTO
 {
     public string UserId { get; set; } = "";
     public string Password { get; set; } = "";

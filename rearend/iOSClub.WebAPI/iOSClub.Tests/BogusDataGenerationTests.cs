@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Bogus;
-using iOSClub.Data.DataModels;
+using iOSClub.Data.DataObjects;
 using Xunit;
 
 namespace iOSClub.Tests;
@@ -9,10 +9,10 @@ namespace iOSClub.Tests;
 public class BogusDataGenerationTests
 {
     [Fact]
-    public void GenerateStudentModelsWithBogus()
+    public void GenerateStudentDOsWithBogus()
     {
         // 配置Bogus生成器
-        var faker = new Faker<StudentModel>()
+        var faker = new Faker<StudentDO>()
             .RuleFor(s => s.UserName, f => f.Name.FullName())
             .RuleFor(s => s.UserId, f => f.Random.Replace("2023######"))
             .RuleFor(s => s.Academy, f => f.PickRandom("计算机学院", "软件学院", "电子工程学院", "通信工程学院", "自动化学院"))
@@ -45,10 +45,10 @@ public class BogusDataGenerationTests
     }
 
     [Fact]
-    public void GenerateArticleModelsWithBogus()
+    public void GenerateArticleDOsWithBogus()
     {
-        // 配置Bogus生成器用于ArticleModel
-        var faker = new Faker<ArticleModel>()
+        // 配置Bogus生成器用于ArticleDO
+        var faker = new Faker<ArticleDO>()
             .RuleFor(a => a.Path, f => $"/articles/{f.Random.Guid()}")
             .RuleFor(a => a.Title, f => f.Lorem.Sentence(5, 3))
             .RuleFor(a => a.Content, f => f.Lorem.Paragraphs(3))
@@ -74,10 +74,10 @@ public class BogusDataGenerationTests
     }
 
     [Fact]
-    public void GenerateProjectModelsWithBogus()
+    public void GenerateProjectDOsWithBogus()
     {
-        // 配置Bogus生成器用于ProjectModel
-        var faker = new Faker<ProjectModel>()
+        // 配置Bogus生成器用于ProjectDO
+        var faker = new Faker<ProjectDO>()
             .RuleFor(p => p.Id, f => f.Random.Guid().ToString())
             .RuleFor(p => p.Title, f => f.Company.CatchPhrase())
             .RuleFor(p => p.Description, f => f.Lorem.Paragraphs(2))

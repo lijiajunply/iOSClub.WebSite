@@ -1,5 +1,5 @@
-using iOSClub.Data.DataModels;
-using iOSClub.Data.ShowModels;
+using iOSClub.Data.DataObjects;
+using iOSClub.Data.VOs;
 using iOSClub.DataApi.Repositories;
 using iOSClub.DataApi.Services;
 using iOSClub.WebAPI.Common.Security;

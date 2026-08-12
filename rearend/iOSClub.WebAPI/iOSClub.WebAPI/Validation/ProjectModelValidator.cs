@@ -1,11 +1,11 @@
 using FluentValidation;
-using iOSClub.Data.DataModels;
+using iOSClub.Data.DataObjects;
 
 namespace iOSClub.WebAPI.Validation;
 
-public class ProjectModelValidator : AbstractValidator<ProjectModel>
+public class ProjectDOValidator : AbstractValidator<ProjectDO>
 {
-    public ProjectModelValidator()
+    public ProjectDOValidator()
     {
         RuleFor(x => x.Id)
             .NotEmpty().WithMessage("项目ID不能为空")

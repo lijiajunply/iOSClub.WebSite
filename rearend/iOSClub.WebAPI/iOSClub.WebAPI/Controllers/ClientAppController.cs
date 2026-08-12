@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using iOSClub.Data.DataModels;
+using iOSClub.Data.DataObjects;
 using iOSClub.DataApi.Repositories;
 using iOSClub.WebAPI.Common;
 using System.Security.Cryptography;
@@ -18,18 +18,18 @@ public class ClientAppController(IClientApplicationRepository clientAppRepositor
     /// </summary>
     /// <returns>客户端应用列表</returns>
     [HttpGet]
-    public async Task<ActionResult<ApiResponse<IEnumerable<ClientApplication>>>> GetClientApplications()
+    public async Task<ActionResult<ApiResponse<IEnumerable<ClientApplicationDO>>>> GetClientApplications()
     {
         try
         {
             var clientApps = await clientAppRepository.GetAllAsync();
-            var clientApplications = clientApps as ClientApplication[] ?? clientApps.ToArray();
+            var clientApplications = clientApps as ClientApplicationDO[] ?? clientApps.ToArray();
             if (logger.IsEnabled(LogLevel.Information))
             {
                 logger.LogInformation("获取客户端应用列表成功，应用数量: {Count}", clientApplications.Length);
             }
 
-            return Ok(ApiResponse<IEnumerable<ClientApplication>>.Success(clientApplications));
+            return Ok(ApiResponse<IEnumerable<ClientApplicationDO>>.Success(clientApplications));
         }
         catch (Exception ex)
         {
@@ -38,7 +38,7 @@ public class ClientAppController(IClientApplicationRepository clientAppRepositor
                 logger.LogInformation(ex, "获取客户端应用列表失败");
             }
 
-            return Ok(ApiResponse<IEnumerable<ClientApplication>>.Fail(ErrorCode.InternalServerError, "获取客户端应用列表失败"));
+            return Ok(ApiResponse<IEnumerable<ClientApplicationDO>>.Fail(ErrorCode.InternalServerError, "获取客户端应用列表失败"));
         }
     }
 
@@ -48,7 +48,7 @@ public class ClientAppController(IClientApplicationRepository clientAppRepositor
     /// <param name="clientId">客户端ID</param>
     /// <returns>客户端应用</returns>
     [HttpGet("{clientId}")]
-    public async Task<ActionResult<ApiResponse<ClientApplication>>> GetClientApplication(string clientId)
+    public async Task<ActionResult<ApiResponse<ClientApplicationDO>>> GetClientApplication(string clientId)
     {
         try
         {
@@ -60,7 +60,7 @@ public class ClientAppController(IClientApplicationRepository clientAppRepositor
                     logger.LogInformation("获取客户端应用失败，客户端不存在，ID: {ClientId}", clientId);
                 }
 
-                return Ok(ApiResponse<ClientApplication>.Fail(ErrorCode.ResourceNotFound, "客户端应用不存在"));
+                return Ok(ApiResponse<ClientApplicationDO>.Fail(ErrorCode.ResourceNotFound, "客户端应用不存在"));
             }
 
             if (logger.IsEnabled(LogLevel.Information))
@@ -68,7 +68,7 @@ public class ClientAppController(IClientApplicationRepository clientAppRepositor
                 logger.LogInformation("获取客户端应用成功，ID: {ClientId}, 名称: {Name}", clientId, clientApp.ApplicationName);
             }
 
-            return Ok(ApiResponse<ClientApplication>.Success(clientApp));
+            return Ok(ApiResponse<ClientApplicationDO>.Success(clientApp));
         }
         catch (Exception ex)
         {
@@ -77,7 +77,7 @@ public class ClientAppController(IClientApplicationRepository clientAppRepositor
                 logger.LogInformation(ex, "获取客户端应用失败，ID: {ClientId}", clientId);
             }
 
-            return Ok(ApiResponse<ClientApplication>.Fail(ErrorCode.InternalServerError, "获取客户端应用失败"));
+            return Ok(ApiResponse<ClientApplicationDO>.Fail(ErrorCode.InternalServerError, "获取客户端应用失败"));
         }
     }
 
@@ -87,7 +87,7 @@ public class ClientAppController(IClientApplicationRepository clientAppRepositor
     /// <param name="clientAppModel">客户端应用信息</param>
     /// <returns>创建的客户端应用</returns>
     [HttpPost]
-    public async Task<ActionResult<ApiResponse<ClientAppResultModel>>> CreateClientApplication(
+    public async Task<ActionResult<ApiResponse<ClientAppResultModel>>> CreateClientApplicationDO(
         CreateClientAppModel clientAppModel)
     {
         try
@@ -96,7 +96,7 @@ public class ClientAppController(IClientApplicationRepository clientAppRepositor
             var clientId = GenerateClientId();
             var clientSecret = GenerateClientSecret();
 
-            var clientApp = new ClientApplication
+            var clientApp = new ClientApplicationDO
             {
                 ClientId = clientId,
                 ClientSecret = clientSecret,
@@ -166,7 +166,7 @@ public class ClientAppController(IClientApplicationRepository clientAppRepositor
     /// <param name="clientAppModel">客户端应用信息</param>
     /// <returns>更新结果</returns>
     [HttpPut("{clientId}")]
-    public async Task<ActionResult<ApiResponse>> UpdateClientApplication(string clientId,
+    public async Task<ActionResult<ApiResponse>> UpdateClientApplicationDO(string clientId,
         UpdateClientAppModel clientAppModel)
     {
         try
@@ -229,7 +229,7 @@ public class ClientAppController(IClientApplicationRepository clientAppRepositor
     /// <param name="clientId">客户端ID</param>
     /// <returns>删除结果</returns>
     [HttpDelete("{clientId}")]
-    public async Task<ActionResult<ApiResponse>> DeleteClientApplication(string clientId)
+    public async Task<ActionResult<ApiResponse>> DeleteClientApplicationDO(string clientId)
     {
         try
         {

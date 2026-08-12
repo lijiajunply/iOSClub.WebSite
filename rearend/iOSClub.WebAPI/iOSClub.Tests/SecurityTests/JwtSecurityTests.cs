@@ -1,4 +1,4 @@
-using iOSClub.Data.ShowModels;
+using iOSClub.Data.VOs;
 using iOSClub.WebAPI.Common.Config;
 using iOSClub.WebAPI.Common.Security;
 using Microsoft.Extensions.Logging;
@@ -90,7 +90,7 @@ public class JwtSecurityTests
         rsaKeyManager.StoreKeyPair(rsa, _jwtConfig.RsaPrivateKeyPath, _jwtConfig.RsaPublicKeyPath);
 
         // 创建测试用户模型
-        var memberModel = new MemberModel
+        var memberModel = new MemberVO
         {
             UserId = "test_user_123",
             UserName = "Test User",
@@ -125,7 +125,7 @@ public class JwtSecurityTests
         rsaKeyManager.StoreKeyPair(rsa, _jwtConfig.RsaPrivateKeyPath, _jwtConfig.RsaPublicKeyPath);
 
         // 创建测试用户模型
-        var memberModel = new MemberModel
+        var memberModel = new MemberVO
         {
             UserId = "test_user_123",
             UserName = "Test User",

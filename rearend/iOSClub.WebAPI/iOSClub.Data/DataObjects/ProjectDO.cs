@@ -1,12 +1,14 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
-namespace iOSClub.Data.DataModels;
+namespace iOSClub.Data.DataObjects;
 
-public class ProjectModel : DataModel
+[Table("Projects")]
+public class ProjectDO : DataObject
 {
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public DepartmentModel? Department { get; set; }
+    public DepartmentDO? Department { get; set; }
     [MaxLength(20)] public string Title { get; set; } = "";
 
     [Key] [MaxLength(32)]public string Id { get; set; } = "";
@@ -15,7 +17,7 @@ public class ProjectModel : DataModel
     [MaxLength(20)] public string? StartTime { get; set; }
     [MaxLength(20)] public string? EndTime { get; set; }
 
-    public void Update(ProjectModel model)
+    public void Update(ProjectDO model)
     {
         if (!string.IsNullOrEmpty(model.Title)) Title = model.Title;
         if (!string.IsNullOrEmpty(model.Description)) Description = model.Description;
@@ -24,12 +26,12 @@ public class ProjectModel : DataModel
     }
 
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-    public List<StaffModel> Staffs { get; set; } = [];
-    
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-    public List<TaskModel> Tasks { get; set; } = [];
+    public List<StaffDO> Staffs { get; set; } = [];
 
-    public ProjectModel OutputWhenOtherList()
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public List<TaskDO> Tasks { get; set; } = [];
+
+    public ProjectDO OutputWhenOtherList()
     {
         Staffs = Staffs.Select(x => x.OutputWhenOtherList()).ToList();
         Tasks = Tasks.Select(x => x.OutputWhenOtherList()).ToList();

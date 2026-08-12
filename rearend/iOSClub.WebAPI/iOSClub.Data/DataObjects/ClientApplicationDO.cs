@@ -1,11 +1,13 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
-namespace iOSClub.Data.DataModels;
+namespace iOSClub.Data.DataObjects;
 
 /// <summary>
 /// 第三方应用客户端模型
 /// </summary>
-public class ClientApplication
+[Table("ClientApplications")]
+public class ClientApplicationDO
 {
     /// <summary>
     /// 客户端ID（主键）

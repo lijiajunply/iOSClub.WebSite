@@ -1,8 +1,10 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
-namespace iOSClub.Data.DataModels;
+namespace iOSClub.Data.DataObjects;
 
-public class DepartmentModel : DataModel
+[Table("Departments")]
+public class DepartmentDO : DataObject
 {
     [MaxLength(32)]
     public string Key { get; set; } = "";
@@ -20,14 +22,14 @@ public class DepartmentModel : DataModel
     /// <summary>
     /// 部员
     /// </summary>
-    public List<StaffModel> Staffs { get; set; } = [];
+    public List<StaffDO> Staffs { get; set; } = [];
 
     /// <summary>
     /// 项目
     /// </summary>
-    public List<ProjectModel> Projects { get; set; } = [];
+    public List<ProjectDO> Projects { get; set; } = [];
 
-    public DepartmentModel OutputWhenOtherList()
+    public DepartmentDO OutputWhenOtherList()
     {
         Staffs = Staffs.Select(x => x.OutputWhenOtherList()).ToList();
         Projects = Projects.Select(x => x.OutputWhenOtherList()).ToList();

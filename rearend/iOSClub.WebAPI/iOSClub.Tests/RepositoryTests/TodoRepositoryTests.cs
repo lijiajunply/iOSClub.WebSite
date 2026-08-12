@@ -1,5 +1,5 @@
 using iOSClub.Data;
-using iOSClub.Data.DataModels;
+using iOSClub.Data.DataObjects;
 using iOSClub.DataApi.Repositories;
 using Microsoft.EntityFrameworkCore;
 using iOSClub.Tests;
@@ -41,7 +41,7 @@ public class TodoRepositoryTests
             await context.Database.EnsureCreatedAsync();
             
             // 直接创建Student实例，确保每个实例都有唯一的UserId
-            var student1 = new StudentModel
+            var student1 = new StudentDO
             {
                 UserId = student1UserId,
                 UserName = "Student 1",
@@ -52,7 +52,7 @@ public class TodoRepositoryTests
                 PoliticalLandscape = "共青团员",
                 JoinTime = DateTime.Now.AddDays(-30)
             };
-            var student2 = new StudentModel
+            var student2 = new StudentDO
             {
                 UserId = student2UserId,
                 UserName = "Student 2",
@@ -68,7 +68,7 @@ public class TodoRepositoryTests
             await context.SaveChangesAsync();
 
             // 直接创建Todo实例，确保每个实例都有唯一的Id，并将Student属性显式设为null
-            var todo1 = new TodoModel
+            var todo1 = new TodoDO
             {
                 Id = Guid.NewGuid().ToString(),
                 StudentId = student1UserId,
@@ -80,7 +80,7 @@ public class TodoRepositoryTests
                 EndTime = DateTime.Now.AddDays(5).ToString("yyyy-MM-dd"),
                 CreatedTime = DateTime.Now
             };
-            var todo2 = new TodoModel
+            var todo2 = new TodoDO
             {
                 Id = Guid.NewGuid().ToString(),
                 StudentId = student1UserId,
@@ -92,7 +92,7 @@ public class TodoRepositoryTests
                 EndTime = DateTime.Now.AddDays(3).ToString("yyyy-MM-dd"),
                 CreatedTime = DateTime.Now
             };
-            var todo3 = new TodoModel
+            var todo3 = new TodoDO
             {
                 Id = Guid.NewGuid().ToString(),
                 StudentId = student2UserId,
@@ -345,7 +345,7 @@ public class TodoRepositoryTests
         await context.SaveChangesAsync();
 
         // 创建Todo实例，关联到已存在的Student
-        var todos = new List<TodoModel>
+        var todos = new List<TodoDO>
         {
             BogusDataGenerator.TodoFaker
                 .RuleFor(t => t.StudentId, student1.UserId)
@@ -385,7 +385,7 @@ public class TodoRepositoryTests
         await context.SaveChangesAsync();
 
         // 创建Todo实例，关联到已存在的Student
-        var todos = new List<TodoModel>
+        var todos = new List<TodoDO>
         {
             BogusDataGenerator.TodoFaker
                 .RuleFor(t => t.StudentId, student.UserId)
@@ -428,7 +428,7 @@ public class TodoRepositoryTests
         await context.SaveChangesAsync();
 
         // 创建Todo实例，关联到已存在的Student
-        var todos = new List<TodoModel>();
+        var todos = new List<TodoDO>();
         for (var i = 1; i <= 15; i++)
         {
             var todo = BogusDataGenerator.TodoFaker

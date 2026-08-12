@@ -1,6 +1,7 @@
 using iOSClub.Data; 
-using iOSClub.Data.DataModels; 
-using iOSClub.Data.ShowModels; 
+using iOSClub.Data.DataObjects; 
+using iOSClub.Data.DTOs;
+using iOSClub.Data.VOs; 
 using Microsoft.AspNetCore.Mvc.Testing; 
 using Microsoft.Extensions.DependencyInjection; 
 using Microsoft.EntityFrameworkCore; 
@@ -82,7 +83,7 @@ public class AuthControllerTests : IClassFixture<WebApplicationFactory<Program>>
         await context.Database.EnsureDeletedAsync(); 
         await context.Database.EnsureCreatedAsync(); 
         
-        var studentModel = new StudentModel 
+        var studentModel = new StudentDO 
         { 
             UserId = "20210001", 
             UserName = "Test Student", 
@@ -95,7 +96,7 @@ public class AuthControllerTests : IClassFixture<WebApplicationFactory<Program>>
         }; 
         
         var expectedToken = "mock-jwt-token"; 
-        _tokenGeneratorMock.Setup(t => t.GetMemberToken(It.IsAny<MemberModel>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>())).Returns((expectedToken, "mock-refresh-token")); 
+        _tokenGeneratorMock.Setup(t => t.GetMemberToken(It.IsAny<MemberVO>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>())).Returns((expectedToken, "mock-refresh-token")); 
         
         // Act 
         var response = await _client.PostAsJsonAsync("/Auth/signup", studentModel); 
@@ -120,7 +121,7 @@ public class AuthControllerTests : IClassFixture<WebApplicationFactory<Program>>
         await context.Database.EnsureCreatedAsync(); 
         
         // 添加测试学生数据 
-        var student = new StudentModel 
+        var student = new StudentDO 
         { 
             UserId = "20210001", 
             UserName = "Test Student", 
@@ -134,10 +135,10 @@ public class AuthControllerTests : IClassFixture<WebApplicationFactory<Program>>
         await context.Students.AddAsync(student); 
         await context.SaveChangesAsync(); 
         
-        var loginModel = new LoginModel { UserId = student.UserId, Password = "password123" }; 
+        var loginModel = new LoginDTO { UserId = student.UserId, Password = "password123" }; 
         var expectedToken = "mock-jwt-token"; 
         
-        _tokenGeneratorMock.Setup(t => t.GetMemberToken(It.IsAny<MemberModel>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>())).Returns((expectedToken, "mock-refresh-token")); 
+        _tokenGeneratorMock.Setup(t => t.GetMemberToken(It.IsAny<MemberVO>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>())).Returns((expectedToken, "mock-refresh-token")); 
         _redisDbMock.Setup(r => r.StringGetAsync(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>())).ReturnsAsync(RedisValue.Null); 
         
         // Act 
@@ -163,7 +164,7 @@ public class AuthControllerTests : IClassFixture<WebApplicationFactory<Program>>
         await context.Database.EnsureCreatedAsync(); 
         
         // 添加测试学生数据 
-        var student = new StudentModel 
+        var student = new StudentDO 
         { 
             UserId = "20210001", 
             UserName = "Test Student", 
@@ -177,7 +178,7 @@ public class AuthControllerTests : IClassFixture<WebApplicationFactory<Program>>
         await context.Students.AddAsync(student); 
         await context.SaveChangesAsync(); 
         
-        var loginModel = new LoginModel { UserId = student.UserId, Password = "wrongpassword" }; 
+        var loginModel = new LoginDTO { UserId = student.UserId, Password = "wrongpassword" }; 
         
         // Act 
         var response = await _client.PostAsJsonAsync("/Auth/login", loginModel); 
@@ -201,7 +202,7 @@ public class AuthControllerTests : IClassFixture<WebApplicationFactory<Program>>
         await context.Database.EnsureCreatedAsync(); 
         
         // 不添加任何用户数据 
-        var loginModel = new LoginModel { UserId = "non_existent_user", Password = "password123" }; 
+        var loginModel = new LoginDTO { UserId = "non_existent_user", Password = "password123" }; 
         
         // Act 
         var response = await _client.PostAsJsonAsync("/Auth/login", loginModel); 
@@ -225,7 +226,7 @@ public class AuthControllerTests : IClassFixture<WebApplicationFactory<Program>>
         await context.Database.EnsureCreatedAsync(); 
         
         // 添加测试学生数据 
-        var student = new StudentModel 
+        var student = new StudentDO 
         { 
             UserId = "20210001", 
             UserName = "Test Student", 
@@ -239,10 +240,10 @@ public class AuthControllerTests : IClassFixture<WebApplicationFactory<Program>>
         await context.Students.AddAsync(student); 
         await context.SaveChangesAsync(); 
         
-        var loginModel = new LoginModel { UserId = student.UserId, Password = "password123" }; 
+        var loginModel = new LoginDTO { UserId = student.UserId, Password = "password123" }; 
         var token = "mock-jwt-token"; 
         
-        _tokenGeneratorMock.Setup(t => t.GetMemberToken(It.IsAny<MemberModel>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>())).Returns((token, "mock-refresh-token")); 
+        _tokenGeneratorMock.Setup(t => t.GetMemberToken(It.IsAny<MemberVO>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>())).Returns((token, "mock-refresh-token")); 
         _redisDbMock.Setup(r => r.StringGetAsync(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>())).ReturnsAsync(RedisValue.Null); 
         _redisDbMock.Setup(r => r.KeyDeleteAsync(It.IsAny<RedisKey[]>(), It.IsAny<CommandFlags>())).ReturnsAsync(2L); 
         
@@ -283,7 +284,7 @@ public class AuthControllerTests : IClassFixture<WebApplicationFactory<Program>>
         var newAccessToken = "new-mock-jwt-token"; 
         
         _redisDbMock.Setup(r => r.StringGetAsync(It.Is<RedisKey>(k => k.ToString() == $"refresh:{userId}"), It.IsAny<CommandFlags>())).ReturnsAsync(refreshToken); 
-        _tokenGeneratorMock.Setup(t => t.GetMemberToken(It.IsAny<MemberModel>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>())).Returns((newAccessToken, refreshToken)); 
+        _tokenGeneratorMock.Setup(t => t.GetMemberToken(It.IsAny<MemberVO>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>())).Returns((newAccessToken, refreshToken)); 
         
         // Act 
         var response = await _client.PostAsync($"/Auth/refresh-token?userId={userId}&refreshToken={refreshToken}", null); 

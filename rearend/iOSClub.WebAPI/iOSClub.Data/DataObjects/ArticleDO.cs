@@ -1,8 +1,10 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
-namespace iOSClub.Data.DataModels;
+namespace iOSClub.Data.DataObjects;
 
-public class ArticleModel
+[Table("Articles")]
+public class ArticleDO
 {
     /// <summary>
     /// 路径
@@ -45,7 +47,7 @@ public class ArticleModel
     /// <summary>
     /// 分类
     /// </summary>
-    public CategoryModel? Category { get; set; }
+    public CategoryDO? Category { get; set; }
 
     /// <summary>
     /// 文章排序（用于自定义分类内文章顺序）

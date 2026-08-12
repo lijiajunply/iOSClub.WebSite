@@ -6,7 +6,7 @@ using System.Text;
 using iOSClub.WebAPI.Common.Config;
 using Microsoft.Extensions.Logging;
 using Moq;
-using iOSClub.Data.ShowModels;
+using iOSClub.Data.VOs;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using Bogus;
@@ -21,7 +21,7 @@ public class JwtServiceTests : IDisposable
     private readonly RsaKeyManager _rsaKeyManager;
     private readonly JwtService _jwtService;
     private readonly string _testDirectory;
-    private readonly Faker<MemberModel> _memberFaker;
+    private readonly Faker<MemberVO> _memberFaker;
 
     public JwtServiceTests()
     {
@@ -44,8 +44,8 @@ public class JwtServiceTests : IDisposable
         _loggerMock = new Mock<ILogger<JwtService>>();
         _rsaLoggerMock = new Mock<ILogger<RsaKeyManager>>();
         
-        // 创建MemberModel的Bogus生成器
-        _memberFaker = new Faker<MemberModel>()
+        // 创建MemberVO的Bogus生成器
+        _memberFaker = new Faker<MemberVO>()
             .RuleFor(m => m.UserId, f => f.Random.AlphaNumeric(10))
             .RuleFor(m => m.UserName, f => f.Name.FullName())
             .RuleFor(m => m.Identity, f => f.PickRandom("Student", "Staff", "President", "Founder"));

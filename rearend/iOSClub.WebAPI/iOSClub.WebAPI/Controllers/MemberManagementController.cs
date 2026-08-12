@@ -1,5 +1,5 @@
 using iOSClub.Data;
-using iOSClub.Data.DataModels;
+using iOSClub.Data.DataObjects;
 using iOSClub.DataApi.Repositories;
 using iOSClub.WebAPI.Common;
 using Microsoft.AspNetCore.Authorization;
@@ -62,7 +62,7 @@ public class MemberManagementController(
     /// <param name="list">学生列表</param>
     /// <returns>更新后的学生列表</returns>
     [HttpPost("update-many")]
-    public async Task<ActionResult<ApiResponse<bool>>> UpdateMany(List<StudentModel> list)
+    public async Task<ActionResult<ApiResponse<bool>>> UpdateMany(List<StudentDO> list)
     {
         try
         {
@@ -103,7 +103,7 @@ public class MemberManagementController(
     /// <param name="model">成员模型</param>
     /// <returns>操作结果</returns>
     [HttpPost("update")]
-    public async Task<ActionResult<ApiResponse<object>>> Update([FromBody] StudentModel model)
+    public async Task<ActionResult<ApiResponse<object>>> Update([FromBody] StudentDO model)
     {
         try
         {

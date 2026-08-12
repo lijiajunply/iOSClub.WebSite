@@ -1,5 +1,5 @@
 using iOSClub.Data;
-using iOSClub.Data.DataModels;
+using iOSClub.Data.DataObjects;
 using iOSClub.DataApi.Repositories;
 using Microsoft.EntityFrameworkCore;
 
@@ -252,7 +252,7 @@ public class StaffRepositoryTests
         var memberStaff = BogusDataGenerator.StaffFaker.Generate();
         memberStaff.Identity = "Member";
         
-        var staffs = new List<StaffModel> { presidentStaff, ministerStaff, memberStaff };
+        var staffs = new List<StaffDO> { presidentStaff, ministerStaff, memberStaff };
         await context.Staffs.AddRangeAsync(staffs);
         await context.SaveChangesAsync();
 

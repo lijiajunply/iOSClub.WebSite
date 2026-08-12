@@ -1,8 +1,10 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
-namespace iOSClub.Data.DataModels;
+namespace iOSClub.Data.DataObjects;
 
-public class StaffModel
+[Table("Staffs")]
+public class StaffDO
 {
     [Key] [MaxLength(10)] public string UserId { get; set; } = "";
 
@@ -18,16 +20,16 @@ public class StaffModel
     [MaxLength(20)]
     public string Identity { get; set; } = "Member";
 
-    public DepartmentModel? Department { get; set; }
+    public DepartmentDO? Department { get; set; }
 
-    public List<ProjectModel> Projects { get; set; } = [];
-    public List<TaskModel> Tasks { get; set; } = [];
+    public List<ProjectDO> Projects { get; set; } = [];
+    public List<TaskDO> Tasks { get; set; } = [];
 
-    public StaffModel OutputWhenOtherList()
+    public StaffDO OutputWhenOtherList()
     {
         Department = Department == null
             ? null
-            : new DepartmentModel()
+            : new DepartmentDO()
             {
                 Key = Department.Key,
                 Name = Department.Name,

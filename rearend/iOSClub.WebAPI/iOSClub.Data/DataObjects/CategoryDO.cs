@@ -1,8 +1,10 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
-namespace iOSClub.Data.DataModels;
+namespace iOSClub.Data.DataObjects;
 
-public class CategoryModel : DataModel
+[Table("Categories")]
+public class CategoryDO : DataObject
 {
     /// <summary>
     /// 分类ID
@@ -32,5 +34,5 @@ public class CategoryModel : DataModel
     /// <summary>
     /// 分类下的文章
     /// </summary>
-    public ICollection<ArticleModel> Articles { get; set; } = new List<ArticleModel>();
+    public ICollection<ArticleDO> Articles { get; set; } = new List<ArticleDO>();
 }

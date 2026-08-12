@@ -1,4 +1,4 @@
-﻿namespace iOSClub.Data.DataModels;
+namespace iOSClub.Data.DataObjects;
 
 public interface ITodo
 {

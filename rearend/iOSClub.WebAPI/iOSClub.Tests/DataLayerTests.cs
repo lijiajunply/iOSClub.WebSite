@@ -1,5 +1,5 @@
 using iOSClub.Data;
-using iOSClub.Data.DataModels;
+using iOSClub.Data.DataObjects;
 using Microsoft.EntityFrameworkCore;
 
 namespace iOSClub.Tests;

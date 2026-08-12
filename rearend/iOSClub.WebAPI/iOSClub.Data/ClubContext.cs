@@ -1,7 +1,7 @@
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
-using iOSClub.Data.DataModels;
+using iOSClub.Data.DataObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 
@@ -9,43 +9,43 @@ namespace iOSClub.Data;
 
 public sealed class ClubContext(DbContextOptions<ClubContext> options) : DbContext(options)
 {
-    public DbSet<StudentModel> Students { get; init; }
-    public DbSet<StaffModel> Staffs { get; init; }
-    public DbSet<TaskModel> Tasks { get; init; }
-    public DbSet<TodoModel> Todos { get; init; }
-    public DbSet<ProjectModel> Projects { get; init; }
-    public DbSet<ResourceModel> Resources { get; init; }
-    public DbSet<DepartmentModel> Departments { get; init; }
-    public DbSet<ArticleModel> Articles { get; init; }
-    public DbSet<CategoryModel> Categories { get; init; }
-    public DbSet<ClientApplication> ClientApplications { get; init; }
+    public DbSet<StudentDO> Students { get; init; }
+    public DbSet<StaffDO> Staffs { get; init; }
+    public DbSet<TaskDO> Tasks { get; init; }
+    public DbSet<TodoDO> Todos { get; init; }
+    public DbSet<ProjectDO> Projects { get; init; }
+    public DbSet<ResourceDO> Resources { get; init; }
+    public DbSet<DepartmentDO> Departments { get; init; }
+    public DbSet<ArticleDO> Articles { get; init; }
+    public DbSet<CategoryDO> Categories { get; init; }
+    public DbSet<ClientApplicationDO> ClientApplications { get; init; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<TodoModel>()
+        modelBuilder.Entity<TodoDO>()
             .HasOne(x => x.Student).WithMany()
             .HasForeignKey(e => e.StudentId)
             .IsRequired();
 
-        modelBuilder.Entity<StaffModel>()
+        modelBuilder.Entity<StaffDO>()
             .HasMany(x => x.Tasks)
             .WithMany(x => x.Users);
 
-        modelBuilder.Entity<StaffModel>()
+        modelBuilder.Entity<StaffDO>()
             .HasMany(x => x.Projects)
             .WithMany(x => x.Staffs);
 
-        modelBuilder.Entity<DepartmentModel>()
+        modelBuilder.Entity<DepartmentDO>()
             .HasMany(x => x.Staffs)
             .WithOne(x => x.Department)
             .IsRequired(false);
 
-        modelBuilder.Entity<DepartmentModel>()
+        modelBuilder.Entity<DepartmentDO>()
             .HasMany(x => x.Projects)
             .WithOne(x => x.Department)
             .IsRequired(false);
 
-        modelBuilder.Entity<CategoryModel>()
+        modelBuilder.Entity<CategoryDO>()
             .HasMany(x => x.Articles)
             .WithOne(x => x.Category)
             .HasForeignKey(x => x.CategoryId)
@@ -54,32 +54,32 @@ public sealed class ClubContext(DbContextOptions<ClubContext> options) : DbConte
 
         // 为频繁用于查询条件的字段添加索引，提高查询效率
 
-        // StudentModel 索引
-        modelBuilder.Entity<StudentModel>()
+        // StudentDO 索引
+        modelBuilder.Entity<StudentDO>()
             .HasIndex(s => s.UserId) // 主键索引，通常自动创建，但显式指定更清晰
             .IsUnique();
-        modelBuilder.Entity<StudentModel>()
+        modelBuilder.Entity<StudentDO>()
             .HasIndex(s => s.JoinTime); // 用于统计和时间范围查询
-        modelBuilder.Entity<StudentModel>()
+        modelBuilder.Entity<StudentDO>()
             .HasIndex(s => s.Academy); // 用于学院统计和过滤
-        modelBuilder.Entity<StudentModel>()
+        modelBuilder.Entity<StudentDO>()
             .HasIndex(s => s.UserName); // 用于用户名搜索
-        modelBuilder.Entity<StudentModel>()
+        modelBuilder.Entity<StudentDO>()
             .HasIndex(s => s.ClassName); // 用于班级搜索和过滤
-        modelBuilder.Entity<StudentModel>()
+        modelBuilder.Entity<StudentDO>()
             .HasIndex(s => s.PhoneNum); // 用于电话号码搜索
-        modelBuilder.Entity<StudentModel>()
+        modelBuilder.Entity<StudentDO>()
             .HasIndex(s => s.PoliticalLandscape); // 用于政治面貌统计
 
-        // StaffModel 索引
-        modelBuilder.Entity<StaffModel>()
-            .HasIndex(s => s.UserId) // 主键索引，同时用于与StudentModel的连接查询
+        // StaffDO 索引
+        modelBuilder.Entity<StaffDO>()
+            .HasIndex(s => s.UserId) // 主键索引，同时用于与StudentDO的连接查询
             .IsUnique();
-        modelBuilder.Entity<StaffModel>()
+        modelBuilder.Entity<StaffDO>()
             .HasIndex(s => s.Identity); // 用于身份过滤
 
-        // ArticleModel 索引
-        modelBuilder.Entity<ArticleModel>()
+        // ArticleDO 索引
+        modelBuilder.Entity<ArticleDO>()
             .HasIndex(a => a.CategoryId); // 用于按分类查询
     }
 }
@@ -178,10 +178,4 @@ public static class DataTool
     {
         return modelPasswordHash.Length >= 32;
     }
-}
-
-public abstract class DataModel
-{
-    public override string ToString() => $"{GetType()} : {DataTool.GetProperties(this)}; Guid: {Guid.NewGuid():N}";
-    public string GetHashKey() => DataTool.ToMd5Hash(ToString());
 }

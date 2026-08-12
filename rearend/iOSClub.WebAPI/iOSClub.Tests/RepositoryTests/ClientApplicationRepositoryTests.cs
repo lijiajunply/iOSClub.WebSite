@@ -1,5 +1,5 @@
 using iOSClub.Data;
-using iOSClub.Data.DataModels;
+using iOSClub.Data.DataObjects;
 using iOSClub.DataApi.Repositories;
 using Microsoft.EntityFrameworkCore;
 
@@ -43,7 +43,7 @@ public class ClientApplicationRepositoryTests
     }
 
     [Fact]
-    public async Task GetByClientIdAsync_ReturnsCorrectClientApplication()
+    public async Task GetByClientIdAsync_ReturnsCorrectClientApplicationDO()
     {
         // Arrange
         await using var context = new ClubContext(_options);
@@ -64,7 +64,7 @@ public class ClientApplicationRepositoryTests
     }
 
     [Fact]
-    public async Task CreateAsync_CreatesNewClientApplication()
+    public async Task CreateAsync_CreatesNewClientApplicationDO()
     {
         // Arrange
         await using var context = new ClubContext(_options);
@@ -88,7 +88,7 @@ public class ClientApplicationRepositoryTests
     }
 
     [Fact]
-    public async Task UpdateAsync_UpdatesExistingClientApplication()
+    public async Task UpdateAsync_UpdatesExistingClientApplicationDO()
     {
         // Arrange
         await using var context = new ClubContext(_options);
@@ -119,7 +119,7 @@ public class ClientApplicationRepositoryTests
     }
 
     [Fact]
-    public async Task DeleteAsync_RemovesClientApplication()
+    public async Task DeleteAsync_RemovesClientApplicationDO()
     {
         // Arrange
         await using var context = new ClubContext(_options);
