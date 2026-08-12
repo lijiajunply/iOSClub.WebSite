@@ -22,7 +22,7 @@ public class ClientApplicationRepositoryTests
     }
 
     [Fact]
-    public async Task GetAllAsync_ReturnsAllClientApplications()
+    public async Task GetAllAsync_ReturnsAllClientApplicationDO()
     {
         // Arrange
         await using var context = new ClubContext(_options);
@@ -144,7 +144,7 @@ public class ClientApplicationRepositoryTests
     }
 
     [Fact]
-    public async Task ValidateCredentialsAsync_ReturnsClientApplication_WhenCredentialsAreValid()
+    public async Task ValidateCredentialsAsync_ReturnsClientApplicationDOWhenCredentialsAreValid()
     {
         // Arrange
         await using var context = new ClubContext(_options);
@@ -187,7 +187,7 @@ public class ClientApplicationRepositoryTests
     }
 
     [Fact]
-    public async Task GetByRedirectUriAsync_ReturnsClientApplication_WhenRedirectUriExists()
+    public async Task GetByRedirectUriAsync_ReturnsClientApplicationDOWhenRedirectUriExists()
     {
         // Arrange
         await using var context = new ClubContext(_options);

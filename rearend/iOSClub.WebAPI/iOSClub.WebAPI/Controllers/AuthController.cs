@@ -26,11 +26,11 @@ public class AuthController(
     /// <param name="model">学生注册信息模型</param>
     /// <returns>成功返回JWT令牌，失败返回相应的错误信息</returns>
     [HttpPost("signup")]
-    public async Task<ActionResult<ApiResponse<string>>> SignUp(StudentDO model)
+    public async Task<ActionResult<ApiResponse<string>>> SignUp(StudentCreateDTO dto)
     {
         try
         {
-            var createdStudent = await studentRepository.Create(model);
+            var createdStudent = await studentRepository.Create(dto.Adapt<StudentDO>());
 
             if (createdStudent == null)
             {

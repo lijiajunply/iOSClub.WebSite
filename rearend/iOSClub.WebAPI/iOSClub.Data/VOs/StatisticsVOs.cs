@@ -1,31 +1,12 @@
 namespace iOSClub.Data.VOs;
 
-/// <summary>
-/// 用于存储年度统计数据的记录类型
-/// </summary>
 [Serializable]
-public record YearCountVO(string Year, int Value);
-
-/// <summary>
-/// 用于存储学院统计数据的记录类型
-/// </summary>
+public class YearCountVO { public string Year { get; set; } = ""; public int Value { get; set; } }
 [Serializable]
-public record AcademyCountVO(string Type, int Value);
-
-/// <summary>
-/// 用于存储年级统计数据的记录类型
-/// </summary>
+public class AcademyCountVO { public string Type { get; set; } = ""; public int Value { get; set; } }
 [Serializable]
-public record GradeCountVO(string Grade, int Value);
-
-/// <summary>
-/// 用于存储政治面貌统计数据的记录类型
-/// </summary>
+public class GradeCountVO { public string Grade { get; set; } = ""; public int Value { get; set; } }
 [Serializable]
-public record LandscapeCountVO(string Type, int Value);
-
-/// <summary>
-/// 用于存储性别统计数据的记录类型
-/// </summary>
+public class LandscapeCountVO { public string Type { get; set; } = ""; public int Value { get; set; } }
 [Serializable]
-public record GenderCountVO(string Type, int Value);
+public class GenderCountVO { public string Type { get; set; } = ""; public int Value { get; set; } }

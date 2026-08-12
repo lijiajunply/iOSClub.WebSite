@@ -1,4 +1,7 @@
+using Mapster;
 using iOSClub.Data.DataObjects;
+using iOSClub.Data.DTOs;
+using iOSClub.Data.VOs;
 using iOSClub.DataApi.Repositories;
 using iOSClub.WebAPI.Common;
 using iOSClub.WebAPI.IdentityModels;
@@ -20,12 +23,12 @@ public class ArticleController(
     /// </summary>
     [Authorize(Roles = "Founder,President,Minister,Department")]
     [HttpGet]
-    public async Task<ActionResult<ApiResponse<IEnumerable<ArticleDO>>>> GetArticles()
+    public async Task<ActionResult<ApiResponse<IEnumerable<ArticleListItemVO>>>> GetArticles()
     {
         try
         {
             var articles = await articleRepository.GetAll();
-            return Ok(ApiResponse<IEnumerable<ArticleDO>>.Success(articles.OrderByDescending(x => x.LastWriteTime)));
+            return Ok(ApiResponse<IEnumerable<ArticleListItemVO>>.Success(articles.Adapt<List<ArticleListItemVO>>().OrderByDescending(x => x.LastWriteTime)));
         }
         catch (Exception ex)
         {
@@ -34,7 +37,7 @@ public class ArticleController(
                 logger.LogInformation(ex, "获取文章列表时发生错误");
             }
 
-            return Ok(ApiResponse<IEnumerable<ArticleDO>>.Fail(ErrorCode.InternalServerError, "获取文章列表失败"));
+            return Ok(ApiResponse<IEnumerable<ArticleListItemVO>>.Fail(ErrorCode.InternalServerError, "获取文章列表失败"));
         }
     }
 
@@ -42,11 +45,11 @@ public class ArticleController(
     /// 根据路径获取文章（公开访问）
     /// </summary>
     [HttpGet("{path}")]
-    public async Task<ActionResult<ApiResponse<ArticleDO>>> GetArticle(string path)
+    public async Task<ActionResult<ApiResponse<ArticleVO>>> GetArticle(string path)
     {
         if (string.IsNullOrWhiteSpace(path))
         {
-            return Ok(ApiResponse<ArticleDO>.Fail(ErrorCode.ParameterEmpty, "路径不能为空"));
+            return Ok(ApiResponse<ArticleVO>.Fail(ErrorCode.ParameterEmpty, "路径不能为空"));
         }
 
         try
@@ -57,8 +60,8 @@ public class ArticleController(
 
             var article = await articleRepository.GetFromPath(path, userIdentity);
             return Ok(article == null
-                ? ApiResponse<ArticleDO>.Fail(ErrorCode.ArticleNotFound, $"未找到路径为 '{path}' 的文章")
-                : ApiResponse<ArticleDO>.Success(article));
+                ? ApiResponse<ArticleVO>.Fail(ErrorCode.ArticleNotFound, $"未找到路径为 '{path}' 的文章")
+                : ApiResponse<ArticleVO>.Success(article.Adapt<ArticleVO>()));
         }
         catch (Exception ex)
         {
@@ -67,7 +70,7 @@ public class ArticleController(
                 logger.LogInformation(ex, "获取文章时发生错误，路径: {Path}", path);
             }
 
-            return Ok(ApiResponse<ArticleDO>.Fail(ErrorCode.InternalServerError, "获取文章失败"));
+            return Ok(ApiResponse<ArticleVO>.Fail(ErrorCode.InternalServerError, "获取文章失败"));
         }
     }
 
@@ -76,7 +79,7 @@ public class ArticleController(
     /// </summary>
     [Authorize(Roles = "Founder,President,Minister,Department")]
     [HttpPost]
-    public async Task<ActionResult<ApiResponse<ArticleDO>>> CreateArticle([FromBody] ArticleCreateDto createDto)
+    public async Task<ActionResult<ApiResponse<ArticleVO>>> CreateArticle([FromBody] ArticleCreateDTO createDto)
     {
         try
         {
@@ -85,14 +88,14 @@ public class ArticleController(
             if (!Validator.TryValidateObject(createDto, new ValidationContext(createDto), validationResults, true))
             {
                 var errorMessage = string.Join(", ", validationResults.Select(v => v.ErrorMessage));
-                return Ok(ApiResponse<ArticleDO>.Fail(ErrorCode.ParameterValidationFailed, errorMessage));
+                return Ok(ApiResponse<ArticleVO>.Fail(ErrorCode.ParameterValidationFailed, errorMessage));
             }
 
             // 检查路径是否已存在
             var existingArticle = await articleRepository.GetFromPath(createDto.Path);
             if (existingArticle != null)
             {
-                return Ok(ApiResponse<ArticleDO>.Fail(ErrorCode.ResourceAlreadyExists,
+                return Ok(ApiResponse<ArticleVO>.Fail(ErrorCode.ResourceAlreadyExists,
                     $"路径 '{createDto.Path}' 已存在"));
             }
 
@@ -112,17 +115,17 @@ public class ArticleController(
             var success = await articleRepository.CreateOrUpdate(articleModel);
             if (!success)
             {
-                return Ok(ApiResponse<ArticleDO>.Fail(ErrorCode.OperationFailed, "创建文章失败"));
+                return Ok(ApiResponse<ArticleVO>.Fail(ErrorCode.OperationFailed, "创建文章失败"));
             }
 
             var createdArticle = await articleRepository.GetFromPath(createDto.Path);
             if (createdArticle == null)
             {
-                return Ok(ApiResponse<ArticleDO>.Fail(ErrorCode.InternalServerError, "创建文章成功，但获取文章失败"));
+                return Ok(ApiResponse<ArticleVO>.Fail(ErrorCode.InternalServerError, "创建文章成功，但获取文章失败"));
             }
 
             return CreatedAtAction(nameof(GetArticle), new { path = createDto.Path },
-                ApiResponse<ArticleDO>.Success(createdArticle, "文章创建成功"));
+                ApiResponse<ArticleVO>.Success(createdArticle.Adapt<ArticleVO>(), "文章创建成功"));
         }
         catch (Exception ex)
         {
@@ -131,7 +134,7 @@ public class ArticleController(
                 logger.LogInformation(ex, "创建文章时发生错误");
             }
 
-            return Ok(ApiResponse<ArticleDO>.Fail(ErrorCode.InternalServerError, "创建文章失败"));
+            return Ok(ApiResponse<ArticleVO>.Fail(ErrorCode.InternalServerError, "创建文章失败"));
         }
     }
 
@@ -140,7 +143,7 @@ public class ArticleController(
     /// </summary>
     [Authorize(Roles = "Founder,President,Minister,Department")]
     [HttpPost("update/{path}")]
-    public async Task<ActionResult<ApiResponse>> UpdateArticle(string path, [FromBody] ArticleUpdateDto updateDto)
+    public async Task<ActionResult<ApiResponse>> UpdateArticle(string path, [FromBody] ArticleUpdateDTO updateDto)
     {
         try
         {
@@ -321,53 +324,4 @@ public class ArticleController(
             return Ok(ApiResponse.Fail(ErrorCode.InternalServerError, "文章顺序更新失败"));
         }
     }
-}
-
-// 创建文章的DTO
-[Serializable]
-public class ArticleCreateDto(string? identity)
-{
-    [Required(ErrorMessage = "文章路径是必需的")]
-    [StringLength(128, ErrorMessage = "路径长度不能超过128个字符")]
-    [RegularExpression("^[a-zA-Z0-9_-]+$", ErrorMessage = "路径只能包含字母、数字、下划线和连字符")]
-    public string Path { get; set; } = "";
-
-    [Required(ErrorMessage = "文章标题是必需的")]
-    [StringLength(100, ErrorMessage = "标题长度不能超过100个字符")]
-    public string Title { get; set; } = "";
-
-    [Required(ErrorMessage = "文章内容是必需的")]
-    [MinLength(10, ErrorMessage = "内容至少需要10个字符")]
-    public string Content { get; set; } = "";
-
-    [StringLength(20, ErrorMessage = "身份标识长度不能超过20个字符")]
-    public string? Identity { get; set; } = identity;
-
-    [StringLength(128, ErrorMessage = "分类长度不能超过128个字符")]
-    public string? Category { get; set; }
-
-    [Range(0, 1000, ErrorMessage = "文章排序值必须在0-1000之间")]
-    public int ArticleOrder { get; set; } = 0;
-}
-
-// 更新文章的DTO
-[Serializable]
-public class ArticleUpdateDto
-{
-    [Required(ErrorMessage = "文章标题是必需的")]
-    [StringLength(100, ErrorMessage = "标题长度不能超过100个字符")]
-    public string Title { get; set; } = "";
-
-    [Required(ErrorMessage = "文章内容是必需的")]
-    [MinLength(10, ErrorMessage = "内容至少需要10个字符")]
-    public string Content { get; set; } = "";
-
-    [StringLength(20, ErrorMessage = "身份标识长度不能超过20个字符")]
-    public string? Identity { get; set; }
-
-    [StringLength(128, ErrorMessage = "分类长度不能超过128个字符")]
-    public string? Category { get; set; }
-
-    [Range(0, 1000, ErrorMessage = "文章排序值必须在0-1000之间")]
-    public int ArticleOrder { get; set; } = 0;
 }

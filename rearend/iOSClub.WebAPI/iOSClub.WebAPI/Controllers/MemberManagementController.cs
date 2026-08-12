@@ -1,5 +1,8 @@
+using Mapster;
 using iOSClub.Data;
 using iOSClub.Data.DataObjects;
+using iOSClub.Data.DTOs;
+using iOSClub.Data.VOs;
 using iOSClub.DataApi.Repositories;
 using iOSClub.WebAPI.Common;
 using Microsoft.AspNetCore.Authorization;
@@ -62,11 +65,12 @@ public class MemberManagementController(
     /// <param name="list">学生列表</param>
     /// <returns>更新后的学生列表</returns>
     [HttpPost("update-many")]
-    public async Task<ActionResult<ApiResponse<bool>>> UpdateMany(List<StudentDO> list)
+    public async Task<ActionResult<ApiResponse<bool>>> UpdateMany(List<StudentUpdateDTO> list)
     {
         try
         {
-            var result = await studentRepository.UpdateManyAsync(list);
+            var doList = list.Adapt<List<StudentDO>>();
+            var result = await studentRepository.UpdateManyAsync(doList);
             if (result)
             {
                 if (logger.IsEnabled(LogLevel.Information))
@@ -103,11 +107,11 @@ public class MemberManagementController(
     /// <param name="model">成员模型</param>
     /// <returns>操作结果</returns>
     [HttpPost("update")]
-    public async Task<ActionResult<ApiResponse<object>>> Update([FromBody] StudentDO model)
+    public async Task<ActionResult<ApiResponse<object>>> Update([FromBody] StudentUpdateDTO model)
     {
         try
         {
-            var result = await studentRepository.UpdateAsync(model);
+            var result = await studentRepository.UpdateAsync(model.Adapt<StudentDO>());
             if (!result)
             {
                 if (logger.IsEnabled(LogLevel.Information))

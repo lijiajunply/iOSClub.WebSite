@@ -1,4 +1,7 @@
+using Mapster;
 using iOSClub.Data.DataObjects;
+using iOSClub.Data.DTOs;
+using iOSClub.Data.VOs;
 using iOSClub.DataApi.Repositories;
 using iOSClub.WebAPI.Common;
 using Microsoft.AspNetCore.Authorization;
@@ -16,12 +19,12 @@ public class CategoryController(ICategoryRepository categoryRepository, ILogger<
     /// 获取所有分类（公开访问）
     /// </summary>
     [HttpGet("all")]
-    public async Task<ActionResult<ApiResponse<IEnumerable<CategoryDO>>>> GetAllCategories()
+    public async Task<ActionResult<ApiResponse<IEnumerable<CategoryVO>>>> GetAllCategories()
     {
         try
         {
             var categories = await categoryRepository.GetAll();
-            return Ok(ApiResponse<IEnumerable<CategoryDO>>.Success(categories));
+            return Ok(ApiResponse<IEnumerable<CategoryVO>>.Success(categories.Adapt<List<CategoryVO>>()));
         }
         catch (Exception ex)
         {
@@ -29,7 +32,7 @@ public class CategoryController(ICategoryRepository categoryRepository, ILogger<
             {
                 logger.LogInformation(ex, "获取分类列表时发生错误");
             }
-            return Ok(ApiResponse<IEnumerable<CategoryDO>>.Fail(ErrorCode.InternalServerError, "获取分类列表失败"));
+            return Ok(ApiResponse<IEnumerable<CategoryVO>>.Fail(ErrorCode.InternalServerError, "获取分类列表失败"));
         }
     }
 
@@ -37,11 +40,11 @@ public class CategoryController(ICategoryRepository categoryRepository, ILogger<
     /// 根据名称获取分类（公开访问）
     /// </summary>
     [HttpGet("{name}")]
-    public async Task<ActionResult<ApiResponse<CategoryDO>>> GetCategory(string name)
+    public async Task<ActionResult<ApiResponse<CategoryVO>>> GetCategory(string name)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
-            return Ok(ApiResponse<CategoryDO>.Fail(ErrorCode.ParameterEmpty, "分类名称不能为空"));
+            return Ok(ApiResponse<CategoryVO>.Fail(ErrorCode.ParameterEmpty, "分类名称不能为空"));
         }
 
         try
@@ -49,10 +52,10 @@ public class CategoryController(ICategoryRepository categoryRepository, ILogger<
             var category = await categoryRepository.GetByName(name);
             if (category == null)
             {
-                return Ok(ApiResponse<CategoryDO>.Fail(ErrorCode.CategoryNotFound, $"未找到名称为 '{name}' 的分类"));
+                return Ok(ApiResponse<CategoryVO>.Fail(ErrorCode.CategoryNotFound, $"未找到名称为 '{name}' 的分类"));
             }
 
-            return Ok(ApiResponse<CategoryDO>.Success(category));
+            return Ok(ApiResponse<CategoryVO>.Success(category.Adapt<CategoryVO>()));
         }
         catch (Exception ex)
         {
@@ -60,22 +63,22 @@ public class CategoryController(ICategoryRepository categoryRepository, ILogger<
             {
                 logger.LogInformation(ex, "获取分类时发生错误，名称: {Name}", name);
             }
-            return Ok(ApiResponse<CategoryDO>.Fail(ErrorCode.InternalServerError, "获取分类失败"));
+            return Ok(ApiResponse<CategoryVO>.Fail(ErrorCode.InternalServerError, "获取分类失败"));
         }
     }
 
     [HttpGet("byId/{id}")]
-    public async Task<ActionResult<ApiResponse<CategoryDO>>> GetCategoryById(string id)
+    public async Task<ActionResult<ApiResponse<CategoryVO>>> GetCategoryById(string id)
     {
         try
         {
             var category = await categoryRepository.GetById(id);
             if (category == null)
             {
-                return Ok(ApiResponse<CategoryDO>.Fail(ErrorCode.CategoryNotFound, $"未找到ID为 '{id}' 的分类"));
+                return Ok(ApiResponse<CategoryVO>.Fail(ErrorCode.CategoryNotFound, $"未找到ID为 '{id}' 的分类"));
             }
 
-            return Ok(ApiResponse<CategoryDO>.Success(category));
+            return Ok(ApiResponse<CategoryVO>.Success(category.Adapt<CategoryVO>()));
         }
         catch (Exception ex)
         {
@@ -83,17 +86,17 @@ public class CategoryController(ICategoryRepository categoryRepository, ILogger<
             {
                 logger.LogInformation(ex, "获取分类时发生错误，ID: {Id}", id);
             }
-            return Ok(ApiResponse<CategoryDO>.Fail(ErrorCode.InternalServerError, "获取分类失败"));
+            return Ok(ApiResponse<CategoryVO>.Fail(ErrorCode.InternalServerError, "获取分类失败"));
         }
     }
-    
+
     [HttpGet("articles/{id}")]
-    public async Task<ActionResult<ApiResponse<IEnumerable<ArticleDO>>>> GetArticles(string id)
+    public async Task<ActionResult<ApiResponse<IEnumerable<ArticleListItemVO>>>> GetArticles(string id)
     {
         try
         {
             var articles = await categoryRepository.GetArticlesById(id);
-            return Ok(ApiResponse<IEnumerable<ArticleDO>>.Success(articles));
+            return Ok(ApiResponse<IEnumerable<ArticleListItemVO>>.Success(articles.Adapt<List<ArticleListItemVO>>()));
         }
         catch (Exception ex)
         {
@@ -101,7 +104,7 @@ public class CategoryController(ICategoryRepository categoryRepository, ILogger<
             {
                 logger.LogInformation(ex, "获取分类下的文章时发生错误，ID: {Id}", id);
             }
-            return Ok(ApiResponse<IEnumerable<ArticleDO>>.Fail(ErrorCode.InternalServerError, "获取分类下的文章失败"));
+            return Ok(ApiResponse<IEnumerable<ArticleListItemVO>>.Fail(ErrorCode.InternalServerError, "获取分类下的文章失败"));
         }
     }
 
@@ -110,19 +113,20 @@ public class CategoryController(ICategoryRepository categoryRepository, ILogger<
     /// </summary>
     [Authorize(Roles = "Founder, President")]
     [HttpPost("CreateOrUpdate")]
-    public async Task<ActionResult<ApiResponse<string>>> CreateOrUpdateCategory([FromBody] CategoryDO category)
+    public async Task<ActionResult<ApiResponse<string>>> CreateOrUpdateCategory([FromBody] CategoryCreateUpdateDTO dto)
     {
         try
         {
             // 数据验证
             var validationResults = new List<ValidationResult>();
-            if (!Validator.TryValidateObject(category, new ValidationContext(category), validationResults, true))
+            var entity = dto.Adapt<CategoryDO>();
+            if (!Validator.TryValidateObject(entity, new ValidationContext(entity), validationResults, true))
             {
                 var errorMessage = string.Join(", ", validationResults.Select(v => v.ErrorMessage));
                 return Ok(ApiResponse<string>.Fail(ErrorCode.ParameterValidationFailed, errorMessage));
             }
 
-            var result = await categoryRepository.CreateOrUpdate(category);
+            var result = await categoryRepository.CreateOrUpdate(entity);
             if (result)
             {
                 return Ok(ApiResponse<string>.Success("分类创建/更新成功"));

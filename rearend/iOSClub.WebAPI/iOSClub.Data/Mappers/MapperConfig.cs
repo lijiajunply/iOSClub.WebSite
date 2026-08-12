@@ -11,12 +11,9 @@ public static class MapperConfig
     {
         var config = TypeAdapterConfig.GlobalSettings;
 
-        // DO → VO 映射
-        config.NewConfig<StudentDO, StudentVO>()
-            .Ignore(dest => "PasswordHash");
-
-        config.NewConfig<StudentDO, MemberVO>()
-            .Ignore(dest => "PasswordHash");
+        // DO → VO 映射（VO不含PasswordHash/ClientSecret，Mapster自动跳过不存在的目标属性）
+        config.NewConfig<StudentDO, StudentVO>();
+        config.NewConfig<StudentDO, MemberVO>();
 
         config.NewConfig<StaffDO, StaffVO>()
             .Map(dest => dest.DepartmentName,
@@ -50,8 +47,7 @@ public static class MapperConfig
             .Map(dest => dest.StaffCount, src => src.Staffs.Count)
             .Map(dest => dest.ProjectCount, src => src.Projects.Count);
 
-        config.NewConfig<ClientApplicationDO, ClientAppVO>()
-            .Ignore(dest => "ClientSecret");
+        config.NewConfig<ClientApplicationDO, ClientAppVO>();
 
         config.NewConfig<ClientApplicationDO, ClientAppResultVO>()
             .Map(dest => dest.RedirectUris,
@@ -63,7 +59,6 @@ public static class MapperConfig
 
         config.NewConfig<DTOs.StudentUpdateDTO, StudentDO>()
             .Ignore(dest => dest.UserId)
-            .Ignore(dest => dest.PasswordHash)
             .Ignore(dest => dest.JoinTime);
 
         config.NewConfig<DTOs.StaffCreateDTO, StaffDO>()

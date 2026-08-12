@@ -4,6 +4,7 @@ namespace iOSClub.Data.DTOs;
 
 public class StudentUpdateDTO
 {
+    [MaxLength(10)] public string UserId { get; set; } = "";
     [MaxLength(50)] public string? UserName { get; set; }
     [MaxLength(50)] public string? Academy { get; set; }
     [MaxLength(10)] public string? PoliticalLandscape { get; set; }
