@@ -1,13 +1,12 @@
 using iOSClub.Data;
-using iOSClub.Data.DataModels;
-using iOSClub.Data.ShowModels;
+using iOSClub.Data.DTOs;
+using iOSClub.Data.VOs;
 using iOSClub.DataApi.Repositories;
 using iOSClub.DataApi.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 using Moq;
-using iOSClub.Tests;
 
 namespace iOSClub.Tests.IntegrationTests;
 
@@ -76,10 +75,10 @@ public class LoginIntegrationTests
         await context.Students.AddAsync(student);
         await context.SaveChangesAsync();
         
-        var loginModel = new LoginModel { UserId = student.UserId, Password = "password123" };
+        var loginModel = new LoginDTO { UserId = student.UserId, Password = "password123" };
         var expectedToken = "mock-jwt-token";
         
-        _tokenGeneratorMock.Setup(t => t.GetMemberToken(It.IsAny<MemberModel>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>())).Returns((expectedToken, "mock-refresh-token"));
+        _tokenGeneratorMock.Setup(t => t.GetMemberToken(It.IsAny<MemberVO>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>())).Returns((expectedToken, "mock-refresh-token"));
         
         // Act
         var result = await _loginService.Login(loginModel);
@@ -107,7 +106,7 @@ public class LoginIntegrationTests
         await context.Students.AddAsync(student);
         await context.SaveChangesAsync();
         
-        var loginModel = new LoginModel { UserId = student.UserId, Password = "wrongpassword" };
+        var loginModel = new LoginDTO { UserId = student.UserId, Password = "wrongpassword" };
         
         // Act
         var result = await _loginService.Login(loginModel);
@@ -141,10 +140,10 @@ public class LoginIntegrationTests
         await context.Staffs.AddAsync(staff);
         await context.SaveChangesAsync();
         
-        var loginModel = new LoginModel { UserId = student.UserId, Password = "password123" };
+        var loginModel = new LoginDTO { UserId = student.UserId, Password = "password123" };
         var expectedToken = "mock-jwt-token";
         
-        _tokenGeneratorMock.Setup(t => t.GetMemberToken(It.Is<MemberModel>(m => m.Identity == "President"), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>())).Returns((expectedToken, "mock-refresh-token"));
+        _tokenGeneratorMock.Setup(t => t.GetMemberToken(It.Is<MemberVO>(m => m.Identity == "President"), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>())).Returns((expectedToken, "mock-refresh-token"));
         
         // Act
         var result = await _loginService.Login(loginModel);
@@ -153,6 +152,6 @@ public class LoginIntegrationTests
         Assert.Equal(expectedToken, result);
         
         // 验证TokenGenerator使用了正确的Identity（President）
-        _tokenGeneratorMock.Verify(t => t.GetMemberToken(It.Is<MemberModel>(m => m.Identity == "President"), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+        _tokenGeneratorMock.Verify(t => t.GetMemberToken(It.Is<MemberVO>(m => m.Identity == "President"), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
     }
 }

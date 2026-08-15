@@ -1,5 +1,5 @@
 using iOSClub.Data;
-using iOSClub.Data.DataModels;
+using iOSClub.Data.DataObjects;
 using Microsoft.EntityFrameworkCore;
 
 namespace iOSClub.DataApi.Repositories;
@@ -13,21 +13,21 @@ public interface ICategoryRepository
     /// 获取所有分类
     /// </summary>
     /// <returns>分类列表</returns>
-    public Task<IEnumerable<CategoryModel>> GetAll();
+    public Task<IEnumerable<CategoryDO>> GetAll();
     
     /// <summary>
     /// 根据名称获取分类
     /// </summary>
     /// <param name="name">分类名称</param>
     /// <returns>分类模型，如果找不到则返回null</returns>
-    public Task<CategoryModel?> GetByName(string name);
+    public Task<CategoryDO?> GetByName(string name);
     
     /// <summary>
     /// 创建或更新分类
     /// </summary>
     /// <param name="model">分类模型</param>
     /// <returns>是否操作成功</returns>
-    public Task<bool> CreateOrUpdate(CategoryModel model);
+    public Task<bool> CreateOrUpdate(CategoryDO model);
     
     /// <summary>
     /// 删除分类
@@ -56,19 +56,19 @@ public interface ICategoryRepository
     /// </summary>
     /// <param name="id">分类ID</param>
     /// <returns>分类模型，如果找不到则返回null</returns>
-    Task<CategoryModel?> GetById(string id);
+    Task<CategoryDO?> GetById(string id);
     
     /// <summary>
     /// 根据分类ID获取文章列表
     /// </summary>
     /// <param name="id">分类ID</param>
     /// <returns>文章数组</returns>
-    public Task<ArticleModel[]> GetArticlesById(string id);
+    public Task<ArticleDO[]> GetArticlesById(string id);
 }
 
 public class CategoryRepository(IDbContextFactory<ClubContext> factory) : ICategoryRepository
 {
-    public async Task<IEnumerable<CategoryModel>> GetAll()
+    public async Task<IEnumerable<CategoryDO>> GetAll()
     {
         await using var context = await factory.CreateDbContextAsync();
         return await context.Categories
@@ -76,14 +76,14 @@ public class CategoryRepository(IDbContextFactory<ClubContext> factory) : ICateg
             .ToListAsync();
     }
 
-    public async Task<CategoryModel?> GetByName(string name)
+    public async Task<CategoryDO?> GetByName(string name)
     {
         await using var context = await factory.CreateDbContextAsync();
         return await context.Categories.Include(x => x.Articles)
             .FirstOrDefaultAsync(c => c.Name == name);
     }
 
-    public async Task<bool> CreateOrUpdate(CategoryModel model)
+    public async Task<bool> CreateOrUpdate(CategoryDO model)
     {
         await using var context = await factory.CreateDbContextAsync();
 
@@ -190,16 +190,16 @@ public class CategoryRepository(IDbContextFactory<ClubContext> factory) : ICateg
         }
     }
 
-    public async Task<CategoryModel?> GetById(string id)
+    public async Task<CategoryDO?> GetById(string id)
     {
         await using var context = await factory.CreateDbContextAsync();
         return await context.Categories.FirstOrDefaultAsync(c => c.Id == id);
     }
 
-    public async Task<ArticleModel[]> GetArticlesById(string id)
+    public async Task<ArticleDO[]> GetArticlesById(string id)
     {
         await using var context = await factory.CreateDbContextAsync();
-        return await context.Articles.Where(x => x.CategoryId == id).Select(x => new ArticleModel()
+        return await context.Articles.Where(x => x.CategoryId == id).Select(x => new ArticleDO()
             {
                 Path = x.Path,
                 Title = x.Title,

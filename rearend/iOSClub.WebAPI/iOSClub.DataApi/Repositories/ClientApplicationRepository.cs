@@ -1,5 +1,5 @@
 using iOSClub.Data;
-using iOSClub.Data.DataModels;
+using iOSClub.Data.DataObjects;
 using Microsoft.EntityFrameworkCore;
 
 namespace iOSClub.DataApi.Repositories;
@@ -10,35 +10,35 @@ public interface IClientApplicationRepository
     /// 获取所有客户端应用
     /// </summary>
     /// <returns>客户端应用列表</returns>
-    Task<IEnumerable<ClientApplication>> GetAllAsync();
+    Task<IEnumerable<ClientApplicationDO>> GetAllAsync();
 
     /// <summary>
     /// 根据客户端ID获取应用
     /// </summary>
     /// <param name="clientId">客户端ID</param>
     /// <returns>客户端应用</returns>
-    Task<ClientApplication?> GetByClientIdAsync(string clientId);
+    Task<ClientApplicationDO?> GetByClientIdAsync(string clientId);
 
     /// <summary>
     /// 根据重定向URI获取应用
     /// </summary>
     /// <param name="redirectUri">重定向Url</param>
     /// <returns></returns>
-    Task<ClientApplication?> GetByRedirectUriAsync(string redirectUri);
+    Task<ClientApplicationDO?> GetByRedirectUriAsync(string redirectUri);
 
     /// <summary>
     /// 创建新的客户端应用
     /// </summary>
     /// <param name="clientApplication">客户端应用</param>
     /// <returns>是否创建成功</returns>
-    Task<bool> CreateAsync(ClientApplication clientApplication);
+    Task<bool> CreateAsync(ClientApplicationDO clientApplication);
 
     /// <summary>
     /// 更新客户端应用
     /// </summary>
     /// <param name="clientApplication">客户端应用</param>
     /// <returns>是否更新成功</returns>
-    Task<bool> UpdateAsync(ClientApplication clientApplication);
+    Task<bool> UpdateAsync(ClientApplicationDO clientApplication);
 
     /// <summary>
     /// 删除客户端应用
@@ -53,30 +53,30 @@ public interface IClientApplicationRepository
     /// <param name="clientId">客户端ID</param>
     /// <param name="clientSecret">客户端密钥</param>
     /// <returns>客户端应用</returns>
-    Task<ClientApplication?> ValidateCredentialsAsync(string clientId, string clientSecret);
+    Task<ClientApplicationDO?> ValidateCredentialsAsync(string clientId, string clientSecret);
 }
 
 public class ClientApplicationRepository(IDbContextFactory<ClubContext> contextFactory) : IClientApplicationRepository
 {
-    public async Task<IEnumerable<ClientApplication>> GetAllAsync()
+    public async Task<IEnumerable<ClientApplicationDO>> GetAllAsync()
     {
         await using var context = await contextFactory.CreateDbContextAsync();
         return await context.ClientApplications.ToListAsync();
     }
 
-    public async Task<ClientApplication?> GetByClientIdAsync(string clientId)
+    public async Task<ClientApplicationDO?> GetByClientIdAsync(string clientId)
     {
         await using var context = await contextFactory.CreateDbContextAsync();
         return await context.ClientApplications.FirstOrDefaultAsync(c => c.ClientId == clientId);
     }
 
-    public async Task<ClientApplication?> GetByRedirectUriAsync(string redirectUri)
+    public async Task<ClientApplicationDO?> GetByRedirectUriAsync(string redirectUri)
     {
         await using var context = await contextFactory.CreateDbContextAsync();
         return await context.ClientApplications.FirstOrDefaultAsync(c => c.RedirectUris.Contains(redirectUri));
     }
 
-    public async Task<bool> CreateAsync(ClientApplication clientApplication)
+    public async Task<bool> CreateAsync(ClientApplicationDO clientApplication)
     {
         await using var context = await contextFactory.CreateDbContextAsync();
         // 对客户端密钥进行哈希处理后再存储
@@ -85,7 +85,7 @@ public class ClientApplicationRepository(IDbContextFactory<ClubContext> contextF
         return await context.SaveChangesAsync() > 0;
     }
 
-    public async Task<bool> UpdateAsync(ClientApplication clientApplication)
+    public async Task<bool> UpdateAsync(ClientApplicationDO clientApplication)
     {
         await using var context = await contextFactory.CreateDbContextAsync();
         // 检查客户端密钥是否需要重新哈希（如果提供了新密钥）
@@ -110,7 +110,7 @@ public class ClientApplicationRepository(IDbContextFactory<ClubContext> contextF
         return await context.SaveChangesAsync() > 0;
     }
 
-    public async Task<ClientApplication?> ValidateCredentialsAsync(string clientId, string clientSecret)
+    public async Task<ClientApplicationDO?> ValidateCredentialsAsync(string clientId, string clientSecret)
     {
         await using var context = await contextFactory.CreateDbContextAsync();
         var clientApplication =

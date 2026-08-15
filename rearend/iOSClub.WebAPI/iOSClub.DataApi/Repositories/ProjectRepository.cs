@@ -1,5 +1,5 @@
 using iOSClub.Data;
-using iOSClub.Data.DataModels;
+using iOSClub.Data.DataObjects;
 using Microsoft.EntityFrameworkCore;
 
 namespace iOSClub.DataApi.Repositories;
@@ -13,35 +13,35 @@ public interface IProjectRepository
     /// 获取所有项目
     /// </summary>
     /// <returns>项目列表</returns>
-    Task<List<ProjectModel>> GetAllProjectsAsync();
+    Task<List<ProjectDO>> GetAllProjectsAsync();
     
     /// <summary>
     /// 根据ID获取项目
     /// </summary>
     /// <param name="id">项目ID</param>
     /// <returns>项目模型，如果找不到则返回null</returns>
-    Task<ProjectModel?> GetProjectByIdAsync(string id);
+    Task<ProjectDO?> GetProjectByIdAsync(string id);
     
     /// <summary>
     /// 根据标题获取项目
     /// </summary>
     /// <param name="title">项目标题</param>
     /// <returns>项目模型，如果找不到则返回null</returns>
-    Task<ProjectModel?> GetProjectByTitleAsync(string title);
+    Task<ProjectDO?> GetProjectByTitleAsync(string title);
     
     /// <summary>
     /// 根据部门获取项目
     /// </summary>
     /// <param name="departmentName">部门名称</param>
     /// <returns>项目列表</returns>
-    Task<List<ProjectModel>> GetProjectsByDepartmentAsync(string departmentName);
+    Task<List<ProjectDO>> GetProjectsByDepartmentAsync(string departmentName);
     
     /// <summary>
     /// 根据成员获取项目
     /// </summary>
     /// <param name="userId">成员ID</param>
     /// <returns>项目列表</returns>
-    Task<List<ProjectModel>> GetProjectsByStaffAsync(string userId);
+    Task<List<ProjectDO>> GetProjectsByStaffAsync(string userId);
     
     /// <summary>
     /// 创建项目
@@ -49,14 +49,14 @@ public interface IProjectRepository
     /// <param name="project">项目模型</param>
     /// <param name="creator">创建者</param>
     /// <returns>创建的项目模型，如果创建失败则返回null</returns>
-    Task<ProjectModel?> CreateProjectAsync(ProjectModel project, StaffModel creator);
+    Task<ProjectDO?> CreateProjectAsync(ProjectDO project, StaffDO creator);
     
     /// <summary>
     /// 更新项目
     /// </summary>
     /// <param name="project">项目模型</param>
     /// <returns>是否更新成功</returns>
-    Task<bool> UpdateProjectAsync(ProjectModel project);
+    Task<bool> UpdateProjectAsync(ProjectDO project);
     
     /// <summary>
     /// 删除项目
@@ -93,14 +93,14 @@ public interface IProjectRepository
     /// </summary>
     /// <param name="projectId">项目ID</param>
     /// <returns>成员列表</returns>
-    Task<List<StaffModel>> GetProjectStaffsAsync(string projectId);
+    Task<List<StaffDO>> GetProjectStaffsAsync(string projectId);
     
     /// <summary>
     /// 获取项目任务列表
     /// </summary>
     /// <param name="projectId">项目ID</param>
     /// <returns>任务列表</returns>
-    Task<List<TaskModel>> GetProjectTasksAsync(string projectId);
+    Task<List<TaskDO>> GetProjectTasksAsync(string projectId);
     
     /// <summary>
     /// 检查用户是否有项目管理权限
@@ -116,14 +116,14 @@ public interface IProjectRepository
     /// <param name="startTime">开始时间</param>
     /// <param name="endTime">结束时间</param>
     /// <returns>项目列表</returns>
-    Task<List<ProjectModel>> GetProjectsByTimeRangeAsync(string? startTime, string? endTime);
+    Task<List<ProjectDO>> GetProjectsByTimeRangeAsync(string? startTime, string? endTime);
     
     /// <summary>
     /// 搜索项目
     /// </summary>
     /// <param name="searchTerm">搜索词</param>
     /// <returns>项目列表</returns>
-    Task<List<ProjectModel>> SearchProjectsAsync(string searchTerm);
+    Task<List<ProjectDO>> SearchProjectsAsync(string searchTerm);
 }
 
 public class ProjectRepository(IDbContextFactory<ClubContext> factory) : IProjectRepository
@@ -131,7 +131,7 @@ public class ProjectRepository(IDbContextFactory<ClubContext> factory) : IProjec
     /// <summary>
     /// 获取所有项目（包含关联数据）
     /// </summary>
-    public async Task<List<ProjectModel>> GetAllProjectsAsync()
+    public async Task<List<ProjectDO>> GetAllProjectsAsync()
     {
         await using var context = await factory.CreateDbContextAsync();
         return (await context.Projects
@@ -146,7 +146,7 @@ public class ProjectRepository(IDbContextFactory<ClubContext> factory) : IProjec
     /// <summary>
     /// 根据ID获取项目
     /// </summary>
-    public async Task<ProjectModel?> GetProjectByIdAsync(string id)
+    public async Task<ProjectDO?> GetProjectByIdAsync(string id)
     {
         await using var context = await factory.CreateDbContextAsync();
         var project = await context.Projects
@@ -160,7 +160,7 @@ public class ProjectRepository(IDbContextFactory<ClubContext> factory) : IProjec
     /// <summary>
     /// 根据标题获取项目
     /// </summary>
-    public async Task<ProjectModel?> GetProjectByTitleAsync(string title)
+    public async Task<ProjectDO?> GetProjectByTitleAsync(string title)
     {
         await using var context = await factory.CreateDbContextAsync();
         var project = await context.Projects
@@ -174,7 +174,7 @@ public class ProjectRepository(IDbContextFactory<ClubContext> factory) : IProjec
     /// <summary>
     /// 获取指定部门的所有项目
     /// </summary>
-    public async Task<List<ProjectModel>> GetProjectsByDepartmentAsync(string departmentName)
+    public async Task<List<ProjectDO>> GetProjectsByDepartmentAsync(string departmentName)
     {
         await using var context = await factory.CreateDbContextAsync();
         return (await context.Projects
@@ -190,7 +190,7 @@ public class ProjectRepository(IDbContextFactory<ClubContext> factory) : IProjec
     /// <summary>
     /// 获取指定成员参与的所有项目
     /// </summary>
-    public async Task<List<ProjectModel>> GetProjectsByStaffAsync(string userId)
+    public async Task<List<ProjectDO>> GetProjectsByStaffAsync(string userId)
     {
         await using var context = await factory.CreateDbContextAsync();
         return (await context.Projects
@@ -206,7 +206,7 @@ public class ProjectRepository(IDbContextFactory<ClubContext> factory) : IProjec
     /// <summary>
     /// 创建新项目
     /// </summary>
-    public async Task<ProjectModel?> CreateProjectAsync(ProjectModel project, StaffModel creator)
+    public async Task<ProjectDO?> CreateProjectAsync(ProjectDO project, StaffDO creator)
     {
         await using var context = await factory.CreateDbContextAsync();
         try
@@ -230,12 +230,12 @@ public class ProjectRepository(IDbContextFactory<ClubContext> factory) : IProjec
             var existingStaff = await context.Staffs.FindAsync(creator.UserId);
             if (existingStaff != null)
             {
-                // 如果存在，使用数据库中的 StaffModel
+                // 如果存在，使用数据库中的 StaffDO
                 project.Staffs.Add(existingStaff);
             }
             else
             {
-                // 如果不存在，添加新的 StaffModel
+                // 如果不存在，添加新的 StaffDO
                 project.Staffs.Add(creator);
             }
 
@@ -255,7 +255,7 @@ public class ProjectRepository(IDbContextFactory<ClubContext> factory) : IProjec
     /// <summary>
     /// 更新项目信息
     /// </summary>
-    public async Task<bool> UpdateProjectAsync(ProjectModel project)
+    public async Task<bool> UpdateProjectAsync(ProjectDO project)
     {
         await using var context = await factory.CreateDbContextAsync();
         try
@@ -376,7 +376,7 @@ public class ProjectRepository(IDbContextFactory<ClubContext> factory) : IProjec
     /// <summary>
     /// 获取项目的成员列表
     /// </summary>
-    public async Task<List<StaffModel>> GetProjectStaffsAsync(string projectId)
+    public async Task<List<StaffDO>> GetProjectStaffsAsync(string projectId)
     {
         await using var context = await factory.CreateDbContextAsync();
         return await context.Projects
@@ -388,7 +388,7 @@ public class ProjectRepository(IDbContextFactory<ClubContext> factory) : IProjec
     /// <summary>
     /// 获取项目的任务列表
     /// </summary>
-    public async Task<List<TaskModel>> GetProjectTasksAsync(string projectId)
+    public async Task<List<TaskDO>> GetProjectTasksAsync(string projectId)
     {
         await using var context = await factory.CreateDbContextAsync();
         return await context.Projects
@@ -423,7 +423,7 @@ public class ProjectRepository(IDbContextFactory<ClubContext> factory) : IProjec
     /// <summary>
     /// 根据时间范围获取项目
     /// </summary>
-    public async Task<List<ProjectModel>> GetProjectsByTimeRangeAsync(string? startTime, string? endTime)
+    public async Task<List<ProjectDO>> GetProjectsByTimeRangeAsync(string? startTime, string? endTime)
     {
         await using var context = await factory.CreateDbContextAsync();
         var query = context.Projects
@@ -448,7 +448,7 @@ public class ProjectRepository(IDbContextFactory<ClubContext> factory) : IProjec
     /// <summary>
     /// 搜索项目
     /// </summary>
-    public async Task<List<ProjectModel>> SearchProjectsAsync(string searchTerm)
+    public async Task<List<ProjectDO>> SearchProjectsAsync(string searchTerm)
     {
         await using var context = await factory.CreateDbContextAsync();
         return await context.Projects

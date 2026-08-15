@@ -1,5 +1,5 @@
 using iOSClub.Data;
-using iOSClub.Data.DataModels;
+using iOSClub.Data.DataObjects;
 using Microsoft.EntityFrameworkCore;
 
 namespace iOSClub.DataApi.Repositories;
@@ -13,35 +13,35 @@ public interface IDepartmentRepository
     /// 获取所有部门
     /// </summary>
     /// <returns>部门列表</returns>
-    Task<List<DepartmentModel>> GetAllDepartmentsAsync();
+    Task<List<DepartmentDO>> GetAllDepartmentsAsync();
     
     /// <summary>
     /// 根据名称获取部门
     /// </summary>
     /// <param name="name">部门名称</param>
     /// <returns>部门模型，如果找不到则返回null</returns>
-    Task<DepartmentModel?> GetDepartmentByNameAsync(string name);
+    Task<DepartmentDO?> GetDepartmentByNameAsync(string name);
     
     /// <summary>
     /// 根据Key获取部门
     /// </summary>
     /// <param name="key">部门Key</param>
     /// <returns>部门模型，如果找不到则返回null</returns>
-    Task<DepartmentModel?> GetDepartmentByKeyAsync(string key);
+    Task<DepartmentDO?> GetDepartmentByKeyAsync(string key);
     
     /// <summary>
     /// 添加部门
     /// </summary>
     /// <param name="department">部门模型</param>
     /// <returns>是否添加成功</returns>
-    Task<bool> AddDepartmentAsync(DepartmentModel department);
+    Task<bool> AddDepartmentAsync(DepartmentDO department);
     
     /// <summary>
     /// 更新部门
     /// </summary>
     /// <param name="department">部门模型</param>
     /// <returns>是否更新成功</returns>
-    Task<bool> UpdateDepartmentAsync(DepartmentModel department);
+    Task<bool> UpdateDepartmentAsync(DepartmentDO department);
     
     /// <summary>
     /// 删除部门
@@ -76,14 +76,14 @@ public interface IDepartmentRepository
     /// </summary>
     /// <param name="departmentName">部门名称</param>
     /// <returns>成员列表</returns>
-    Task<List<StaffModel>> GetDepartmentStaffsAsync(string departmentName);
+    Task<List<StaffDO>> GetDepartmentStaffsAsync(string departmentName);
     
     /// <summary>
     /// 获取部门项目列表
     /// </summary>
     /// <param name="departmentName">部门名称</param>
     /// <returns>项目列表</returns>
-    Task<List<ProjectModel>> GetDepartmentProjectsAsync(string departmentName);
+    Task<List<ProjectDO>> GetDepartmentProjectsAsync(string departmentName);
 }
 
 public class DepartmentRepository(IDbContextFactory<ClubContext> factory) : IDepartmentRepository
@@ -91,7 +91,7 @@ public class DepartmentRepository(IDbContextFactory<ClubContext> factory) : IDep
     /// <summary>
     /// 获取所有部门
     /// </summary>
-    public async Task<List<DepartmentModel>> GetAllDepartmentsAsync()
+    public async Task<List<DepartmentDO>> GetAllDepartmentsAsync()
     {
         await using var context = await factory.CreateDbContextAsync();
         return (await context.Departments
@@ -105,7 +105,7 @@ public class DepartmentRepository(IDbContextFactory<ClubContext> factory) : IDep
     /// <summary>
     /// 根据部门名称获取部门
     /// </summary>
-    public async Task<DepartmentModel?> GetDepartmentByNameAsync(string name)
+    public async Task<DepartmentDO?> GetDepartmentByNameAsync(string name)
     {
         await using var context = await factory.CreateDbContextAsync();
         var department = await context.Departments
@@ -118,7 +118,7 @@ public class DepartmentRepository(IDbContextFactory<ClubContext> factory) : IDep
     /// <summary>
     /// 根据部门Key获取部门
     /// </summary>
-    public async Task<DepartmentModel?> GetDepartmentByKeyAsync(string key)
+    public async Task<DepartmentDO?> GetDepartmentByKeyAsync(string key)
     {
         await using var context = await factory.CreateDbContextAsync();
         var department = await context.Departments
@@ -131,7 +131,7 @@ public class DepartmentRepository(IDbContextFactory<ClubContext> factory) : IDep
     /// <summary>
     /// 添加新部门
     /// </summary>
-    public async Task<bool> AddDepartmentAsync(DepartmentModel department)
+    public async Task<bool> AddDepartmentAsync(DepartmentDO department)
     {
         await using var context = await factory.CreateDbContextAsync();
         try
@@ -149,7 +149,7 @@ public class DepartmentRepository(IDbContextFactory<ClubContext> factory) : IDep
     /// <summary>
     /// 更新部门信息
     /// </summary>
-    public async Task<bool> UpdateDepartmentAsync(DepartmentModel department)
+    public async Task<bool> UpdateDepartmentAsync(DepartmentDO department)
     {
         await using var context = await factory.CreateDbContextAsync();
         try
@@ -222,7 +222,7 @@ public class DepartmentRepository(IDbContextFactory<ClubContext> factory) : IDep
     /// <summary>
     /// 获取指定部门的所有成员
     /// </summary>
-    public async Task<List<StaffModel>> GetDepartmentStaffsAsync(string departmentName)
+    public async Task<List<StaffDO>> GetDepartmentStaffsAsync(string departmentName)
     {
         await using var context = await factory.CreateDbContextAsync();
         return await context.Departments
@@ -234,7 +234,7 @@ public class DepartmentRepository(IDbContextFactory<ClubContext> factory) : IDep
     /// <summary>
     /// 获取指定部门的所有项目
     /// </summary>
-    public async Task<List<ProjectModel>> GetDepartmentProjectsAsync(string departmentName)
+    public async Task<List<ProjectDO>> GetDepartmentProjectsAsync(string departmentName)
     {
         await using var context = await factory.CreateDbContextAsync();
         return await context.Departments

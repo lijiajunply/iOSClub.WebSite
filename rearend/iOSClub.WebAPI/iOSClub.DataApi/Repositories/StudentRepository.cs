@@ -1,7 +1,8 @@
 using iOSClub.Data;
-using iOSClub.Data.DataModels;
-using iOSClub.Data.ShowModels;
+using iOSClub.Data.DataObjects;
+using iOSClub.Data.VOs;
 using Microsoft.EntityFrameworkCore;
+using ParadeDB.EntityFrameworkCore.Extensions;
 
 namespace iOSClub.DataApi.Repositories;
 
@@ -14,14 +15,14 @@ public interface IStudentRepository
     /// 获取所有学生
     /// </summary>
     /// <returns>学生列表</returns>
-    public Task<List<StudentModel>> GetAll();
+    public Task<List<StudentDO>> GetAll();
 
     /// <summary>
     /// 根据ID获取学生
     /// </summary>
     /// <param name="id">学生ID</param>
     /// <returns>学生模型，如果找不到则返回null</returns>
-    public Task<StudentModel?> Get(string id) => GetByIdAsync(id);
+    public Task<StudentDO?> Get(string id) => GetByIdAsync(id);
 
     /// <summary>
     /// 创建学生
@@ -29,14 +30,14 @@ public interface IStudentRepository
     /// <param name="model">学生模型</param>
     /// <returns>创建的学生模型，如果创建失败则返回null</returns>
     /// <exception cref="ArgumentException">当输入参数无效时抛出</exception>
-    public Task<StudentModel?> Create(StudentModel model);
+    public Task<StudentDO?> Create(StudentDO model);
 
     /// <summary>
     /// 更新学生
     /// </summary>
     /// <param name="model">学生模型</param>
     /// <returns>是否更新成功</returns>
-    public Task<bool> Update(StudentModel model);
+    public Task<bool> Update(StudentDO model);
 
     /// <summary>
     /// 删除学生
@@ -59,21 +60,21 @@ public interface IStudentRepository
     /// <param name="userId">学生ID</param>
     /// <param name="password">密码</param>
     /// <returns>学生模型，验证失败返回null</returns>
-    public Task<StudentModel?> LoginAndGetStudentAsync(string userId, string password);
+    public Task<StudentDO?> LoginAndGetStudentAsync(string userId, string password);
 
     /// <summary>
     /// 根据ID异步获取学生
     /// </summary>
     /// <param name="id">学生ID</param>
     /// <returns>学生模型，如果找不到则返回null</returns>
-    public Task<StudentModel?> GetByIdAsync(string id);
+    public Task<StudentDO?> GetByIdAsync(string id);
 
     /// <summary>
     /// 异步更新学生
     /// </summary>
     /// <param name="model">学生模型</param>
     /// <returns>是否更新成功</returns>
-    public Task<bool> UpdateAsync(StudentModel model);
+    public Task<bool> UpdateAsync(StudentDO model);
 
     /// <summary>
     /// 异步删除学生
@@ -87,13 +88,13 @@ public interface IStudentRepository
     /// </summary>
     /// <param name="list">学生列表</param>
     /// <returns>是否更新成功</returns>
-    public Task<bool> UpdateManyAsync(List<StudentModel> list);
+    public Task<bool> UpdateManyAsync(List<StudentDO> list);
 
     /// <summary>
     /// 异步获取所有成员
     /// </summary>
     /// <returns>成员列表</returns>
-    public Task<List<MemberModel>> GetAllMembersAsync();
+    public Task<List<MemberVO>> GetAllMembersAsync();
 
     /// <summary>
     /// 异步分页获取成员
@@ -101,7 +102,7 @@ public interface IStudentRepository
     /// <param name="pageNum">页码</param>
     /// <param name="pageSize">每页大小</param>
     /// <returns>成员列表和总记录数</returns>
-    public Task<(List<MemberModel>, int)> GetMembersPagedAsync(int pageNum, int pageSize);
+    public Task<(List<MemberVO>, int)> GetMembersPagedAsync(int pageNum, int pageSize);
 
     /// <summary>
     /// 带搜索功能的异步分页获取成员
@@ -111,7 +112,7 @@ public interface IStudentRepository
     /// <param name="searchTerm">搜索词</param>
     /// <param name="searchCondition">搜索条件</param>
     /// <returns>成员列表和总记录数</returns>
-    public Task<(List<MemberModel>, int)> GetMembersPagedAsync(int pageNum, int pageSize, string? searchTerm,
+    public Task<(List<MemberVO>, int)> GetMembersPagedAsync(int pageNum, int pageSize, string? searchTerm,
         string? searchCondition);
 
     /// <summary>
@@ -120,35 +121,35 @@ public interface IStudentRepository
     /// <param name="searchTerm">搜索词</param>
     /// <param name="searchCondition">搜索条件</param>
     /// <returns>学生列表</returns>
-    public Task<List<StudentModel>> Search(string searchTerm, string searchCondition);
+    public Task<List<StudentDO>> Search(string searchTerm, string searchCondition);
 }
 
 public class StudentRepository(IDbContextFactory<ClubContext> factory) : IStudentRepository
 {
     // 使用EF Core编译查询，缓存查询计划，提高重复查询性能
-    private static readonly Func<ClubContext, string, Task<StudentModel?>> GetStudentByIdQuery =
+    private static readonly Func<ClubContext, string, Task<StudentDO?>> GetStudentByIdQuery =
         EF.CompileAsyncQuery((ClubContext context, string id) =>
             context.Students.AsNoTracking().FirstOrDefault(s => s.UserId == id));
 
-    private static readonly Func<ClubContext, string, Task<StudentModel?>> LoginQuery =
+    private static readonly Func<ClubContext, string, Task<StudentDO?>> LoginQuery =
         EF.CompileAsyncQuery((ClubContext context, string userId) =>
             context.Students.AsNoTracking()
                 .FirstOrDefault(s => s.UserId == userId));
 
-    public async Task<List<StudentModel>> GetAll()
+    public async Task<List<StudentDO>> GetAll()
     {
         await using var context = await factory.CreateDbContextAsync();
         var students = await context.Students.AsNoTracking().ToListAsync();
         return students;
     }
 
-    public async Task<StudentModel?> GetByIdAsync(string id)
+    public async Task<StudentDO?> GetByIdAsync(string id)
     {
         await using var context = await factory.CreateDbContextAsync();
         return await GetStudentByIdQuery(context, id);
     }
 
-    public async Task<bool> Update(StudentModel model)
+    public async Task<bool> Update(StudentDO model)
     {
         // 输入验证
         if (string.IsNullOrWhiteSpace(model.UserId))
@@ -181,7 +182,7 @@ public class StudentRepository(IDbContextFactory<ClubContext> factory) : IStuden
         return result == 1;
     }
 
-    public async Task<StudentModel?> Create(StudentModel model)
+    public async Task<StudentDO?> Create(StudentDO model)
     {
         // 输入验证
         if (string.IsNullOrWhiteSpace(model.UserId))
@@ -252,7 +253,7 @@ public class StudentRepository(IDbContextFactory<ClubContext> factory) : IStuden
     }
 
 
-    public async Task<StudentModel?> LoginAndGetStudentAsync(string userId, string password)
+    public async Task<StudentDO?> LoginAndGetStudentAsync(string userId, string password)
     {
         if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(password))
         {
@@ -273,7 +274,7 @@ public class StudentRepository(IDbContextFactory<ClubContext> factory) : IStuden
     }
 
 
-    public async Task<bool> UpdateAsync(StudentModel model)
+    public async Task<bool> UpdateAsync(StudentDO model)
     {
         // 输入验证
         if (string.IsNullOrWhiteSpace(model.UserId))
@@ -339,7 +340,7 @@ public class StudentRepository(IDbContextFactory<ClubContext> factory) : IStuden
         return result > 0;
     }
 
-    public async Task<bool> UpdateManyAsync(List<StudentModel> list)
+    public async Task<bool> UpdateManyAsync(List<StudentDO> list)
     {
         // 输入验证
         if (list.Count == 0)
@@ -407,26 +408,38 @@ public class StudentRepository(IDbContextFactory<ClubContext> factory) : IStuden
         return result > 0;
     }
 
-    public async Task<List<MemberModel>> GetAllMembersAsync()
+    public async Task<List<MemberVO>> GetAllMembersAsync()
     {
         await using var context = await factory.CreateDbContextAsync();
         var query = from student in context.Students.AsNoTracking()
             join staff in context.Staffs.AsNoTracking()
                 on student.UserId equals staff.UserId into staffGroup
             from staff in staffGroup.DefaultIfEmpty() // LEFT JOIN
-            select MemberModel.CopyFrom(student, staff != null ? staff.Identity : "Member");
+            select new MemberVO
+            {
+                UserId = student.UserId,
+                UserName = student.UserName,
+                Academy = student.Academy,
+                PoliticalLandscape = student.PoliticalLandscape,
+                Gender = student.Gender,
+                ClassName = student.ClassName,
+                PhoneNum = student.PhoneNum,
+                JoinTime = student.JoinTime,
+                EMail = student.EMail,
+                Identity = staff != null ? staff.Identity : "Member"
+            };
 
         return await query.ToListAsync();
     }
 
-    public async Task<(List<MemberModel>, int)> GetMembersPagedAsync(int pageNum, int pageSize)
+    public async Task<(List<MemberVO>, int)> GetMembersPagedAsync(int pageNum, int pageSize)
     {
         // 调用带搜索参数的版本，传递null值表示无搜索条件
         return await GetMembersPagedAsync(pageNum, pageSize, null, null);
     }
 
     // 带搜索功能的分页方法实现
-    public async Task<(List<MemberModel>, int)> GetMembersPagedAsync(int pageNum, int pageSize, string? searchTerm,
+    public async Task<(List<MemberVO>, int)> GetMembersPagedAsync(int pageNum, int pageSize, string? searchTerm,
         string? searchCondition)
     {
         await using var context = await factory.CreateDbContextAsync();
@@ -434,21 +447,7 @@ public class StudentRepository(IDbContextFactory<ClubContext> factory) : IStuden
         var query = context.Students.AsQueryable();
 
         // 如果提供了搜索词，则应用搜索条件
-        if (!string.IsNullOrEmpty(searchTerm))
-        {
-            query = searchCondition?.ToLower() switch
-            {
-                "userid" => query.Where(s => s.UserId.StartsWith(searchTerm)),
-                "username" => query.Where(s => s.UserName.Contains(searchTerm)),
-                "classname" => query.Where(s => s.ClassName.Contains(searchTerm)),
-                "academy" => query.Where(s => s.Academy.Contains(searchTerm)),
-                "phone_num" => query.Where(s => s.PhoneNum.Contains(searchTerm)),
-                _ => query.Where(s =>
-                    s.UserId.Contains(searchTerm) || s.UserName.Contains(searchTerm) ||
-                    s.ClassName.Contains(searchTerm) || s.Academy.Contains(searchTerm) ||
-                    s.PhoneNum.Contains(searchTerm))
-            };
-        }
+        query = ApplySearch(query, searchTerm, searchCondition);
 
         // 计算总记录数
         var totalCount = await query.CountAsync();
@@ -472,38 +471,64 @@ public class StudentRepository(IDbContextFactory<ClubContext> factory) : IStuden
             .Take(pageSize)
             .ToListAsync();
 
-        // 转换为MemberModel列表
+        // 转换为MemberVO列表
         var results = memberData.Select(item =>
-            MemberModel.CopyFrom(item.Student, item.StaffIdentity)).ToList();
+            new MemberVO
+            {
+                UserId = item.Student.UserId,
+                UserName = item.Student.UserName,
+                Academy = item.Student.Academy,
+                PoliticalLandscape = item.Student.PoliticalLandscape,
+                Gender = item.Student.Gender,
+                ClassName = item.Student.ClassName,
+                PhoneNum = item.Student.PhoneNum,
+                JoinTime = item.Student.JoinTime,
+                EMail = item.Student.EMail,
+                Identity = item.StaffIdentity
+            }).ToList();
 
         return (results, totalCount);
     }
 
-    public async Task<List<StudentModel>> Search(string searchTerm, string searchCondition)
+    public async Task<List<StudentDO>> Search(string searchTerm, string searchCondition)
     {
         await using var context = await factory.CreateDbContextAsync();
         var query = context.Students.AsQueryable();
 
         // 如果提供了搜索词，则应用搜索条件
-        if (!string.IsNullOrEmpty(searchTerm))
-        {
-            query = searchCondition.ToLower() switch
-            {
-                "userid" => query.Where(s => s.UserId.StartsWith(searchTerm)),
-                "username" => query.Where(s => s.UserName.Contains(searchTerm)),
-                "classname" => query.Where(s => s.ClassName.Contains(searchTerm)),
-                "academy" => query.Where(s => s.Academy.Contains(searchTerm)),
-                "phone_num" => query.Where(s => s.PhoneNum.Contains(searchTerm)),
-                _ => query.Where(s =>
-                    s.UserId.Contains(searchTerm) || s.UserName.Contains(searchTerm) ||
-                    s.ClassName.Contains(searchTerm) || s.Academy.Contains(searchTerm) ||
-                    s.PhoneNum.Contains(searchTerm))
-            };
-        }
+        query = ApplySearch(query, searchTerm, searchCondition);
 
         // 直接返回结果，避免多余的查询和内存操作
         return await query.AsNoTracking()
             .OrderBy(s => s.UserId) // 确保结果一致性
             .ToListAsync();
+    }
+
+    /// <summary>
+    /// 应用成员搜索条件：指定字段的精确过滤（学号/姓名/班级/学院/手机号）沿用 LIKE，
+    /// 未指定条件的模糊搜索对文本字段（姓名/班级/学院）使用 ParadeDB BM25 检索。
+    /// </summary>
+    private static IQueryable<StudentDO> ApplySearch(IQueryable<StudentDO> query, string? searchTerm,
+        string? searchCondition)
+    {
+        if (string.IsNullOrEmpty(searchTerm))
+            return query;
+
+        return searchCondition?.ToLower() switch
+        {
+            // 结构化字段的精确过滤，沿用前缀/子串匹配，语义更精确
+            "userid" => query.Where(s => s.UserId.StartsWith(searchTerm)),
+            "username" => query.Where(s => s.UserName.Contains(searchTerm)),
+            "classname" => query.Where(s => s.ClassName.Contains(searchTerm)),
+            "academy" => query.Where(s => s.Academy.Contains(searchTerm)),
+            "phone_num" => query.Where(s => s.PhoneNum.Contains(searchTerm)),
+            // 无指定条件：文本字段走 BM25 相关度检索，标识符字段沿用子串匹配
+            _ => query.Where(s =>
+                EF.Functions.MatchAny(s.UserName, searchTerm) ||
+                EF.Functions.MatchAny(s.ClassName, searchTerm) ||
+                EF.Functions.MatchAny(s.Academy, searchTerm) ||
+                s.UserId.Contains(searchTerm) ||
+                s.PhoneNum.Contains(searchTerm))
+        };
     }
 }

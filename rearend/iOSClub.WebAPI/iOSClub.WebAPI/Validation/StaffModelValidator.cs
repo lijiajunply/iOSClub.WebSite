@@ -1,11 +1,11 @@
 using FluentValidation;
-using iOSClub.Data.DataModels;
+using iOSClub.Data.DataObjects;
 
 namespace iOSClub.WebAPI.Validation;
 
-public class StaffModelValidator : AbstractValidator<StaffModel>
+public class StaffDOValidator : AbstractValidator<StaffDO>
 {
-    public StaffModelValidator()
+    public StaffDOValidator()
     {
         RuleFor(x => x.UserId)
             .NotEmpty().WithMessage("员工ID不能为空")

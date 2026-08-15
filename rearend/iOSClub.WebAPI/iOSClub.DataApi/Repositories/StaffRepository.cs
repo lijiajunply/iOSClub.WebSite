@@ -1,6 +1,6 @@
 using iOSClub.Data;
-using iOSClub.Data.DataModels;
-using iOSClub.Data.ShowModels;
+using iOSClub.Data.DataObjects;
+using iOSClub.Data.VOs;
 using Microsoft.EntityFrameworkCore;
 
 namespace iOSClub.DataApi.Repositories;
@@ -14,27 +14,27 @@ public interface IStaffRepository
     /// 获取所有员工
     /// </summary>
     /// <returns>员工列表</returns>
-    Task<IEnumerable<StaffModel>> GetAllStaffAsync();
+    Task<IEnumerable<StaffDO>> GetAllStaffAsync();
     
     /// <summary>
     /// 获取所有员工并转换为成员模型
     /// </summary>
     /// <returns>成员模型列表</returns>
-    Task<IEnumerable<MemberModel>> GetAllStaffToMembers();
+    Task<IEnumerable<MemberVO>> GetAllStaffToMembers();
     
     /// <summary>
     /// 根据ID获取员工
     /// </summary>
     /// <param name="userId">员工ID</param>
     /// <returns>员工模型，如果找不到则返回null</returns>
-    Task<StaffModel?> GetStaffByIdAsync(string userId);
+    Task<StaffDO?> GetStaffByIdAsync(string userId);
     
     /// <summary>
     /// 根据ID获取员工，不包含关联数据
     /// </summary>
     /// <param name="userId">员工ID</param>
     /// <returns>员工模型，如果找不到则返回null</returns>
-    Task<StaffModel?> GetStaffByIdWithoutOtherData(string userId);
+    Task<StaffDO?> GetStaffByIdWithoutOtherData(string userId);
     
     /// <summary>
     /// 创建员工
@@ -42,14 +42,14 @@ public interface IStaffRepository
     /// <param name="staff">员工模型</param>
     /// <returns>是否创建成功</returns>
     /// <exception cref="ArgumentException">当员工身份和部门不匹配时抛出</exception>
-    Task<bool> CreateStaffAsync(StaffModel staff);
+    Task<bool> CreateStaffAsync(StaffDO staff);
     
     /// <summary>
     /// 更新员工
     /// </summary>
     /// <param name="staff">员工模型</param>
     /// <returns>是否更新成功</returns>
-    Task<bool> UpdateStaffAsync(StaffModel staff);
+    Task<bool> UpdateStaffAsync(StaffDO staff);
     
     /// <summary>
     /// 删除员工
@@ -70,7 +70,7 @@ public interface IStaffRepository
     /// </summary>
     /// <param name="identities">身份列表</param>
     /// <returns>员工列表</returns>
-    Task<IEnumerable<StaffModel>> GetStaffsByIdentitiesAsync(params string[] identities);
+    Task<IEnumerable<StaffDO>> GetStaffsByIdentitiesAsync(params string[] identities);
     
     /// <summary>
     /// 更改员工部门
@@ -84,12 +84,12 @@ public interface IStaffRepository
     /// 获取所有员工及其身份
     /// </summary>
     /// <returns>成员模型列表，包含身份信息</returns>
-    Task<IEnumerable<MemberModel>> GetAllStaffIdentity();
+    Task<IEnumerable<MemberVO>> GetAllStaffIdentity();
 }
 
 public class StaffRepository(IDbContextFactory<ClubContext> factory) : IStaffRepository
 {
-    public async Task<IEnumerable<StaffModel>> GetAllStaffAsync()
+    public async Task<IEnumerable<StaffDO>> GetAllStaffAsync()
     {
         await using var context = await factory.CreateDbContextAsync();
         return (await context.Staffs
@@ -100,7 +100,7 @@ public class StaffRepository(IDbContextFactory<ClubContext> factory) : IStaffRep
             .Select(x => x.OutputWhenOtherList());
     }
 
-    public async Task<IEnumerable<MemberModel>> GetAllStaffToMembers()
+    public async Task<IEnumerable<MemberVO>> GetAllStaffToMembers()
     {
         await using var context = await factory.CreateDbContextAsync();
         var query = from staff in context.Staffs
@@ -108,7 +108,7 @@ public class StaffRepository(IDbContextFactory<ClubContext> factory) : IStaffRep
                 on staff.UserId equals student.UserId into studentGroup
             from student in studentGroup.DefaultIfEmpty() // LEFT JOIN
             where student != null && staff.Identity != "Founder"
-            select new MemberModel
+            select new MemberVO
             {
                 UserId = staff.UserId,
                 UserName = student != null ? student.UserName : staff.Name,
@@ -118,15 +118,14 @@ public class StaffRepository(IDbContextFactory<ClubContext> factory) : IStaffRep
                 ClassName = student != null ? student.ClassName : "",
                 PhoneNum = student != null ? student.PhoneNum : "",
                 JoinTime = student != null ? student.JoinTime : DateTime.SpecifyKind(DateTime.Today, DateTimeKind.Utc),
-                PasswordHash = student != null ? student.PasswordHash : "",
                 EMail = student != null ? student.EMail : null,
                 Identity = staff.Identity
             };
 
         return await query.ToListAsync();
     }
-    
-    public async Task<IEnumerable<MemberModel>> GetAllStaffIdentity()
+
+    public async Task<IEnumerable<MemberVO>> GetAllStaffIdentity()
     {
         await using var context = await factory.CreateDbContextAsync();
         var query = from staff in context.Staffs
@@ -134,7 +133,7 @@ public class StaffRepository(IDbContextFactory<ClubContext> factory) : IStaffRep
                 on staff.UserId equals student.UserId into studentGroup
             from student in studentGroup.DefaultIfEmpty() // LEFT JOIN
             where student != null && staff.Identity != "Founder"
-            select new MemberModel
+            select new MemberVO
             {
                 UserId = staff.UserId,
                 UserName = student != null ? student.UserName : staff.Name,
@@ -144,7 +143,6 @@ public class StaffRepository(IDbContextFactory<ClubContext> factory) : IStaffRep
                 ClassName = student != null ? student.ClassName : "",
                 PhoneNum = student != null ? student.PhoneNum : "",
                 JoinTime = student != null ? student.JoinTime : DateTime.SpecifyKind(DateTime.Today, DateTimeKind.Utc),
-                PasswordHash = student != null ? student.PasswordHash : "",
                 EMail = student != null ? student.EMail : null,
                 Identity = staff.Identity == "Minister" ? $"{staff.Department!.Name} 部长" :
                     staff.Identity == "Department" ? $"{staff.Department!.Name} 部员" :
@@ -155,7 +153,7 @@ public class StaffRepository(IDbContextFactory<ClubContext> factory) : IStaffRep
         return await query.ToListAsync();
     }
 
-    public async Task<StaffModel?> GetStaffByIdWithoutOtherData(string userId)
+    public async Task<StaffDO?> GetStaffByIdWithoutOtherData(string userId)
     {
         await using var context = await factory.CreateDbContextAsync();
         var staff = await context.Staffs
@@ -163,7 +161,7 @@ public class StaffRepository(IDbContextFactory<ClubContext> factory) : IStaffRep
         return staff?.OutputWhenOtherList();
     }
 
-    public async Task<StaffModel?> GetStaffByIdAsync(string userId)
+    public async Task<StaffDO?> GetStaffByIdAsync(string userId)
     {
         await using var context = await factory.CreateDbContextAsync();
         var staff = await context.Staffs
@@ -174,7 +172,7 @@ public class StaffRepository(IDbContextFactory<ClubContext> factory) : IStaffRep
         return staff?.OutputWhenOtherList();
     }
 
-    public async Task<bool> CreateStaffAsync(StaffModel staff)
+    public async Task<bool> CreateStaffAsync(StaffDO staff)
     {
         await using var context = await factory.CreateDbContextAsync();
 
@@ -195,7 +193,7 @@ public class StaffRepository(IDbContextFactory<ClubContext> factory) : IStaffRep
         return await context.SaveChangesAsync() > 0;
     }
 
-    public async Task<bool> UpdateStaffAsync(StaffModel staff)
+    public async Task<bool> UpdateStaffAsync(StaffDO staff)
     {
         await using var context = await factory.CreateDbContextAsync();
 
@@ -229,7 +227,7 @@ public class StaffRepository(IDbContextFactory<ClubContext> factory) : IStaffRep
         return await context.Staffs.AnyAsync(s => s.UserId == userId);
     }
 
-    public async Task<IEnumerable<StaffModel>> GetStaffsByIdentitiesAsync(params string[] identities)
+    public async Task<IEnumerable<StaffDO>> GetStaffsByIdentitiesAsync(params string[] identities)
     {
         await using var context = await factory.CreateDbContextAsync();
         return await context.Staffs

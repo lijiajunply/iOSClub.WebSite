@@ -3,9 +3,7 @@ using iOSClub.WebAPI.Common.Security;
 using iOSClub.WebAPI.Common.Config;
 using Microsoft.Extensions.Logging;
 using Moq;
-using iOSClub.Data.ShowModels;
-using System.IO;
-using System.Security.Cryptography;
+using iOSClub.Data.VOs;
 
 namespace iOSClub.Tests.PerformanceTests;
 
@@ -23,7 +21,7 @@ public class SecurityPerformanceTests
     private Mock<ILogger<JwtService>> _loggerMock = null!;
     private Mock<ILogger<RsaKeyManager>> _rsaLoggerMock = null!;
     private string _testDirectory = null!;
-    private MemberModel _testMember = null!;
+    private MemberVO _testMember = null!;
 
     /// <summary>
     /// 测试设置
@@ -55,7 +53,7 @@ public class SecurityPerformanceTests
         _jwtService = new JwtService(_jwtConfig, _rsaKeyManager, _loggerMock.Object);
         
         // 创建测试用户模型
-        _testMember = new MemberModel
+        _testMember = new MemberVO
         {
             UserId = "test_user_123",
             UserName = "Test User",

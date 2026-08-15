@@ -1,6 +1,4 @@
 using iOSClub.WebAPI.Common.Security;
-using Xunit;
-using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using iOSClub.WebAPI.Common.Config;

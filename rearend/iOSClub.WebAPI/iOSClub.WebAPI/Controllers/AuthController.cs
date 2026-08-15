@@ -1,11 +1,13 @@
-using iOSClub.Data.DataModels;
+using iOSClub.Data.DataObjects;
+using iOSClub.Data.DTOs;
+using iOSClub.Data.VOs;
 using iOSClub.DataApi.Repositories;
 using iOSClub.DataApi.Services;
 using iOSClub.WebAPI.Common;
 using iOSClub.WebAPI.IdentityModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using iOSClub.Data.ShowModels;
+using Mapster;
 
 namespace iOSClub.WebAPI.Controllers;
 
@@ -24,18 +26,18 @@ public class AuthController(
     /// <param name="model">学生注册信息模型</param>
     /// <returns>成功返回JWT令牌，失败返回相应的错误信息</returns>
     [HttpPost("signup")]
-    public async Task<ActionResult<ApiResponse<string>>> SignUp(StudentModel model)
+    public async Task<ActionResult<ApiResponse<string>>> SignUp(StudentCreateDTO dto)
     {
         try
         {
-            var createdStudent = await studentRepository.Create(model);
+            var createdStudent = await studentRepository.Create(dto.Adapt<StudentDO>());
 
             if (createdStudent == null)
             {
                 return Ok(ApiResponse<string>.Fail(ErrorCode.ResourceAlreadyExists, "用户已存在"));
             }
 
-            var (accessToken, refreshToken) = tokenGenerator.GetMemberToken(MemberModel.AutoCopy<StudentModel, MemberModel>(createdStudent));
+            var (accessToken, refreshToken) = tokenGenerator.GetMemberToken(createdStudent.Adapt<MemberVO>());
             // 返回访问令牌和刷新令牌，刷新令牌存储在响应头中
             Response.Headers.Append("X-Refresh-Token", refreshToken);
             return Ok(ApiResponse<string>.Success(accessToken, "注册成功"));
@@ -58,7 +60,7 @@ public class AuthController(
     /// <param name="scope">权限</param>
     /// <returns>成功返回JWT令牌，失败返回相应的错误信息</returns>
     [HttpPost("login")]
-    public async Task<ActionResult<ApiResponse<string>>> Login(LoginModel loginModel, string clientId = "",
+    public async Task<ActionResult<ApiResponse<string>>> Login(LoginDTO loginModel, string clientId = "",
         string scope = "")
     {
         try

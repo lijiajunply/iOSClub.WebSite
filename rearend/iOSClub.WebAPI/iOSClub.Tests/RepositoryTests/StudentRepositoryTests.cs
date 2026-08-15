@@ -1,10 +1,7 @@
 using iOSClub.Data;
-using iOSClub.Data.DataModels;
+using iOSClub.Data.DataObjects;
 using iOSClub.DataApi.Repositories;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using Moq;
-using iOSClub.Tests;
 
 namespace iOSClub.Tests.RepositoryTests;
 
@@ -223,7 +220,7 @@ public class StudentRepositoryTests
         await context.Database.EnsureCreatedAsync();
 
         // 使用Bogus生成学生，并确保有两个学生的Academy是"Computer Science"
-        var students = new List<StudentModel>
+        var students = new List<StudentDO>
         {
             BogusDataGenerator.StudentFaker
                 .RuleFor(s => s.Academy, "Computer Science")

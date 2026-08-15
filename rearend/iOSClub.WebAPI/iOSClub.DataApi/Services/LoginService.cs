@@ -1,4 +1,5 @@
-using iOSClub.Data.ShowModels;
+using iOSClub.Data.DTOs;
+using iOSClub.Data.VOs;
 using iOSClub.DataApi.Repositories;
 using StackExchange.Redis;
 using System.Text.Json;
@@ -20,7 +21,7 @@ public interface ITokenGenerator
     /// <param name="scope">权限范围</param>
     /// <param name="clientId">客户端ID</param>
     /// <returns>访问令牌和刷新令牌的元组</returns>
-    public (string AccessToken, string RefreshToken) GetMemberToken(MemberModel model, bool rememberMe = false,
+    public (string AccessToken, string RefreshToken) GetMemberToken(MemberVO model, bool rememberMe = false,
         string scope = "", string clientId = "");
 }
 
@@ -33,7 +34,7 @@ public interface ILoginService
     /// <param name="clientId">客户端 ID</param>
     /// <param name="scope">权限</param>
     /// <returns>凭证</returns>
-    public Task<string> Login(LoginModel model, string clientId = "", string scope = "");
+    public Task<string> Login(LoginDTO model, string clientId = "", string scope = "");
 
     public Task<string> LoginThirdPartyFromMainJwt(string userId, string clientId, string jwt, string scope = "");
 
@@ -61,7 +62,7 @@ public interface ILoginService
     /// <param name="clientId">客户端 ID</param>
     /// <param name="scope">权限</param>
     /// <returns>凭证</returns>
-    public Task<string> StaffLogin(LoginModel model, string clientId = "", string scope = "");
+    public Task<string> StaffLogin(LoginDTO model, string clientId = "", string scope = "");
 
     /// <summary>
     /// 修改用户密码
@@ -133,7 +134,7 @@ public class LoginService(
     private const string RefreshTokenPrefix = "refresh:";
     private const int RefreshTokenExpiryHours = 72; // 刷新令牌过期时间：72小时
 
-    public async Task<string> Login(LoginModel model, string clientId = "", string scope = "")
+    public async Task<string> Login(LoginDTO model, string clientId = "", string scope = "")
     {
         // 一次查询完成密码验证+获取学生数据，消除原先 Login()+GetByIdAsync() 的重复 DB 查询
         var stu = await studentRepository.LoginAndGetStudentAsync(model.UserId, model.Password);
@@ -150,12 +151,11 @@ public class LoginService(
         var isNotHasEMail = string.IsNullOrEmpty(stu.EMail);
 
         // 关于查询身份信息的，需要完成 StaffRepository 之后，在这里进行查询，我先随便给个值
-        var memberModel = new MemberModel()
+        var memberModel = new MemberVO()
         {
             UserName = name,
             UserId = model.UserId,
-            Identity = identity,
-            PasswordHash = model.Password
+            Identity = identity
         };
 
         var s = await GetClientKey(clientId, isNotHasEMail);
@@ -206,7 +206,7 @@ public class LoginService(
         }
 
         var member = await studentRepository.GetByIdAsync(userId);
-        var memberModel = new MemberModel()
+        var memberModel = new MemberVO()
         {
             UserId = userId
         };
@@ -214,14 +214,13 @@ public class LoginService(
         if (member != null)
         {
             memberModel.UserName = member.UserName;
-            memberModel.PasswordHash = member.PasswordHash;
             memberModel.Identity = "Member";
         }
 
         var staff = await staffRepository.GetStaffByIdWithoutOtherData(userId);
         if (staff != null)
         {
-            memberModel = new MemberModel()
+            memberModel = new MemberVO()
             {
                 UserId = userId,
                 UserName = staff.Name,
@@ -351,7 +350,7 @@ public class LoginService(
                 return "";
             }
 
-            var memberModel = JsonSerializer.Deserialize<MemberModel>(userInfoJson.ToString());
+            var memberModel = JsonSerializer.Deserialize<MemberVO>(userInfoJson.ToString());
             if (memberModel == null)
             {
                 if (logger.IsEnabled(LogLevel.Warning))
@@ -518,14 +517,14 @@ public class LoginService(
         return storedToken == token;
     }
 
-    public async Task<string> StaffLogin(LoginModel model, string clientId = "", string scope = "")
+    public async Task<string> StaffLogin(LoginDTO model, string clientId = "", string scope = "")
     {
         var staff = await staffRepository.GetStaffByIdWithoutOtherData(model.Password);
 
         if (staff == null || staff.Name != model.UserId)
             return "";
 
-        var memberModel = new MemberModel()
+        var memberModel = new MemberVO()
         {
             UserName = staff.Name,
             UserId = staff.UserId,

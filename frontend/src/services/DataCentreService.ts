@@ -79,37 +79,15 @@ export class DataCentreService {
     }
 
     static async updateDataFromJson(file: File): Promise<void> {
-        // 对于文件上传，我们需要使用FormData
         const formData = new FormData();
         formData.append('file', file);
 
-        // 直接使用fetch而不是apiRequest，因为apiRequest不支持FormData上传
-        const token = AuthService.getToken();
-        if (!token) {
-            throw new Error('未登录');
-        }
-
-        const response = await fetch(`${url}/DataCentre/update-from-json`, {
+        // 通过统一请求层解析 ApiResponse；HTTP 200 的业务失败也会抛出错误。
+        await apiRequest<void>({
+            url: `${url}/DataCentre/update-from-json`,
             method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                // 注意：不要设置Content-Type，浏览器会自动设置
-            },
-            body: formData,
+            body: formData
         });
-
-        if (!response.ok) {
-            // 尝试解析错误响应
-            let errorMessage = `HTTP error! status: ${response.status}`;
-            try {
-                const errorData = await response.json();
-                if (errorData.Message) {
-                    errorMessage = errorData.Message;
-                }
-            } catch {
-            }
-            throw new Error(errorMessage);
-        }
     }
 
     static async exportJson(): Promise<Blob> {
