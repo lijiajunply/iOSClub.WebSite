@@ -1,8 +1,8 @@
-using System.Data;
-using System.Data.Common;
 using iOSClub.Data;
-using iOSClub.Data.DataModels;
+using iOSClub.Data.DataObjects;
 using Microsoft.EntityFrameworkCore;
+using ParadeDB.EntityFrameworkCore;
+using ParadeDB.EntityFrameworkCore.Extensions;
 
 namespace iOSClub.DataApi.Repositories;
 
@@ -15,7 +15,7 @@ public interface IArticleRepository
     /// 获取所有文章
     /// </summary>
     /// <returns>文章列表</returns>
-    public Task<IEnumerable<ArticleModel>> GetAll();
+    public Task<IEnumerable<ArticleDO>> GetAll();
 
     /// <summary>
     /// 根据路径获取文章
@@ -23,14 +23,14 @@ public interface IArticleRepository
     /// <param name="path">文章路径</param>
     /// <param name="identity">用户身份</param>
     /// <returns>文章模型，如果找不到或没有权限则返回null</returns>
-    public Task<ArticleModel?> GetFromPath(string path, string identity = "");
+    public Task<ArticleDO?> GetFromPath(string path, string identity = "");
 
     /// <summary>
     /// 创建或更新文章
     /// </summary>
     /// <param name="model">文章模型</param>
     /// <returns>是否操作成功</returns>
-    public Task<bool> CreateOrUpdate(ArticleModel model);
+    public Task<bool> CreateOrUpdate(ArticleDO model);
 
     /// <summary>
     /// 删除文章
@@ -44,7 +44,7 @@ public interface IArticleRepository
     /// </summary>
     /// <param name="identity">用户身份</param>
     /// <returns>按分类分组的文章字典</returns>
-    public Task<Dictionary<string, IEnumerable<ArticleModel>>> GetAllCategoryArticles(string identity);
+    public Task<Dictionary<string, IEnumerable<ArticleDO>>> GetAllCategoryArticles(string identity);
 
     /// <summary>
     /// 更新文章顺序
@@ -68,7 +68,7 @@ public interface IArticleRepository
 
 // 添加一个用于搜索结果的模型
 [Serializable]
-public class ArticleSearchResult : ArticleModel
+public class ArticleSearchResult : ArticleDO
 {
     public string HighlightedTitle { get; set; } = "";
     public string HighlightedContent { get; set; } = "";
@@ -78,31 +78,31 @@ public class ArticleSearchResult : ArticleModel
 public class ArticleRepository(IDbContextFactory<ClubContext> factory, ICategoryRepository repository)
     : IArticleRepository
 {
-    public async Task<IEnumerable<ArticleModel>> GetAll()
+    public async Task<IEnumerable<ArticleDO>> GetAll()
     {
         await using var context = await factory.CreateDbContextAsync();
-        var articles = await context.Articles.Include(x => x.Category).Select(x => new ArticleModel()
+        var articles = await context.Articles.Include(x => x.Category).Select(x => new ArticleDO()
         {
             Path = x.Path,
             Title = x.Title,
             LastWriteTime = x.LastWriteTime,
-            Category = x.Category == null ? null : new CategoryModel() { Name = x.Category.Name },
+            Category = x.Category == null ? null : new CategoryDO() { Name = x.Category.Name },
             Identity = x.Identity
         }).ToListAsync();
         return articles;
     }
 
-    public async Task<ArticleModel?> GetFromPath(string path, string identity = "")
+    public async Task<ArticleDO?> GetFromPath(string path, string identity = "")
     {
         await using var context = await factory.CreateDbContextAsync();
         var article = await context.Articles.Include(x => x.Category)
-            .Select(x => new ArticleModel()
+            .Select(x => new ArticleDO()
             {
                 Path = x.Path,
                 Title = x.Title,
                 Content = x.Content,
                 LastWriteTime = x.LastWriteTime,
-                Category = x.Category == null ? null : new CategoryModel() { Name = x.Category.Name },
+                Category = x.Category == null ? null : new CategoryDO() { Name = x.Category.Name },
                 ArticleOrder = x.ArticleOrder,
                 Identity = x.Identity,
                 CategoryId = x.CategoryId,
@@ -120,7 +120,7 @@ public class ArticleRepository(IDbContextFactory<ClubContext> factory, ICategory
         return IsIdentityExist(identity, article.Identity) ? article : null;
     }
 
-    public async Task<bool> CreateOrUpdate(ArticleModel model)
+    public async Task<bool> CreateOrUpdate(ArticleDO model)
     {
         await using var context = await factory.CreateDbContextAsync();
 
@@ -137,7 +137,7 @@ public class ArticleRepository(IDbContextFactory<ClubContext> factory, ICategory
                 var category = await repository.GetByName(model.Category.Name);
                 if (category == null)
                 {
-                    await repository.CreateOrUpdate(new CategoryModel() { Name = model.Category.Name });
+                    await repository.CreateOrUpdate(new CategoryDO() { Name = model.Category.Name });
                     category = await repository.GetByName(model.Category.Name);
                 }
 
@@ -164,7 +164,7 @@ public class ArticleRepository(IDbContextFactory<ClubContext> factory, ICategory
                 var category = await repository.GetByName(model.Category.Name);
                 if (category == null)
                 {
-                    await repository.CreateOrUpdate(new CategoryModel() { Name = model.Category.Name });
+                    await repository.CreateOrUpdate(new CategoryDO() { Name = model.Category.Name });
                     category = await repository.GetByName(model.Category.Name);
                 }
 
@@ -191,7 +191,7 @@ public class ArticleRepository(IDbContextFactory<ClubContext> factory, ICategory
         ["Department"] = 3, ["Member"] = 4, [""] = 5
     };
 
-    public async Task<Dictionary<string, IEnumerable<ArticleModel>>> GetAllCategoryArticles(string identity)
+    public async Task<Dictionary<string, IEnumerable<ArticleDO>>> GetAllCategoryArticles(string identity)
     {
         await using var context = await factory.CreateDbContextAsync();
 
@@ -219,13 +219,13 @@ public class ArticleRepository(IDbContextFactory<ClubContext> factory, ICategory
 
         return articles
             .GroupBy(article => article.CategoryName)
-            .ToDictionary(group => group.Key, group => group.Select(x => new ArticleModel()
+            .ToDictionary(group => group.Key, group => group.Select(x => new ArticleDO()
             {
                 Path = x.Path,
                 Title = x.Title,
                 Identity = x.Identity,
                 LastWriteTime = x.LastWriteTime,
-                Category = new CategoryModel()
+                Category = new CategoryDO()
                 {
                     Name = x.CategoryName
                 }
@@ -320,83 +320,32 @@ public class ArticleRepository(IDbContextFactory<ClubContext> factory, ICategory
     {
         await using var context = await factory.CreateDbContextAsync();
 
-        const string sql = @"  
-            WITH ranked_articles AS (  
-                SELECT   
-                    ""Path"", ""Title"", ""Content"", ""LastWriteTime"",   
-                    ""Identity"", ""CategoryId"", ""ArticleOrder"",  
-                    ts_headline('zhcfg', ""Title"", query) as highlighted_title,  
-                    ts_headline('zhcfg', ""Content"", query, 'StartSel=<b>, StopSel=</b>, MaxWords=50, MinWords=15, ShortWord=3') as highlighted_content,  
-        
-                    -- 评分逻辑：如果 Title 直接 LIKE 命中，给极高的权重(比如 10)，否则用 standard rank
-                    CASE 
-                        WHEN ""Title"" LIKE '%' || @keyword || '%' THEN 10.0 
-                        ELSE ts_rank(to_tsvector('zhcfg', coalesce(""Title"", '')), query) * 2 
-                    END + 
-                    ts_rank(to_tsvector('zhcfg', coalesce(""Content"", '')), query) as rank  
+        var allowedIdentities = GetAllowedIdentities(string.IsNullOrEmpty(identity) ? "Member" : identity);
 
-                FROM ""Articles"",  
-                    plainto_tsquery('zhcfg', @keyword) as query  
-    
-                WHERE 
-                    -- 条件 1：全文检索命中 (处理长文本、语义搜索)
-                    (to_tsvector('zhcfg', coalesce(""Title"", '')) || to_tsvector('zhcfg', coalesce(""Content"", ''))) @@ query
-                    OR 
-                    -- 条件 2：标题简单模糊匹配 (处理停用词、短语、完全匹配)
-                    ""Title"" LIKE '%' || @keyword || '%'
-            )  
-            SELECT * FROM ranked_articles  
-            -- 过滤掉 rank 0 的情况（防止 query 为空时 LIKE 也未命中显示无关数据，视情况可加）
-            WHERE rank > 0 
-            ORDER BY rank DESC, ""LastWriteTime"" DESC   
-            OFFSET @offset ROWS  
-            FETCH NEXT @pageSize ROWS ONLY";
-
-        await using var command = context.Database.GetDbConnection().CreateCommand();
-        command.CommandText = sql;
-
-        AddParameter(command, "@keyword", keyword);
-        AddParameter(command, "@offset", (pageNumber - 1) * pageSize);
-        AddParameter(command, "@pageSize", pageSize);
-
-        await context.Database.OpenConnectionAsync();
-        await using var reader = await command.ExecuteReaderAsync();
-
-        var results = new List<ArticleSearchResult>();
-        if (string.IsNullOrEmpty(identity)) identity = "Member";
-        while (await reader.ReadAsync())
-        {
-            var res = MapToArticleSearchResult(reader, identity);
-            if (res != null) results.Add(res);
-        }
-
-        return results;
-    }
-
-    private static void AddParameter(DbCommand command, string name, object value)
-    {
-        var parameter = command.CreateParameter();
-        parameter.ParameterName = name;
-        parameter.Value = value;
-        command.Parameters.Add(parameter);
-    }
-
-    private static ArticleSearchResult? MapToArticleSearchResult(DbDataReader reader, string identity)
-    {
-        var allowedIdentities = GetAllowedIdentities(identity);
-
-        if (!allowedIdentities.Contains(reader.GetString("Identity")))
-            return null;
-
-        return new ArticleSearchResult
-        {
-            Path = reader.GetString("Path"),
-            Title = reader.GetString("Title"),
-            LastWriteTime = reader.GetDateTime("LastWriteTime"),
-            Identity = reader.GetString("Identity"),
-            HighlightedTitle = reader.GetString("highlighted_title"),
-            HighlightedContent = reader.GetString("highlighted_content"),
-            Rank = reader.GetFloat("rank")
-        };
+        return await context.Articles
+            .AsNoTracking()
+            .Where(a => a.Identity == null || ((IEnumerable<string>)allowedIdentities).Contains(a.Identity))
+            .Where(a =>
+                EF.Functions.MatchAny(a.Title, keyword) ||
+                EF.Functions.MatchAny(a.Content, keyword))
+            .Select(a => new ArticleSearchResult
+            {
+                Path = a.Path,
+                Title = a.Title,
+                LastWriteTime = a.LastWriteTime,
+                Identity = a.Identity,
+                CategoryId = a.CategoryId,
+                ArticleOrder = a.ArticleOrder,
+                HighlightedTitle = EF.Functions.Snippet(a.Title,
+                    new SnippetOptions { StartTag = "<b>", EndTag = "</b>" }) ?? "",
+                HighlightedContent = EF.Functions.Snippet(a.Content,
+                    new SnippetOptions { StartTag = "<b>", EndTag = "</b>", MaxNumChars = 200 }) ?? "",
+                Rank = EF.Functions.Score(a.Path)
+            })
+            .OrderByDescending(a => a.Rank)
+            .ThenByDescending(a => a.LastWriteTime)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
     }
 }

@@ -1,8 +1,7 @@
 using iOSClub.Data;
-using iOSClub.Data.DataModels;
+using iOSClub.Data.DataObjects;
 using iOSClub.DataApi.Services;
 using Microsoft.EntityFrameworkCore;
-using iOSClub.Tests;
 
 namespace iOSClub.Tests.ServiceTests;
 
@@ -24,7 +23,7 @@ public class DataCentreServiceTests
     }
 
     [Fact]
-    public async Task GetYearDataAsync_ReturnsCorrectYearCounts()
+    public async Task GetYearDataAsync_ReturnsCorrectYearCountVOs()
     {
         // Arrange
         await using var context = new ClubContext(_options);
@@ -32,7 +31,7 @@ public class DataCentreServiceTests
         await context.Database.EnsureCreatedAsync();
 
         // 使用Bogus生成测试数据
-        var students = new List<StudentModel>
+        var students = new List<StudentDO>
         {
             BogusDataGenerator.StudentFaker.Clone()
                 .RuleFor(s => s.UserId, "20123456")
@@ -84,7 +83,7 @@ public class DataCentreServiceTests
     }
 
     [Fact]
-    public async Task GetCollegeDataAsync_ReturnsCorrectAcademyCounts()
+    public async Task GetCollegeDataAsync_ReturnsCorrectAcademyCountVOs()
     {
         // Arrange
         await using var context = new ClubContext(_options);
@@ -92,7 +91,7 @@ public class DataCentreServiceTests
         await context.Database.EnsureCreatedAsync();
 
         // 使用Bogus生成测试数据
-        var students = new List<StudentModel>
+        var students = new List<StudentDO>
         {
             BogusDataGenerator.StudentFaker.Clone()
                 .RuleFor(s => s.UserId, "20123456")
@@ -140,7 +139,7 @@ public class DataCentreServiceTests
     }
 
     [Fact]
-    public async Task GetGradeDataAsync_ReturnsCorrectGradeCounts()
+    public async Task GetGradeDataAsync_ReturnsCorrectGradeCountVOs()
     {
         // Arrange
         await using var context = new ClubContext(_options);
@@ -148,7 +147,7 @@ public class DataCentreServiceTests
         await context.Database.EnsureCreatedAsync();
 
         // 使用Bogus生成测试数据
-        var students = new List<StudentModel>
+        var students = new List<StudentDO>
         {
             BogusDataGenerator.StudentFaker.Clone()
                 .RuleFor(s => s.UserId, "20123456")
@@ -202,7 +201,7 @@ public class DataCentreServiceTests
     }
 
     [Fact]
-    public async Task GetLandscapeDataAsync_ReturnsCorrectPoliticalLandscapeCounts()
+    public async Task GetLandscapeDataAsync_ReturnsCorrectPoliticalLandscapeCountVOs()
     {
         // Arrange
         await using var context = new ClubContext(_options);
@@ -210,7 +209,7 @@ public class DataCentreServiceTests
         await context.Database.EnsureCreatedAsync();
 
         // 使用Bogus生成测试数据
-        var students = new List<StudentModel>
+        var students = new List<StudentDO>
         {
             BogusDataGenerator.StudentFaker.Clone()
                 .RuleFor(s => s.UserId, "20123456")
@@ -262,7 +261,7 @@ public class DataCentreServiceTests
     }
 
     [Fact]
-    public async Task GetGenderDataAsync_ReturnsCorrectGenderCounts()
+    public async Task GetGenderDataAsync_ReturnsCorrectGenderCountVOs()
     {
         // Arrange
         await using var context = new ClubContext(_options);
@@ -270,7 +269,7 @@ public class DataCentreServiceTests
         await context.Database.EnsureCreatedAsync();
 
         // 使用Bogus生成测试数据，确保性别分布符合预期
-        var students = new List<StudentModel>
+        var students = new List<StudentDO>
         {
             BogusDataGenerator.StudentFaker.Clone()
                 .RuleFor(s => s.UserId, "20123456")

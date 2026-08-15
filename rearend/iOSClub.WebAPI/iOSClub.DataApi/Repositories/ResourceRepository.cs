@@ -1,5 +1,5 @@
 using iOSClub.Data;
-using iOSClub.Data.DataModels;
+using iOSClub.Data.DataObjects;
 using Microsoft.EntityFrameworkCore;
 
 namespace iOSClub.DataApi.Repositories;
@@ -13,42 +13,42 @@ public interface IResourceRepository
     /// 获取所有资源
     /// </summary>
     /// <returns>资源列表</returns>
-    Task<List<ResourceModel>> GetAllResourcesAsync();
+    Task<List<ResourceDO>> GetAllResourcesAsync();
     
     /// <summary>
     /// 根据ID获取资源
     /// </summary>
     /// <param name="id">资源ID</param>
     /// <returns>资源模型，如果找不到则返回null</returns>
-    Task<ResourceModel?> GetResourceByIdAsync(string id);
+    Task<ResourceDO?> GetResourceByIdAsync(string id);
     
     /// <summary>
     /// 根据标签获取资源
     /// </summary>
     /// <param name="tag">资源标签</param>
     /// <returns>资源列表</returns>
-    Task<List<ResourceModel>> GetResourcesByTagAsync(string tag);
+    Task<List<ResourceDO>> GetResourcesByTagAsync(string tag);
     
     /// <summary>
     /// 根据名称搜索资源
     /// </summary>
     /// <param name="name">资源名称搜索词</param>
     /// <returns>资源列表</returns>
-    Task<List<ResourceModel>> SearchResourcesByNameAsync(string name);
+    Task<List<ResourceDO>> SearchResourcesByNameAsync(string name);
     
     /// <summary>
     /// 添加资源
     /// </summary>
     /// <param name="resource">资源模型</param>
     /// <returns>是否添加成功</returns>
-    Task<bool> AddResourceAsync(ResourceModel resource);
+    Task<bool> AddResourceAsync(ResourceDO resource);
     
     /// <summary>
     /// 更新资源
     /// </summary>
     /// <param name="resource">资源模型</param>
     /// <returns>是否更新成功</returns>
-    Task<bool> UpdateResourceAsync(ResourceModel resource);
+    Task<bool> UpdateResourceAsync(ResourceDO resource);
     
     /// <summary>
     /// 删除资源
@@ -83,7 +83,7 @@ public class ResourceRepository(IDbContextFactory<ClubContext> factory) : IResou
     /// <summary>
     /// 获取所有资源
     /// </summary>
-    public async Task<List<ResourceModel>> GetAllResourcesAsync()
+    public async Task<List<ResourceDO>> GetAllResourcesAsync()
     {
         await using var context = await factory.CreateDbContextAsync();
         return await context.Resources.ToListAsync();
@@ -92,7 +92,7 @@ public class ResourceRepository(IDbContextFactory<ClubContext> factory) : IResou
     /// <summary>
     /// 根据ID获取资源
     /// </summary>
-    public async Task<ResourceModel?> GetResourceByIdAsync(string id)
+    public async Task<ResourceDO?> GetResourceByIdAsync(string id)
     {
         await using var context = await factory.CreateDbContextAsync();
         return await context.Resources.FindAsync(id);
@@ -101,7 +101,7 @@ public class ResourceRepository(IDbContextFactory<ClubContext> factory) : IResou
     /// <summary>
     /// 根据标签获取资源
     /// </summary>
-    public async Task<List<ResourceModel>> GetResourcesByTagAsync(string tag)
+    public async Task<List<ResourceDO>> GetResourcesByTagAsync(string tag)
     {
         await using var context = await factory.CreateDbContextAsync();
         return await context.Resources
@@ -112,7 +112,7 @@ public class ResourceRepository(IDbContextFactory<ClubContext> factory) : IResou
     /// <summary>
     /// 根据名称搜索资源
     /// </summary>
-    public async Task<List<ResourceModel>> SearchResourcesByNameAsync(string name)
+    public async Task<List<ResourceDO>> SearchResourcesByNameAsync(string name)
     {
         await using var context = await factory.CreateDbContextAsync();
         return await context.Resources
@@ -123,7 +123,7 @@ public class ResourceRepository(IDbContextFactory<ClubContext> factory) : IResou
     /// <summary>
     /// 添加资源
     /// </summary>
-    public async Task<bool> AddResourceAsync(ResourceModel resource)
+    public async Task<bool> AddResourceAsync(ResourceDO resource)
     {
         await using var context = await factory.CreateDbContextAsync();
         try
@@ -143,7 +143,7 @@ public class ResourceRepository(IDbContextFactory<ClubContext> factory) : IResou
     /// <summary>
     /// 更新资源
     /// </summary>
-    public async Task<bool> UpdateResourceAsync(ResourceModel resource)
+    public async Task<bool> UpdateResourceAsync(ResourceDO resource)
     {
         await using var context = await factory.CreateDbContextAsync();
         try

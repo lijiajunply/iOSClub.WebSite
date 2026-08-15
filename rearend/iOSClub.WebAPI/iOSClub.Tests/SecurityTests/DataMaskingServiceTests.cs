@@ -1,7 +1,6 @@
 using iOSClub.WebAPI.Common.Security;
 using Microsoft.Extensions.Logging;
 using Moq;
-using Xunit;
 
 namespace iOSClub.Tests.SecurityTests;
 

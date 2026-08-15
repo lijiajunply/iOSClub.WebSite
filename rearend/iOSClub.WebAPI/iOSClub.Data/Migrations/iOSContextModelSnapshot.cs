@@ -17,12 +17,13 @@ namespace iOSClub.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.0")
+                .HasAnnotation("ProductVersion", "10.0.11")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
+            NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "pg_search");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("ProjectModelStaffModel", b =>
+            modelBuilder.Entity("ProjectDOStaffDO", b =>
                 {
                     b.Property<string>("ProjectsId")
                         .HasColumnType("character varying(32)");
@@ -34,10 +35,10 @@ namespace iOSClub.Data.Migrations
 
                     b.HasIndex("StaffsUserId");
 
-                    b.ToTable("ProjectModelStaffModel");
+                    b.ToTable("ProjectDOStaffDO");
                 });
 
-            modelBuilder.Entity("StaffModelTaskModel", b =>
+            modelBuilder.Entity("StaffDOTaskDO", b =>
                 {
                     b.Property<string>("TasksId")
                         .HasColumnType("character varying(32)");
@@ -49,10 +50,10 @@ namespace iOSClub.Data.Migrations
 
                     b.HasIndex("UsersUserId");
 
-                    b.ToTable("StaffModelTaskModel");
+                    b.ToTable("StaffDOTaskDO");
                 });
 
-            modelBuilder.Entity("iOSClub.Data.DataModels.ArticleModel", b =>
+            modelBuilder.Entity("iOSClub.Data.DataObjects.ArticleDO", b =>
                 {
                     b.Property<string>("Path")
                         .HasMaxLength(128)
@@ -85,10 +86,20 @@ namespace iOSClub.Data.Migrations
 
                     b.HasIndex("CategoryId");
 
+                    b.HasIndex("Path")
+                        .HasDatabaseName("articles_search_idx")
+                        .HasAnnotation("ParadeDB:IndexFieldAliases", new[] { "", "", "" })
+                        .HasAnnotation("ParadeDB:IndexFieldKinds", new[] { "property", "property", "property" })
+                        .HasAnnotation("ParadeDB:IndexFieldOpclasses", new[] { "", "", "" })
+                        .HasAnnotation("ParadeDB:IndexFieldProperties", new[] { "Path", "Title", "Content" })
+                        .HasAnnotation("ParadeDB:IndexFieldTokenizers", new[] { "", "pdb.jieba", "pdb.jieba" })
+                        .HasAnnotation("ParadeDB:IndexKeyProperty", "Path")
+                        .HasAnnotation("ParadeDB:IndexSearchTokenizer", "jieba");
+
                     b.ToTable("Articles");
                 });
 
-            modelBuilder.Entity("iOSClub.Data.DataModels.CategoryModel", b =>
+            modelBuilder.Entity("iOSClub.Data.DataObjects.CategoryDO", b =>
                 {
                     b.Property<string>("Id")
                         .HasMaxLength(128)
@@ -111,7 +122,7 @@ namespace iOSClub.Data.Migrations
                     b.ToTable("Categories");
                 });
 
-            modelBuilder.Entity("iOSClub.Data.DataModels.ClientApplication", b =>
+            modelBuilder.Entity("iOSClub.Data.DataObjects.ClientApplicationDO", b =>
                 {
                     b.Property<string>("ClientId")
                         .HasMaxLength(50)
@@ -167,7 +178,7 @@ namespace iOSClub.Data.Migrations
                     b.ToTable("ClientApplications");
                 });
 
-            modelBuilder.Entity("iOSClub.Data.DataModels.DepartmentModel", b =>
+            modelBuilder.Entity("iOSClub.Data.DataObjects.DepartmentDO", b =>
                 {
                     b.Property<string>("Name")
                         .HasMaxLength(20)
@@ -187,7 +198,7 @@ namespace iOSClub.Data.Migrations
                     b.ToTable("Departments");
                 });
 
-            modelBuilder.Entity("iOSClub.Data.DataModels.ProjectModel", b =>
+            modelBuilder.Entity("iOSClub.Data.DataObjects.ProjectDO", b =>
                 {
                     b.Property<string>("Id")
                         .HasMaxLength(32)
@@ -221,7 +232,7 @@ namespace iOSClub.Data.Migrations
                     b.ToTable("Projects");
                 });
 
-            modelBuilder.Entity("iOSClub.Data.DataModels.ResourceModel", b =>
+            modelBuilder.Entity("iOSClub.Data.DataObjects.ResourceDO", b =>
                 {
                     b.Property<string>("Id")
                         .HasMaxLength(32)
@@ -245,7 +256,7 @@ namespace iOSClub.Data.Migrations
                     b.ToTable("Resources");
                 });
 
-            modelBuilder.Entity("iOSClub.Data.DataModels.StaffModel", b =>
+            modelBuilder.Entity("iOSClub.Data.DataObjects.StaffDO", b =>
                 {
                     b.Property<string>("UserId")
                         .HasMaxLength(10)
@@ -276,7 +287,7 @@ namespace iOSClub.Data.Migrations
                     b.ToTable("Staffs");
                 });
 
-            modelBuilder.Entity("iOSClub.Data.DataModels.StudentModel", b =>
+            modelBuilder.Entity("iOSClub.Data.DataObjects.StudentDO", b =>
                 {
                     b.Property<string>("UserId")
                         .HasMaxLength(10)
@@ -337,14 +348,21 @@ namespace iOSClub.Data.Migrations
                     b.HasIndex("PoliticalLandscape");
 
                     b.HasIndex("UserId")
-                        .IsUnique();
+                        .HasDatabaseName("students_search_idx")
+                        .HasAnnotation("ParadeDB:IndexFieldAliases", new[] { "", "", "", "" })
+                        .HasAnnotation("ParadeDB:IndexFieldKinds", new[] { "property", "property", "property", "property" })
+                        .HasAnnotation("ParadeDB:IndexFieldOpclasses", new[] { "", "", "", "" })
+                        .HasAnnotation("ParadeDB:IndexFieldProperties", new[] { "UserId", "UserName", "ClassName", "Academy" })
+                        .HasAnnotation("ParadeDB:IndexFieldTokenizers", new[] { "", "pdb.jieba", "pdb.jieba", "pdb.jieba" })
+                        .HasAnnotation("ParadeDB:IndexKeyProperty", "UserId")
+                        .HasAnnotation("ParadeDB:IndexSearchTokenizer", "jieba");
 
                     b.HasIndex("UserName");
 
                     b.ToTable("Students");
                 });
 
-            modelBuilder.Entity("iOSClub.Data.DataModels.TaskModel", b =>
+            modelBuilder.Entity("iOSClub.Data.DataObjects.TaskDO", b =>
                 {
                     b.Property<string>("Id")
                         .HasMaxLength(32)
@@ -384,7 +402,7 @@ namespace iOSClub.Data.Migrations
                     b.ToTable("Tasks");
                 });
 
-            modelBuilder.Entity("iOSClub.Data.DataModels.TodoModel", b =>
+            modelBuilder.Entity("iOSClub.Data.DataObjects.TodoDO", b =>
                 {
                     b.Property<string>("Id")
                         .HasMaxLength(32)
@@ -428,39 +446,39 @@ namespace iOSClub.Data.Migrations
                     b.ToTable("Todos");
                 });
 
-            modelBuilder.Entity("ProjectModelStaffModel", b =>
+            modelBuilder.Entity("ProjectDOStaffDO", b =>
                 {
-                    b.HasOne("iOSClub.Data.DataModels.ProjectModel", null)
+                    b.HasOne("iOSClub.Data.DataObjects.ProjectDO", null)
                         .WithMany()
                         .HasForeignKey("ProjectsId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("iOSClub.Data.DataModels.StaffModel", null)
+                    b.HasOne("iOSClub.Data.DataObjects.StaffDO", null)
                         .WithMany()
                         .HasForeignKey("StaffsUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("StaffModelTaskModel", b =>
+            modelBuilder.Entity("StaffDOTaskDO", b =>
                 {
-                    b.HasOne("iOSClub.Data.DataModels.TaskModel", null)
+                    b.HasOne("iOSClub.Data.DataObjects.TaskDO", null)
                         .WithMany()
                         .HasForeignKey("TasksId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("iOSClub.Data.DataModels.StaffModel", null)
+                    b.HasOne("iOSClub.Data.DataObjects.StaffDO", null)
                         .WithMany()
                         .HasForeignKey("UsersUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("iOSClub.Data.DataModels.ArticleModel", b =>
+            modelBuilder.Entity("iOSClub.Data.DataObjects.ArticleDO", b =>
                 {
-                    b.HasOne("iOSClub.Data.DataModels.CategoryModel", "Category")
+                    b.HasOne("iOSClub.Data.DataObjects.CategoryDO", "Category")
                         .WithMany("Articles")
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.SetNull);
@@ -468,27 +486,27 @@ namespace iOSClub.Data.Migrations
                     b.Navigation("Category");
                 });
 
-            modelBuilder.Entity("iOSClub.Data.DataModels.ProjectModel", b =>
+            modelBuilder.Entity("iOSClub.Data.DataObjects.ProjectDO", b =>
                 {
-                    b.HasOne("iOSClub.Data.DataModels.DepartmentModel", "Department")
+                    b.HasOne("iOSClub.Data.DataObjects.DepartmentDO", "Department")
                         .WithMany("Projects")
                         .HasForeignKey("DepartmentName");
 
                     b.Navigation("Department");
                 });
 
-            modelBuilder.Entity("iOSClub.Data.DataModels.StaffModel", b =>
+            modelBuilder.Entity("iOSClub.Data.DataObjects.StaffDO", b =>
                 {
-                    b.HasOne("iOSClub.Data.DataModels.DepartmentModel", "Department")
+                    b.HasOne("iOSClub.Data.DataObjects.DepartmentDO", "Department")
                         .WithMany("Staffs")
                         .HasForeignKey("DepartmentName");
 
                     b.Navigation("Department");
                 });
 
-            modelBuilder.Entity("iOSClub.Data.DataModels.TaskModel", b =>
+            modelBuilder.Entity("iOSClub.Data.DataObjects.TaskDO", b =>
                 {
-                    b.HasOne("iOSClub.Data.DataModels.ProjectModel", "Project")
+                    b.HasOne("iOSClub.Data.DataObjects.ProjectDO", "Project")
                         .WithMany("Tasks")
                         .HasForeignKey("ProjectId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -497,9 +515,9 @@ namespace iOSClub.Data.Migrations
                     b.Navigation("Project");
                 });
 
-            modelBuilder.Entity("iOSClub.Data.DataModels.TodoModel", b =>
+            modelBuilder.Entity("iOSClub.Data.DataObjects.TodoDO", b =>
                 {
-                    b.HasOne("iOSClub.Data.DataModels.StudentModel", "Student")
+                    b.HasOne("iOSClub.Data.DataObjects.StudentDO", "Student")
                         .WithMany()
                         .HasForeignKey("StudentId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -508,19 +526,19 @@ namespace iOSClub.Data.Migrations
                     b.Navigation("Student");
                 });
 
-            modelBuilder.Entity("iOSClub.Data.DataModels.CategoryModel", b =>
+            modelBuilder.Entity("iOSClub.Data.DataObjects.CategoryDO", b =>
                 {
                     b.Navigation("Articles");
                 });
 
-            modelBuilder.Entity("iOSClub.Data.DataModels.DepartmentModel", b =>
+            modelBuilder.Entity("iOSClub.Data.DataObjects.DepartmentDO", b =>
                 {
                     b.Navigation("Projects");
 
                     b.Navigation("Staffs");
                 });
 
-            modelBuilder.Entity("iOSClub.Data.DataModels.ProjectModel", b =>
+            modelBuilder.Entity("iOSClub.Data.DataObjects.ProjectDO", b =>
                 {
                     b.Navigation("Tasks");
                 });

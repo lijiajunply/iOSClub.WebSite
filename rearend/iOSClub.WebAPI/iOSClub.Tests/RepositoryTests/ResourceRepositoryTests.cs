@@ -1,5 +1,4 @@
 using iOSClub.Data;
-using iOSClub.Data.DataModels;
 using iOSClub.DataApi.Repositories;
 using Microsoft.EntityFrameworkCore;
 

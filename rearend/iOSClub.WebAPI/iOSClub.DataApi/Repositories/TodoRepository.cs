@@ -1,5 +1,5 @@
 using iOSClub.Data;
-using iOSClub.Data.DataModels;
+using iOSClub.Data.DataObjects;
 using Microsoft.EntityFrameworkCore;
 
 namespace iOSClub.DataApi.Repositories;
@@ -14,28 +14,28 @@ public interface ITodoRepository
     /// </summary>
     /// <param name="userId">用户ID</param>
     /// <returns>待办事项列表</returns>
-    Task<List<TodoModel>> GetTodosByUserIdAsync(string userId);
+    Task<List<TodoDO>> GetTodosByUserIdAsync(string userId);
     
     /// <summary>
     /// 根据ID获取待办事项
     /// </summary>
     /// <param name="id">待办事项ID</param>
     /// <returns>待办事项模型，如果找不到则返回null</returns>
-    Task<TodoModel?> GetTodoByIdAsync(string id);
+    Task<TodoDO?> GetTodoByIdAsync(string id);
     
     /// <summary>
     /// 添加待办事项
     /// </summary>
     /// <param name="todo">待办事项模型</param>
     /// <returns>是否添加成功</returns>
-    Task<bool> AddTodoAsync(TodoModel todo);
+    Task<bool> AddTodoAsync(TodoDO todo);
     
     /// <summary>
     /// 更新待办事项
     /// </summary>
     /// <param name="todo">待办事项模型</param>
     /// <returns>是否更新成功</returns>
-    Task<bool> UpdateTodoAsync(TodoModel todo);
+    Task<bool> UpdateTodoAsync(TodoDO todo);
     
     /// <summary>
     /// 删除待办事项
@@ -80,7 +80,7 @@ public interface ITodoRepository
     /// <param name="page">页码</param>
     /// <param name="pageSize">每页大小</param>
     /// <returns>待办事项列表</returns>
-    Task<List<TodoModel>> GetTodosPagedAsync(string userId, int page, int pageSize);
+    Task<List<TodoDO>> GetTodosPagedAsync(string userId, int page, int pageSize);
 }
 
 public class TodoRepository(IDbContextFactory<ClubContext> factory) : ITodoRepository
@@ -89,7 +89,7 @@ public class TodoRepository(IDbContextFactory<ClubContext> factory) : ITodoRepos
     /// <summary>
     /// 获取用户的所有待办事项
     /// </summary>
-    public async Task<List<TodoModel>> GetTodosByUserIdAsync(string userId)
+    public async Task<List<TodoDO>> GetTodosByUserIdAsync(string userId)
     {
         await using var context = await factory.CreateDbContextAsync();
         return await context.Todos
@@ -101,7 +101,7 @@ public class TodoRepository(IDbContextFactory<ClubContext> factory) : ITodoRepos
     /// <summary>
     /// 根据ID获取待办事项
     /// </summary>
-    public async Task<TodoModel?> GetTodoByIdAsync(string id)
+    public async Task<TodoDO?> GetTodoByIdAsync(string id)
     {
         await using var context = await factory.CreateDbContextAsync();
         return await context.Todos
@@ -111,7 +111,7 @@ public class TodoRepository(IDbContextFactory<ClubContext> factory) : ITodoRepos
     /// <summary>
     /// 添加待办事项
     /// </summary>
-    public async Task<bool> AddTodoAsync(TodoModel todo)
+    public async Task<bool> AddTodoAsync(TodoDO todo)
     {
         await using var context = await factory.CreateDbContextAsync();
         try
@@ -129,7 +129,7 @@ public class TodoRepository(IDbContextFactory<ClubContext> factory) : ITodoRepos
     /// <summary>
     /// 更新待办事项
     /// </summary>
-    public async Task<bool> UpdateTodoAsync(TodoModel todo)
+    public async Task<bool> UpdateTodoAsync(TodoDO todo)
     {
         await using var context = await factory.CreateDbContextAsync();
         try
@@ -215,7 +215,7 @@ public class TodoRepository(IDbContextFactory<ClubContext> factory) : ITodoRepos
     /// <summary>
     /// 获取用户待办事项（分页）
     /// </summary>
-    public async Task<List<TodoModel>> GetTodosPagedAsync(string userId, int page, int pageSize)
+    public async Task<List<TodoDO>> GetTodosPagedAsync(string userId, int page, int pageSize)
     {
         await using var context = await factory.CreateDbContextAsync();
         return await context.Todos

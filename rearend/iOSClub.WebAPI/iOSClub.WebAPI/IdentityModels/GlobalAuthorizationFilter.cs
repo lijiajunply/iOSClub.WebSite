@@ -1,6 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using iOSClub.Data.ShowModels;
+using iOSClub.Data.VOs;
 using iOSClub.DataApi.Services;
 using iOSClub.WebAPI.Common.Security;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -82,7 +82,7 @@ public class GlobalAuthorizationFilter(
 
 public static class TokenHelper
 {
-    public static MemberModel? GetUser(this ClaimsPrincipal? claimsPrincipal)
+    public static MemberVO? GetUser(this ClaimsPrincipal? claimsPrincipal)
     {
         var claimId = claimsPrincipal?.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
         var claimRole = claimsPrincipal?.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role);
@@ -91,7 +91,7 @@ public static class TokenHelper
             return null;
         }
 
-        return new MemberModel()
+        return new MemberVO()
         {
             UserId = claimId!.Value,
             Identity = claimRole!.Value,

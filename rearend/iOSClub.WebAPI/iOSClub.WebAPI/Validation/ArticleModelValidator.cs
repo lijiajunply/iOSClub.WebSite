@@ -1,11 +1,11 @@
 using FluentValidation;
-using iOSClub.Data.DataModels;
+using iOSClub.Data.DataObjects;
 
 namespace iOSClub.WebAPI.Validation;
 
-public class ArticleModelValidator : AbstractValidator<ArticleModel>
+public class ArticleDOValidator : AbstractValidator<ArticleDO>
 {
-    public ArticleModelValidator()
+    public ArticleDOValidator()
     {
         RuleFor(x => x.Path)
             .NotEmpty().WithMessage("文章路径不能为空")

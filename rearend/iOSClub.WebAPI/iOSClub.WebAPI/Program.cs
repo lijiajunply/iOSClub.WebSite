@@ -1,10 +1,10 @@
 using System.Data;
-using System.Data.Common;
 using System.IO.Compression;
 using System.Security.Cryptography;
 using FluentValidation.AspNetCore;
 using iOSClub.Data;
-using iOSClub.Data.DataModels;
+using iOSClub.Data.DataObjects;
+using iOSClub.Data.Mappers;
 using iOSClub.DataApi.Services;
 using iOSClub.WebAPI.Common;
 using iOSClub.WebAPI.Common.Config;
@@ -21,6 +21,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.IdentityModel.Tokens;
 using NpgsqlDataProtection;
+using ParadeDB.EntityFrameworkCore.Extensions;
 using Prometheus;
 using Scalar.AspNetCore;
 using Serilog;
@@ -30,6 +31,9 @@ using DotEnv.Core;
 new EnvLoader().Load();
 
 var builder = WebApplication.CreateBuilder(args);
+
+// 配置Mapster全局映射
+MapperConfig.Configure();
 
 #region 控制器基本设置
 
@@ -246,7 +250,11 @@ else
     builder.Services.AddDbContextFactory<ClubContext>(opt =>
     {
         opt.UseNpgsql(sql,
-            o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
+            o =>
+            {
+                o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+                o.UseParadeDb();
+            });
         opt.ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning));
     });
 
@@ -424,7 +432,7 @@ using (var scope = app.Services.CreateScope())
         {
             var user = Environment.GetEnvironmentVariable("USER", EnvironmentVariableTarget.Process);
             Console.WriteLine(user);
-            var model = new StaffModel() { Identity = "Founder", Name = "root", UserId = "0000000000" };
+            var model = new StaffDO() { Identity = "Founder", Name = "root", UserId = "0000000000" };
             var users = user?.Split(',');
             if (!string.IsNullOrEmpty(user) && users != null)
             {

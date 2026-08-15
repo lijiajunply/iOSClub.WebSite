@@ -1,5 +1,7 @@
-using iOSClub.Data.DataModels;
-using iOSClub.Data.ShowModels;
+using Mapster;
+using iOSClub.Data.DataObjects;
+using iOSClub.Data.DTOs;
+using iOSClub.Data.VOs;
 using iOSClub.DataApi.Repositories;
 using iOSClub.WebAPI.Common;
 using Microsoft.AspNetCore.Authorization;
@@ -18,18 +20,18 @@ public class StaffController(IStaffRepository staffRepository, ILogger<StaffCont
     /// </summary>
     /// <returns>员工列表</returns>
     [HttpGet]
-    public async Task<ActionResult<ApiResponse<IEnumerable<StaffModel>>>> GetAllStaff()
+    public async Task<ActionResult<ApiResponse<IEnumerable<StaffVO>>>> GetAllStaff()
     {
         try
         {
             var staffs = await staffRepository.GetAllStaffAsync();
-            var staffModels = staffs as StaffModel[] ?? staffs.ToArray();
+            var staffModels = staffs as StaffDO[] ?? staffs.ToArray();
             if (logger.IsEnabled(LogLevel.Information))
             {
                 logger.LogInformation("获取所有员工列表成功，员工数量: {Count}", staffModels.Length);
             }
 
-            return Ok(ApiResponse<IEnumerable<StaffModel>>.Success(staffModels, "获取所有员工列表成功"));
+            return Ok(ApiResponse<IEnumerable<StaffVO>>.Success(staffModels.Adapt<List<StaffVO>>(), "获取所有员工列表成功"));
         }
         catch (Exception ex)
         {
@@ -38,23 +40,23 @@ public class StaffController(IStaffRepository staffRepository, ILogger<StaffCont
                 logger.LogInformation(ex, "获取所有员工列表失败");
             }
 
-            return Ok(ApiResponse<IEnumerable<StaffModel>>.Fail(ErrorCode.InternalServerError, "获取所有员工列表失败"));
+            return Ok(ApiResponse<IEnumerable<StaffVO>>.Fail(ErrorCode.InternalServerError, "获取所有员工列表失败"));
         }
     }
 
     [HttpGet("members")]
-    public async Task<ActionResult<ApiResponse<IEnumerable<MemberModel>>>> GetAllStaffToMembers()
+    public async Task<ActionResult<ApiResponse<IEnumerable<MemberVO>>>> GetAllStaffToMembers()
     {
         try
         {
             var staffs = await staffRepository.GetAllStaffToMembers();
-            var memberModels = staffs as MemberModel[] ?? staffs.ToArray();
+            var memberModels = staffs as MemberVO[] ?? staffs.ToArray();
             if (logger.IsEnabled(LogLevel.Information))
             {
                 logger.LogInformation("获取所有成员列表成功，成员数量: {Count}", memberModels.Length);
             }
 
-            return Ok(ApiResponse<IEnumerable<MemberModel>>.Success(memberModels, "获取所有成员列表成功"));
+            return Ok(ApiResponse<IEnumerable<MemberVO>>.Success(memberModels, "获取所有成员列表成功"));
         }
         catch (Exception ex)
         {
@@ -63,7 +65,7 @@ public class StaffController(IStaffRepository staffRepository, ILogger<StaffCont
                 logger.LogInformation(ex, "获取所有成员列表失败");
             }
 
-            return Ok(ApiResponse<IEnumerable<MemberModel>>.Fail(ErrorCode.InternalServerError, "获取所有成员列表失败"));
+            return Ok(ApiResponse<IEnumerable<MemberVO>>.Fail(ErrorCode.InternalServerError, "获取所有成员列表失败"));
         }
     }
 
@@ -73,7 +75,7 @@ public class StaffController(IStaffRepository staffRepository, ILogger<StaffCont
     /// <param name="userId">用户ID</param>
     /// <returns>员工信息</returns>
     [HttpGet("{userId}")]
-    public async Task<ActionResult<ApiResponse<StaffModel>>> GetStaff(string userId)
+    public async Task<ActionResult<ApiResponse<StaffVO>>> GetStaff(string userId)
     {
         try
         {
@@ -85,7 +87,7 @@ public class StaffController(IStaffRepository staffRepository, ILogger<StaffCont
                     logger.LogInformation("获取员工信息失败，员工不存在，ID: {UserId}", userId);
                 }
 
-                return Ok(ApiResponse<StaffModel>.Fail(ErrorCode.UserNotFound, "员工不存在"));
+                return Ok(ApiResponse<StaffVO>.Fail(ErrorCode.UserNotFound, "员工不存在"));
             }
 
             if (logger.IsEnabled(LogLevel.Information))
@@ -93,7 +95,7 @@ public class StaffController(IStaffRepository staffRepository, ILogger<StaffCont
                 logger.LogInformation("获取员工信息成功，ID: {UserId}", userId);
             }
 
-            return Ok(ApiResponse<StaffModel>.Success(staff, "获取员工信息成功"));
+            return Ok(ApiResponse<StaffVO>.Success(staff.Adapt<StaffVO>(), "获取员工信息成功"));
         }
         catch (Exception ex)
         {
@@ -102,7 +104,7 @@ public class StaffController(IStaffRepository staffRepository, ILogger<StaffCont
                 logger.LogInformation(ex, "获取员工信息失败，ID: {UserId}", userId);
             }
 
-            return Ok(ApiResponse<StaffModel>.Fail(ErrorCode.InternalServerError, "获取员工信息失败"));
+            return Ok(ApiResponse<StaffVO>.Fail(ErrorCode.InternalServerError, "获取员工信息失败"));
         }
     }
 
@@ -112,11 +114,11 @@ public class StaffController(IStaffRepository staffRepository, ILogger<StaffCont
     /// <param name="staff">员工信息模型</param>
     /// <returns>创建结果</returns>
     [HttpPost("Create")]
-    public async Task<ActionResult<ApiResponse>> CreateStaff([FromBody] StaffModel staff)
+    public async Task<ActionResult<ApiResponse>> CreateStaff([FromBody] StaffCreateDTO staff)
     {
         try
         {
-            var result = await staffRepository.CreateStaffAsync(staff);
+            var result = await staffRepository.CreateStaffAsync(staff.Adapt<StaffDO>());
             if (!result)
             {
                 if (logger.IsEnabled(LogLevel.Information))
@@ -124,7 +126,7 @@ public class StaffController(IStaffRepository staffRepository, ILogger<StaffCont
                     logger.LogInformation("创建成员失败，ID: {UserId}, 名称: {Name}", staff.UserId, staff.Name);
                 }
 
-                return Ok(ApiResponse<StaffModel>.Fail(ErrorCode.OperationFailed, "创建成员失败"));
+                return Ok(ApiResponse<StaffVO>.Fail(ErrorCode.OperationFailed, "创建成员失败"));
             }
 
             if (logger.IsEnabled(LogLevel.Information))
@@ -141,7 +143,7 @@ public class StaffController(IStaffRepository staffRepository, ILogger<StaffCont
                 logger.LogInformation(ex, "创建成员失败，ID: {UserId}, 名称: {Name}", staff.UserId, staff.Name);
             }
 
-            return Ok(ApiResponse<StaffModel>.Fail(ErrorCode.InternalServerError, "创建成员失败"));
+            return Ok(ApiResponse<StaffVO>.Fail(ErrorCode.InternalServerError, "创建成员失败"));
         }
     }
 
@@ -151,7 +153,7 @@ public class StaffController(IStaffRepository staffRepository, ILogger<StaffCont
     /// <param name="staff">更新后的员工信息</param>
     /// <returns>更新结果</returns>
     [HttpPost("Update")]
-    public async Task<ActionResult<ApiResponse<object>>> UpdateStaff([FromBody] StaffModel staff)
+    public async Task<ActionResult<ApiResponse<object>>> UpdateStaff([FromBody] StaffCreateDTO staff)
     {
         try
         {
@@ -167,7 +169,7 @@ public class StaffController(IStaffRepository staffRepository, ILogger<StaffCont
                 return Ok(ApiResponse<object>.Fail(ErrorCode.UserNotFound, "员工不存在"));
             }
 
-            var result = await staffRepository.UpdateStaffAsync(staff);
+            var result = await staffRepository.UpdateStaffAsync(staff.Adapt<StaffDO>());
             if (!result)
             {
                 if (logger.IsEnabled(LogLevel.Information))
@@ -253,18 +255,18 @@ public class StaffController(IStaffRepository staffRepository, ILogger<StaffCont
     /// <param name="identity">员工身份</param>
     /// <returns>符合条件的员工列表</returns>
     [HttpGet("by-identity/{identity}")]
-    public async Task<ActionResult<ApiResponse<IEnumerable<StaffModel>>>> GetStaffsByIdentity(string identity)
+    public async Task<ActionResult<ApiResponse<IEnumerable<StaffVO>>>> GetStaffsByIdentity(string identity)
     {
         try
         {
             var staffs = await staffRepository.GetStaffsByIdentitiesAsync(identity);
-            var staffModels = staffs as StaffModel[] ?? staffs.ToArray();
+            var staffModels = staffs as StaffDO[] ?? staffs.ToArray();
             if (logger.IsEnabled(LogLevel.Information))
             {
                 logger.LogInformation("根据身份获取员工列表成功，身份: {Identity}, 员工数量: {Count}", identity, staffModels.Length);
             }
 
-            return Ok(ApiResponse<IEnumerable<StaffModel>>.Success(staffModels, "根据身份获取员工列表成功"));
+            return Ok(ApiResponse<IEnumerable<StaffVO>>.Success(staffModels.Adapt<List<StaffVO>>(), "根据身份获取员工列表成功"));
         }
         catch (Exception ex)
         {
@@ -273,7 +275,7 @@ public class StaffController(IStaffRepository staffRepository, ILogger<StaffCont
                 logger.LogInformation(ex, "根据身份获取员工列表失败，身份: {Identity}", identity);
             }
 
-            return Ok(ApiResponse<IEnumerable<StaffModel>>.Fail(ErrorCode.InternalServerError, "根据身份获取员工列表失败"));
+            return Ok(ApiResponse<IEnumerable<StaffVO>>.Fail(ErrorCode.InternalServerError, "根据身份获取员工列表失败"));
         }
     }
 
