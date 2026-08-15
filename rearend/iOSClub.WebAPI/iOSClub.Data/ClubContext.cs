@@ -4,6 +4,8 @@ using System.Text;
 using iOSClub.Data.DataObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
+using ParadeDB.EntityFrameworkCore;
+using ParadeDB.EntityFrameworkCore.Extensions;
 
 namespace iOSClub.Data;
 
@@ -56,9 +58,6 @@ public sealed class ClubContext(DbContextOptions<ClubContext> options) : DbConte
 
         // StudentDO 索引
         modelBuilder.Entity<StudentDO>()
-            .HasIndex(s => s.UserId) // 主键索引，通常自动创建，但显式指定更清晰
-            .IsUnique();
-        modelBuilder.Entity<StudentDO>()
             .HasIndex(s => s.JoinTime); // 用于统计和时间范围查询
         modelBuilder.Entity<StudentDO>()
             .HasIndex(s => s.Academy); // 用于学院统计和过滤
@@ -81,6 +80,20 @@ public sealed class ClubContext(DbContextOptions<ClubContext> options) : DbConte
         // ArticleDO 索引
         modelBuilder.Entity<ArticleDO>()
             .HasIndex(a => a.CategoryId); // 用于按分类查询
+
+        // ParadeDB BM25 全文检索索引（pg_search）
+        modelBuilder.Entity<ArticleDO>()
+            .HasParadeDbIndex("articles_search_idx", a => a.Path)
+            .HasField(a => a.Title, Tokenizer.Jieba())
+            .HasField(a => a.Content, Tokenizer.Jieba())
+            .HasSearchTokenizer(Tokenizer.Jieba());
+
+        modelBuilder.Entity<StudentDO>()
+            .HasParadeDbIndex("students_search_idx", s => s.UserId)
+            .HasField(s => s.UserName, Tokenizer.Jieba())
+            .HasField(s => s.ClassName, Tokenizer.Jieba())
+            .HasField(s => s.Academy, Tokenizer.Jieba())
+            .HasSearchTokenizer(Tokenizer.Jieba());
     }
 }
 
@@ -90,7 +103,7 @@ public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<ClubContex
     public ClubContext CreateDbContext(string[] args)
     {
         var optionsBuilder = new DbContextOptionsBuilder<ClubContext>();
-        optionsBuilder.UseNpgsql("");
+        optionsBuilder.UseNpgsql("Host=localhost;Database=paradedb_design", o => o.UseParadeDb());
         return new ClubContext(optionsBuilder.Options);
     }
 }

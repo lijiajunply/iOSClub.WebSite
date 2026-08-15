@@ -1,8 +1,8 @@
-using System.Data;
-using System.Data.Common;
 using iOSClub.Data;
 using iOSClub.Data.DataObjects;
 using Microsoft.EntityFrameworkCore;
+using ParadeDB.EntityFrameworkCore;
+using ParadeDB.EntityFrameworkCore.Extensions;
 
 namespace iOSClub.DataApi.Repositories;
 
@@ -320,83 +320,32 @@ public class ArticleRepository(IDbContextFactory<ClubContext> factory, ICategory
     {
         await using var context = await factory.CreateDbContextAsync();
 
-        const string sql = @"  
-            WITH ranked_articles AS (  
-                SELECT   
-                    ""Path"", ""Title"", ""Content"", ""LastWriteTime"",   
-                    ""Identity"", ""CategoryId"", ""ArticleOrder"",  
-                    ts_headline('zhcfg', ""Title"", query) as highlighted_title,  
-                    ts_headline('zhcfg', ""Content"", query, 'StartSel=<b>, StopSel=</b>, MaxWords=50, MinWords=15, ShortWord=3') as highlighted_content,  
-        
-                    -- 评分逻辑：如果 Title 直接 LIKE 命中，给极高的权重(比如 10)，否则用 standard rank
-                    CASE 
-                        WHEN ""Title"" LIKE '%' || @keyword || '%' THEN 10.0 
-                        ELSE ts_rank(to_tsvector('zhcfg', coalesce(""Title"", '')), query) * 2 
-                    END + 
-                    ts_rank(to_tsvector('zhcfg', coalesce(""Content"", '')), query) as rank  
+        var allowedIdentities = GetAllowedIdentities(string.IsNullOrEmpty(identity) ? "Member" : identity);
 
-                FROM ""Articles"",  
-                    plainto_tsquery('zhcfg', @keyword) as query  
-    
-                WHERE 
-                    -- 条件 1：全文检索命中 (处理长文本、语义搜索)
-                    (to_tsvector('zhcfg', coalesce(""Title"", '')) || to_tsvector('zhcfg', coalesce(""Content"", ''))) @@ query
-                    OR 
-                    -- 条件 2：标题简单模糊匹配 (处理停用词、短语、完全匹配)
-                    ""Title"" LIKE '%' || @keyword || '%'
-            )  
-            SELECT * FROM ranked_articles  
-            -- 过滤掉 rank 0 的情况（防止 query 为空时 LIKE 也未命中显示无关数据，视情况可加）
-            WHERE rank > 0 
-            ORDER BY rank DESC, ""LastWriteTime"" DESC   
-            OFFSET @offset ROWS  
-            FETCH NEXT @pageSize ROWS ONLY";
-
-        await using var command = context.Database.GetDbConnection().CreateCommand();
-        command.CommandText = sql;
-
-        AddParameter(command, "@keyword", keyword);
-        AddParameter(command, "@offset", (pageNumber - 1) * pageSize);
-        AddParameter(command, "@pageSize", pageSize);
-
-        await context.Database.OpenConnectionAsync();
-        await using var reader = await command.ExecuteReaderAsync();
-
-        var results = new List<ArticleSearchResult>();
-        if (string.IsNullOrEmpty(identity)) identity = "Member";
-        while (await reader.ReadAsync())
-        {
-            var res = MapToArticleSearchResult(reader, identity);
-            if (res != null) results.Add(res);
-        }
-
-        return results;
-    }
-
-    private static void AddParameter(DbCommand command, string name, object value)
-    {
-        var parameter = command.CreateParameter();
-        parameter.ParameterName = name;
-        parameter.Value = value;
-        command.Parameters.Add(parameter);
-    }
-
-    private static ArticleSearchResult? MapToArticleSearchResult(DbDataReader reader, string identity)
-    {
-        var allowedIdentities = GetAllowedIdentities(identity);
-
-        if (!allowedIdentities.Contains(reader.GetString("Identity")))
-            return null;
-
-        return new ArticleSearchResult
-        {
-            Path = reader.GetString("Path"),
-            Title = reader.GetString("Title"),
-            LastWriteTime = reader.GetDateTime("LastWriteTime"),
-            Identity = reader.GetString("Identity"),
-            HighlightedTitle = reader.GetString("highlighted_title"),
-            HighlightedContent = reader.GetString("highlighted_content"),
-            Rank = reader.GetFloat("rank")
-        };
+        return await context.Articles
+            .AsNoTracking()
+            .Where(a => a.Identity == null || ((IEnumerable<string>)allowedIdentities).Contains(a.Identity))
+            .Where(a =>
+                EF.Functions.MatchAny(a.Title, keyword) ||
+                EF.Functions.MatchAny(a.Content, keyword))
+            .Select(a => new ArticleSearchResult
+            {
+                Path = a.Path,
+                Title = a.Title,
+                LastWriteTime = a.LastWriteTime,
+                Identity = a.Identity,
+                CategoryId = a.CategoryId,
+                ArticleOrder = a.ArticleOrder,
+                HighlightedTitle = EF.Functions.Snippet(a.Title,
+                    new SnippetOptions { StartTag = "<b>", EndTag = "</b>" }) ?? "",
+                HighlightedContent = EF.Functions.Snippet(a.Content,
+                    new SnippetOptions { StartTag = "<b>", EndTag = "</b>", MaxNumChars = 200 }) ?? "",
+                Rank = EF.Functions.Score(a.Path)
+            })
+            .OrderByDescending(a => a.Rank)
+            .ThenByDescending(a => a.LastWriteTime)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
     }
 }

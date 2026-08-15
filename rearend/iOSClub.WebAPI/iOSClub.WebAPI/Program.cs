@@ -21,6 +21,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.IdentityModel.Tokens;
 using NpgsqlDataProtection;
+using ParadeDB.EntityFrameworkCore.Extensions;
 using Prometheus;
 using Scalar.AspNetCore;
 using Serilog;
@@ -249,7 +250,11 @@ else
     builder.Services.AddDbContextFactory<ClubContext>(opt =>
     {
         opt.UseNpgsql(sql,
-            o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
+            o =>
+            {
+                o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+                o.UseParadeDb();
+            });
         opt.ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning));
     });
 

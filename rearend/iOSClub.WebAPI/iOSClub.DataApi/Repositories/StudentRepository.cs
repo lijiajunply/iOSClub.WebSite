@@ -2,6 +2,7 @@ using iOSClub.Data;
 using iOSClub.Data.DataObjects;
 using iOSClub.Data.VOs;
 using Microsoft.EntityFrameworkCore;
+using ParadeDB.EntityFrameworkCore.Extensions;
 
 namespace iOSClub.DataApi.Repositories;
 
@@ -446,21 +447,7 @@ public class StudentRepository(IDbContextFactory<ClubContext> factory) : IStuden
         var query = context.Students.AsQueryable();
 
         // 如果提供了搜索词，则应用搜索条件
-        if (!string.IsNullOrEmpty(searchTerm))
-        {
-            query = searchCondition?.ToLower() switch
-            {
-                "userid" => query.Where(s => s.UserId.StartsWith(searchTerm)),
-                "username" => query.Where(s => s.UserName.Contains(searchTerm)),
-                "classname" => query.Where(s => s.ClassName.Contains(searchTerm)),
-                "academy" => query.Where(s => s.Academy.Contains(searchTerm)),
-                "phone_num" => query.Where(s => s.PhoneNum.Contains(searchTerm)),
-                _ => query.Where(s =>
-                    s.UserId.Contains(searchTerm) || s.UserName.Contains(searchTerm) ||
-                    s.ClassName.Contains(searchTerm) || s.Academy.Contains(searchTerm) ||
-                    s.PhoneNum.Contains(searchTerm))
-            };
-        }
+        query = ApplySearch(query, searchTerm, searchCondition);
 
         // 计算总记录数
         var totalCount = await query.CountAsync();
@@ -509,25 +496,39 @@ public class StudentRepository(IDbContextFactory<ClubContext> factory) : IStuden
         var query = context.Students.AsQueryable();
 
         // 如果提供了搜索词，则应用搜索条件
-        if (!string.IsNullOrEmpty(searchTerm))
-        {
-            query = searchCondition.ToLower() switch
-            {
-                "userid" => query.Where(s => s.UserId.StartsWith(searchTerm)),
-                "username" => query.Where(s => s.UserName.Contains(searchTerm)),
-                "classname" => query.Where(s => s.ClassName.Contains(searchTerm)),
-                "academy" => query.Where(s => s.Academy.Contains(searchTerm)),
-                "phone_num" => query.Where(s => s.PhoneNum.Contains(searchTerm)),
-                _ => query.Where(s =>
-                    s.UserId.Contains(searchTerm) || s.UserName.Contains(searchTerm) ||
-                    s.ClassName.Contains(searchTerm) || s.Academy.Contains(searchTerm) ||
-                    s.PhoneNum.Contains(searchTerm))
-            };
-        }
+        query = ApplySearch(query, searchTerm, searchCondition);
 
         // 直接返回结果，避免多余的查询和内存操作
         return await query.AsNoTracking()
             .OrderBy(s => s.UserId) // 确保结果一致性
             .ToListAsync();
+    }
+
+    /// <summary>
+    /// 应用成员搜索条件：指定字段的精确过滤（学号/姓名/班级/学院/手机号）沿用 LIKE，
+    /// 未指定条件的模糊搜索对文本字段（姓名/班级/学院）使用 ParadeDB BM25 检索。
+    /// </summary>
+    private static IQueryable<StudentDO> ApplySearch(IQueryable<StudentDO> query, string? searchTerm,
+        string? searchCondition)
+    {
+        if (string.IsNullOrEmpty(searchTerm))
+            return query;
+
+        return searchCondition?.ToLower() switch
+        {
+            // 结构化字段的精确过滤，沿用前缀/子串匹配，语义更精确
+            "userid" => query.Where(s => s.UserId.StartsWith(searchTerm)),
+            "username" => query.Where(s => s.UserName.Contains(searchTerm)),
+            "classname" => query.Where(s => s.ClassName.Contains(searchTerm)),
+            "academy" => query.Where(s => s.Academy.Contains(searchTerm)),
+            "phone_num" => query.Where(s => s.PhoneNum.Contains(searchTerm)),
+            // 无指定条件：文本字段走 BM25 相关度检索，标识符字段沿用子串匹配
+            _ => query.Where(s =>
+                EF.Functions.MatchAny(s.UserName, searchTerm) ||
+                EF.Functions.MatchAny(s.ClassName, searchTerm) ||
+                EF.Functions.MatchAny(s.Academy, searchTerm) ||
+                s.UserId.Contains(searchTerm) ||
+                s.PhoneNum.Contains(searchTerm))
+        };
     }
 }
