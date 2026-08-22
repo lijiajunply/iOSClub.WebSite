@@ -83,7 +83,7 @@ public class SSOController(
             response_types_supported = new[] { "code", "token", "id_token", "id_token token" },
             subject_types_supported = new[] { "public" },
             id_token_signing_alg_values_supported = new[] { "RS256" }, // Changed from HS256 to RS256
-            scopes_supported = new[] { "openid", "profile", "email", "read", "phone" },
+            scopes_supported = new[] { "openid", "profile", "email", "read", "phone", "full", "role" },
             token_endpoint_auth_methods_supported = new[] { "client_secret_post" },
             claims_supported = new[]
                 { "sub", "name", "nickname", "email", "role", "phone", "academy", "class", "joinTime", "avatar" }
@@ -252,7 +252,7 @@ public class SSOController(
         }
 
         // 验证scope参数
-        var validScopes = new[] { "openid", "profile", "email", "read", "phone" };
+        var validScopes = new[] { "openid", "profile", "email", "read", "phone", "full", "role" };
         var requestedScopes = (scope ?? DefaultScore).Split(' ', StringSplitOptions.RemoveEmptyEntries);
         var validRequestedScopes = requestedScopes.Where(s => validScopes.Contains(s)).ToList();
 
@@ -1203,7 +1203,7 @@ public class SSOController(
         }
 
         // read scope - 角色信息
-        if (scopes.Contains("read") || scopes.Contains("full"))
+        if (scopes.Contains("read") || scopes.Contains("role") || scopes.Contains("full"))
         {
             userInfo.TryAdd("role", identity);
         }
