@@ -81,7 +81,6 @@ export class ArticleService {
         return await apiRequest<Record<string, ArticleModel[]>>({
             url: `${url}/Article/category`,
             method: 'GET',
-            requiresAuth: false
         });
     }
 
