@@ -12,7 +12,7 @@
           <div class="space-y-8 mt-6 animate-fade-in">
 
             <!-- 顶部统计卡片组 -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <!-- 领导层概览 -->
               <div class="apple-sub-card p-6 flex flex-col justify-between h-full">
                 <div class="flex items-center justify-between mb-4">
@@ -60,22 +60,6 @@
                 </div>
               </div>
 
-              <!-- 项目概览 -->
-              <div class="apple-sub-card p-6 flex flex-col justify-between h-full">
-                <div class="flex items-center justify-between mb-4">
-                  <div class="flex items-center gap-2 text-gray-500 dark:text-gray-400">
-                    <Icon icon="ion:folder-open-outline" class="text-xl"/>
-                    <span class="text-sm font-medium">运行项目</span>
-                  </div>
-                  <button @click="addProject" class="apple-icon-btn text-blue-500">
-                    <Icon icon="ion:add-circle" width="24"/>
-                  </button>
-                </div>
-                <div class="text-4xl font-bold text-gray-900 dark:text-white tracking-tight">
-                  {{ loading ? '-' : projects.length }}
-                  <span class="text-lg font-normal text-gray-400 ml-1">个</span>
-                </div>
-              </div>
             </div>
 
             <!-- 数据图表区 -->
@@ -111,48 +95,8 @@
                   :pagination="pagination"
                   :bordered="false"
                   :loading="loading"
-                  class="apple-table"
+                  class="apple-table mb-4"
               />
-            </section>
-
-            <!-- 项目卡片网格 -->
-            <section>
-              <h3 class="section-title mb-4">项目一览</h3>
-              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div v-for="project in projects" :key="project.id"
-                     class="apple-item-card group cursor-pointer"
-                     @click="openProject(project)">
-                  <div class="flex justify-between items-start mb-3">
-                    <div class="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400">
-                      <Icon icon="ion:briefcase" width="20"/>
-                    </div>
-                    <div v-if="project.department?.name"
-                         class="text-xs font-medium px-2 py-1 rounded-full bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-gray-300">
-                      {{ project.department.name }}
-                    </div>
-                  </div>
-
-                  <h4 class="text-lg font-semibold mb-2 group-hover:text-blue-600 transition-colors">{{
-                      project.title
-                    }}</h4>
-                  <p class="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-4 h-10">{{
-                      project.description
-                    }}</p>
-
-                  <div
-                      class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all translate-y-2 group-hover:translate-y-0"
-                      @click.stop>
-                    <button class="apple-btn-sm secondary" @click="editProject(project)">编辑</button>
-                    <button class="apple-btn-sm danger" @click="deleteProject(project)">删除</button>
-                  </div>
-                </div>
-                <!-- 空状态 -->
-                <div v-if="projects.length === 0 && !loading"
-                     class="col-span-full py-12 flex flex-col items-center justify-center text-gray-400">
-                  <Icon icon="ion:file-tray-outline" width="48" class="mb-2 opacity-50"/>
-                  <p>暂无项目</p>
-                </div>
-              </div>
             </section>
 
           </div>
@@ -232,15 +176,6 @@
                   </div>
                 </div>
 
-                <div class="apple-sub-card p-6 bg-linear-to-br from-blue-500 to-indigo-600 text-white border-none">
-                  <h3 class="text-white/90 font-medium mb-1">项目统计</h3>
-                  <div class="text-3xl font-bold mb-4">{{ department.projects?.length || 0 }}</div>
-                  <button @click="addProject"
-                          class="w-full py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium transition-colors backdrop-blur-md flex items-center justify-center">
-                    <Icon icon="ion:add" class="mr-1"/>
-                    新建部门项目
-                  </button>
-                </div>
               </div>
 
               <!-- 右侧：成员列表 -->
@@ -273,25 +208,6 @@
               </div>
             </div>
 
-            <!-- 部门项目 -->
-            <section v-if="department.projects !== null && department.projects!.length > 0">
-              <h3 class="section-title mb-4">归属项目</h3>
-              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div v-for="project in department.projects" :key="project.id"
-                     class="apple-item-card group cursor-pointer"
-                     @click="openProject(project)">
-                  <h4 class="text-lg font-semibold mb-2 group-hover:text-blue-600 transition-colors">{{
-                      project.title
-                    }}</h4>
-                  <p class="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-4">{{ project.description }}</p>
-                  <div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all" @click.stop>
-                    <button class="apple-btn-sm secondary" @click="editProject(project)">编辑</button>
-                    <button class="apple-btn-sm danger" @click="deleteProject(project, department.projects)">删除
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </section>
           </div>
           <!-- Loading Skeleton for specific tabs -->
           <div v-else class="p-12 flex justify-center">
@@ -420,7 +336,6 @@
 
 <script setup lang="ts">
 import {ref, onMounted, onBeforeUnmount, h, computed, nextTick, watch, defineComponent} from 'vue'
-import {useRouter} from 'vue-router'
 import {
   useMessage,
   NTabs,
@@ -436,20 +351,17 @@ import type {DataTableColumns} from 'naive-ui'
 import {Icon} from '@iconify/vue'
 import {DepartmentService} from '../services/DepartmentService'
 import {StaffService} from '../services/StaffService'
-import {ProjectService} from '../services/ProjectService'
-import type {Department, DepartmentModel, MemberModel, Project, StudentModel, StaffModel} from '../models'
+import type {Department, DepartmentModel, MemberModel, StudentModel, StaffModel} from '../models'
 import * as echarts from 'echarts'
 import {MemberQueryService} from "../services/MemberQueryService";
 import {useLayoutStore} from '../stores/LayoutStore';
 
-const router = useRouter()
 const message = useMessage()
 const layoutStore = useLayoutStore()
 
 // --- 数据状态 ---
 const ministers = ref<MemberModel[]>([])
 const members = ref<MemberModel[]>([])
-const projects = ref<Project[]>([])
 const departments = ref<Department[]>([])
 const staffs = ref<MemberModel[]>([])
 const loading = ref(true) // 默认 loading true
@@ -653,20 +565,6 @@ const downloadMemberInfo = async () => {
   }
 }
 
-const addProject = () => router.push('/Centre/ProjectEditor')
-const editProject = (project: Project) => router.push(`/Centre/ProjectEditor/${project.id}`)
-const openProject = (project: Project) => router.push(`/Centre/ProjectData/${project.id}`)
-
-const deleteProject = async (project: Project, _?: Project[]) => {
-  try {
-    await ProjectService.deleteProject(project.id)
-    await fetchData()
-    message.success('项目已删除')
-  } catch (error: any) {
-    message.error('删除失败')
-  }
-}
-
 const deleteDepartment = async (department: Department) => {
   try {
     await DepartmentService.deleteDepartment(department.name)
@@ -773,25 +671,11 @@ const fetchData = async () => {
       description: dept.description,
       ministers: dept.staffs?.filter((staff: any) => staff.identity === 'President' || staff.identity === 'Minister') || [],
       members: dept.staffs?.filter((staff: any) => staff.identity === 'Department') || [],
-      projects: (dept.projects || []).map(project => ({
-        id: project.id,
-        title: project.title,
-        description: project.description,
-        department: {id: 0, name: project.department?.name || ''}
-      }))
     } as Department))
 
     staffs.value = await StaffService.getAllStaff()
     ministers.value = staffs.value.filter(staff => staff.identity === 'President')
     members.value = staffs.value.filter(staff => staff.identity !== 'Founder')
-
-    const projectsData = await ProjectService.getAllProjects()
-    projects.value = projectsData.map(project => ({
-      id: project.id,
-      title: project.title,
-      description: project.description,
-      department: {id: 0, name: project.department?.name || ''}
-    })) as Project[]
 
   } catch (error: any) {
     console.error(error)
@@ -1017,22 +901,6 @@ onBeforeUnmount(() => {
 .apple-chip.blue {
   background-color: #F0F8FF;
   color: #007AFF;
-}
-
-/* Item Card (Project) */
-.apple-item-card {
-  background-color: #FFFFFF;
-  border-radius: 20px;
-  padding: 20px;
-  border: 1px solid transparent;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  transition: all 0.3s ease;
-}
-
-.apple-item-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
-  border-color: rgba(0, 122, 255, 0.1);
 }
 
 /* Titles */

@@ -65,25 +65,12 @@ public interface IDepartmentRepository
     Task<int> GetStaffCountAsync(string departmentName);
     
     /// <summary>
-    /// 获取部门项目数量
-    /// </summary>
-    /// <param name="departmentName">部门名称</param>
-    /// <returns>项目数量</returns>
-    Task<int> GetProjectCountAsync(string departmentName);
-    
-    /// <summary>
     /// 获取部门成员列表
     /// </summary>
     /// <param name="departmentName">部门名称</param>
     /// <returns>成员列表</returns>
     Task<List<StaffDO>> GetDepartmentStaffsAsync(string departmentName);
     
-    /// <summary>
-    /// 获取部门项目列表
-    /// </summary>
-    /// <param name="departmentName">部门名称</param>
-    /// <returns>项目列表</returns>
-    Task<List<ProjectDO>> GetDepartmentProjectsAsync(string departmentName);
 }
 
 public class DepartmentRepository(IDbContextFactory<ClubContext> factory) : IDepartmentRepository
@@ -96,7 +83,6 @@ public class DepartmentRepository(IDbContextFactory<ClubContext> factory) : IDep
         await using var context = await factory.CreateDbContextAsync();
         return (await context.Departments
             .Include(d => d.Staffs)
-            .Include(d => d.Projects)
             .ToListAsync())
             .Select(x => x.OutputWhenOtherList())
             .ToList();
@@ -110,7 +96,6 @@ public class DepartmentRepository(IDbContextFactory<ClubContext> factory) : IDep
         await using var context = await factory.CreateDbContextAsync();
         var department = await context.Departments
             .Include(d => d.Staffs)
-            .Include(d => d.Projects)
             .FirstOrDefaultAsync(d => d.Name == name);
         return department?.OutputWhenOtherList();
     }
@@ -123,7 +108,6 @@ public class DepartmentRepository(IDbContextFactory<ClubContext> factory) : IDep
         await using var context = await factory.CreateDbContextAsync();
         var department = await context.Departments
             .Include(d => d.Staffs)
-            .Include(d => d.Projects)
             .FirstOrDefaultAsync(d => d.Key == key);
         return department?.OutputWhenOtherList();
     }
@@ -208,18 +192,6 @@ public class DepartmentRepository(IDbContextFactory<ClubContext> factory) : IDep
     }
 
     /// <summary>
-    /// 获取部门的项目数量
-    /// </summary>
-    public async Task<int> GetProjectCountAsync(string departmentName)
-    {
-        await using var context = await factory.CreateDbContextAsync();
-        return await context.Departments
-            .Where(d => d.Name == departmentName)
-            .SelectMany(d => d.Projects)
-            .CountAsync();
-    }
-
-    /// <summary>
     /// 获取指定部门的所有成员
     /// </summary>
     public async Task<List<StaffDO>> GetDepartmentStaffsAsync(string departmentName)
@@ -231,15 +203,4 @@ public class DepartmentRepository(IDbContextFactory<ClubContext> factory) : IDep
             .ToListAsync();
     }
 
-    /// <summary>
-    /// 获取指定部门的所有项目
-    /// </summary>
-    public async Task<List<ProjectDO>> GetDepartmentProjectsAsync(string departmentName)
-    {
-        await using var context = await factory.CreateDbContextAsync();
-        return await context.Departments
-            .Where(d => d.Name == departmentName)
-            .SelectMany(d => d.Projects)
-            .ToListAsync();
-    }
 }

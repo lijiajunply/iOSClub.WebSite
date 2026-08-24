@@ -26,16 +26,6 @@ public static class MapperConfig
             .Map(dest => dest.CategoryName,
                 src => src.Category != null ? src.Category.Name : null);
 
-        config.NewConfig<ProjectDO, ProjectVO>()
-            .Map(dest => dest.DepartmentName,
-                src => src.Department != null ? src.Department.Name : null)
-            .Map(dest => dest.Staffs,
-                src => src.Staffs.Select(s => new ProjectStaffSummary { UserId = s.UserId, Name = s.Name }).ToList())
-            .Map(dest => dest.Tasks,
-                src => src.Tasks.Select(t => new ProjectTaskSummary { Id = t.Id, Title = t.Title, Status = t.Status }).ToList());
-
-        config.NewConfig<TaskDO, TaskVO>();
-        config.NewConfig<TodoDO, TodoVO>();
         config.NewConfig<ResourceDO, ResourceVO>();
 
         config.NewConfig<CategoryDO, CategoryVO>()
@@ -43,8 +33,7 @@ public static class MapperConfig
                 src => src.Articles.Select(a => a.Adapt<ArticleListItemVO>()).ToList());
 
         config.NewConfig<DepartmentDO, DepartmentVO>()
-            .Map(dest => dest.StaffCount, src => src.Staffs.Count)
-            .Map(dest => dest.ProjectCount, src => src.Projects.Count);
+            .Map(dest => dest.Staffs, src => src.Staffs.Adapt<List<StaffVO>>());
 
         config.NewConfig<ClientApplicationDO, ClientAppVO>();
 
@@ -61,18 +50,13 @@ public static class MapperConfig
             .Ignore(dest => dest.JoinTime);
 
         config.NewConfig<DTOs.StaffCreateDTO, StaffDO>()
-            .Ignore(dest => dest.Department)
-            .Ignore(dest => dest.Projects)
-            .Ignore(dest => dest.Tasks);
+            .Ignore(dest => dest.Department);
 
         config.NewConfig<DTOs.ArticleCreateDTO, ArticleDO>()
             .Ignore(dest => dest.CategoryId)
             .Ignore(dest => dest.Category)
             .Ignore(dest => dest.LastWriteTime);
 
-        config.NewConfig<DTOs.ProjectCreateUpdateDTO, ProjectDO>();
-        config.NewConfig<DTOs.TaskCreateUpdateDTO, TaskDO>();
-        config.NewConfig<DTOs.TodoCreateUpdateDTO, TodoDO>();
         config.NewConfig<DTOs.ResourceCreateUpdateDTO, ResourceDO>();
         config.NewConfig<DTOs.CategoryCreateUpdateDTO, CategoryDO>();
         config.NewConfig<DTOs.DepartmentCreateUpdateDTO, DepartmentDO>();

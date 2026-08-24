@@ -94,8 +94,6 @@ public class StaffRepository(IDbContextFactory<ClubContext> factory) : IStaffRep
         await using var context = await factory.CreateDbContextAsync();
         return (await context.Staffs
                 .Include(s => s.Department)
-                .Include(s => s.Projects)
-                .Include(s => s.Tasks)
                 .ToListAsync())
             .Select(x => x.OutputWhenOtherList());
     }
@@ -166,8 +164,6 @@ public class StaffRepository(IDbContextFactory<ClubContext> factory) : IStaffRep
         await using var context = await factory.CreateDbContextAsync();
         var staff = await context.Staffs
             .Include(s => s.Department)
-            .Include(s => s.Projects)
-            .Include(s => s.Tasks)
             .FirstOrDefaultAsync(s => s.UserId == userId);
         return staff?.OutputWhenOtherList();
     }

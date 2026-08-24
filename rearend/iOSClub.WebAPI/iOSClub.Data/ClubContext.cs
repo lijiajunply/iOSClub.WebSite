@@ -13,9 +13,6 @@ public sealed class ClubContext(DbContextOptions<ClubContext> options) : DbConte
 {
     public DbSet<StudentDO> Students { get; init; }
     public DbSet<StaffDO> Staffs { get; init; }
-    public DbSet<TaskDO> Tasks { get; init; }
-    public DbSet<TodoDO> Todos { get; init; }
-    public DbSet<ProjectDO> Projects { get; init; }
     public DbSet<ResourceDO> Resources { get; init; }
     public DbSet<DepartmentDO> Departments { get; init; }
     public DbSet<ArticleDO> Articles { get; init; }
@@ -24,26 +21,8 @@ public sealed class ClubContext(DbContextOptions<ClubContext> options) : DbConte
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<TodoDO>()
-            .HasOne(x => x.Student).WithMany()
-            .HasForeignKey(e => e.StudentId)
-            .IsRequired();
-
-        modelBuilder.Entity<StaffDO>()
-            .HasMany(x => x.Tasks)
-            .WithMany(x => x.Users);
-
-        modelBuilder.Entity<StaffDO>()
-            .HasMany(x => x.Projects)
-            .WithMany(x => x.Staffs);
-
         modelBuilder.Entity<DepartmentDO>()
             .HasMany(x => x.Staffs)
-            .WithOne(x => x.Department)
-            .IsRequired(false);
-
-        modelBuilder.Entity<DepartmentDO>()
-            .HasMany(x => x.Projects)
             .WithOne(x => x.Department)
             .IsRequired(false);
 

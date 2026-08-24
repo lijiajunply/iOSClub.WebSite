@@ -1,7 +1,7 @@
 namespace iOSClub.Data.VOs;
 
 /// <summary>
-/// 员工视图对象 - Department展平为DepartmentName，Projects/Tasks简化
+/// 员工视图对象 - Department展平为DepartmentName
 /// </summary>
 public class StaffVO
 {

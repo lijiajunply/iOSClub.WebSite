@@ -1,13 +1,17 @@
-import {ProjectModel, StaffModel} from "./ProjectModel";
-
 // 部门模型接口
+export interface StaffModel {
+  userId: string;
+  name: string;
+  identity: string;
+  department: DepartmentModel | null;
+}
+
 export interface Department {
   id: string;
   name: string;
   description: string;
   ministers?: StaffModel[];
   members?: StaffModel[];
-  projects?: Project[];
 }
 
 export interface DepartmentModel {
@@ -15,17 +19,6 @@ export interface DepartmentModel {
   name: string;
   description: string;
   staffs?: StaffModel[];
-  projects?: ProjectModel[];
-}
-
-export interface Project {
-  id: string;
-  title: string;
-  description: string;
-  department?: {
-    id: number;
-    name: string;
-  };
 }
 
 // 身份枚举

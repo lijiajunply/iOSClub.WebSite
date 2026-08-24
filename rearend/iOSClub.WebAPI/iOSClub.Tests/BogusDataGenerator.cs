@@ -87,18 +87,6 @@ public static class BogusDataGenerator
         .RuleFor(d => d.Description, f => f.Lorem.Sentence());
     
     /// <summary>
-    /// ProjectDO的Bogus生成器
-    /// </summary>
-    public static readonly Faker<ProjectDO> ProjectFaker = new Faker<ProjectDO>()
-        .RuleFor(p => p.Id, f => f.Random.Guid().ToString())
-        .RuleFor(p => p.Title, f => f.Company.CatchPhrase())
-        .RuleFor(p => p.Description, f => f.Lorem.Paragraphs(2))
-        .RuleFor(p => p.StartTime, f => f.Date.Past(6).ToString("yyyy-MM-dd"))
-        .RuleFor(p => p.EndTime, f => f.Date.Future(6).ToString("yyyy-MM-dd"))
-        .RuleFor(p => p.Staffs, _ => new List<StaffDO>())
-        .RuleFor(p => p.Tasks, _ => new List<TaskDO>());
-    
-    /// <summary>
     /// ResourceDO的Bogus生成器
     /// </summary>
     public static readonly Faker<ResourceDO> ResourceFaker = new Faker<ResourceDO>()
@@ -113,34 +101,7 @@ public static class BogusDataGenerator
     public static readonly Faker<StaffDO> StaffFaker = new Faker<StaffDO>()
         .RuleFor(s => s.UserId, f => $"2023{NextId().ToString().PadLeft(6, '0')}")
         .RuleFor(s => s.Name, f => f.Name.FullName())
-        .RuleFor(s => s.Identity, f => f.PickRandom("Founder", "President", "Minister", "Department", "Member"))
-        .RuleFor(s => s.Projects, _ => new List<ProjectDO>())
-        .RuleFor(s => s.Tasks, _ => new List<TaskDO>());
-    
-    /// <summary>
-    /// TaskDO的Bogus生成器
-    /// </summary>
-    public static readonly Faker<TaskDO> TaskFaker = new Faker<TaskDO>()
-        .RuleFor(t => t.Id, f => f.Random.Guid().ToString())
-        .RuleFor(t => t.Title, f => f.Lorem.Sentence(3, 2))
-        .RuleFor(t => t.Description, f => f.Lorem.Paragraph())
-        .RuleFor(t => t.Status, f => f.Random.Bool())
-        .RuleFor(t => t.StartTime, f => f.Date.Past(30).ToString("yyyy-MM-dd"))
-        .RuleFor(t => t.EndTime, f => f.Date.Future(30).ToString("yyyy-MM-dd"))
-        .RuleFor(t => t.Users, _ => new List<StaffDO>());
-    
-    /// <summary>
-    /// TodoDO的Bogus生成器
-    /// </summary>
-    public static readonly Faker<TodoDO> TodoFaker = new Faker<TodoDO>()
-        .RuleFor(t => t.Id, f => f.Random.Guid().ToString())
-        .RuleFor(t => t.Title, f => f.Lorem.Sentence(3, 2))
-        .RuleFor(t => t.Description, f => f.Lorem.Paragraph())
-        .RuleFor(t => t.Status, f => f.Random.Bool())
-        .RuleFor(t => t.StartTime, f => f.Date.Past(30).ToString("yyyy-MM-dd"))
-        .RuleFor(t => t.EndTime, f => f.Date.Future(30).ToString("yyyy-MM-dd"))
-        .RuleFor(t => t.CreatedTime, f => f.Date.Past(30))
-        .RuleFor(t => t.StudentId, f => $"2023{NextId().ToString().PadLeft(6, '0')}");
+        .RuleFor(s => s.Identity, f => f.PickRandom("Founder", "President", "Minister", "Department", "Member"));
     
     /// <summary>
     /// 生成指定数量的StudentDO
@@ -183,14 +144,6 @@ public static class BogusDataGenerator
     }
     
     /// <summary>
-    /// 生成指定数量的ProjectDO
-    /// </summary>
-    public static List<ProjectDO> GenerateProjects(int count)
-    {
-        return ProjectFaker.Generate(count);
-    }
-    
-    /// <summary>
     /// 生成指定数量的ResourceDO
     /// </summary>
     public static List<ResourceDO> GenerateResources(int count)
@@ -206,19 +159,4 @@ public static class BogusDataGenerator
         return StaffFaker.Generate(count);
     }
     
-    /// <summary>
-    /// 生成指定数量的TaskDO
-    /// </summary>
-    public static List<TaskDO> GenerateTasks(int count)
-    {
-        return TaskFaker.Generate(count);
-    }
-    
-    /// <summary>
-    /// 生成指定数量的TodoDO
-    /// </summary>
-    public static List<TodoDO> GenerateTodos(int count)
-    {
-        return TodoFaker.Generate(count);
-    }
 }

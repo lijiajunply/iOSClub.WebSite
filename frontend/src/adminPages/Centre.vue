@@ -50,11 +50,11 @@
           </div>
         </div>
 
-        <!-- 统计数据 (EChart + 关键指标) -->
+        <!-- 关键指标 -->
         <div v-if="userInfo.isAdmin"
-             class="md:col-span-12 lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+             class="md:col-span-12 lg:col-span-8 h-full">
           <!-- 成员概览 -->
-          <div class="ios-card p-5 flex flex-col justify-between hover:scale-[1.02] transition-all cursor-pointer"
+          <div class="ios-card p-5 flex flex-col justify-between hover:scale-[1.02] transition-all cursor-pointer h-full"
                @click="router.push('/Centre/MemberData')">
             <div class="flex items-center justify-between mb-2">
               <div class="p-2 bg-indigo-100 dark:bg-indigo-500/20 rounded-lg text-indigo-600 dark:text-indigo-400">
@@ -69,32 +69,6 @@
             </div>
           </div>
 
-          <!-- 项目概览 -->
-          <div class="ios-card p-5 flex flex-col justify-between hover:scale-[1.02] transition-all cursor-pointer"
-               @click="router.push('/Centre/Department')">
-            <div class="flex items-center justify-between mb-2">
-              <div class="p-2 bg-orange-100 dark:bg-orange-500/20 rounded-lg text-orange-600 dark:text-orange-400">
-                <Icon icon="solar:folder-with-files-bold-duotone" class="w-6 h-6"/>
-              </div>
-            </div>
-            <div>
-              <div class="text-sm text-slate-500 dark:text-slate-400 font-medium">进行中项目</div>
-              <div class="text-2xl font-bold mt-0.5">{{ statistics.projects }}</div>
-            </div>
-          </div>
-
-          <!-- 任务完成率 (EChart Mini) -->
-          <div
-              class="ios-card p-5 flex flex-col justify-between sm:col-span-2 md:col-span-1 hover:scale-[1.02] transition-all">
-            <div class="flex justify-between items-start">
-              <div class="text-sm text-slate-500 dark:text-slate-400 font-medium">任务完成率</div>
-              <Icon icon="solar:chart-2-bold-duotone" class="w-5 h-5 text-slate-400"/>
-            </div>
-            <div class="flex-1 flex items-center justify-center h-20 w-full" ref="chartContainer">
-              <!-- Chart rendered here -->
-            </div>
-            <div class="text-center text-xs font-medium text-slate-400">{{ statistics.tasks }} 个待办任务</div>
-          </div>
         </div>
       </div>
 
@@ -132,59 +106,8 @@
         </div>
       </section>
 
-      <!-- 任务与资源 (Grid) -->
+      <!-- 社团资源 / 部门管理 -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-        <!-- 我的任务列表 -->
-        <section class="ios-card flex flex-col h-[400px]">
-          <div
-              class="rounded-t-3xl p-5 border-b border-slate-100 dark:border-neutral-800 flex justify-between items-center bg-white/50 dark:bg-neutral-800/50 backdrop-blur-sm sticky top-0 z-10">
-            <div class="flex items-center gap-2">
-              <div class="w-1.5 h-5 rounded-full bg-blue-500"></div>
-              <h3 class="font-bold text-lg">提醒事项</h3>
-            </div>
-            <n-tag size="small" round class="bg-slate-100! dark:bg-neutral-700! text-slate-500!">
-              {{ tasks.length }} 个待办
-            </n-tag>
-          </div>
-
-          <div class="flex-1 overflow-y-auto p-2 custom-scrollbar">
-            <div v-if="loading.tasks" class="space-y-3 p-3">
-              <div v-for="i in 3" :key="i" class="h-16 bg-slate-100 dark:bg-neutral-800 rounded-xl animate-pulse"></div>
-            </div>
-            <div v-else-if="tasks.length === 0" class="h-full flex flex-col items-center justify-center text-slate-400">
-              <Icon icon="solar:checklist-minimalistic-linear" class="w-12 h-12 mb-2 opacity-50"/>
-              <p class="text-sm">无待办事项</p>
-            </div>
-            <div v-else class="space-y-2">
-              <div v-for="task in tasks" :key="task.id"
-                   class="group flex items-start gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-neutral-800/50 transition-colors">
-                <div class="mt-1">
-                  <div
-                      class="w-5 h-5 rounded-full border-2 flex items-center justify-center cursor-pointer transition-colors"
-                      :class="task.status ? 'bg-blue-500 border-blue-500' : 'border-slate-300 dark:border-slate-600 hover:border-blue-400'"
-                  >
-                    <Icon v-if="task.status" icon="solar:check-read-linear" class="text-white w-3 h-3"/>
-                  </div>
-                </div>
-                <div class="flex-1 min-w-0">
-                  <h4 class="text-sm font-medium truncate" :class="{'line-through text-slate-400': task.status}">
-                    {{ task.title }}</h4>
-                  <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">
-                    {{ task.description || '无详细描述' }}</p>
-                  <div class="flex items-center gap-2 mt-1.5">
-                       <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-neutral-700 text-slate-500">
-                         {{ formatDateSimple(task.startTime) }}
-                       </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- 社团资源 / 部门管理 -->
-        <section class="grid grid-rows-2 gap-6 h-[400px]">
 
           <!-- 资源快捷入口 -->
           <div
@@ -253,7 +176,6 @@
               </div>
             </div>
           </div>
-        </section>
       </div>
 
     </main>
@@ -268,17 +190,14 @@
 </template>
 
 <script setup lang="ts">
-import {ref, onMounted, computed, nextTick} from 'vue'
+import {ref, onMounted, computed} from 'vue'
 import {useRouter} from 'vue-router'
-import {NTag} from 'naive-ui'
 import {Icon} from '@iconify/vue'
 import {ToolService} from '../services/ToolService'
 import {UserService} from '../services/UserService'
-import {ProjectService} from '../services/ProjectService'
 import {DataCentreService} from "../services/DataCentreService"
 import {AuthService} from "../services/AuthService"
 import IconFont from "../components/IconFont.vue"
-import * as echarts from 'echarts'
 // @ts-ignore
 import '//at.alicdn.com/t/c/font_4612528_md4hjwjgcb.js';
 
@@ -301,20 +220,9 @@ interface Tool {
   description?: string
 }
 
-interface Task {
-  id: number
-  title: string
-  description: string
-  startTime: string
-  endTime: string
-  status: boolean
-}
-
 interface Statistics {
   members: number
   staffs: number
-  projects: number
-  tasks: number
   resources: number
   departments: number
 }
@@ -329,25 +237,19 @@ const userInfo = ref<UserInfo>({
 })
 
 const tools = ref<Tool[]>([])
-const tasks = ref<Task[]>([])
 const statistics = ref<Statistics>({
   members: 0,
   staffs: 0,
-  projects: 0,
-  tasks: 0,
   resources: 0,
   departments: 0
 })
 
 const loading = ref({
   tools: true,
-  tasks: true,
   resources: true,
   departments: true,
   statistics: true
 })
-
-const chartContainer = ref<HTMLElement | null>(null)
 
 // --- Computed ---
 const welcomeMessage = computed(() => {
@@ -371,12 +273,6 @@ const getRoleText = (role: string): string => {
   return map[role] || role
 }
 
-const formatDateSimple = (dateStr: string) => {
-  if (!dateStr) return ''
-  const date = new Date(dateStr)
-  return `${date.getMonth() + 1}月${date.getDate()}日`
-}
-
 const fixImageUrl = (tool: Tool) => {
   if (tool.icon) {
     return tool.icon.replace(/([^:])(\/\/)/g, '$1/')
@@ -394,47 +290,6 @@ const goToPersonalData = () => router.push('/Centre/PersonalData')
 const goToResources = () => router.push('/Centre/Resources')
 const goToDepartment = () => router.push('/Centre/Department')
 const openTool = (url: string) => window.open(url, '_blank')
-
-// --- ECharts ---
-const initChart = () => {
-  if (!chartContainer.value) return
-
-  const myChart = echarts.init(chartContainer.value)
-  const option = {
-    tooltip: {trigger: 'item'},
-    series: [
-      {
-        name: 'Access From',
-        type: 'pie',
-        radius: ['60%', '90%'],
-        avoidLabelOverlap: false,
-        itemStyle: {
-          borderRadius: 5,
-          borderColor: '#fff',
-          borderWidth: 1
-        },
-        label: {show: false},
-        emphasis: {label: {show: false}},
-        labelLine: {show: false},
-        data: [
-          {value: 1048, name: 'Done', itemStyle: {color: '#3B82F6'}}, // Blue
-          {value: 735, name: 'Todo', itemStyle: {color: '#E2E8F0'}},  // Slate-200
-        ]
-      }
-    ]
-  }
-
-  // 适配深色模式（简单示例，实际需监听主题变化）
-  const isDark = document.documentElement.classList.contains('dark')
-  if (isDark) {
-    option.series[0].itemStyle.borderColor = '#171717'
-    option.series[0].data[1].itemStyle.color = '#404040'
-  }
-
-  myChart.setOption(option)
-
-  window.addEventListener('resize', () => myChart.resize())
-}
 
 // --- Data Fetching ---
 // 这里保留原有逻辑，仅做 TS 类型适配和轻微简化
@@ -475,32 +330,6 @@ const fetchUserInfo = async () => {
   }
 }
 
-const fetchTasks = async () => {
-  if (!userInfo.value.isAdmin) {
-    return
-  }
-  try {
-    loading.value.tasks = true
-    const todoData = await ProjectService.getYourTasks()
-    tasks.value = todoData.map((task: any) => ({
-      id: task.id,
-      title: task.title,
-      description: task.description,
-      startTime: task.startTime,
-      endTime: task.endTime,
-      status: task.status
-    }))
-  } catch (error) {
-    tasks.value = [
-      {id: 1, title: '审核纳新申请', description: '2024秋季招新', startTime: '2023-10-01', endTime: '', status: false},
-      {id: 2, title: '部署新官网', description: 'Frontend v3.0', startTime: '2023-10-05', endTime: '', status: true},
-      {id: 3, title: '服务器维护', description: 'SSL证书更新', startTime: '2023-09-28', endTime: '', status: false}
-    ]
-  } finally {
-    loading.value.tasks = false
-  }
-}
-
 const fetchStatistics = async () => {
   if (!userInfo.value.isAdmin) {
     return
@@ -509,21 +338,18 @@ const fetchStatistics = async () => {
     loading.value.statistics = true
     statistics.value = await DataCentreService.getCentreData()
   } catch (e) {
-    statistics.value = {members: 128, staffs: 42, projects: 15, tasks: 36, resources: 24, departments: 4}
+    statistics.value = {members: 128, staffs: 42, resources: 24, departments: 4}
   } finally {
     loading.value.statistics = false
-    // 数据加载完后初始化图表
-    await nextTick(() => initChart())
   }
 }
 
 onMounted(async () => {
   // 先获取用户信息（后续 fetchStatistics 依赖 isAdmin 判断）
   await fetchUserInfo()
-  // fetchTools 和 fetchTasks 不依赖用户信息，与 fetchStatistics 并行加载
+  // 工具和统计数据并行加载
   await Promise.allSettled([
     fetchTools(),
-    fetchTasks(),
     fetchStatistics(),
   ])
 })

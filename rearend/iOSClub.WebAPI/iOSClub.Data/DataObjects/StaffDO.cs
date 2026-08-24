@@ -22,9 +22,6 @@ public class StaffDO
 
     public DepartmentDO? Department { get; set; }
 
-    public List<ProjectDO> Projects { get; set; } = [];
-    public List<TaskDO> Tasks { get; set; } = [];
-
     public StaffDO OutputWhenOtherList()
     {
         Department = Department == null
@@ -35,9 +32,6 @@ public class StaffDO
                 Name = Department.Name,
                 Description = Department.Description,
             };
-
-        Tasks = Tasks.Select(t => t.OutputWhenOtherList()).ToList();
-        Projects = Projects.Select(p => p.OutputWhenOtherList()).ToList();
 
         return this;
     }

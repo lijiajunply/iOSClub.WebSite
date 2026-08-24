@@ -70,31 +70,4 @@ public class BogusDataGenerationTests
         }
     }
 
-    [Fact]
-    public void GenerateProjectDOsWithBogus()
-    {
-        // 配置Bogus生成器用于ProjectDO
-        var faker = new Faker<ProjectDO>()
-            .RuleFor(p => p.Id, f => f.Random.Guid().ToString())
-            .RuleFor(p => p.Title, f => f.Company.CatchPhrase())
-            .RuleFor(p => p.Description, f => f.Lorem.Paragraphs(2))
-            .RuleFor(p => p.StartTime, f => f.Date.Past(6).ToString("yyyy-MM-dd"))
-            .RuleFor(p => p.EndTime, f => f.Date.Future(6).ToString("yyyy-MM-dd"));
-
-        // 生成8个项目
-        var projects = faker.Generate(8);
-
-        // 验证生成的数据
-        Assert.NotNull(projects);
-        Assert.Equal(8, projects.Count);
-        
-        foreach (var project in projects)
-        {
-            Assert.False(string.IsNullOrEmpty(project.Id));
-            Assert.False(string.IsNullOrEmpty(project.Title));
-            Assert.False(string.IsNullOrEmpty(project.Description));
-            Assert.NotNull(project.StartTime);
-            Assert.NotNull(project.EndTime);
-        }
-    }
 }

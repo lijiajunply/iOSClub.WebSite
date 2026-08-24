@@ -13,7 +13,7 @@
 
       <!-- 加载状态 -->
       <div v-if="loading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div v-for="i in 8" :key="i" class="apple-card-base h-40 animate-pulse bg-gray-200 dark:bg-gray-800"></div>
+        <div v-for="i in 4" :key="i" class="apple-card-base h-40 animate-pulse bg-gray-200 dark:bg-gray-800"></div>
       </div>
 
       <!-- 数据概览卡片网格 -->
@@ -138,11 +138,8 @@ const isAdmin = ref(false)
 const statistics = ref({
   members: 0,
   staffs: 0,
-  projects: 0,
-  tasks: 0,
   resources: 0,
-  departments: 0,
-  todos: 0
+  departments: 0
 })
 
 // Monitoring data state — only HTTP metrics (the rest are devops-level or never tracked)
@@ -191,20 +188,6 @@ const statItems = computed<StatItemConfig[]>(() => [
     textClass: 'text-green-600 dark:text-green-400'
   },
   {
-    key: 'projects',
-    label: '项目归档',
-    icon: 'material-symbols:folder',
-    bgClass: 'bg-purple-100 dark:bg-purple-900/40',
-    textClass: 'text-purple-600 dark:text-purple-400'
-  },
-  {
-    key: 'tasks',
-    label: '任务统计',
-    icon: 'material-symbols:task',
-    bgClass: 'bg-amber-100 dark:bg-amber-900/40',
-    textClass: 'text-amber-600 dark:text-amber-400'
-  },
-  {
     key: 'resources',
     label: '资源池',
     icon: 'material-symbols:folder-open',
@@ -217,13 +200,6 @@ const statItems = computed<StatItemConfig[]>(() => [
     icon: 'material-symbols:groups',
     bgClass: 'bg-indigo-100 dark:bg-indigo-900/40',
     textClass: 'text-indigo-600 dark:text-indigo-400'
-  },
-  {
-    key: 'todos',
-    label: '待办事项',
-    icon: 'ion:checkbox',
-    bgClass: 'bg-red-100 dark:bg-red-900/40',
-    textClass: 'text-red-600 dark:text-red-400'
   }
 ])
 

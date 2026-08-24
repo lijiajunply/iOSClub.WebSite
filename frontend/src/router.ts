@@ -181,24 +181,6 @@ const routes = [
                 component: () => import('./adminPages/Category/CategorySetting.vue'),
             },
             {
-                path: 'Projects',
-                name: 'ProjectsData',
-                meta: { title: "项目管理 - 西建大 iOS Club" },
-                component: () => import('./adminPages/Project/ProjectEditor.vue'),
-            },
-            {
-                path: 'ProjectEditor/:id',
-                name: 'ProjectEditor',
-                meta: { title: "编辑项目 - 西建大 iOS Club" },
-                component: () => import('./adminPages/Project/ProjectEditor.vue'),
-            },
-            {
-                path: 'ProjectData/:id',
-                name: 'ProjectData',
-                meta: { title: "项目详情 - 西建大 iOS Club" },
-                component: () => import('./adminPages/Project/ProjectData.vue'),
-            },
-            {
                 path: 'Resources',
                 name: 'Resources',
                 meta: { title: "资源管理 - 西建大 iOS Club" },
@@ -227,12 +209,6 @@ const routes = [
                 name: 'ClientApplication',
                 meta: { title: "客户端应用 - 西建大 iOS Club" },
                 component: () => import('./adminPages/ClientApplication.vue'),
-            },
-            {
-                path: 'Project/:id?',
-                name: 'Project',
-                meta: { title: "项目编辑 - 西建大 iOS Club" },
-                component: () => import('./adminPages/Project/ProjectEditor.vue'),
             },
             {
                 path: 'Logs',

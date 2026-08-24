@@ -62,31 +62,4 @@ public class DataLayerTests
         Assert.Equal(category.Id, retrievedArticle.CategoryId);
     }
 
-    [Fact]
-    public async Task CanAddAndRetrieveProject()
-    {
-        // Arrange
-        await using var context = new ClubContext(_options);
-        var department = BogusDataGenerator.DepartmentFaker.Clone()
-            .RuleFor(d => d.Key, "test-dept")
-            .Generate();
-        context.Departments.Add(department);
-        await context.SaveChangesAsync();
-
-        var project = BogusDataGenerator.ProjectFaker.Clone()
-            .RuleFor(p => p.Id, "test-project")
-            .RuleFor(p => p.StartTime, "2024-01-01")
-            .RuleFor(p => p.EndTime, "2024-12-31")
-            .Generate();
-
-        // Act
-        context.Projects.Add(project);
-        await context.SaveChangesAsync();
-
-        // Assert
-        var retrievedProject = await context.Projects.FindAsync(project.Id);
-        Assert.NotNull(retrievedProject);
-        Assert.Equal(project.Title, retrievedProject.Title);
-        Assert.Equal(project.Description, retrievedProject.Description);
-    }
 }

@@ -24,15 +24,9 @@ public class DepartmentDO : DataObject
     /// </summary>
     public List<StaffDO> Staffs { get; set; } = [];
 
-    /// <summary>
-    /// 项目
-    /// </summary>
-    public List<ProjectDO> Projects { get; set; } = [];
-
     public DepartmentDO OutputWhenOtherList()
     {
         Staffs = Staffs.Select(x => x.OutputWhenOtherList()).ToList();
-        Projects = Projects.Select(x => x.OutputWhenOtherList()).ToList();
         return this;
     }
 }

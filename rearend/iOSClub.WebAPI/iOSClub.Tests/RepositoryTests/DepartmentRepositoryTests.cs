@@ -66,6 +66,29 @@ public class DepartmentRepositoryTests
     }
 
     [Fact]
+    public async Task GetDepartmentByNameAsync_IncludesDepartmentStaffs()
+    {
+        // Arrange
+        await _context.Database.EnsureDeletedAsync();
+        await _context.Database.EnsureCreatedAsync();
+
+        var department = BogusDataGenerator.DepartmentFaker.Generate();
+        var staffs = BogusDataGenerator.GenerateStaffs(2);
+        staffs.ForEach(staff => staff.Department = department);
+        await _context.Departments.AddAsync(department);
+        await _context.Staffs.AddRangeAsync(staffs);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _departmentRepository.GetDepartmentByNameAsync(department.Name);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Staffs.Count);
+        Assert.All(result.Staffs, staff => Assert.Equal(department.Name, staff.Department?.Name));
+    }
+
+    [Fact]
     public async Task GetDepartmentByKeyAsync_ReturnsCorrectDepartment()
     {
         // Arrange
@@ -221,30 +244,4 @@ public class DepartmentRepositoryTests
         Assert.Equal(2, result);
     }
 
-    [Fact]
-    public async Task GetProjectCountAsync_ReturnsCorrectCount()
-    {
-        // Arrange
-        await _context.Database.EnsureDeletedAsync();
-        await _context.Database.EnsureCreatedAsync();
-        
-        // 使用Bogus生成1个部门
-        var department = BogusDataGenerator.DepartmentFaker.Generate();
-        await _context.Departments.AddAsync(department);
-        
-        // 使用Bogus生成2个项目
-        var projects = BogusDataGenerator.GenerateProjects(2);
-        foreach (var project in projects)
-        {
-            project.Department = department;
-        }
-        await _context.Projects.AddRangeAsync(projects);
-        await _context.SaveChangesAsync();
-
-        // Act
-        var result = await _departmentRepository.GetProjectCountAsync(department.Name);
-
-        // Assert
-        Assert.Equal(2, result);
-    }
 }

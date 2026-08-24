@@ -154,12 +154,6 @@ public class DataCentreController(
                         DateTimeKind.Utc);
             }
 
-            // 确保所有DateTime值都是UTC时间
-            foreach (var todo in allData.Todos.Where(todo => todo.CreatedTime.Kind == DateTimeKind.Unspecified))
-            {
-                todo.CreatedTime = DateTime.SpecifyKind(todo.CreatedTime, DateTimeKind.Utc);
-            }
-
             foreach (var article in allData.Articles.Where(article =>
                          article.LastWriteTime.Kind == DateTimeKind.Unspecified))
             {
@@ -174,10 +168,7 @@ public class DataCentreController(
             await context.Departments.AddRangeAsync(allData.Departments);
             await context.Staffs.AddRangeAsync(allData.Presidents.Where(staff => staff.Identity == "President"));
             await context.SaveChangesAsync();
-            await context.Tasks.AddRangeAsync(allData.Tasks);
-            await context.Projects.AddRangeAsync(allData.Projects);
             await context.Resources.AddRangeAsync(allData.Resources);
-            await context.Todos.AddRangeAsync(allData.Todos);
             await context.Articles.AddRangeAsync(allData.Articles);
             await context.SaveChangesAsync();
 
@@ -214,10 +205,7 @@ public class DataCentreController(
                 Members = await context.Students.CountAsync(),
                 Departments = await context.Departments.CountAsync(),
                 Staffs = await context.Staffs.Where(staff => staff.Identity != "Founder").CountAsync(),
-                Tasks = await context.Tasks.CountAsync(),
-                Projects = await context.Projects.CountAsync(),
                 Resources = await context.Resources.CountAsync(),
-                Todos = await context.Todos.CountAsync()
             };
             return Ok(ApiResponse<object>.Success(data));
         }
@@ -243,10 +231,7 @@ public class DataCentreController(
                 Students = await context.Students.ToListAsync(),
                 Departments = await context.Departments.ToListAsync(),
                 Presidents = await context.Staffs.Where(staff => staff.Identity == "President").ToListAsync(),
-                Tasks = await context.Tasks.ToListAsync(),
-                Projects = await context.Projects.ToListAsync(),
                 Resources = await context.Resources.ToListAsync(),
-                Todos = await context.Todos.ToListAsync(),
             };
 
             var options = new JsonSerializerOptions

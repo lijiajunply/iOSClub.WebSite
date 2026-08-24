@@ -16,11 +16,9 @@ public static class ServiceCollectionExtensions
             services.AddScoped<IArticleRepository, ArticleRepository>();
             services.AddScoped<ICategoryRepository, CategoryRepository>();
             services.AddScoped<IDepartmentRepository, DepartmentRepository>();
-            services.AddScoped<IProjectRepository, ProjectRepository>();
             services.AddScoped<IResourceRepository, ResourceRepository>();
             services.AddScoped<IStaffRepository, StaffRepository>();
             services.AddScoped<IStudentRepository, StudentRepository>();
-            services.AddScoped<ITodoRepository, TodoRepository>();
 
             services.AddScoped<IDataCentreService, DataCentreService>();
             services.AddScoped<IClientApplicationRepository, ClientApplicationRepository>();

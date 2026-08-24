@@ -192,12 +192,9 @@ public class DepartmentController(
             if (department == null)
                 return Ok(ApiResponse<string>.Fail(ErrorCode.ResourceNotFound, "部门不存在"));
 
-            // 检查部门是否有成员或项目
+            // 包含成员的部门不能直接删除
             if (department.Staffs.Count != 0)
                 return Ok(ApiResponse<string>.Fail(ErrorCode.InvalidStatusForOperation, "无法删除包含成员的部门"));
-
-            if (department.Projects.Count != 0)
-                return Ok(ApiResponse<string>.Fail(ErrorCode.InvalidStatusForOperation, "无法删除包含项目的部门"));
 
             var result = await departmentRepository.DeleteDepartmentAsync(name);
             if (!result)

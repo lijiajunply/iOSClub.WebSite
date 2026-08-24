@@ -8,6 +8,5 @@ public class DepartmentVO
     public string Name { get; set; } = "";
     public string Key { get; set; } = "";
     public string? Description { get; set; }
-    public int StaffCount { get; set; }
-    public int ProjectCount { get; set; }
+    public List<StaffVO> Staffs { get; set; } = [];
 }

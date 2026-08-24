@@ -708,7 +708,7 @@ onBeforeUnmount(() => {
                 :loading="loading"
                 :single-line="false"
                 size="large"
-                class="ios-table"
+                class="ios-table mb-2"
             />
           </div>
         </div>
