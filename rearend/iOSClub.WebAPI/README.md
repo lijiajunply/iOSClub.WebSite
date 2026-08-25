@@ -112,6 +112,11 @@ dotnet publish -c Release
 
 3. 配置数据库连接字符串
 
+如果后端部署在 Nginx、Zeabur 等反向代理之后，请把代理节点的 IP 配置到
+`TRUSTED_PROXY_IPS`（多个地址用英文逗号分隔），例如
+`TRUSTED_PROXY_IPS=10.0.0.2,10.0.0.3`。只有这些代理转发的
+`X-Forwarded-For` 才会用于限流；未配置时会使用直接连接地址，避免客户端伪造请求头。
+
 ## 贡献指南
 
 1. 确保安装了.NET 10 SDK

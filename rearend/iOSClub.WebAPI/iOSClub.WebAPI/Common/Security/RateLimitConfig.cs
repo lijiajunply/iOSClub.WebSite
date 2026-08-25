@@ -94,7 +94,9 @@ public class RateLimitConfig
         new()
         {
             Name = "login",
-            PathPattern = "/api/auth/*",
+            // Controllers use [Route("[controller]")], so the deployed login route is /Auth/login.
+            // Keep the /api/auth alias for deployments that put the API behind an /api prefix.
+            PathPattern = "/Auth/*|/api/auth/*",
             TokenLimit = 30, // 从10提升到30，每个IP每分钟30次登录尝试
             ReplenishmentPeriod = TimeSpan.FromMinutes(1),
             TokensPerPeriod = 30,

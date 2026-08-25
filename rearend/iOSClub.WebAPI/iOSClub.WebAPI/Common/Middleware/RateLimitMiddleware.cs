@@ -121,22 +121,15 @@ public class RateLimitMiddleware : IDisposable
     /// <returns>客户端IP地址</returns>
     private string GetClientIp(HttpContext context)
     {
-        // 检查X-Forwarded-For头（处理反向代理情况）
-        var forwardedFor = context.Request.Headers["X-Forwarded-For"].FirstOrDefault();
-        if (!string.IsNullOrEmpty(forwardedFor))
-        {
-            return forwardedFor.Split(',')[0].Trim();
-        }
+        // ForwardedHeadersMiddleware has already validated and applied proxy headers.
+        // Never trust X-Forwarded-For/X-Real-IP directly: clients can forge them and
+        // accidentally (or deliberately) put many users in the same rate-limit bucket.
+        var remoteIp = context.Connection.RemoteIpAddress;
+        if (remoteIp == null) return "unknown";
 
-        // 检查X-Real-IP头
-        var realIp = context.Request.Headers["X-Real-IP"].FirstOrDefault();
-        if (!string.IsNullOrEmpty(realIp))
-        {
-            return realIp.Trim();
-        }
-
-        // 直接从连接获取IP
-        return context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        return remoteIp.IsIPv4MappedToIPv6
+            ? remoteIp.MapToIPv4().ToString()
+            : remoteIp.ToString();
     }
 
     /// <summary>

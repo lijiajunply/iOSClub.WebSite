@@ -1,5 +1,6 @@
 using System.Data;
 using System.IO.Compression;
+using System.Net;
 using System.Security.Cryptography;
 using FluentValidation.AspNetCore;
 using iOSClub.Data;
@@ -15,6 +16,7 @@ using iOSClub.WebAPI.IdentityModels;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
@@ -31,6 +33,28 @@ using DotEnv.Core;
 new EnvLoader().Load();
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Only accept forwarded client IP headers from explicitly configured reverse proxies.
+// This keeps rate limiting per real client without allowing arbitrary clients to spoof
+// X-Forwarded-For and avoids merging all users behind an untrusted proxy.
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+
+    var configuredProxyIps = builder.Configuration.GetSection("Security:TrustedProxies")
+        .GetChildren()
+        .Select(x => x.Value)
+        .Concat((Environment.GetEnvironmentVariable("TRUSTED_PROXY_IPS") ?? string.Empty)
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+
+    foreach (var proxyIp in configuredProxyIps.Distinct(StringComparer.OrdinalIgnoreCase))
+    {
+        if (IPAddress.TryParse(proxyIp, out var address))
+        {
+            options.KnownProxies.Add(address);
+        }
+    }
+});
 
 // 配置Mapster全局映射
 MapperConfig.Configure();
@@ -360,6 +384,9 @@ builder.Services.Configure<GzipCompressionProviderOptions>(options => { options.
 #endregion
 
 var app = builder.Build();
+
+// Must run before RateLimitMiddleware so only trusted proxy headers affect the client IP.
+app.UseForwardedHeaders();
 
 // 注册全局异常处理中间件
 app.UseMiddleware<GlobalExceptionMiddleware>();
