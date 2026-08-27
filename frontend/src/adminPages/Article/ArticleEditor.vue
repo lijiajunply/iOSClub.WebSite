@@ -2,6 +2,29 @@
   <!-- 页面容器：Apple 风格浅灰背景，暗黑模式深色背景 -->
   <div class="min-h-screen bg-[#f5f5f7] dark:bg-black transition-colors duration-300 p-4 sm:p-6 lg:p-8 font-sans">
 
+    <!-- Markdown 文件导入入口；实际导入模式在读取文件后选择。 -->
+    <input
+        ref="fileInput"
+        type="file"
+        accept=".md,text/markdown,text/plain"
+        class="hidden"
+        @change="handleMarkdownFileChange"
+    />
+
+    <n-modal v-model:show="showImportModeModal" preset="dialog" title="导入 Markdown" :mask-closable="false">
+      <div class="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+        <p>已读取文件「{{ pendingFileName }}」，请选择导入方式。</p>
+        <p class="text-xs text-gray-400 dark:text-gray-500">覆盖会替换当前正文，续写会将文件内容追加到当前正文末尾。</p>
+      </div>
+      <template #action>
+        <div class="flex w-full justify-end gap-2">
+          <n-button @click="cancelMarkdownImport">取消</n-button>
+          <n-button type="info" @click="applyMarkdownImport('append')">续写</n-button>
+          <n-button type="primary" @click="applyMarkdownImport('overwrite')">覆盖</n-button>
+        </div>
+      </template>
+    </n-modal>
+
     <!-- 主要布局网格 -->
     <div class="max-w-[1600px] mx-auto grid grid-cols-1 xl:grid-cols-2 gap-6 lg:gap-8 items-start">
 
@@ -152,7 +175,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, defineComponent, h } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useMessage, NForm, NFormItem, NInput, NSelect } from 'naive-ui'
+import { useMessage, NForm, NFormItem, NInput, NSelect, NButton, NModal } from 'naive-ui'
 import { Icon } from '@iconify/vue'
 import { ArticleService } from '../../services/ArticleService'
 import type { ArticleModel, ArticleCreateDto, ArticleUpdateDto, CategoryModel } from '../../models'
@@ -179,7 +202,11 @@ const layoutStore = useLayoutStore()
 const saving = ref(false)
 const editingArticle = ref<ArticleModel | null>(null)
 const formRef = ref<InstanceType<typeof NForm> | null>(null)
+const fileInput = ref<HTMLInputElement | null>(null)
 const categoryOptions = ref<Array<{ label: string, value: string }>>([])
+const showImportModeModal = ref(false)
+const pendingFileName = ref('')
+const pendingMarkdownContent = ref('')
 
 const editForm = ref<EditFormType>({
   path: '',
@@ -244,6 +271,73 @@ const goBack = () => {
   router.push('/Centre/Article')
 }
 
+const triggerMarkdownImport = () => {
+  fileInput.value?.click()
+}
+
+const handleMarkdownFileChange = async (event: Event) => {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
+  if (!file) return
+
+  if (!file.name.toLowerCase().endsWith('.md')) {
+    message.error('请选择 Markdown 文件（.md）')
+    return
+  }
+
+  try {
+    pendingMarkdownContent.value = (await file.text()).replace(/^\uFEFF/, '')
+    pendingFileName.value = file.name
+    showImportModeModal.value = true
+  } catch (error) {
+    message.error('读取 Markdown 文件失败: ' + (error instanceof Error ? error.message : String(error)))
+  }
+}
+
+const cancelMarkdownImport = () => {
+  showImportModeModal.value = false
+  pendingMarkdownContent.value = ''
+  pendingFileName.value = ''
+}
+
+const applyMarkdownImport = (mode: 'overwrite' | 'append') => {
+  const importedContent = pendingMarkdownContent.value
+  if (mode === 'overwrite') {
+    editForm.value.content = importedContent
+  } else {
+    const currentContent = editForm.value.content.replace(/\r\n?/g, '\n')
+    const normalizedImportedContent = importedContent.replace(/\r\n?/g, '\n')
+    editForm.value.content = currentContent && normalizedImportedContent
+      ? `${currentContent.replace(/\n+$/, '')}\n\n${normalizedImportedContent.replace(/^\n+/, '')}`
+      : currentContent + normalizedImportedContent
+  }
+
+  message.success(mode === 'overwrite' ? 'Markdown 内容已覆盖' : 'Markdown 内容已续写')
+  cancelMarkdownImport()
+}
+
+const sanitizeFileName = (value: string) => {
+  const sanitized = value.trim().replace(/[\\/:*?"<>|]/g, '-').replace(/\s+/g, '-').replace(/-+/g, '-')
+  return sanitized || 'article'
+}
+
+const downloadMarkdown = () => {
+  const name = sanitizeFileName(editForm.value.title || editForm.value.path)
+  const blob = new Blob([editForm.value.content || ''], { type: 'text/markdown;charset=utf-8' })
+  const downloadUrl = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = downloadUrl
+  link.download = `${name}.md`
+  document.body.appendChild(link)
+  link.click()
+  setTimeout(() => {
+    document.body.removeChild(link)
+    URL.revokeObjectURL(downloadUrl)
+  }, 100)
+  message.success('Markdown 文件已下载')
+}
+
 const fetchArticle = async (path: string) => {
   try {
     const article = await ArticleService.getArticleByPath(path)
@@ -302,6 +396,22 @@ onMounted(async () => {
   const ActionsComponent = defineComponent({
     setup() {
       return () => h('div', { class: 'flex items-center justify-end space-x-3' }, [
+        // Markdown 文件操作
+        h('button', {
+          class: 'group w-10 h-10 rounded-full bg-gray-200/60 dark:bg-gray-700/60 hover:bg-gray-300 dark:hover:bg-gray-600 flex items-center justify-center transition-all backdrop-blur-sm active:scale-95',
+          onClick: triggerMarkdownImport,
+          title: '导入 Markdown'
+        }, [
+          h(Icon, { icon: 'solar:upload-minimalistic-bold', class: 'text-gray-500 dark:text-gray-300 w-5 h-5' })
+        ]),
+        h('button', {
+          class: 'group w-10 h-10 rounded-full bg-gray-200/60 dark:bg-gray-700/60 hover:bg-gray-300 dark:hover:bg-gray-600 flex items-center justify-center transition-all backdrop-blur-sm active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed',
+          onClick: downloadMarkdown,
+          disabled: !editForm.value.content,
+          title: '下载 Markdown'
+        }, [
+          h(Icon, { icon: 'solar:download-minimalistic-bold', class: 'text-gray-500 dark:text-gray-300 w-5 h-5' })
+        ]),
         // Cancel Button - Circle with Icon
         h('button', {
           class: 'group w-10 h-10 rounded-full bg-gray-200/60 dark:bg-gray-700/60 hover:bg-gray-300 dark:hover:bg-gray-600 flex items-center justify-center transition-all backdrop-blur-sm active:scale-95',
