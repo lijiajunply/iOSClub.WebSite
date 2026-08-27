@@ -25,10 +25,10 @@ export class ArticleService {
         }
 
         return await apiRequest<ArticleModel>({
-            // 详情接口会按当前用户身份过滤文章；apiRequest 在没有登录态时
-            // 仍可匿名请求，因此不应显式禁用 Authorization 头。
+            // 文章详情公开可读，但服务端会按当前身份过滤受限文章。
             url: `${url}/Article/${encodeURIComponent(path)}`,
-            method: 'GET'
+            method: 'GET',
+            optionalAuth: true
         });
     }
 
@@ -81,6 +81,7 @@ export class ArticleService {
         return await apiRequest<Record<string, ArticleModel[]>>({
             url: `${url}/Article/category`,
             method: 'GET',
+            optionalAuth: true
         });
     }
 

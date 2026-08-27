@@ -17,6 +17,11 @@ export interface ApiResponse<T> {
 export interface ApiRequestConfig extends Omit<RequestInit, 'body'> {
     url: string;
     requiresAuth?: boolean;
+    /**
+     * Attach the current identity when possible, but fall back to an anonymous
+     * request if the access/refresh token can no longer be used.
+     */
+    optionalAuth?: boolean;
     body?: any;
 
     showMessage?: boolean;
@@ -67,11 +72,20 @@ export async function apiRequest<T>(config: ApiRequestConfig): Promise<T> {
         ...((headers as Record<string, string>) || {})
     };
 
-    // 如果配置要求认证且有令牌，添加Authorization头前先确保 Token 有效
+    // 需要认证的请求携带令牌；可选认证请求在令牌失效时降级为匿名请求。
     if (config.requiresAuth !== false) {
         const token = AuthService.getToken();
         if (token) {
-            await ensureValidToken();
+            try {
+                await ensureValidToken();
+            } catch (error) {
+                if (!config.optionalAuth) {
+                    throw error;
+                }
+
+                AuthService.clearTokens();
+            }
+
             const validToken = AuthService.getToken();
             if (validToken) {
                 requestHeaders['Authorization'] = `Bearer ${validToken}`;
@@ -128,7 +142,7 @@ export async function apiRequest<T>(config: ApiRequestConfig): Promise<T> {
         if (apiResponse.code !== 200) {
         // 根据HTTP状态码处理特殊情况
         // 当code为401或者errorCode为3001时触发令牌刷新逻辑
-        if (apiResponse.code === 401 || apiResponse.errorCode === 3001) {
+        if (config.requiresAuth !== false && (apiResponse.code === 401 || apiResponse.errorCode === 3001)) {
             try {
                 // 使用共享 Promise 刷新令牌，避免并发 401 触发多次刷新
                 if (!refreshPromise) {
@@ -173,9 +187,36 @@ export async function apiRequest<T>(config: ApiRequestConfig): Promise<T> {
                     // 如果重新请求还是失败，继续执行下面的错误处理逻辑
                 }
             } catch (refreshError) {
-                // 刷新令牌失败，清除令牌并抛出错误
-                AuthService.clearToken();
-                throw new Error('登录已过期，请重新登录');
+                // 公开但按身份过滤的接口可以在刷新失败后匿名重试。
+                if (config.optionalAuth) {
+                    AuthService.clearTokens();
+                    delete requestHeaders['Authorization'];
+
+                    const anonymousResponse = await fetch(url, {
+                        headers: requestHeaders,
+                        body: requestBody,
+                        ...rest
+                    });
+
+                    if (!anonymousResponse.ok) {
+                        apiResponse = {
+                            code: anonymousResponse.status,
+                            errorCode: anonymousResponse.status === 401 ? 3001 : 5000,
+                            message: anonymousResponse.statusText || '请求失败',
+                            data: null!
+                        };
+                    } else {
+                        apiResponse = await anonymousResponse.json();
+                    }
+
+                    if (apiResponse.code === 200) {
+                        return apiResponse.data;
+                    }
+                } else {
+                    // 刷新令牌失败，清除令牌并抛出错误
+                    AuthService.clearToken();
+                    throw new Error('登录已过期，请重新登录');
+                }
             }
             
             // 如果令牌刷新成功但重新请求仍然失败，继续执行下面的错误处理逻辑
