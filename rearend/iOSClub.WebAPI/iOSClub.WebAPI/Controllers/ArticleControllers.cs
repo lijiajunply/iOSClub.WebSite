@@ -339,7 +339,7 @@ public class ArticleController(
         if (user == null)
             return new ArticleAccessScope();
 
-        if (user.Identity == "Founder")
+        if (user.Identity is "Founder" or "President")
             return new ArticleAccessScope(user.Identity);
 
         var staff = await staffRepository.GetStaffByIdAsync(user.UserId);

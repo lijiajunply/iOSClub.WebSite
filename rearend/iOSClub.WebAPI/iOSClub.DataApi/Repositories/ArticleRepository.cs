@@ -197,12 +197,12 @@ public class ArticleRepository(IDbContextFactory<ClubContext> factory, ICategory
         await using var context = await factory.CreateDbContextAsync();
 
         var allowedIdentities = GetAllowedIdentities(accessScope.Identity);
-        var isFounder = accessScope.Identity == "Founder";
+        var canAccessAllDepartments = CanAccessAllDepartments(accessScope.Identity);
 
         var query = context.Articles
             .AsNoTracking()
             .Where(a => a.Identity == null || ((IEnumerable<string>)allowedIdentities).Contains(a.Identity))
-            .Where(a => a.VisibleToDepartment == null || isFounder ||
+            .Where(a => a.VisibleToDepartment == null || canAccessAllDepartments ||
                         a.VisibleToDepartment == accessScope.DepartmentName)
             .Select(a => new ArticleProjection
             {
@@ -253,9 +253,12 @@ public class ArticleRepository(IDbContextFactory<ClubContext> factory, ICategory
             return false;
 
         return string.IsNullOrEmpty(article.VisibleToDepartment) ||
-               accessScope.Identity == "Founder" ||
+               CanAccessAllDepartments(accessScope.Identity) ||
                article.VisibleToDepartment == accessScope.DepartmentName;
     }
+
+    private static bool CanAccessAllDepartments(string identity)
+        => identity is "Founder" or "President";
 
     private static string[] GetAllowedIdentities(string identity)
     {
@@ -336,12 +339,12 @@ public class ArticleRepository(IDbContextFactory<ClubContext> factory, ICategory
         await using var context = await factory.CreateDbContextAsync();
 
         var allowedIdentities = GetAllowedIdentities(accessScope.Identity);
-        var isFounder = accessScope.Identity == "Founder";
+        var canAccessAllDepartments = CanAccessAllDepartments(accessScope.Identity);
 
         return await context.Articles
             .AsNoTracking()
             .Where(a => a.Identity == null || ((IEnumerable<string>)allowedIdentities).Contains(a.Identity))
-            .Where(a => a.VisibleToDepartment == null || isFounder ||
+            .Where(a => a.VisibleToDepartment == null || canAccessAllDepartments ||
                         a.VisibleToDepartment == accessScope.DepartmentName)
             .Where(a =>
                 EF.Functions.MatchAny(a.Title, keyword) ||

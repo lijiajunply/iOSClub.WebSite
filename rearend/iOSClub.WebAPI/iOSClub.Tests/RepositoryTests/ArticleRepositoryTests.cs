@@ -197,7 +197,7 @@ public class ArticleRepositoryTests
     [InlineData("Department", "科技部", true)]
     [InlineData("Minister", "科技部", true)]
     [InlineData("Department", "宣传部", false)]
-    [InlineData("President", null, false)]
+    [InlineData("President", null, true)]
     [InlineData("Founder", null, true)]
     public async Task GetFromPath_EnforcesDepartmentVisibility(
         string identity,
@@ -221,5 +221,30 @@ public class ArticleRepositoryTests
             new ArticleAccessScope(identity, departmentName));
 
         Assert.Equal(shouldBeVisible, result != null);
+    }
+
+    [Theory]
+    [InlineData("President")]
+    [InlineData("Founder")]
+    public async Task GetAllCategoryArticles_GlobalManagersSeeDepartmentArticles(string identity)
+    {
+        await using var context = new ClubContext(_options);
+        await context.Database.EnsureDeletedAsync();
+        await context.Database.EnsureCreatedAsync();
+
+        var department = new DepartmentDO { Name = "科技部", Key = "technology" };
+        var category = BogusDataGenerator.CategoryFaker.Generate();
+        var article = BogusDataGenerator.ArticleFaker.Generate();
+        article.Identity = "Department";
+        article.VisibleToDepartment = department.Name;
+        article.CategoryId = category.Id;
+        await context.Departments.AddAsync(department);
+        await context.Categories.AddAsync(category);
+        await context.Articles.AddAsync(article);
+        await context.SaveChangesAsync();
+
+        var result = await _articleRepository.GetAllCategoryArticles(new ArticleAccessScope(identity));
+
+        Assert.Contains(result.SelectMany(group => group.Value), item => item.Path == article.Path);
     }
 }
