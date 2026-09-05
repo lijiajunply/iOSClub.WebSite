@@ -14,6 +14,7 @@ using iOSClub.WebAPI.Common.Middleware;
 using iOSClub.WebAPI.Common.Security;
 using iOSClub.WebAPI.IdentityModels;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -120,6 +121,7 @@ builder.Services.AddSingleton<JwtService>();
 #region 身份验证
 
 builder.Services.AddAuthorizationCore();
+builder.Services.AddSingleton<IAuthorizationHandler, FounderAuthorizationHandler>();
 
 // 配置JWT认证 - 注意：在测试环境中，我们将使用服务注入的方式获取RsaKeyManager，
 // 而不是直接创建实例，这样可以允许测试代码替换该服务

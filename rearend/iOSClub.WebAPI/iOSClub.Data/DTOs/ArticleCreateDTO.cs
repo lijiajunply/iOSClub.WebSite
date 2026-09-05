@@ -20,6 +20,9 @@ public class ArticleCreateDTO
     [StringLength(20, ErrorMessage = "身份标识长度不能超过20个字符")]
     public string? Identity { get; set; }
 
+    [StringLength(20, ErrorMessage = "部门名称长度不能超过20个字符")]
+    public string? VisibleToDepartment { get; set; }
+
     [StringLength(128, ErrorMessage = "分类长度不能超过128个字符")]
     public string? Category { get; set; }
 

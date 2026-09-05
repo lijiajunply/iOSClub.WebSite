@@ -13,6 +13,7 @@ export interface ArticleModel {
   content: string;
   lastWriteTime: string;
   identity?: string;
+  visibleToDepartment?: string;
   categoryId?: string;
   category?: CategoryModel;
   articleOrder?: number;
@@ -24,6 +25,7 @@ export interface ArticleCreateDto {
   title: string;
   content: string;
   identity?: string;
+  visibleToDepartment?: string;
   categoryId?: string;
   articleOrder?: number;
   category?: string;
@@ -33,6 +35,7 @@ export interface ArticleUpdateDto{
   title: string;
   content: string;
   identity?: string;
+  visibleToDepartment?: string;
   categoryId?: string;
   articleOrder?: number;
   category?: string;
@@ -45,6 +48,7 @@ export interface ArticleSearchResult {
   content: string;
   lastWriteTime: string;
   identity?: string;
+  visibleToDepartment?: string;
   categoryId?: string;
   category?: CategoryModel;
   articleOrder?: number;

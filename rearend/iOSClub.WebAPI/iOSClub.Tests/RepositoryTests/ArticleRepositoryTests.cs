@@ -1,4 +1,5 @@
 using iOSClub.Data;
+using iOSClub.Data.DataObjects;
 using iOSClub.DataApi.Repositories;
 using Microsoft.EntityFrameworkCore;
 
@@ -181,7 +182,7 @@ public class ArticleRepositoryTests
         await context.SaveChangesAsync();
 
         // Act
-        var result = await _articleRepository.GetAllCategoryArticles("Member");
+        var result = await _articleRepository.GetAllCategoryArticles(new ArticleAccessScope("Member"));
 
         // Assert
         Assert.NotNull(result);
@@ -190,5 +191,35 @@ public class ArticleRepositoryTests
         Assert.True(result.ContainsKey(category2.Name));
         Assert.Equal(2, result[category1.Name].Count());
         Assert.Single(result[category2.Name]);
+    }
+
+    [Theory]
+    [InlineData("Department", "科技部", true)]
+    [InlineData("Minister", "科技部", true)]
+    [InlineData("Department", "宣传部", false)]
+    [InlineData("President", null, false)]
+    [InlineData("Founder", null, true)]
+    public async Task GetFromPath_EnforcesDepartmentVisibility(
+        string identity,
+        string? departmentName,
+        bool shouldBeVisible)
+    {
+        await using var context = new ClubContext(_options);
+        await context.Database.EnsureDeletedAsync();
+        await context.Database.EnsureCreatedAsync();
+
+        var department = new DepartmentDO { Name = "科技部", Key = "technology" };
+        var article = BogusDataGenerator.ArticleFaker.Generate();
+        article.Identity = "Department";
+        article.VisibleToDepartment = department.Name;
+        await context.Departments.AddAsync(department);
+        await context.Articles.AddAsync(article);
+        await context.SaveChangesAsync();
+
+        var result = await _articleRepository.GetFromPath(
+            article.Path,
+            new ArticleAccessScope(identity, departmentName));
+
+        Assert.Equal(shouldBeVisible, result != null);
     }
 }

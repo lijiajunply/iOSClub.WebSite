@@ -15,6 +15,8 @@ namespace iOSClub.WebAPI.Controllers;
 [Route("[controller]")] // 使用C#推荐的API路径格式
 public class ArticleController(
     IArticleRepository articleRepository,
+    IStaffRepository staffRepository,
+    IDepartmentRepository departmentRepository,
     ILogger<ArticleController> logger)
     : ControllerBase
 {
@@ -54,11 +56,7 @@ public class ArticleController(
 
         try
         {
-            var userIdentity = "";
-            var userJwt = HttpContext.User.GetUser();
-            if (userJwt != null) userIdentity = userJwt.Identity;
-
-            var article = await articleRepository.GetFromPath(path, userIdentity);
+            var article = await articleRepository.GetFromPath(path, await GetAccessScope());
             return Ok(article == null
                 ? ApiResponse<ArticleVO>.Fail(ErrorCode.ArticleNotFound, $"未找到路径为 '{path}' 的文章")
                 : ApiResponse<ArticleVO>.Success(article.Adapt<ArticleVO>()));
@@ -91,6 +89,14 @@ public class ArticleController(
                 return Ok(ApiResponse<ArticleVO>.Fail(ErrorCode.ParameterValidationFailed, errorMessage));
             }
 
+            var visibleToDepartment = NormalizeDepartment(createDto.VisibleToDepartment);
+            if (visibleToDepartment != null &&
+                !await departmentRepository.DepartmentExistsAsync(visibleToDepartment))
+            {
+                return Ok(ApiResponse<ArticleVO>.Fail(ErrorCode.ResourceNotFound,
+                    $"部门 '{visibleToDepartment}' 不存在"));
+            }
+
             // 检查路径是否已存在
             var existingArticle = await articleRepository.GetFromPath(createDto.Path);
             if (existingArticle != null)
@@ -105,6 +111,7 @@ public class ArticleController(
                 Title = createDto.Title,
                 Content = createDto.Content,
                 Identity = createDto.Identity,
+                VisibleToDepartment = visibleToDepartment,
                 Category = string.IsNullOrEmpty(createDto.Category)
                     ? null
                     : new CategoryDO() { Name = createDto.Category },
@@ -160,6 +167,14 @@ public class ArticleController(
                 return Ok(ApiResponse.Fail(ErrorCode.ParameterValidationFailed, errorMessage));
             }
 
+            var visibleToDepartment = NormalizeDepartment(updateDto.VisibleToDepartment);
+            if (visibleToDepartment != null &&
+                !await departmentRepository.DepartmentExistsAsync(visibleToDepartment))
+            {
+                return Ok(ApiResponse.Fail(ErrorCode.ResourceNotFound,
+                    $"部门 '{visibleToDepartment}' 不存在"));
+            }
+
             // 检查文章是否存在
             var existingArticle = await articleRepository.GetFromPath(path);
             if (existingArticle == null)
@@ -171,6 +186,7 @@ public class ArticleController(
             existingArticle.Title = updateDto.Title;
             existingArticle.Content = updateDto.Content;
             existingArticle.Identity = updateDto.Identity;
+            existingArticle.VisibleToDepartment = visibleToDepartment;
             existingArticle.Category = string.IsNullOrEmpty(updateDto.Category)
                 ? null
                 : new CategoryDO() { Name = updateDto.Category };
@@ -247,11 +263,7 @@ public class ArticleController(
 
         try
         {
-            var userIdentity = "";
-            var userJwt = HttpContext.User.GetUser();
-            if (userJwt != null) userIdentity = userJwt.Identity;
-
-            var articles = await articleRepository.SearchArticlesWithHighlights(keyword, userIdentity);
+            var articles = await articleRepository.SearchArticlesWithHighlights(keyword, await GetAccessScope());
             return Ok(ApiResponse<IEnumerable<ArticleSearchResult>>.Success(
                 articles.OrderByDescending(a => a.LastWriteTime)));
         }
@@ -274,11 +286,7 @@ public class ArticleController(
     {
         try
         {
-            var userIdentity = "";
-            var userJwt = HttpContext.User.GetUser();
-            if (userJwt != null) userIdentity = userJwt.Identity;
-
-            var articles = await articleRepository.GetAllCategoryArticles(userIdentity);
+            var articles = await articleRepository.GetAllCategoryArticles(await GetAccessScope());
             return Ok(ApiResponse<object>.Success(articles));
         }
         catch (Exception ex)
@@ -324,4 +332,20 @@ public class ArticleController(
             return Ok(ApiResponse.Fail(ErrorCode.InternalServerError, "文章顺序更新失败"));
         }
     }
+
+    private async Task<ArticleAccessScope> GetAccessScope()
+    {
+        var user = HttpContext.User.GetUser();
+        if (user == null)
+            return new ArticleAccessScope();
+
+        if (user.Identity == "Founder")
+            return new ArticleAccessScope(user.Identity);
+
+        var staff = await staffRepository.GetStaffByIdAsync(user.UserId);
+        return new ArticleAccessScope(user.Identity, staff?.Department?.Name);
+    }
+
+    private static string? NormalizeDepartment(string? departmentName)
+        => string.IsNullOrWhiteSpace(departmentName) ? null : departmentName.Trim();
 }

@@ -64,7 +64,7 @@ export class ArticleService {
         return await apiRequest<ArticleSearchResult[]>({
             url: `${url}/Article/search/highlights?keyword=${encodeURIComponent(keyword)}`,
             method: 'GET',
-            requiresAuth: false
+            optionalAuth: true
         });
     }
 

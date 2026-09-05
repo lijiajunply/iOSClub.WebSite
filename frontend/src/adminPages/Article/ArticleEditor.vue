@@ -107,9 +107,27 @@
             </div>
           </div>
 
+          <div class="ios-list-item text-gray-400">
+            <div class="ios-label">
+              <Icon icon="solar:buildings-2-bold-duotone" class="text-cyan-500 text-xl" />
+              <span>限定部门</span>
+            </div>
+            <div class="ios-input-wrapper w-1/2">
+              <n-select
+                  v-model:value="editForm.visibleToDepartment"
+                  :options="departmentOptions"
+                  placeholder="不限部门"
+                  filterable
+                  clearable
+                  class="ios-select-reset"
+                  :bordered="false"
+              />
+            </div>
+          </div>
+
           <div class="px-6 py-2 bg-gray-50/50 dark:bg-white/5">
             <p class="text-xs text-gray-400 dark:text-gray-500">
-              路径设定后无法更改；留空分类将归入“其他”。
+              路径设定后无法更改；限定部门留空时按访问权限向所有符合职级的成员开放。
             </p>
           </div>
         </div>
@@ -182,6 +200,7 @@ import type { ArticleModel, ArticleCreateDto, ArticleUpdateDto, CategoryModel } 
 import MarkdownComponent from '../../components/MarkdownComponent.vue'
 import { useLayoutStore } from '../../stores/LayoutStore'
 import { CategoryService } from '../../services/CategoryService'
+import { DepartmentService } from '../../services/DepartmentService'
 
 // --- Types ---
 interface EditFormType {
@@ -189,6 +208,7 @@ interface EditFormType {
   title: string
   content: string
   identity: 'Member' | 'Department' | 'Minister' | 'President' | 'Founder'
+  visibleToDepartment: string | null
   categoryName?: string
   lastWriteTime: string
 }
@@ -204,6 +224,7 @@ const editingArticle = ref<ArticleModel | null>(null)
 const formRef = ref<InstanceType<typeof NForm> | null>(null)
 const fileInput = ref<HTMLInputElement | null>(null)
 const categoryOptions = ref<Array<{ label: string, value: string }>>([])
+const departmentOptions = ref<Array<{ label: string, value: string }>>([])
 const showImportModeModal = ref(false)
 const pendingFileName = ref('')
 const pendingMarkdownContent = ref('')
@@ -213,6 +234,7 @@ const editForm = ref<EditFormType>({
   title: '',
   content: '',
   identity: 'Member',
+  visibleToDepartment: null,
   categoryName: '',
   lastWriteTime: new Date().toISOString(),
 })
@@ -260,6 +282,19 @@ const fetchCategoryOptions = async () => {
     } catch (fallbackError) {
       console.error('Fallback category fetch failed:', fallbackError)
     }
+  }
+}
+
+const fetchDepartmentOptions = async () => {
+  try {
+    const departments = await DepartmentService.getAllDepartments()
+    departmentOptions.value = departments.map(department => ({
+      label: department.name,
+      value: department.name
+    }))
+  } catch (error) {
+    console.error('Department fetch failed:', error)
+    message.error('无法加载部门列表')
   }
 }
 
@@ -347,6 +382,7 @@ const fetchArticle = async (path: string) => {
       title: article.title || '',
       content: article.content || '',
       identity: (article.identity as EditFormType['identity']) || 'Member',
+      visibleToDepartment: article.visibleToDepartment || null,
       categoryName: article.category?.name || '',
       lastWriteTime: article.lastWriteTime || new Date().toISOString(),
     }
@@ -370,6 +406,7 @@ const saveArticle = async () => {
       title: editForm.value.title,
       content: editForm.value.content,
       identity: editForm.value.identity,
+      visibleToDepartment: editForm.value.visibleToDepartment,
       category: editForm.value.categoryName,
     }
 
@@ -437,7 +474,7 @@ onMounted(async () => {
 
   layoutStore.setActionsComponent(ActionsComponent)
 
-  await fetchCategoryOptions()
+  await Promise.all([fetchCategoryOptions(), fetchDepartmentOptions()])
   const articlePath = route.params.path as string
   if (articlePath) {
     await fetchArticle(articlePath)

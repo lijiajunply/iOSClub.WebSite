@@ -33,6 +33,14 @@ public sealed class ClubContext(DbContextOptions<ClubContext> options) : DbConte
             .OnDelete(DeleteBehavior.SetNull)
             .IsRequired(false);
 
+        modelBuilder.Entity<ArticleDO>()
+            .HasOne<DepartmentDO>()
+            .WithMany()
+            .HasForeignKey(x => x.VisibleToDepartment)
+            .HasPrincipalKey(x => x.Name)
+            .OnDelete(DeleteBehavior.SetNull)
+            .IsRequired(false);
+
         // 为频繁用于查询条件的字段添加索引，提高查询效率
 
         // StudentDO 索引
@@ -59,6 +67,8 @@ public sealed class ClubContext(DbContextOptions<ClubContext> options) : DbConte
         // ArticleDO 索引
         modelBuilder.Entity<ArticleDO>()
             .HasIndex(a => a.CategoryId); // 用于按分类查询
+        modelBuilder.Entity<ArticleDO>()
+            .HasIndex(a => a.VisibleToDepartment); // 用于按部门过滤可见文章
 
         // ParadeDB BM25 全文检索索引（pg_search）
         modelBuilder.Entity<ArticleDO>()

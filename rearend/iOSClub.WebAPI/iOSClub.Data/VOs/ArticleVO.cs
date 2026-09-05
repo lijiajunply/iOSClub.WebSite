@@ -10,6 +10,7 @@ public class ArticleVO
     public string Content { get; set; } = "";
     public DateTime LastWriteTime { get; set; }
     public string? Identity { get; set; }
+    public string? VisibleToDepartment { get; set; }
     public string? CategoryId { get; set; }
     public string? CategoryName { get; set; }
     public int ArticleOrder { get; set; }

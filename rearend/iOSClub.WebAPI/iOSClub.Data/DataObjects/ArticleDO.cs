@@ -39,6 +39,12 @@ public class ArticleDO
     public string? Identity { get; set; }
 
     /// <summary>
+    /// 限定可查看文章的部门名称；为空时不限制部门。
+    /// </summary>
+    [MaxLength(20)]
+    public string? VisibleToDepartment { get; set; }
+
+    /// <summary>
     /// 分类ID
     /// </summary>
     [MaxLength(128)]

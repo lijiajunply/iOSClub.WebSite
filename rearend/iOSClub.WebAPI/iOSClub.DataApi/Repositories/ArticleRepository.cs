@@ -21,9 +21,9 @@ public interface IArticleRepository
     /// 根据路径获取文章
     /// </summary>
     /// <param name="path">文章路径</param>
-    /// <param name="identity">用户身份</param>
+    /// <param name="accessScope">访问者身份和部门；为空时用于后台操作，不进行可见性过滤</param>
     /// <returns>文章模型，如果找不到或没有权限则返回null</returns>
-    public Task<ArticleDO?> GetFromPath(string path, string identity = "");
+    public Task<ArticleDO?> GetFromPath(string path, ArticleAccessScope? accessScope = null);
 
     /// <summary>
     /// 创建或更新文章
@@ -42,9 +42,9 @@ public interface IArticleRepository
     /// <summary>
     /// 获取所有分类文章
     /// </summary>
-    /// <param name="identity">用户身份</param>
+    /// <param name="accessScope">访问者身份和部门</param>
     /// <returns>按分类分组的文章字典</returns>
-    public Task<Dictionary<string, IEnumerable<ArticleDO>>> GetAllCategoryArticles(string identity);
+    public Task<Dictionary<string, IEnumerable<ArticleDO>>> GetAllCategoryArticles(ArticleAccessScope accessScope);
 
     /// <summary>
     /// 更新文章顺序
@@ -57,14 +57,16 @@ public interface IArticleRepository
     /// 搜索文章并返回高亮结果
     /// </summary>
     /// <param name="keyword">搜索关键词</param>
-    /// <param name="identity">用户身份</param>
+    /// <param name="accessScope">访问者身份和部门</param>
     /// <param name="pageSize">每页大小</param>
     /// <param name="pageNumber">页码</param>
     /// <returns>高亮的文章搜索结果</returns>
-    public Task<IEnumerable<ArticleSearchResult>> SearchArticlesWithHighlights(string keyword, string identity = "",
+    public Task<IEnumerable<ArticleSearchResult>> SearchArticlesWithHighlights(string keyword, ArticleAccessScope accessScope,
         int pageSize = 20,
         int pageNumber = 1);
 }
+
+public sealed record ArticleAccessScope(string Identity = "Member", string? DepartmentName = null);
 
 // 添加一个用于搜索结果的模型
 [Serializable]
@@ -87,12 +89,13 @@ public class ArticleRepository(IDbContextFactory<ClubContext> factory, ICategory
             Title = x.Title,
             LastWriteTime = x.LastWriteTime,
             Category = x.Category == null ? null : new CategoryDO() { Name = x.Category.Name },
-            Identity = x.Identity
+            Identity = x.Identity,
+            VisibleToDepartment = x.VisibleToDepartment
         }).ToListAsync();
         return articles;
     }
 
-    public async Task<ArticleDO?> GetFromPath(string path, string identity = "")
+    public async Task<ArticleDO?> GetFromPath(string path, ArticleAccessScope? accessScope = null)
     {
         await using var context = await factory.CreateDbContextAsync();
         var article = await context.Articles.Include(x => x.Category)
@@ -105,6 +108,7 @@ public class ArticleRepository(IDbContextFactory<ClubContext> factory, ICategory
                 Category = x.Category == null ? null : new CategoryDO() { Name = x.Category.Name },
                 ArticleOrder = x.ArticleOrder,
                 Identity = x.Identity,
+                VisibleToDepartment = x.VisibleToDepartment,
                 CategoryId = x.CategoryId,
             })
             .FirstOrDefaultAsync(x => x.Path == path);
@@ -112,12 +116,7 @@ public class ArticleRepository(IDbContextFactory<ClubContext> factory, ICategory
         if (article == null)
             return null;
 
-        if (string.IsNullOrEmpty(identity))
-        {
-            identity = "Member";
-        }
-
-        return IsIdentityExist(identity, article.Identity) ? article : null;
+        return accessScope == null || IsAccessible(accessScope, article) ? article : null;
     }
 
     public async Task<bool> CreateOrUpdate(ArticleDO model)
@@ -154,6 +153,8 @@ public class ArticleRepository(IDbContextFactory<ClubContext> factory, ICategory
             article.LastWriteTime = DateTime.UtcNow;
             article.Title = model.Title;
             article.Identity = model.Identity;
+            article.VisibleToDepartment = model.VisibleToDepartment;
+            article.ArticleOrder = model.ArticleOrder;
 
             if (string.IsNullOrEmpty(model.Category?.Name))
             {
@@ -191,17 +192,18 @@ public class ArticleRepository(IDbContextFactory<ClubContext> factory, ICategory
         ["Department"] = 3, ["Member"] = 4, [""] = 5
     };
 
-    public async Task<Dictionary<string, IEnumerable<ArticleDO>>> GetAllCategoryArticles(string identity)
+    public async Task<Dictionary<string, IEnumerable<ArticleDO>>> GetAllCategoryArticles(ArticleAccessScope accessScope)
     {
         await using var context = await factory.CreateDbContextAsync();
 
-        if (string.IsNullOrEmpty(identity)) identity = "Member";
-
-        var allowedIdentities = GetAllowedIdentities(identity);
+        var allowedIdentities = GetAllowedIdentities(accessScope.Identity);
+        var isFounder = accessScope.Identity == "Founder";
 
         var query = context.Articles
             .AsNoTracking()
             .Where(a => a.Identity == null || ((IEnumerable<string>)allowedIdentities).Contains(a.Identity))
+            .Where(a => a.VisibleToDepartment == null || isFounder ||
+                        a.VisibleToDepartment == accessScope.DepartmentName)
             .Select(a => new ArticleProjection
             {
                 Path = a.Path,
@@ -210,7 +212,8 @@ public class ArticleRepository(IDbContextFactory<ClubContext> factory, ICategory
                 LastWriteTime = a.LastWriteTime,
                 CategoryName = a.Category != null ? a.Category.Name : "其他",
                 CategoryOrder = a.Category != null ? a.Category.Order : int.MaxValue,
-                Identity = a.Identity
+                Identity = a.Identity,
+                VisibleToDepartment = a.VisibleToDepartment
             })
             .OrderBy(a => a.CategoryOrder)
             .ThenBy(a => a.ArticleOrder);
@@ -224,6 +227,7 @@ public class ArticleRepository(IDbContextFactory<ClubContext> factory, ICategory
                 Path = x.Path,
                 Title = x.Title,
                 Identity = x.Identity,
+                VisibleToDepartment = x.VisibleToDepartment,
                 LastWriteTime = x.LastWriteTime,
                 Category = new CategoryDO()
                 {
@@ -241,6 +245,16 @@ public class ArticleRepository(IDbContextFactory<ClubContext> factory, ICategory
         return IdentityLevels.TryGetValue(identity, out var identityLevel) &&
                IdentityLevels.TryGetValue(neededIdentity, out var neededLevel) &&
                identityLevel <= neededLevel;
+    }
+
+    private static bool IsAccessible(ArticleAccessScope accessScope, ArticleDO article)
+    {
+        if (!IsIdentityExist(accessScope.Identity, article.Identity))
+            return false;
+
+        return string.IsNullOrEmpty(article.VisibleToDepartment) ||
+               accessScope.Identity == "Founder" ||
+               article.VisibleToDepartment == accessScope.DepartmentName;
     }
 
     private static string[] GetAllowedIdentities(string identity)
@@ -264,6 +278,7 @@ public class ArticleRepository(IDbContextFactory<ClubContext> factory, ICategory
         public string CategoryName { get; set; } = "";
         public int CategoryOrder { get; set; }
         public string? Identity { get; set; }
+        public string? VisibleToDepartment { get; set; }
     }
 
     public async Task<bool> UpdateArticleOrders(Dictionary<string, int>? articleOrders)
@@ -314,17 +329,20 @@ public class ArticleRepository(IDbContextFactory<ClubContext> factory, ICategory
 
     public async Task<IEnumerable<ArticleSearchResult>> SearchArticlesWithHighlights(
         string keyword,
-        string identity = "",
+        ArticleAccessScope accessScope,
         int pageSize = 20,
         int pageNumber = 1)
     {
         await using var context = await factory.CreateDbContextAsync();
 
-        var allowedIdentities = GetAllowedIdentities(string.IsNullOrEmpty(identity) ? "Member" : identity);
+        var allowedIdentities = GetAllowedIdentities(accessScope.Identity);
+        var isFounder = accessScope.Identity == "Founder";
 
         return await context.Articles
             .AsNoTracking()
             .Where(a => a.Identity == null || ((IEnumerable<string>)allowedIdentities).Contains(a.Identity))
+            .Where(a => a.VisibleToDepartment == null || isFounder ||
+                        a.VisibleToDepartment == accessScope.DepartmentName)
             .Where(a =>
                 EF.Functions.MatchAny(a.Title, keyword) ||
                 EF.Functions.MatchAny(a.Content, keyword))
@@ -334,6 +352,7 @@ public class ArticleRepository(IDbContextFactory<ClubContext> factory, ICategory
                 Title = a.Title,
                 LastWriteTime = a.LastWriteTime,
                 Identity = a.Identity,
+                VisibleToDepartment = a.VisibleToDepartment,
                 CategoryId = a.CategoryId,
                 ArticleOrder = a.ArticleOrder,
                 HighlightedTitle = EF.Functions.Snippet(a.Title,

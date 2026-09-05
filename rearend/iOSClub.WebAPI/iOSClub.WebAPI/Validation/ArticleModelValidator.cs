@@ -24,6 +24,10 @@ public class ArticleDOValidator : AbstractValidator<ArticleDO>
             .MaximumLength(128).WithMessage("分类ID长度不能超过128个字符")
             .When(x => x.CategoryId != null);
 
+        RuleFor(x => x.VisibleToDepartment)
+            .MaximumLength(20).WithMessage("部门名称长度不能超过20个字符")
+            .When(x => x.VisibleToDepartment != null);
+
         RuleFor(x => x.ArticleOrder)
             .GreaterThanOrEqualTo(0).WithMessage("文章排序必须大于或等于0")
             .LessThanOrEqualTo(9999).WithMessage("文章排序不能超过9999");

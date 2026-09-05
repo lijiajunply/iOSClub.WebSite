@@ -49,7 +49,7 @@
                     :type="getIdentityType(article.identity)"
                     class="!font-medium !text-[11px] px-2"
                 >
-                  {{ getIdentityLabel(article.identity || '') }}
+                  {{ getAccessLabel(article) }}
                 </n-tag>
               </div>
 
@@ -156,6 +156,9 @@ const getIdentityLabel = (identity: string) => {
   }
   return options[identity] || '未知'
 }
+
+const getAccessLabel = (article: ArticleModel) =>
+  article.visibleToDepartment || getIdentityLabel(article.identity || '')
 
 const getIdentityType = (identity: string | null | undefined): "default" | "success" | "info" | "warning" | "error" => {
   switch (identity) {
