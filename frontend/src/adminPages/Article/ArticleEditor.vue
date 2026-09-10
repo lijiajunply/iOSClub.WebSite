@@ -383,7 +383,7 @@ const fetchArticle = async (path: string) => {
       content: article.content || '',
       identity: (article.identity as EditFormType['identity']) || 'Member',
       visibleToDepartment: article.visibleToDepartment || null,
-      categoryName: article.category?.name || '',
+      categoryName: article.categoryName || '',
       lastWriteTime: article.lastWriteTime || new Date().toISOString(),
     }
   } catch (error) {

@@ -543,7 +543,7 @@ const confirmCleanup = async () => {
   try {
     const result = await LogsService.cleanupOldLogs(cleanupDays.value)
     msgRef.destroy()
-    message.success(result.Message || '日志清理成功')
+    message.success(result.message || '日志清理成功')
     showCleanupDialog.value = false
     await getLogs()
     await loadStatistics()

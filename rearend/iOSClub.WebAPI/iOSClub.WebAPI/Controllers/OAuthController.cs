@@ -13,7 +13,7 @@ namespace iOSClub.WebAPI.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class OAuthController(ILoginService loginService, IConnectionMultiplexer redis, IConfiguration configuration, ILogger<OAuthController> logger)
+public class OAuthController(ILoginService loginService, IConnectionMultiplexer redis, IConfiguration configuration)
     : ControllerBase
 {
     private readonly IDatabase _db = redis.GetDatabase();
@@ -73,49 +73,38 @@ public class OAuthController(ILoginService loginService, IConnectionMultiplexer 
     [HttpPost("exchange")]
     public async Task<ActionResult<ApiResponse<object>>> ExchangeToken([FromBody] OAuthExchangeRequest request)
     {
-        try
+        // 如果你有一个外部 OAuth 提供商的访问令牌，
+        // 可以在这里验证并交换为内部 JWT Token
+
+        // 这是一个示例，实际实现会根据你的 OAuth 提供商而有所不同
+        // 通常你需要调用 OAuth 提供商的 API 来验证访问令牌
+
+        // 使用 loginService 验证用户并生成 JWT Token
+        if (string.IsNullOrEmpty(request.UserId) || string.IsNullOrEmpty(request.UserName))
+            return Ok(ApiResponse<object>.Fail(ErrorCode.ParameterEmpty, "用户ID和用户名不能为空"));
+
+        // 创建LoginDTO用于传递RememberMe参数
+        var loginModel = new LoginDTO
         {
-            // 如果你有一个外部 OAuth 提供商的访问令牌，
-            // 可以在这里验证并交换为内部 JWT Token
+            UserId = request.UserId,
+            Password = request.Password ?? request.UserId, // 如果没有提供密码，则使用UserId作为默认密码
+            RememberMe = request.RememberMe
+        };
 
-            // 这是一个示例，实际实现会根据你的 OAuth 提供商而有所不同
-            // 通常你需要调用 OAuth 提供商的 API 来验证访问令牌
+        // 首先尝试普通用户登录
+        var token = await loginService.Login(loginModel);
 
-            // 使用 loginService 验证用户并生成 JWT Token
-            if (string.IsNullOrEmpty(request.UserId) || string.IsNullOrEmpty(request.UserName))
-                return Ok(ApiResponse<object>.Fail(ErrorCode.ParameterEmpty, "用户ID和用户名不能为空"));
-
-            // 创建LoginDTO用于传递RememberMe参数
-            var loginModel = new LoginDTO
-            {
-                UserId = request.UserId,
-                Password = request.Password ?? request.UserId, // 如果没有提供密码，则使用UserId作为默认密码
-                RememberMe = request.RememberMe
-            };
-
-            // 首先尝试普通用户登录
-            var token = await loginService.Login(loginModel);
-
-            // 如果普通用户登录失败，尝试员工登录
-            if (string.IsNullOrEmpty(token))
-            {
-                token = await loginService.StaffLogin(loginModel);
-            }
-
-            // 如果登录仍然失败，返回错误
-            if (string.IsNullOrEmpty(token))
-                return Ok(ApiResponse<object>.Fail(ErrorCode.UserNotFound, "用户登录失败"));
-
-            return Ok(ApiResponse<object>.Success(new { Token = token }, "获取令牌成功"));
-        }
-        catch (Exception ex)
+        // 如果普通用户登录失败，尝试员工登录
+        if (string.IsNullOrEmpty(token))
         {
-            if (logger.IsEnabled(LogLevel.Information))
-            {
-                logger.LogInformation(ex, "获取令牌失败，用户ID: {UserId}", request.UserId);
-            }
-            return Ok(ApiResponse<object>.Fail(ErrorCode.InternalServerError, "获取令牌失败"));
+            token = await loginService.StaffLogin(loginModel);
         }
+
+        // 如果登录仍然失败，返回错误
+        if (string.IsNullOrEmpty(token))
+            return Ok(ApiResponse<object>.Fail(ErrorCode.UserNotFound, "用户登录失败"));
+
+        return Ok(ApiResponse<object>.Success(new { Token = token }, "获取令牌成功"));
     }
 
     [HttpPost("logout")]

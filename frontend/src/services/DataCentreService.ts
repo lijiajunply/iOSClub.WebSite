@@ -109,8 +109,9 @@ export class DataCentreService {
             let errorMessage = `HTTP error! status: ${response.status}`;
             try {
                 const errorData = await response.json();
-                if (errorData.Message) {
-                    errorMessage = errorData.Message;
+                // 后端统一信封用的是 camelCase 的 message 字段
+                if (errorData.message) {
+                    errorMessage = errorData.message;
                 }
             } catch {
             }

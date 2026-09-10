@@ -14,7 +14,7 @@ namespace iOSClub.WebAPI.Controllers;
 [ApiController]
 [Authorize]
 [Route("[controller]")]
-public class LogsController(ILogger<LogsController> logger)
+public class LogsController
     : ControllerBase
 {
     /// <summary>
@@ -46,196 +46,180 @@ public class LogsController(ILogger<LogsController> logger)
         int pageSize = 10, string? searchTerm = null,
         string? levelFilter = null, string? timeRange = null)
     {
-        try
+        var logs = new List<LogEntry>();
+        int totalCount;
+
+        await using (var connection = new SqliteConnection(ConnectionString))
         {
-            var logs = new List<LogEntry>();
-            int totalCount;
+            await connection.OpenAsync();
 
-            await using (var connection = new SqliteConnection(ConnectionString))
+            // 确保参数有效
+            if (pageIndex < 1) pageIndex = 1;
+            if (pageSize is < 1 or > 100) pageSize = 10;
+
+            // 搜索参数验证
+            if (!string.IsNullOrEmpty(searchTerm))
             {
-                await connection.OpenAsync();
-
-                // 确保参数有效
-                if (pageIndex < 1) pageIndex = 1;
-                if (pageSize is < 1 or > 100) pageSize = 10;
-
-                // 搜索参数验证
-                if (!string.IsNullOrEmpty(searchTerm))
+                // 限制搜索关键词长度
+                if (searchTerm.Length > 100)
                 {
-                    // 限制搜索关键词长度
-                    if (searchTerm.Length > 100)
+                    searchTerm = searchTerm.Substring(0, 100);
+                }
+
+                // 去除前后空白
+                searchTerm = searchTerm.Trim();
+            }
+
+            // 日志级别验证 - 可选，取决于系统支持的日志级别
+            if (!string.IsNullOrEmpty(levelFilter))
+            {
+                // 转换为标准格式
+                levelFilter = levelFilter.Trim();
+            }
+
+            // 时间范围验证
+            if (!string.IsNullOrEmpty(timeRange))
+            {
+                timeRange = timeRange.Trim();
+                // 如果不是"today"，则验证是否为有效的天数
+                if (!timeRange.Equals("today", StringComparison.OrdinalIgnoreCase))
+                {
+                    // 尝试解析为天数，如果解析失败或天数小于等于0，则设为null
+                    if (!int.TryParse(timeRange, out int days) || days <= 0)
                     {
-                        searchTerm = searchTerm.Substring(0, 100);
-                    }
-
-                    // 去除前后空白
-                    searchTerm = searchTerm.Trim();
-                }
-
-                // 日志级别验证 - 可选，取决于系统支持的日志级别
-                if (!string.IsNullOrEmpty(levelFilter))
-                {
-                    // 转换为标准格式
-                    levelFilter = levelFilter.Trim();
-                }
-
-                // 时间范围验证
-                if (!string.IsNullOrEmpty(timeRange))
-                {
-                    timeRange = timeRange.Trim();
-                    // 如果不是"today"，则验证是否为有效的天数
-                    if (!timeRange.Equals("today", StringComparison.OrdinalIgnoreCase))
-                    {
-                        // 尝试解析为天数，如果解析失败或天数小于等于0，则设为null
-                        if (!int.TryParse(timeRange, out int days) || days <= 0)
-                        {
-                            timeRange = null;
-                        }
-                    }
-                }
-
-                // 构建基础查询和参数
-                var conditions = new List<string>();
-
-                // 名称/内容搜索
-                if (!string.IsNullOrEmpty(searchTerm))
-                {
-                    conditions.Add("(RenderedMessage LIKE @SearchTerm OR Properties LIKE @SearchTerm)");
-                }
-
-                // 级别搜索
-                if (!string.IsNullOrEmpty(levelFilter))
-                {
-                    conditions.Add("Level = @LevelFilter");
-                }
-
-                // 时间差搜索
-                if (!string.IsNullOrEmpty(timeRange))
-                {
-                    if (timeRange.Equals("today", StringComparison.OrdinalIgnoreCase))
-                    {
-                        conditions.Add("Timestamp >= @TodayStart");
-                    }
-                    else if (int.TryParse(timeRange, out _))
-                    {
-                        conditions.Add("Timestamp >= @DateThreshold");
-                    }
-                }
-
-                // 构建WHERE子句
-                var whereClause = conditions.Count > 0 ? " WHERE " + string.Join(" AND ", conditions) : "";
-
-                // 获取总日志数量（带过滤条件）
-                var countCommand = connection.CreateCommand();
-                countCommand.CommandText = $"SELECT COUNT(*) FROM Logs{whereClause}";
-
-                // 设置参数
-                if (!string.IsNullOrEmpty(searchTerm))
-                {
-                    countCommand.Parameters.AddWithValue("@SearchTerm", $"%{searchTerm}%");
-                }
-
-                if (!string.IsNullOrEmpty(levelFilter))
-                {
-                    countCommand.Parameters.AddWithValue("@LevelFilter", levelFilter);
-                }
-
-                if (!string.IsNullOrEmpty(timeRange))
-                {
-                    if (timeRange.Equals("today", StringComparison.OrdinalIgnoreCase))
-                    {
-                        countCommand.Parameters.AddWithValue("@TodayStart", DateTime.Today);
-                    }
-                    else if (int.TryParse(timeRange, out int days))
-                    {
-                        countCommand.Parameters.AddWithValue("@DateThreshold", DateTime.Now.AddDays(-days));
-                    }
-                }
-
-                totalCount = Convert.ToInt32(await countCommand.ExecuteScalarAsync());
-
-                // 构建分页查询
-                var command = connection.CreateCommand();
-                command.CommandText = $"""
-                                       SELECT Timestamp, Level, Exception, Properties, RenderedMessage
-                                       FROM Logs
-                                       {whereClause}
-                                       ORDER BY Timestamp DESC 
-                                       LIMIT @PageSize OFFSET @Offset
-                                       """;
-
-                // 设置查询参数
-                if (!string.IsNullOrEmpty(searchTerm))
-                {
-                    command.Parameters.AddWithValue("@SearchTerm", $"%{searchTerm}%");
-                }
-
-                if (!string.IsNullOrEmpty(levelFilter))
-                {
-                    command.Parameters.AddWithValue("@LevelFilter", levelFilter);
-                }
-
-                if (!string.IsNullOrEmpty(timeRange))
-                {
-                    if (timeRange.Equals("today", StringComparison.OrdinalIgnoreCase))
-                    {
-                        command.Parameters.AddWithValue("@TodayStart", DateTime.Today);
-                    }
-                    else if (int.TryParse(timeRange, out int days))
-                    {
-                        command.Parameters.AddWithValue("@DateThreshold", DateTime.Now.AddDays(-days));
-                    }
-                }
-
-                command.Parameters.AddWithValue("@PageSize", pageSize);
-                command.Parameters.AddWithValue("@Offset", (pageIndex - 1) * pageSize);
-
-                await using (var reader = await command.ExecuteReaderAsync())
-                {
-                    while (await reader.ReadAsync())
-                    {
-                        logs.Add(new LogEntry
-                        {
-                            Timestamp = reader.GetDateTime(0),
-                            Level = reader.GetString(1),
-                            Exception = reader.IsDBNull(2) ? null : reader.GetString(2),
-                            Properties = reader.IsDBNull(3)
-                                ? null
-                                : JsonSerializer.Deserialize<Dictionary<string, object>>(reader.GetString(3)),
-                            Message = reader.IsDBNull(4) ? null : reader.GetString(4),
-                        });
+                        timeRange = null;
                     }
                 }
             }
 
-            // 计算总页数
-            int totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+            // 构建基础查询和参数
+            var conditions = new List<string>();
 
-            // 创建分页响应
-            var response = new PaginatedResponse<LogEntry>
+            // 名称/内容搜索
+            if (!string.IsNullOrEmpty(searchTerm))
             {
-                Data = logs,
-                TotalCount = totalCount,
-                PageIndex = pageIndex,
-                PageSize = pageSize,
-                TotalPages = totalPages
-            };
-
-            return Ok(ApiResponse<PaginatedResponse<LogEntry>>.Success(response, "获取日志成功"));
-        }
-        catch (Exception ex)
-        {
-            // 记录包含搜索参数的详细错误日志，便于调试
-            if (logger.IsEnabled(LogLevel.Error))
-            {
-                logger.LogError(ex,
-                    "获取日志时发生错误，搜索参数：searchTerm={SearchTerm}, levelFilter={LevelFilter}, timeRange={TimeRange}",
-                    searchTerm ?? "null", levelFilter ?? "null", timeRange ?? "null");
+                conditions.Add("(RenderedMessage LIKE @SearchTerm OR Properties LIKE @SearchTerm)");
             }
 
-            return Ok(ApiResponse<PaginatedResponse<LogEntry>>.Fail(ErrorCode.InternalServerError,
-                $"获取日志时发生错误: {ex.Message}"));
+            // 级别搜索
+            if (!string.IsNullOrEmpty(levelFilter))
+            {
+                conditions.Add("Level = @LevelFilter");
+            }
+
+            // 时间差搜索
+            if (!string.IsNullOrEmpty(timeRange))
+            {
+                if (timeRange.Equals("today", StringComparison.OrdinalIgnoreCase))
+                {
+                    conditions.Add("Timestamp >= @TodayStart");
+                }
+                else if (int.TryParse(timeRange, out _))
+                {
+                    conditions.Add("Timestamp >= @DateThreshold");
+                }
+            }
+
+            // 构建WHERE子句
+            var whereClause = conditions.Count > 0 ? " WHERE " + string.Join(" AND ", conditions) : "";
+
+            // 获取总日志数量（带过滤条件）
+            var countCommand = connection.CreateCommand();
+            countCommand.CommandText = $"SELECT COUNT(*) FROM Logs{whereClause}";
+
+            // 设置参数
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                countCommand.Parameters.AddWithValue("@SearchTerm", $"%{searchTerm}%");
+            }
+
+            if (!string.IsNullOrEmpty(levelFilter))
+            {
+                countCommand.Parameters.AddWithValue("@LevelFilter", levelFilter);
+            }
+
+            if (!string.IsNullOrEmpty(timeRange))
+            {
+                if (timeRange.Equals("today", StringComparison.OrdinalIgnoreCase))
+                {
+                    countCommand.Parameters.AddWithValue("@TodayStart", DateTime.Today);
+                }
+                else if (int.TryParse(timeRange, out int days))
+                {
+                    countCommand.Parameters.AddWithValue("@DateThreshold", DateTime.Now.AddDays(-days));
+                }
+            }
+
+            totalCount = Convert.ToInt32(await countCommand.ExecuteScalarAsync());
+
+            // 构建分页查询
+            var command = connection.CreateCommand();
+            command.CommandText = $"""
+                                   SELECT Timestamp, Level, Exception, Properties, RenderedMessage
+                                   FROM Logs
+                                   {whereClause}
+                                   ORDER BY Timestamp DESC 
+                                   LIMIT @PageSize OFFSET @Offset
+                                   """;
+
+            // 设置查询参数
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                command.Parameters.AddWithValue("@SearchTerm", $"%{searchTerm}%");
+            }
+
+            if (!string.IsNullOrEmpty(levelFilter))
+            {
+                command.Parameters.AddWithValue("@LevelFilter", levelFilter);
+            }
+
+            if (!string.IsNullOrEmpty(timeRange))
+            {
+                if (timeRange.Equals("today", StringComparison.OrdinalIgnoreCase))
+                {
+                    command.Parameters.AddWithValue("@TodayStart", DateTime.Today);
+                }
+                else if (int.TryParse(timeRange, out int days))
+                {
+                    command.Parameters.AddWithValue("@DateThreshold", DateTime.Now.AddDays(-days));
+                }
+            }
+
+            command.Parameters.AddWithValue("@PageSize", pageSize);
+            command.Parameters.AddWithValue("@Offset", (pageIndex - 1) * pageSize);
+
+            await using (var reader = await command.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    logs.Add(new LogEntry
+                    {
+                        Timestamp = reader.GetDateTime(0),
+                        Level = reader.GetString(1),
+                        Exception = reader.IsDBNull(2) ? null : reader.GetString(2),
+                        Properties = reader.IsDBNull(3)
+                            ? null
+                            : JsonSerializer.Deserialize<Dictionary<string, object>>(reader.GetString(3)),
+                        Message = reader.IsDBNull(4) ? null : reader.GetString(4),
+                    });
+                }
+            }
         }
+
+        // 计算总页数
+        int totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+
+        // 创建分页响应
+        var response = new PaginatedResponse<LogEntry>
+        {
+            Data = logs,
+            TotalCount = totalCount,
+            PageIndex = pageIndex,
+            PageSize = pageSize,
+            TotalPages = totalPages
+        };
+
+        return Ok(ApiResponse<PaginatedResponse<LogEntry>>.Success(response, "获取日志成功"));
     }
 
 
@@ -246,45 +230,33 @@ public class LogsController(ILogger<LogsController> logger)
     [HttpGet("statistics")]
     public async Task<ActionResult<ApiResponse<LogStatistics>>> GetLogStatistics()
     {
-        try
+        var statistics = new LogStatistics();
+
+        await using (var connection = new SqliteConnection(ConnectionString))
         {
-            var statistics = new LogStatistics();
+            await connection.OpenAsync();
 
-            await using (var connection = new SqliteConnection(ConnectionString))
+            // 获取总日志数量
+            var totalCommand = connection.CreateCommand();
+            totalCommand.CommandText = "SELECT COUNT(*) FROM Logs";
+            statistics.TotalCount = Convert.ToInt32(await totalCommand.ExecuteScalarAsync());
+
+            // 获取各日志级别的数量
+            var levelCommand = connection.CreateCommand();
+            levelCommand.CommandText = "SELECT Level, COUNT(*) FROM Logs GROUP BY Level";
+
+            await using (var reader = await levelCommand.ExecuteReaderAsync())
             {
-                await connection.OpenAsync();
-
-                // 获取总日志数量
-                var totalCommand = connection.CreateCommand();
-                totalCommand.CommandText = "SELECT COUNT(*) FROM Logs";
-                statistics.TotalCount = Convert.ToInt32(await totalCommand.ExecuteScalarAsync());
-
-                // 获取各日志级别的数量
-                var levelCommand = connection.CreateCommand();
-                levelCommand.CommandText = "SELECT Level, COUNT(*) FROM Logs GROUP BY Level";
-
-                await using (var reader = await levelCommand.ExecuteReaderAsync())
+                while (await reader.ReadAsync())
                 {
-                    while (await reader.ReadAsync())
-                    {
-                        var level = reader.GetString(0);
-                        var count = reader.GetInt32(1);
-                        statistics.LevelCounts[level] = count;
-                    }
+                    var level = reader.GetString(0);
+                    var count = reader.GetInt32(1);
+                    statistics.LevelCounts[level] = count;
                 }
             }
-
-            return Ok(ApiResponse<LogStatistics>.Success(statistics, "获取日志统计信息成功"));
         }
-        catch (Exception ex)
-        {
-            if (logger.IsEnabled(LogLevel.Error))
-            {
-                logger.LogError(ex, "获取日志统计信息时发生错误");
-            }
 
-            return Ok(ApiResponse<LogStatistics>.Fail(ErrorCode.InternalServerError, $"获取日志统计信息时发生错误: {ex.Message}"));
-        }
+        return Ok(ApiResponse<LogStatistics>.Success(statistics, "获取日志统计信息成功"));
     }
 
     /// <summary>
@@ -295,41 +267,29 @@ public class LogsController(ILogger<LogsController> logger)
     [HttpPost("cleanup")]
     public async Task<ActionResult<ApiResponse<object>>> CleanupOldLogs([FromQuery] int days = 7)
     {
-        try
+        // 验证参数
+        if (days <= 0)
         {
-            // 验证参数
-            if (days <= 0)
-            {
-                return Ok(ApiResponse<object>.Fail(ErrorCode.ParameterOutOfRange, "天数必须大于0"));
-            }
-
-            // 获取日志数据库路径
-            var sqlPath = "logs/log.db";
-            if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Production")
-            {
-                sqlPath = Environment.CurrentDirectory + "/logs/log.db";
-            }
-
-            // 清理指定天数前的日志
-            await using var connection = new SQLiteConnection($"Data Source={sqlPath}");
-            await connection.OpenAsync();
-            await using var command =
-                new SQLiteCommand("DELETE FROM Logs WHERE Timestamp < @cutoffDate", connection);
-            command.Parameters.AddWithValue("@cutoffDate", DateTime.Now.AddDays(-days));
-            var rowsAffected = await command.ExecuteNonQueryAsync();
-
-            var result = new { Message = $"成功清理了 {rowsAffected} 条 {days} 天前的日志" };
-            return Ok(ApiResponse<object>.Success(result, "清理日志成功"));
+            return Ok(ApiResponse<object>.Fail(ErrorCode.ParameterOutOfRange, "天数必须大于0"));
         }
-        catch (Exception ex)
+
+        // 获取日志数据库路径
+        var sqlPath = "logs/log.db";
+        if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Production")
         {
-            if (logger.IsEnabled(LogLevel.Error))
-            {
-                logger.LogError(ex, "手动清理旧日志时出错");
-            }
-
-            return Ok(ApiResponse<object>.Fail(ErrorCode.InternalServerError, $"清理旧日志时出错: {ex.Message}"));
+            sqlPath = Environment.CurrentDirectory + "/logs/log.db";
         }
+
+        // 清理指定天数前的日志
+        await using var connection = new SQLiteConnection($"Data Source={sqlPath}");
+        await connection.OpenAsync();
+        await using var command =
+            new SQLiteCommand("DELETE FROM Logs WHERE Timestamp < @cutoffDate", connection);
+        command.Parameters.AddWithValue("@cutoffDate", DateTime.Now.AddDays(-days));
+        var rowsAffected = await command.ExecuteNonQueryAsync();
+
+        var result = new { Message = $"成功清理了 {rowsAffected} 条 {days} 天前的日志" };
+        return Ok(ApiResponse<object>.Success(result, "清理日志成功"));
     }
 
     /// <summary>
@@ -340,109 +300,96 @@ public class LogsController(ILogger<LogsController> logger)
     [HttpGet("distribution")]
     public async Task<ActionResult<ApiResponse<List<LogDistribution>>>> GetLogDistribution(string? timeRange = "today")
     {
-        try
+        var distributions = new List<LogDistribution>();
+
+        await using (var connection = new SqliteConnection(ConnectionString))
         {
-            var distributions = new List<LogDistribution>();
+            await connection.OpenAsync();
 
-            await using (var connection = new SqliteConnection(ConnectionString))
+            // 时间范围验证和处理
+            if (!string.IsNullOrEmpty(timeRange))
             {
-                await connection.OpenAsync();
-
-                // 时间范围验证和处理
-                if (!string.IsNullOrEmpty(timeRange))
+                timeRange = timeRange.Trim();
+                // 如果不是"today"，则验证是否为有效的天数
+                if (!timeRange.Equals("today", StringComparison.OrdinalIgnoreCase))
                 {
-                    timeRange = timeRange.Trim();
-                    // 如果不是"today"，则验证是否为有效的天数
-                    if (!timeRange.Equals("today", StringComparison.OrdinalIgnoreCase))
+                    // 尝试解析为天数，如果解析失败或天数小于等于0，则设为"today"
+                    if (!int.TryParse(timeRange, out int days) || days <= 0)
                     {
-                        // 尝试解析为天数，如果解析失败或天数小于等于0，则设为"today"
-                        if (!int.TryParse(timeRange, out int days) || days <= 0)
-                        {
-                            timeRange = "today";
-                        }
+                        timeRange = "today";
                     }
                 }
-                else
-                {
-                    timeRange = "today";
-                }
-
-                // 构建时间过滤条件
-                string timeFilter = string.Empty;
-                if (timeRange.Equals("today", StringComparison.OrdinalIgnoreCase))
-                {
-                    timeFilter = "Timestamp >= @TodayStart";
-                }
-                else if (int.TryParse(timeRange, out int days))
-                {
-                    timeFilter = "Timestamp >= @DateThreshold";
-                }
-
-                // 根据时间范围选择不同的分组粒度
-                string groupByFormat;
-                if (timeRange.Equals("today", StringComparison.OrdinalIgnoreCase))
-                {
-                    // 当天数据按小时分组
-                    groupByFormat = "strftime('%H:00', Timestamp)";
-                }
-                else
-                {
-                    // 多天数据按天分组
-                    groupByFormat = "strftime('%Y-%m-%d', Timestamp)";
-                }
-
-                // 构建查询
-                var query = $@"
-                    SELECT 
-                        {groupByFormat} as TimePoint,
-                        COUNT(*) as TotalCount,
-                        SUM(CASE WHEN Level = 'Error' OR Level = 'Critical' THEN 1 ELSE 0 END) as ErrorCount,
-                        SUM(CASE WHEN Level = 'Information' THEN 1 ELSE 0 END) as InfoCount,
-                        SUM(CASE WHEN Level = 'Warning' THEN 1 ELSE 0 END) as WarningCount
-                    FROM Logs
-                    WHERE {timeFilter}
-                    GROUP BY TimePoint
-                    ORDER BY TimePoint;
-                ";
-
-                await using var command = new SqliteCommand(query, connection);
-
-                // 设置参数
-                if (timeRange.Equals("today", StringComparison.OrdinalIgnoreCase))
-                {
-                    command.Parameters.AddWithValue("@TodayStart", DateTime.Today);
-                }
-                else if (int.TryParse(timeRange, out int days))
-                {
-                    command.Parameters.AddWithValue("@DateThreshold", DateTime.Now.AddDays(-days));
-                }
-
-                await using var reader = await command.ExecuteReaderAsync();
-                while (await reader.ReadAsync())
-                {
-                    distributions.Add(new LogDistribution
-                    {
-                        TimePoint = reader.GetString(0),
-                        TotalCount = reader.GetInt32(1),
-                        ErrorCount = reader.GetInt32(2),
-                        InfoCount = reader.GetInt32(3),
-                        WarningCount = reader.GetInt32(4)
-                    });
-                }
             }
-
-            return Ok(ApiResponse<List<LogDistribution>>.Success(distributions, "获取日志分布数据成功"));
-        }
-        catch (Exception ex)
-        {
-            if (logger.IsEnabled(LogLevel.Error))
+            else
             {
-                logger.LogError(ex, "获取日志分布数据时发生错误，时间范围：{TimeRange}", timeRange ?? "null");
+                timeRange = "today";
             }
 
-            return Ok(ApiResponse<List<LogDistribution>>.Fail(ErrorCode.InternalServerError,
-                $"获取日志分布数据时发生错误: {ex.Message}"));
+            // 构建时间过滤条件
+            string timeFilter = string.Empty;
+            if (timeRange.Equals("today", StringComparison.OrdinalIgnoreCase))
+            {
+                timeFilter = "Timestamp >= @TodayStart";
+            }
+            else if (int.TryParse(timeRange, out int days))
+            {
+                timeFilter = "Timestamp >= @DateThreshold";
+            }
+
+            // 根据时间范围选择不同的分组粒度
+            string groupByFormat;
+            if (timeRange.Equals("today", StringComparison.OrdinalIgnoreCase))
+            {
+                // 当天数据按小时分组
+                groupByFormat = "strftime('%H:00', Timestamp)";
+            }
+            else
+            {
+                // 多天数据按天分组
+                groupByFormat = "strftime('%Y-%m-%d', Timestamp)";
+            }
+
+            // 构建查询
+            var query = $@"
+                SELECT 
+                    {groupByFormat} as TimePoint,
+                    COUNT(*) as TotalCount,
+                    SUM(CASE WHEN Level = 'Error' OR Level = 'Critical' THEN 1 ELSE 0 END) as ErrorCount,
+                    SUM(CASE WHEN Level = 'Information' THEN 1 ELSE 0 END) as InfoCount,
+                    SUM(CASE WHEN Level = 'Warning' THEN 1 ELSE 0 END) as WarningCount
+                FROM Logs
+                WHERE {timeFilter}
+                GROUP BY TimePoint
+                ORDER BY TimePoint;
+            ";
+
+            await using var command = new SqliteCommand(query, connection);
+
+            // 设置参数
+            if (timeRange.Equals("today", StringComparison.OrdinalIgnoreCase))
+            {
+                command.Parameters.AddWithValue("@TodayStart", DateTime.Today);
+            }
+            else if (int.TryParse(timeRange, out int days))
+            {
+                command.Parameters.AddWithValue("@DateThreshold", DateTime.Now.AddDays(-days));
+            }
+
+            await using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                distributions.Add(new LogDistribution
+                {
+                    TimePoint = reader.GetString(0),
+                    TotalCount = reader.GetInt32(1),
+                    ErrorCount = reader.GetInt32(2),
+                    InfoCount = reader.GetInt32(3),
+                    WarningCount = reader.GetInt32(4)
+                });
+            }
         }
+
+        return Ok(ApiResponse<List<LogDistribution>>.Success(distributions, "获取日志分布数据成功"));
     }
 }
 

@@ -46,7 +46,16 @@ public class LoginIntegrationTests
         // 设置Redis
         _redisMock.Setup(r => r.GetDatabase(It.IsAny<int>(), It.IsAny<object>())).Returns(_redisDbMock.Object);
         _redisDbMock.Setup(r => r.StringGetAsync(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>())).ReturnsAsync(RedisValue.Null);
-        
+
+        // LoginService 用 _db.CreateBatch() 合并三次写入；不 setup 的话 mock 会返回 null，
+        // 后续 batch.StringSetAsync 直接 NullReferenceException。
+        var batchMock = new Mock<IBatch>();
+        batchMock.Setup(b => b.StringSetAsync(
+                It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<TimeSpan?>(),
+                It.IsAny<When>(), It.IsAny<CommandFlags>()))
+            .ReturnsAsync(true);
+        _redisDbMock.Setup(r => r.CreateBatch(It.IsAny<object>())).Returns(batchMock.Object);
+
         // 创建LoginService实例
         _loginService = new LoginService(
             studentRepository,

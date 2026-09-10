@@ -1,9 +1,10 @@
-// 部门模型接口
+// 员工模型 —— 对应后端 VOs/StaffVO.cs（请求侧对应 DTOs/StaffCreateDTO.cs）
+// 后端不返回嵌套的部门对象，只返回扁平的 departmentName。
 export interface StaffModel {
   userId: string;
   name: string;
   identity: string;
-  department: DepartmentModel | null;
+  departmentName: string | null;
 }
 
 export interface Department {

@@ -37,6 +37,15 @@ public class LoginServiceTests
         // Setup Redis
         _redisMock.Setup(r => r.GetDatabase(It.IsAny<int>(), It.IsAny<object>())).Returns(_redisDbMock.Object);
 
+        // LoginService 用 _db.CreateBatch() 合并三次写入；不 setup 的话 mock 返回 null，
+        // 后续 batch.StringSetAsync 直接 NullReferenceException。
+        var batchMock = new Mock<IBatch>();
+        batchMock.Setup(b => b.StringSetAsync(
+                It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<TimeSpan?>(),
+                It.IsAny<When>(), It.IsAny<CommandFlags>()))
+            .ReturnsAsync(true);
+        _redisDbMock.Setup(r => r.CreateBatch(It.IsAny<object>())).Returns(batchMock.Object);
+
         // Create service instance
         _loginService = new LoginService(
             _studentRepoMock.Object,
@@ -56,8 +65,7 @@ public class LoginServiceTests
         var student = new StudentDO { UserId = loginModel.UserId, UserName = "Test Student", PasswordHash = DataTool.StringToHash(loginModel.Password) };
         var token = "mock-jwt-token";
 
-        _studentRepoMock.Setup(s => s.Login(loginModel.UserId, loginModel.Password)).ReturnsAsync(true);
-        _studentRepoMock.Setup(s => s.GetByIdAsync(loginModel.UserId)).ReturnsAsync(student);
+        _studentRepoMock.Setup(s => s.LoginAndGetStudentAsync(loginModel.UserId, loginModel.Password)).ReturnsAsync(student);
         _staffRepoMock.Setup(s => s.GetStaffByIdWithoutOtherData(loginModel.UserId)).ReturnsAsync((StaffDO?)null);
         _tokenGeneratorMock.Setup(t => t.GetMemberToken(It.IsAny<MemberVO>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>())).Returns((token, "mock-refresh-token"));
         _redisDbMock.Setup(r => r.StringGetAsync(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>())).ReturnsAsync(RedisValue.Null);
@@ -77,7 +85,7 @@ public class LoginServiceTests
         // Arrange
         var loginModel = new LoginDTO { UserId = "1234567890", Password = "wrongpassword" };
 
-        _studentRepoMock.Setup(s => s.Login(loginModel.UserId, loginModel.Password)).ReturnsAsync(false);
+        _studentRepoMock.Setup(s => s.LoginAndGetStudentAsync(loginModel.UserId, loginModel.Password)).ReturnsAsync((StudentDO?)null);
 
         // Act
         var result = await _loginService.Login(loginModel);
@@ -143,6 +151,7 @@ public class LoginServiceTests
         var newPassword = "newpass";
         var student = new StudentDO { UserId = userId, PasswordHash = DataTool.StringToHash(oldPassword) };
 
+        // ChangePassword 走的是 Login + GetByIdAsync（不是 LoginAndGetStudentAsync）
         _studentRepoMock.Setup(s => s.Login(userId, oldPassword)).ReturnsAsync(true);
         _studentRepoMock.Setup(s => s.GetByIdAsync(userId)).ReturnsAsync(student);
         _studentRepoMock.Setup(s => s.UpdateAsync(student)).ReturnsAsync(true);
@@ -153,7 +162,9 @@ public class LoginServiceTests
         // Assert
         Assert.True(result);
         _studentRepoMock.Verify(s => s.UpdateAsync(student), Times.Once);
-        Assert.Equal(DataTool.StringToHash(newPassword), student.PasswordHash);
+        // BCrypt 每次哈希都用随机盐，同一个明文两次 StringToHash 结果不同，
+        // 必须用 IsOk 反验证而不是比较字符串。
+        Assert.True(DataTool.IsOk(newPassword, student.PasswordHash));
     }
 
     [Fact]
@@ -164,6 +175,7 @@ public class LoginServiceTests
         var oldPassword = "wrongoldpass";
         var newPassword = "newpass";
 
+        // ChangePassword 走的是 Login + GetByIdAsync
         _studentRepoMock.Setup(s => s.Login(userId, oldPassword)).ReturnsAsync(false);
 
         // Act
@@ -181,8 +193,7 @@ public class LoginServiceTests
         var student = new StudentDO { UserId = loginModel.UserId, UserName = "Test Student", PasswordHash = DataTool.StringToHash(loginModel.Password) };
         var token = "mock-jwt-token";
 
-        _studentRepoMock.Setup(s => s.Login(loginModel.UserId, loginModel.Password)).ReturnsAsync(true);
-        _studentRepoMock.Setup(s => s.GetByIdAsync(loginModel.UserId)).ReturnsAsync(student);
+        _studentRepoMock.Setup(s => s.LoginAndGetStudentAsync(loginModel.UserId, loginModel.Password)).ReturnsAsync(student);
         _staffRepoMock.Setup(s => s.GetStaffByIdWithoutOtherData(loginModel.UserId)).ReturnsAsync((StaffDO?)null);
         _tokenGeneratorMock.Setup(t => t.GetMemberToken(It.IsAny<MemberVO>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>())).Returns((token, "mock-refresh-token"));
         _redisDbMock.Setup(r => r.StringGetAsync(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>())).ReturnsAsync(RedisValue.Null);
@@ -203,8 +214,7 @@ public class LoginServiceTests
         var existingToken = "existing-jwt-token";
         var student = new StudentDO { UserId = loginModel.UserId, UserName = "Test Student" };
 
-        _studentRepoMock.Setup(s => s.Login(loginModel.UserId, loginModel.Password)).ReturnsAsync(true);
-        _studentRepoMock.Setup(s => s.GetByIdAsync(loginModel.UserId)).ReturnsAsync(student);
+        _studentRepoMock.Setup(s => s.LoginAndGetStudentAsync(loginModel.UserId, loginModel.Password)).ReturnsAsync(student);
         _staffRepoMock.Setup(s => s.GetStaffByIdWithoutOtherData(loginModel.UserId)).ReturnsAsync((StaffDO?)null);
         _redisDbMock.Setup(r => r.StringGetAsync($"token:{loginModel.UserId}", It.IsAny<CommandFlags>())).ReturnsAsync(existingToken);
 

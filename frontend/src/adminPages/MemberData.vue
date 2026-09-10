@@ -20,7 +20,7 @@ import {MemberManagementService} from '../services/MemberManagementService'
 import {
   DataCentreService
 } from '../services/DataCentreService'
-import type {MemberModel, PaginatedMemberResponse} from '../models'
+import type {MemberVO, StudentUpdateDTO, PaginatedMemberResponse} from '../models'
 import type {
   AcademyCount,
   GenderCount,
@@ -101,8 +101,8 @@ const politicalLandscapeOptions = ['群众', '共青团员', '中共党员'].map
 const genderOptions = ['男', '女']
 
 // --- Data Models ---
-const members = ref<MemberModel[]>([])
-const currentMember = ref<MemberModel>({
+const members = ref<MemberVO[]>([])
+const currentMember = ref<MemberVO>({
   identity: '',
   userName: '',
   userId: '',
@@ -112,9 +112,8 @@ const currentMember = ref<MemberModel>({
   politicalLandscape: '',
   gender: '',
   joinTime: '',
-  passwordHash: '',
   eMail: null
-} as MemberModel)
+} as MemberVO)
 
 const passwordForm = ref({
   newPassword: '',
@@ -164,7 +163,7 @@ const columns = [
     title: '面貌',
     key: 'politicalLandscape',
     width: 100,
-    render(row: MemberModel) {
+    render(row: MemberVO) {
       let type = 'default';
       if (row.politicalLandscape === '中共党员') type = 'error';
       if (row.politicalLandscape === '共青团员') type = 'info';
@@ -181,7 +180,7 @@ const columns = [
     title: '操作',
     key: 'actions',
     width: 180,
-    render(row: MemberModel) {
+    render(row: MemberVO) {
       // Using standard HTML/Tailwind buttons via h function for cleaner look instead of NButton
       const btnClass = "px-3 py-1 text-xs font-medium rounded-full transition-colors duration-200 mx-1";
 
@@ -201,7 +200,7 @@ const columns = [
       ]
     }
   }
-] as TableColumn<MemberModel>[]
+] as TableColumn<MemberVO>[]
 
 const paginationConfig = computed(() => ({
   page: currentPage.value,
@@ -428,17 +427,17 @@ const showAddMemberModal = () => {
   currentMember.value = {
     identity: '', userName: '', userId: '', academy: '', className: '',
     phoneNum: '', politicalLandscape: '', gender: '',
-    joinTime: new Date().toISOString(), passwordHash: '', eMail: null
-  } as MemberModel
+    joinTime: new Date().toISOString(), eMail: null
+  } as MemberVO
   showModal.value = true
 }
 
-const editMember = (member: MemberModel) => {
+const editMember = (member: MemberVO) => {
   currentMember.value = {...member}
   showModal.value = true
 }
 
-const deleteMember = async (member: MemberModel) => {
+const deleteMember = async (member: MemberVO) => {
   dialog.warning({
     title: '确认删除',
     content: `确定要删除成员 ${member.userName} 吗？`,
@@ -464,13 +463,25 @@ const saveMember = async () => {
   formRef.value?.validate(async (errors: any) => {
     if (!errors) {
       try {
+        // 只提交后端 StudentUpdateDTO 接受的字段；
+        // identity / joinTime 不在该 DTO 里，发过去会被静默忽略。
+        const payload: StudentUpdateDTO = {
+          userId: currentMember.value.userId,
+          userName: currentMember.value.userName,
+          academy: currentMember.value.academy,
+          politicalLandscape: currentMember.value.politicalLandscape,
+          gender: currentMember.value.gender,
+          className: currentMember.value.className,
+          phoneNum: currentMember.value.phoneNum,
+          eMail: currentMember.value.eMail
+        }
         if (currentMember.value.identity) {
-          await MemberManagementService.updateMember(currentMember.value)
+          await MemberManagementService.updateMember(payload)
           const index = members.value.findIndex(m => m.identity === currentMember.value.identity)
           if (index !== -1) members.value[index] = {...currentMember.value}
           message.success('已更新')
         } else {
-          await MemberManagementService.updateMember(currentMember.value) // Assuming addMember exists or using mock logic
+          await MemberManagementService.updateMember(payload)
           message.success('已添加')
           await fetchMembers() // Refresh for ID generation if real backend
         }
@@ -536,7 +547,7 @@ const downloadBlob = (blob: Blob, filename: string) => {
 }
 
 // --- Password ---
-const showPasswordModalFn = (member: MemberModel) => {
+const showPasswordModalFn = (member: MemberVO) => {
   currentMember.value = {...member}
   passwordForm.value = {newPassword: '', confirmPassword: ''}
   showPasswordModal.value = true

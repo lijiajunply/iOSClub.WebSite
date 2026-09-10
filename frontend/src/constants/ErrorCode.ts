@@ -1,38 +1,55 @@
-export const ErrorCodeMap: Record<number, string> = {
-    0: '操作成功',
-    
-    1000: '参数不能为空',
-    1001: '参数格式错误',
-    1002: '参数超出范围',
-    1003: '参数验证失败',
-    
-    2000: '资源已存在',
-    2001: '操作失败',
-    2002: '数据处理失败',
-    2003: '状态不允许该操作',
-    
-    3000: '未授权访问',
-    3001: '权限不足',
-    3002: '登录已过期',
-    3003: '无效的令牌',
-    
-    4000: '资源不存在',
-    4001: '文章不存在',
-    4002: '分类不存在',
-    4003: '用户不存在',
-    4004: '项目不存在',
-    4005: '文件不存在',
-    
-    5000: '服务器内部错误',
-    5001: '数据库操作失败',
-    5002: '缓存操作失败',
-    5003: '网络错误',
-    
-    6000: '外部服务调用失败',
-    6001: '外部服务超时',
-    6002: '外部服务返回错误',
-    6003: '外部服务未配置',
-    
-    7000: '请求频率过高',
-    7001: '无效请求'
-}
+/**
+ * 业务错误码 —— 与后端 rearend/iOSClub.WebAPI/iOSClub.WebAPI/Common/ErrorCode.cs 一一对应。
+ *
+ * 后端是唯一真源：改动错误码时请先改后端，再同步这里。
+ * 前端通常按区间处理（见 ApiService.ts 的 toError），所以后端新增错误码一般不需要改前端。
+ * 区间划分：1000-1999 参数、2000-2999 业务、3000-3999 权限、4000-4999 资源、
+ *          5000-5999 系统、6000-6999 外部服务、7000-7999 HTTP 相关。
+ */
+export const ErrorCode = {
+    Success: 0,
+
+    // 参数错误
+    ParameterEmpty: 1000,
+    ParameterFormatError: 1001,
+    ParameterOutOfRange: 1002,
+    ParameterValidationFailed: 1003,
+
+    // 业务逻辑错误
+    ResourceAlreadyExists: 2000,
+    OperationFailed: 2001,
+    DataProcessingFailed: 2002,
+    InvalidStatusForOperation: 2003,
+
+    // 权限错误
+    Unauthorized: 3000,
+    InsufficientPermission: 3001,
+    LoginExpired: 3002,
+    InvalidToken: 3003,
+
+    // 资源错误
+    ResourceNotFound: 4000,
+    ArticleNotFound: 4001,
+    CategoryNotFound: 4002,
+    UserNotFound: 4003,
+    ProjectNotFound: 4004,
+    FileNotFound: 4005,
+
+    // 系统错误
+    InternalServerError: 5000,
+    DatabaseOperationFailed: 5001,
+    CacheOperationFailed: 5002,
+    NetworkError: 5003,
+
+    // 外部服务错误
+    ExternalServiceFailed: 6000,
+    ExternalServiceTimeout: 6001,
+    ExternalServiceReturnError: 6002,
+    ExternalServiceNotConfigured: 6003,
+
+    // HTTP 状态码相关错误
+    TooManyRequests: 7000,
+    InvalidRequest: 7001
+} as const;
+
+export type ErrorCodeValue = (typeof ErrorCode)[keyof typeof ErrorCode];

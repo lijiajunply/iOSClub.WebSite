@@ -6,9 +6,10 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection; 
 using Microsoft.EntityFrameworkCore; 
 using Moq; 
-using iOSClub.DataApi.Services; 
+using iOSClub.DataApi.Services;
 using iOSClub.DataApi.Repositories;
-using StackExchange.Redis; 
+using iOSClub.WebAPI.Common;
+using StackExchange.Redis;
 using System.Net.Http.Headers;
 using Newtonsoft.Json; 
 using System.Net.Http.Json; 
@@ -40,27 +41,36 @@ public class AuthControllerTests : IClassFixture<WebApplicationFactory<Program>>
         _redisDbMock = new Mock<IDatabase>(); 
         _emailServiceMock = new Mock<IEmailService>(); 
         
-        // 设置Redis 
-        _redisMock.Setup(r => r.GetDatabase(It.IsAny<int>(), It.IsAny<object>())).Returns(_redisDbMock.Object); 
-        _redisDbMock.Setup(r => r.StringGetAsync(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>())).ReturnsAsync(RedisValue.Null); 
-        
+        // 设置Redis
+        _redisMock.Setup(r => r.GetDatabase(It.IsAny<int>(), It.IsAny<object>())).Returns(_redisDbMock.Object);
+        _redisDbMock.Setup(r => r.StringGetAsync(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>())).ReturnsAsync(RedisValue.Null);
+
+        // LoginService 用 _db.CreateBatch() 合并三次写入；不 setup 的话 mock 会返回 null，
+        // 后续 batch.StringSetAsync 直接 NullReferenceException。
+        var batchMock = new Mock<IBatch>();
+        batchMock.Setup(b => b.StringSetAsync(
+                It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<TimeSpan?>(),
+                It.IsAny<When>(), It.IsAny<CommandFlags>()))
+            .ReturnsAsync(true);
+        _redisDbMock.Setup(r => r.CreateBatch(It.IsAny<object>())).Returns(batchMock.Object);
+
         // 创建HttpClient并配置服务 
         _client = _factory.WithWebHostBuilder(builder => 
         { 
             builder.ConfigureServices(services => 
             { 
-                // 替换ClubContext为内存数据库版本 
-                var descriptor = services.SingleOrDefault( 
-                    d => d.ServiceType == typeof(DbContextOptions<ClubContext>)); 
-                if (descriptor != null) 
-                { 
-                    services.Remove(descriptor); 
-                } 
-                services.AddDbContext<ClubContext>(options => 
-                { 
-                    options.UseInMemoryDatabase("AuthControllerTestDatabase"); 
-                }); 
-                
+                // 替换ClubContext为内存数据库版本。
+                // 应用注册的是 AddDbContextFactory（单例工厂），仓储通过 IDbContextFactory<ClubContext>
+                // 取上下文；只替换 DbContextOptions 会让单例工厂无法消费 scoped 的 options，
+                // 容器校验失败导致整个夹具构造不出来。因此这里直接替换工厂本身。
+                var descriptor = services.SingleOrDefault(
+                    d => d.ServiceType == typeof(IDbContextFactory<ClubContext>));
+                if (descriptor != null)
+                {
+                    services.Remove(descriptor);
+                }
+                services.AddSingleton<IDbContextFactory<ClubContext>>(new TestDbContextFactory(_options));
+
                 // 替换其他服务为Mock版本 
                 services.AddSingleton(_tokenGeneratorMock.Object); 
                 services.AddSingleton(_redisMock.Object); 
@@ -81,17 +91,20 @@ public class AuthControllerTests : IClassFixture<WebApplicationFactory<Program>>
         await context.Database.EnsureDeletedAsync(); 
         await context.Database.EnsureCreatedAsync(); 
         
-        var studentModel = new StudentDO 
-        { 
-            UserId = "20210001", 
-            UserName = "Test Student", 
-            PasswordHash = DataTool.StringToHash("password123"), 
-            Academy = "Computer Science", 
-            Gender = "男", 
-            PoliticalLandscape = "共青团员", 
-            ClassName = "2021级1班", 
-            PhoneNum = "13800138000" 
-        }; 
+        // 注册接口绑定的是 StudentCreateDTO，密码字段叫 password（明文，后端再哈希）。
+        // 之前这里发的是 StudentDO（字段是 passwordHash），密码根本绑不上，
+        // 于是 MapperConfig 里的哈希映射抛 "密码不能为空"，接口返回 500。
+        var studentModel = new StudentCreateDTO
+        {
+            UserId = "20210001",
+            UserName = "Test Student",
+            Password = "password123",
+            Academy = "Computer Science",
+            Gender = "男",
+            PoliticalLandscape = "共青团员",
+            ClassName = "2021级1班",
+            PhoneNum = "13800138000"
+        };
         
         var expectedToken = "mock-jwt-token"; 
         _tokenGeneratorMock.Setup(t => t.GetMemberToken(It.IsAny<MemberVO>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>())).Returns((expectedToken, "mock-refresh-token")); 
@@ -182,12 +195,14 @@ public class AuthControllerTests : IClassFixture<WebApplicationFactory<Program>>
         var response = await _client.PostAsJsonAsync("/Auth/login", loginModel); 
         
         // Assert 
-        response.EnsureSuccessStatusCode(); // 200 OK，但返回错误信息 
-        var content = await response.Content.ReadAsStringAsync(); 
-        var result = JsonConvert.DeserializeObject<ApiResponse<string>>(content); 
-        
-        Assert.NotNull(result); 
-        Assert.True(result.Code != 200); 
+        // 新契约：HTTP 状态码恒等于响应体里的 code，失败响应不再是 HTTP 200，
+        // 所以不能再调 EnsureSuccessStatusCode()。
+        var content = await response.Content.ReadAsStringAsync();
+        var result = JsonConvert.DeserializeObject<ApiResponse<string>>(content);
+
+        Assert.NotNull(result);
+        Assert.True(result.Code != 200);
+        Assert.Equal(result.Code, (int)response.StatusCode);
         Assert.Equal("用户不存在或密码错误", result.Message); 
     } 
     
@@ -206,12 +221,14 @@ public class AuthControllerTests : IClassFixture<WebApplicationFactory<Program>>
         var response = await _client.PostAsJsonAsync("/Auth/login", loginModel); 
         
         // Assert 
-        response.EnsureSuccessStatusCode(); // 200 OK，但返回错误信息 
-        var content = await response.Content.ReadAsStringAsync(); 
-        var result = JsonConvert.DeserializeObject<ApiResponse<string>>(content); 
-        
-        Assert.NotNull(result); 
-        Assert.True(result.Code != 200); 
+        // 新契约：HTTP 状态码恒等于响应体里的 code，失败响应不再是 HTTP 200，
+        // 所以不能再调 EnsureSuccessStatusCode()。
+        var content = await response.Content.ReadAsStringAsync();
+        var result = JsonConvert.DeserializeObject<ApiResponse<string>>(content);
+
+        Assert.NotNull(result);
+        Assert.True(result.Code != 200);
+        Assert.Equal(result.Code, (int)response.StatusCode);
         Assert.Equal("用户不存在或密码错误", result.Message); 
     } 
     
@@ -311,47 +328,35 @@ public class AuthControllerTests : IClassFixture<WebApplicationFactory<Program>>
         var response = await _client.PostAsync($"/Auth/refresh-token?userId={userId}&refreshToken={invalidRefreshToken}", null); 
         
         // Assert 
-        response.EnsureSuccessStatusCode(); // 200 OK，但返回错误信息 
-        var content = await response.Content.ReadAsStringAsync(); 
-        var result = JsonConvert.DeserializeObject<ApiResponse<string>>(content); 
-        
-        Assert.NotNull(result); 
-        Assert.True(result.Code != 200); 
+        // 新契约：HTTP 状态码恒等于响应体里的 code，失败响应不再是 HTTP 200，
+        // 所以不能再调 EnsureSuccessStatusCode()。
+        var content = await response.Content.ReadAsStringAsync();
+        var result = JsonConvert.DeserializeObject<ApiResponse<string>>(content);
+
+        Assert.NotNull(result);
+        Assert.True(result.Code != 200);
+        Assert.Equal(result.Code, (int)response.StatusCode);
         Assert.Equal("无效的刷新令牌", result.Message); 
     } 
     
-    [Fact] 
-    public async Task RefreshToken_MissingParameters_ReturnsError() 
-    { 
-        // Act - 缺少userId和refreshToken参数 
-        var response = await _client.PostAsync("/Auth/refresh-token", null); 
-        
-        // Assert 
-        response.EnsureSuccessStatusCode(); // 200 OK，但返回错误信息 
-        var content = await response.Content.ReadAsStringAsync(); 
-        var result = JsonConvert.DeserializeObject<ApiResponse<string>>(content); 
-        
-        Assert.NotNull(result); 
-        Assert.True(result.Code != 200); 
-        Assert.Equal("用户ID和刷新令牌不能为空", result.Message); 
-    } 
-} 
+    [Fact]
+    public async Task RefreshToken_MissingParameters_ReturnsError()
+    {
+        // Act - 缺少userId和refreshToken参数
+        var response = await _client.PostAsync("/Auth/refresh-token", null);
 
-// 定义ApiResponse类以匹配控制器返回的响应格式 
-public class ApiResponse<T> 
-{ 
-    public int Code { get; set; } 
-    public int ErrorCode { get; set; } 
-    public string? Message { get; set; } 
-    public T? Data { get; set; } 
-    
-    public static ApiResponse<T> Success(T data, string message = "Success") 
-    { 
-        return new ApiResponse<T> { Code = 200, ErrorCode = 0, Message = message, Data = data }; 
-    } 
-    
-    public static ApiResponse<T> Fail(int errorCode, string message = "Fail") 
-    { 
-        return new ApiResponse<T> { Code = errorCode, ErrorCode = errorCode, Message = message, Data = default }; 
-    } 
-} 
+        // Assert
+        // userId / refreshToken 是非空查询参数，[ApiController] 会在进入 action 之前
+        // 就判定模型无效并返回统一信封（errorCode 1003 / HTTP 400）。
+        // action 里那句 "用户ID和刷新令牌不能为空" 对"完全不传"的情况因此永远走不到。
+        var content = await response.Content.ReadAsStringAsync();
+        var result = JsonConvert.DeserializeObject<ApiResponse<string>>(content);
+
+        Assert.NotNull(result);
+        Assert.True(result.Code != 200);
+        Assert.Equal(result.Code, (int)response.StatusCode);
+        Assert.Equal(400, result.Code);
+        Assert.Equal(ErrorCode.ParameterValidationFailed, result.ErrorCode);
+        Assert.Contains("userId", result.Detail ?? "");
+    }
+}

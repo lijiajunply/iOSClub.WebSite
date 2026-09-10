@@ -36,9 +36,11 @@ export class MessageService {
             errorMessage
         } = config
 
-        if (response.code === 200 && showSuccess) {
+        // 成功与否以 errorCode 为准：HTTP 状态码现在与 code 一致，
+        // 而 code 描述的是"请求结果的状态码"，errorCode === 0 才是业务成功。
+        if (response.errorCode === 0 && showSuccess) {
             this.success(successMessage || response.message || '操作成功')
-        } else if (response.code !== 200 && showError) {
+        } else if (response.errorCode !== 0 && showError) {
             this.error(errorMessage || response.message || '操作失败')
         }
     }

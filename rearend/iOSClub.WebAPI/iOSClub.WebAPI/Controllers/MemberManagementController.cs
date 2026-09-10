@@ -27,35 +27,23 @@ public class MemberManagementController(
     [HttpPost("delete/{id}")]
     public async Task<ActionResult<ApiResponse<object>>> Delete(string id)
     {
-        try
-        {
-            var result = await studentRepository.DeleteAsync(id);
-            if (!result)
-            {
-                if (logger.IsEnabled(LogLevel.Information))
-                {
-                    logger.LogInformation("删除学生失败，学生不存在，ID: {Id}", id);
-                }
-
-                return Ok(ApiResponse<object>.Fail(ErrorCode.UserNotFound, "学生不存在"));
-            }
-
-            if (logger.IsEnabled(LogLevel.Information))
-            {
-                logger.LogInformation("删除学生成功，ID: {Id}", id);
-            }
-
-            return Ok(ApiResponse.Success("删除学生成功"));
-        }
-        catch (Exception ex)
+        var result = await studentRepository.DeleteAsync(id);
+        if (!result)
         {
             if (logger.IsEnabled(LogLevel.Information))
             {
-                logger.LogInformation(ex, "删除学生时发生错误，ID: {Id}", id);
+                logger.LogInformation("删除学生失败，学生不存在，ID: {Id}", id);
             }
 
-            return Ok(ApiResponse<object>.Fail(ErrorCode.InternalServerError, "删除学生失败"));
+            return Ok(ApiResponse<object>.Fail(ErrorCode.UserNotFound, "学生不存在"));
         }
+
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation("删除学生成功，ID: {Id}", id);
+        }
+
+        return Ok(ApiResponse.Success("删除学生成功"));
     }
 
     /// <summary>
@@ -66,37 +54,25 @@ public class MemberManagementController(
     [HttpPost("update-many")]
     public async Task<ActionResult<ApiResponse<bool>>> UpdateMany(List<StudentUpdateDTO> list)
     {
-        try
-        {
-            var doList = list.Adapt<List<StudentDO>>();
-            var result = await studentRepository.UpdateManyAsync(doList);
-            if (result)
-            {
-                if (logger.IsEnabled(LogLevel.Information))
-                {
-                    logger.LogInformation("批量更新学生成功，更新数量: {Count}", list.Count);
-                }
-
-                return Ok(ApiResponse<bool>.Success(true, "批量更新学生成功"));
-            }
-            else
-            {
-                if (logger.IsEnabled(LogLevel.Information))
-                {
-                    logger.LogInformation("批量更新学生失败，更新数量: {Count}", list.Count);
-                }
-
-                return Ok(ApiResponse<bool>.Fail(ErrorCode.OperationFailed, "批量更新学生失败"));
-            }
-        }
-        catch (Exception ex)
+        var doList = list.Adapt<List<StudentDO>>();
+        var result = await studentRepository.UpdateManyAsync(doList);
+        if (result)
         {
             if (logger.IsEnabled(LogLevel.Information))
             {
-                logger.LogInformation(ex, "批量更新学生时发生错误，更新数量: {Count}", list.Count);
+                logger.LogInformation("批量更新学生成功，更新数量: {Count}", list.Count);
             }
 
-            return Ok(ApiResponse<bool>.Fail(ErrorCode.InternalServerError, "批量更新学生失败"));
+            return Ok(ApiResponse<bool>.Success(true, "批量更新学生成功"));
+        }
+        else
+        {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("批量更新学生失败，更新数量: {Count}", list.Count);
+            }
+
+            return Ok(ApiResponse<bool>.Fail(ErrorCode.OperationFailed, "批量更新学生失败"));
         }
     }
 
@@ -108,81 +84,57 @@ public class MemberManagementController(
     [HttpPost("update")]
     public async Task<ActionResult<ApiResponse<object>>> Update([FromBody] StudentUpdateDTO model)
     {
-        try
-        {
-            var result = await studentRepository.UpdateAsync(model.Adapt<StudentDO>());
-            if (!result)
-            {
-                if (logger.IsEnabled(LogLevel.Information))
-                {
-                    logger.LogInformation("更新学生信息失败，学生不存在，ID: {Id}", model.UserId);
-                }
-
-                return Ok(ApiResponse<object>.Fail(ErrorCode.UserNotFound, "学生不存在"));
-            }
-
-            if (logger.IsEnabled(LogLevel.Information))
-            {
-                logger.LogInformation("更新学生信息成功，ID: {Id}", model.UserId);
-            }
-
-            return Ok(ApiResponse.Success("更新学生信息成功"));
-        }
-        catch (Exception ex)
+        var result = await studentRepository.UpdateAsync(model.Adapt<StudentDO>());
+        if (!result)
         {
             if (logger.IsEnabled(LogLevel.Information))
             {
-                logger.LogInformation(ex, "更新学生信息时发生错误，ID: {Id}", model.UserId);
+                logger.LogInformation("更新学生信息失败，学生不存在，ID: {Id}", model.UserId);
             }
 
-            return Ok(ApiResponse<object>.Fail(ErrorCode.InternalServerError, "更新学生信息失败"));
+            return Ok(ApiResponse<object>.Fail(ErrorCode.UserNotFound, "学生不存在"));
         }
+
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation("更新学生信息成功，ID: {Id}", model.UserId);
+        }
+
+        return Ok(ApiResponse.Success("更新学生信息成功"));
     }
 
     [HttpPost("reset-password")]
     public async Task<ActionResult<ApiResponse<object>>> ResetPassword(ResetPasswordData data)
     {
-        try
-        {
-            var student = await studentRepository.GetByIdAsync(data.UserId);
-            if (student == null)
-            {
-                if (logger.IsEnabled(LogLevel.Information))
-                {
-                    logger.LogInformation("重置密码失败，学生不存在，ID: {Id}", data.UserId);
-                }
-
-                return Ok(ApiResponse<object>.Fail(ErrorCode.UserNotFound, "学生不存在"));
-            }
-
-            student.PasswordHash = DataTool.StringToHash(data.NewPassword);
-            var result = await studentRepository.UpdateAsync(student);
-            if (!result)
-            {
-                if (logger.IsEnabled(LogLevel.Information))
-                {
-                    logger.LogInformation("重置密码失败，ID: {Id}", data.UserId);
-                }
-
-                return Ok(ApiResponse<object>.Fail(ErrorCode.OperationFailed, "重置密码失败"));
-            }
-
-            if (logger.IsEnabled(LogLevel.Information))
-            {
-                logger.LogInformation("重置密码成功，ID: {Id}", data.UserId);
-            }
-
-            return Ok(ApiResponse.Success("重置密码成功"));
-        }
-        catch (Exception ex)
+        var student = await studentRepository.GetByIdAsync(data.UserId);
+        if (student == null)
         {
             if (logger.IsEnabled(LogLevel.Information))
             {
-                logger.LogInformation(ex, "重置密码时发生错误，ID: {Id}", data.UserId);
+                logger.LogInformation("重置密码失败，学生不存在，ID: {Id}", data.UserId);
             }
 
-            return Ok(ApiResponse<object>.Fail(ErrorCode.InternalServerError, "重置密码失败"));
+            return Ok(ApiResponse<object>.Fail(ErrorCode.UserNotFound, "学生不存在"));
         }
+
+        student.PasswordHash = DataTool.StringToHash(data.NewPassword);
+        var result = await studentRepository.UpdateAsync(student);
+        if (!result)
+        {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("重置密码失败，ID: {Id}", data.UserId);
+            }
+
+            return Ok(ApiResponse<object>.Fail(ErrorCode.OperationFailed, "重置密码失败"));
+        }
+
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation("重置密码成功，ID: {Id}", data.UserId);
+        }
+
+        return Ok(ApiResponse.Success("重置密码成功"));
     }
 }
 

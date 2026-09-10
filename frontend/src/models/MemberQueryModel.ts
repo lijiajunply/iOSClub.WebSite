@@ -1,4 +1,4 @@
-import { MemberModel } from './AuthModel';
+import { MemberVO } from './AuthModel';
 
 // 分页响应接口
 export interface PaginatedMemberResponse {
@@ -6,5 +6,5 @@ export interface PaginatedMemberResponse {
   pageSize: number;
   currentPage: number;
   totalPages: number;
-  data: MemberModel[];
+  data: MemberVO[];
 }

@@ -561,6 +561,14 @@ public class LoginService(
 
     public async Task<bool> ChangePassword(string userId, string oldPassword, string newPassword)
     {
+        // 空密码会让 DataTool.StringToHash 抛 ArgumentException（它把空白输入当作编程错误）。
+        // 但这里是用户输入，属于可预期的校验失败，应当返回 false 让上层给出明确的错误提示，
+        // 而不是让异常冒泡成 500。
+        if (string.IsNullOrWhiteSpace(userId) ||
+            string.IsNullOrWhiteSpace(oldPassword) ||
+            string.IsNullOrWhiteSpace(newPassword))
+            return false;
+
         // 验证旧密码是否正确
         var isLoginSuccess = await studentRepository.Login(userId, oldPassword);
         if (!isLoginSuccess)
@@ -617,6 +625,12 @@ public class LoginService(
 
     public async Task<bool> ResetPasswordWithCode(string userId, string code, string newPassword)
     {
+        // 同 ChangePassword：空的新密码属于可预期的校验失败，不应让 StringToHash 抛异常。
+        if (string.IsNullOrWhiteSpace(userId) ||
+            string.IsNullOrWhiteSpace(code) ||
+            string.IsNullOrWhiteSpace(newPassword))
+            return false;
+
         // 从Redis获取存储的验证码
         var redisKey = $"password_reset_code:{userId}";
         var storedCode = await _db.StringGetAsync(redisKey);

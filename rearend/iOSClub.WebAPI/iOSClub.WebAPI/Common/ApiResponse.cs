@@ -1,10 +1,48 @@
 namespace iOSClub.WebAPI.Common;
 
 /// <summary>
+/// 统一响应信封的非泛型视图。
+/// 供 <see cref="ApiResponseResultFilter"/> 等中间环节在不关心具体数据类型时读取状态字段，
+/// 从而无须反射即可识别任何 <c>ApiResponse&lt;T&gt;</c>。
+/// </summary>
+public interface IApiResponse
+{
+    /// <summary>
+    /// 请求状态码（HTTP 状态码，200 表示成功）
+    /// </summary>
+    int Code { get; set; }
+
+    /// <summary>
+    /// 业务错误码（0 表示成功）
+    /// </summary>
+    int ErrorCode { get; set; }
+
+    /// <summary>
+    /// 响应消息
+    /// </summary>
+    string Message { get; set; }
+
+    /// <summary>
+    /// 详细描述
+    /// </summary>
+    string? Detail { get; set; }
+
+    /// <summary>
+    /// 请求ID，用于追踪请求
+    /// </summary>
+    string? RequestId { get; set; }
+
+    /// <summary>
+    /// 响应时间戳（UTC时间）
+    /// </summary>
+    string? Timestamp { get; set; }
+}
+
+/// <summary>
     /// 统一API响应模型
     /// </summary>
     /// <typeparam name="T">响应数据类型</typeparam>
-    public class ApiResponse<T>
+    public class ApiResponse<T> : IApiResponse
     {
         /// <summary>
         /// 请求状态码（200表示成功，其他表示失败）
@@ -86,7 +124,7 @@ namespace iOSClub.WebAPI.Common;
         {
             return new ApiResponse<T>
             {
-                Code = GetHttpStatusCodeFromErrorCode(errorCode),
+                Code = ErrorCodeHttpMapper.HttpStatusFor(errorCode),
                 ErrorCode = errorCode,
                 Message = message,
                 Detail = detail,
@@ -94,52 +132,7 @@ namespace iOSClub.WebAPI.Common;
                 Timestamp = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
             };
         }
-        
-        /// <summary>
-        /// 失败响应
-        /// </summary>
-        /// <param name="httpStatusCode">HTTP状态码</param>
-        /// <param name="errorCode">业务错误码</param>
-        /// <param name="message">错误消息</param>
-        /// <param name="detail">详细描述</param>
-        /// <param name="requestId">请求ID</param>
-        /// <returns>失败响应模型</returns>
-        public static ApiResponse<T> Fail(int httpStatusCode, int errorCode, string message, string? detail = null, string? requestId = null)
-        {
-            return new ApiResponse<T>
-            {
-                Code = httpStatusCode,
-                ErrorCode = errorCode,
-                Message = message,
-                Detail = detail,
-                RequestId = requestId,
-                Timestamp = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
-            };
-        }
-
-    /// <summary>
-    /// 根据业务错误码获取对应的HTTP状态码
-    /// </summary>
-    /// <param name="errorCode">业务错误码</param>
-    /// <returns>HTTP状态码</returns>
-    protected static int GetHttpStatusCodeFromErrorCode(int errorCode)
-    {
-        if (errorCode is >= 1000 and < 2000) // 参数错误
-            return 400;
-        if (errorCode is >= 2000 and < 3000) // 业务逻辑错误
-            return 400;
-        if (errorCode is >= 3000 and < 4000) // 权限错误
-            return 403;
-        if (errorCode is >= 4000 and < 5000) // 资源错误
-            return 404;
-        if (errorCode is >= 5000 and < 6000) // 系统错误
-            return 500;
-        if (errorCode is >= 6000 and < 7000) // 外部服务错误
-            return 500;
-
-        return 400; // 默认返回400
     }
-}
 
 /// <summary>
     /// 无数据的API响应模型
@@ -178,29 +171,7 @@ namespace iOSClub.WebAPI.Common;
         {
             return new ApiResponse
             {
-                Code = GetHttpStatusCodeFromErrorCode(errorCode),
-                ErrorCode = errorCode,
-                Message = message,
-                Detail = detail,
-                RequestId = requestId,
-                Timestamp = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
-            };
-        }
-        
-        /// <summary>
-        /// 失败响应
-        /// </summary>
-        /// <param name="httpStatusCode">HTTP状态码</param>
-        /// <param name="errorCode">业务错误码</param>
-        /// <param name="message">错误消息</param>
-        /// <param name="detail">详细描述</param>
-        /// <param name="requestId">请求ID</param>
-        /// <returns>失败响应模型</returns>
-        public new static ApiResponse Fail(int httpStatusCode, int errorCode, string message, string? detail = null, string? requestId = null)
-        {
-            return new ApiResponse
-            {
-                Code = httpStatusCode,
+                Code = ErrorCodeHttpMapper.HttpStatusFor(errorCode),
                 ErrorCode = errorCode,
                 Message = message,
                 Detail = detail,

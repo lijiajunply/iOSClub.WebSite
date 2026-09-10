@@ -1,6 +1,6 @@
 import {defineStore} from 'pinia';
 import {AuthService} from '../services/AuthService';
-import type {LoginModel, StudentModel} from '../models';
+import type {LoginModel, StudentCreateDTO} from '../models';
 
 export const useAuthorizationStore = defineStore('AuthorizationId', {
     state: () => ({
@@ -52,7 +52,7 @@ export const useAuthorizationStore = defineStore('AuthorizationId', {
         },
     },
     actions: {
-        async signup(stu: StudentModel): Promise<boolean> {
+        async signup(stu: StudentCreateDTO): Promise<boolean> {
             const { accessToken } = await AuthService.signup(stu);
             if (!accessToken) return false;
             this.Authorization = accessToken;
@@ -82,10 +82,10 @@ export const useAuthorizationStore = defineStore('AuthorizationId', {
             localStorage.setItem('UserId', user.userId);
             return accessToken;
         },
-        async validate(clientId: string | null | undefined = ''): Promise<boolean> {
+        async validate(): Promise<boolean> {
             const id = localStorage.getItem('UserId');
             if (id === null || id === '') return false;
-            return await AuthService.validate(id, this.Authorization, clientId);
+            return await AuthService.validate(id, this.Authorization);
         },
         async refreshToken(): Promise<boolean> {
             try {

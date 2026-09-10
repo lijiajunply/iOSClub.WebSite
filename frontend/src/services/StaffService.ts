@@ -1,6 +1,6 @@
 import {url} from './Url';
 import {apiRequest} from './ApiService';
-import {StaffModel, MemberModel} from "../models";
+import {StaffModel, MemberVO} from "../models";
 
 /**
  * 员工服务类 - 处理员工管理相关的API调用
@@ -8,10 +8,10 @@ import {StaffModel, MemberModel} from "../models";
 export class StaffService {
     /**
      * 获取所有员工列表
-     * @returns Promise<StaffModel[]> 员工列表
+     * @returns Promise<MemberVO[]> 员工列表（后端 /Staff/members 返回 MemberVO）
      */
-    static async getAllStaff(): Promise<MemberModel[]> {
-        return apiRequest<MemberModel[]>({
+    static async getAllStaff(): Promise<MemberVO[]> {
+        return apiRequest<MemberVO[]>({
             url: `${url}/Staff/members`,
             method: 'GET'
         });
@@ -35,7 +35,6 @@ export class StaffService {
      * @returns Promise<any> 创建结果
      */
     static async createStaff(staff: StaffModel): Promise<any> {
-        console.log(staff)
         return apiRequest<any>({
             url: `${url}/Staff/Create`,
             method: 'POST',
@@ -69,7 +68,7 @@ export class StaffService {
 
     static async changeDepartment(userId: string, departmentName: string): Promise<any> {
         return apiRequest<any>({
-            url: `${url}/Staff/change-department/${userId}?departmentName=${departmentName}`,
+            url: `${url}/Staff/change-department/${userId}?departmentName=${encodeURIComponent(departmentName)}`,
             method: 'POST'
         });
     }

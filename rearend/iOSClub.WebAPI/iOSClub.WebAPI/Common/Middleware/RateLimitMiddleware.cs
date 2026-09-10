@@ -168,13 +168,18 @@ public class RateLimitMiddleware : IDisposable
     /// <param name="policy">速率限制策略</param>
     private async Task ReturnRateLimitResponse(HttpContext context, RateLimitPolicy? policy = null)
     {
-        context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
-
         // 根据策略设置不同的Retry-After头
         var retryAfter = policy?.ReplenishmentPeriod.TotalSeconds ?? 60;
         context.Response.Headers.Append("Retry-After", retryAfter.ToString(CultureInfo.InvariantCulture));
 
-        await context.Response.WriteAsJsonAsync(ApiResponse<string>.Fail(ErrorCode.TooManyRequests,
-            "请求频率过高，请稍后再试"));
+        // 状态码取自响应的 Code，不再手写固定值：之前这里写 429、body 里却是 code:400，
+        // 两者打架。本中间件在 GlobalExceptionMiddleware 内部，不经过 MVC 的结果过滤器，
+        // 所以需要自己保证 HTTP 状态码与 body 一致。
+        var body = ApiResponse.Fail(ErrorCode.TooManyRequests, "请求频率过高，请稍后再试",
+            requestId: context.TraceIdentifier);
+
+        context.Response.StatusCode = body.Code;
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsJsonAsync(body);
     }
 }

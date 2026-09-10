@@ -18,6 +18,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
@@ -79,7 +80,55 @@ builder.Services.Configure<KestrelServerOptions>(options =>
 
 // 注册FluentValidation服务（使用旧版API，抑制警告）
 #pragma warning disable CS0618
-var mvcBuilder = builder.Services.AddControllers(options => { options.Filters.Add<GlobalAuthorizationFilter>(); });
+var mvcBuilder = builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<GlobalAuthorizationFilter>();
+    // 统一让 HTTP 状态码跟随响应体里的 code（详见 ApiResponseResultFilter）
+    options.Filters.Add<ApiResponseResultFilter>();
+});
+
+// [ApiController] 默认在 DataAnnotations 校验失败时返回 RFC-7807 的 ValidationProblemDetails
+// （字段是 type/title/status/errors，没有 code/errorCode/message），前端无法识别。
+// 这里改写成统一信封，逐字段错误格式化后放进 detail。
+// 注意不要把结构化错误塞进 data——那会破坏 ApiResponse<T> 的泛型契约
+// （形如 ApiResponse<string> 的调用方会因 data 变成对象而反序列化失败）。
+mvcBuilder.ConfigureApiBehaviorOptions(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        // ModelState 的 key 形如 "dto.UserId"、"$.userId" 或 ""（整个 body 绑定失败）
+        static string FieldName(string key)
+        {
+            var trimmed = key.Contains('.') ? key[(key.LastIndexOf('.') + 1)..] : key;
+            trimmed = trimmed.TrimStart('$', '.');
+            return trimmed.Length == 0
+                ? "body"
+                : char.ToLowerInvariant(trimmed[0]) + trimmed[1..];
+        }
+
+        var errors = context.ModelState
+            .Where(kv => kv.Value?.Errors.Count > 0)
+            .GroupBy(kv => FieldName(kv.Key))
+            .ToDictionary(
+                g => g.Key,
+                g => g.SelectMany(kv => kv.Value!.Errors)
+                    .Select(e => string.IsNullOrWhiteSpace(e.ErrorMessage) ? "参数值无效" : e.ErrorMessage)
+                    .Distinct()
+                    .ToArray());
+
+        var detail = string.Join("; ",
+            errors.SelectMany(e => e.Value.Select(m => $"{e.Key}: {m}")));
+
+        var body = ApiResponse<object>.Fail(
+            ErrorCode.ParameterValidationFailed,
+            "请求参数验证失败",
+            detail,
+            context.HttpContext.TraceIdentifier);
+
+        return new ObjectResult(body) { StatusCode = body.Code };
+    };
+});
+
 mvcBuilder.AddFluentValidation(fv =>
 {
     fv.RegisterValidatorsFromAssemblyContaining<Program>();
@@ -179,11 +228,39 @@ builder.Services.AddAuthentication(options =>
             },
             OnAuthenticationFailed = context =>
             {
-                // 记录认证失败日志
+                // 只记录日志，不要在这里写响应体：challenge 随后还会设置一次状态码，
+                // 而响应一旦开始写入就无法再改，会抛 "response has already started"。
+                // 响应统一由下面的 OnChallenge 产出。
+                var logger = context.HttpContext.RequestServices
+                    .GetRequiredService<ILoggerFactory>().CreateLogger("JwtBearer");
+                logger.LogInformation(context.Exception, "JWT 认证失败: {Path}", context.Request.Path);
                 context.NoResult();
-                context.Fail("认证失败");
-                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                 return Task.CompletedTask;
+            },
+            OnChallenge = async context =>
+            {
+                // 接管框架默认的空 401 响应。OnChallenge 对"完全没带 token"的请求同样会触发，
+                // 而 OnAuthenticationFailed 不会，所以这里是唯一能覆盖全部 401 场景的点。
+                context.HandleResponse();
+
+                var (errorCode, message) = context.AuthenticateFailure switch
+                {
+                    SecurityTokenExpiredException => (ErrorCode.LoginExpired, "登录已过期，请重新登录"),
+                    SecurityTokenInvalidSignatureException => (ErrorCode.InvalidToken, "令牌签名无效"),
+                    SecurityTokenNotYetValidException => (ErrorCode.InvalidToken, "令牌尚未生效"),
+                    SecurityTokenInvalidIssuerException => (ErrorCode.InvalidToken, "令牌签发者无效"),
+                    SecurityTokenInvalidAudienceException => (ErrorCode.InvalidToken, "令牌受众无效"),
+                    _ => (ErrorCode.InvalidToken, "无效的令牌")
+                };
+
+                var body = ApiResponse.Fail(errorCode, message,
+                    requestId: context.HttpContext.TraceIdentifier);
+
+                context.Response.StatusCode = body.Code;
+                context.Response.ContentType = "application/json";
+                // 遵循 RFC 6750：即使响应体由我们接管，也保留标准的 WWW-Authenticate 头
+                context.Response.Headers.Append("WWW-Authenticate", "Bearer error=\"invalid_token\"");
+                await context.Response.WriteAsJsonAsync(body);
             }
         };
     })

@@ -399,8 +399,8 @@ const submitRegistration = async () => {
       gender: form.gender || '',
       className: form.className,
       phoneNum: form.phone,
-      joinTime: new Date().toISOString(),
-      passwordHash: form.password,
+      // 字段名对应后端 StudentCreateDTO.Password（明文，由后端 BCrypt 哈希）
+      password: form.password,
       eMail: form.email
     })
 

@@ -204,16 +204,16 @@ export interface ClientAppResultModel {
 }
 
 /**
- * 重新生成密钥结果
+ * 重新生成密钥结果 —— 对应后端 VOs/ClientAppResultVO.cs
  */
 export interface RegenerateSecretResult {
     /**
      * 客户端ID
      */
     clientId: string;
-    
+
     /**
-     * 新的客户端密钥
+     * 新的客户端密钥（后端字段名为 clientSecret，不是 newSecret）
      */
-    newSecret: string;
+    clientSecret: string;
 }

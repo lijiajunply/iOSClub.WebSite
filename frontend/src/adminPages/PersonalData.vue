@@ -335,7 +335,7 @@ import {Icon} from '@iconify/vue';
 import {useAuthorizationStore} from '../stores/Authorization';
 import {UserService} from '../services/UserService';
 import {AuthService} from '../services/AuthService';
-import type {MemberModel} from '../models';
+import type {MemberVO, StudentUpdateDTO} from '../models';
 import {useLayoutStore} from '../stores/LayoutStore';
 
 const message = useMessage();
@@ -398,9 +398,9 @@ const passwordRules = {
   ]
 };
 
-const userInfo = reactive<MemberModel>({
+const userInfo = reactive<MemberVO>({
   userName: '', gender: '男', userId: '', academy: '', politicalLandscape: '群众',
-  className: '', phoneNum: '', identity: '', joinTime: '', passwordHash: '', eMail: null
+  className: '', phoneNum: '', identity: '', joinTime: '', eMail: null
 });
 
 const rules = {
@@ -435,7 +435,18 @@ const handleSubmit = () => {
 const handleConfirm = async () => {
   try {
     confirmLoading.value = true;
-    await UserService.updateProfile(userInfo);
+    // 只提交后端 StudentUpdateDTO 接受的字段，避免把 identity/joinTime 一起发过去。
+    const payload: StudentUpdateDTO = {
+      userId: userInfo.userId,
+      userName: userInfo.userName,
+      academy: userInfo.academy,
+      politicalLandscape: userInfo.politicalLandscape,
+      gender: userInfo.gender,
+      className: userInfo.className,
+      phoneNum: userInfo.phoneNum,
+      eMail: userInfo.eMail
+    };
+    await UserService.updateProfile(payload);
     message.success('已更新');
     showModal.value = false;
   } catch (error: any) {

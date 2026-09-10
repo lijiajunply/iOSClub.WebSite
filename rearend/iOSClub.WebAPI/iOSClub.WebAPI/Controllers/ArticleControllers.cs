@@ -16,8 +16,7 @@ namespace iOSClub.WebAPI.Controllers;
 public class ArticleController(
     IArticleRepository articleRepository,
     IStaffRepository staffRepository,
-    IDepartmentRepository departmentRepository,
-    ILogger<ArticleController> logger)
+    IDepartmentRepository departmentRepository)
     : ControllerBase
 {
     /// <summary>
@@ -27,20 +26,8 @@ public class ArticleController(
     [HttpGet]
     public async Task<ActionResult<ApiResponse<IEnumerable<ArticleListItemVO>>>> GetArticles()
     {
-        try
-        {
-            var articles = await articleRepository.GetAll();
-            return Ok(ApiResponse<IEnumerable<ArticleListItemVO>>.Success(articles.Adapt<List<ArticleListItemVO>>().OrderByDescending(x => x.LastWriteTime)));
-        }
-        catch (Exception ex)
-        {
-            if (logger.IsEnabled(LogLevel.Information))
-            {
-                logger.LogInformation(ex, "获取文章列表时发生错误");
-            }
-
-            return Ok(ApiResponse<IEnumerable<ArticleListItemVO>>.Fail(ErrorCode.InternalServerError, "获取文章列表失败"));
-        }
+        var articles = await articleRepository.GetAll();
+        return Ok(ApiResponse<IEnumerable<ArticleListItemVO>>.Success(articles.Adapt<List<ArticleListItemVO>>().OrderByDescending(x => x.LastWriteTime)));
     }
 
     /// <summary>
@@ -54,22 +41,10 @@ public class ArticleController(
             return Ok(ApiResponse<ArticleVO>.Fail(ErrorCode.ParameterEmpty, "路径不能为空"));
         }
 
-        try
-        {
-            var article = await articleRepository.GetFromPath(path, await GetAccessScope());
-            return Ok(article == null
-                ? ApiResponse<ArticleVO>.Fail(ErrorCode.ArticleNotFound, $"未找到路径为 '{path}' 的文章")
-                : ApiResponse<ArticleVO>.Success(article.Adapt<ArticleVO>()));
-        }
-        catch (Exception ex)
-        {
-            if (logger.IsEnabled(LogLevel.Information))
-            {
-                logger.LogInformation(ex, "获取文章时发生错误，路径: {Path}", path);
-            }
-
-            return Ok(ApiResponse<ArticleVO>.Fail(ErrorCode.InternalServerError, "获取文章失败"));
-        }
+        var article = await articleRepository.GetFromPath(path, await GetAccessScope());
+        return Ok(article == null
+            ? ApiResponse<ArticleVO>.Fail(ErrorCode.ArticleNotFound, $"未找到路径为 '{path}' 的文章")
+            : ApiResponse<ArticleVO>.Success(article.Adapt<ArticleVO>()));
     }
 
     /// <summary>
@@ -79,70 +54,58 @@ public class ArticleController(
     [HttpPost]
     public async Task<ActionResult<ApiResponse<ArticleVO>>> CreateArticle([FromBody] ArticleCreateDTO createDto)
     {
-        try
+        // 数据验证
+        var validationResults = new List<ValidationResult>();
+        if (!Validator.TryValidateObject(createDto, new ValidationContext(createDto), validationResults, true))
         {
-            // 数据验证
-            var validationResults = new List<ValidationResult>();
-            if (!Validator.TryValidateObject(createDto, new ValidationContext(createDto), validationResults, true))
-            {
-                var errorMessage = string.Join(", ", validationResults.Select(v => v.ErrorMessage));
-                return Ok(ApiResponse<ArticleVO>.Fail(ErrorCode.ParameterValidationFailed, errorMessage));
-            }
-
-            var visibleToDepartment = NormalizeDepartment(createDto.VisibleToDepartment);
-            if (visibleToDepartment != null &&
-                !await departmentRepository.DepartmentExistsAsync(visibleToDepartment))
-            {
-                return Ok(ApiResponse<ArticleVO>.Fail(ErrorCode.ResourceNotFound,
-                    $"部门 '{visibleToDepartment}' 不存在"));
-            }
-
-            // 检查路径是否已存在
-            var existingArticle = await articleRepository.GetFromPath(createDto.Path);
-            if (existingArticle != null)
-            {
-                return Ok(ApiResponse<ArticleVO>.Fail(ErrorCode.ResourceAlreadyExists,
-                    $"路径 '{createDto.Path}' 已存在"));
-            }
-
-            var articleModel = new ArticleDO
-            {
-                Path = createDto.Path,
-                Title = createDto.Title,
-                Content = createDto.Content,
-                Identity = createDto.Identity,
-                VisibleToDepartment = visibleToDepartment,
-                Category = string.IsNullOrEmpty(createDto.Category)
-                    ? null
-                    : new CategoryDO() { Name = createDto.Category },
-                ArticleOrder = createDto.ArticleOrder,
-                LastWriteTime = DateTime.UtcNow
-            };
-
-            var success = await articleRepository.CreateOrUpdate(articleModel);
-            if (!success)
-            {
-                return Ok(ApiResponse<ArticleVO>.Fail(ErrorCode.OperationFailed, "创建文章失败"));
-            }
-
-            var createdArticle = await articleRepository.GetFromPath(createDto.Path);
-            if (createdArticle == null)
-            {
-                return Ok(ApiResponse<ArticleVO>.Fail(ErrorCode.InternalServerError, "创建文章成功，但获取文章失败"));
-            }
-
-            return CreatedAtAction(nameof(GetArticle), new { path = createDto.Path },
-                ApiResponse<ArticleVO>.Success(createdArticle.Adapt<ArticleVO>(), "文章创建成功"));
+            var errorMessage = string.Join(", ", validationResults.Select(v => v.ErrorMessage));
+            return Ok(ApiResponse<ArticleVO>.Fail(ErrorCode.ParameterValidationFailed, errorMessage));
         }
-        catch (Exception ex)
+
+        var visibleToDepartment = NormalizeDepartment(createDto.VisibleToDepartment);
+        if (visibleToDepartment != null &&
+            !await departmentRepository.DepartmentExistsAsync(visibleToDepartment))
         {
-            if (logger.IsEnabled(LogLevel.Information))
-            {
-                logger.LogInformation(ex, "创建文章时发生错误");
-            }
-
-            return Ok(ApiResponse<ArticleVO>.Fail(ErrorCode.InternalServerError, "创建文章失败"));
+            return Ok(ApiResponse<ArticleVO>.Fail(ErrorCode.ResourceNotFound,
+                $"部门 '{visibleToDepartment}' 不存在"));
         }
+
+        // 检查路径是否已存在
+        var existingArticle = await articleRepository.GetFromPath(createDto.Path);
+        if (existingArticle != null)
+        {
+            return Ok(ApiResponse<ArticleVO>.Fail(ErrorCode.ResourceAlreadyExists,
+                $"路径 '{createDto.Path}' 已存在"));
+        }
+
+        var articleModel = new ArticleDO
+        {
+            Path = createDto.Path,
+            Title = createDto.Title,
+            Content = createDto.Content,
+            Identity = createDto.Identity,
+            VisibleToDepartment = visibleToDepartment,
+            Category = string.IsNullOrEmpty(createDto.Category)
+                ? null
+                : new CategoryDO() { Name = createDto.Category },
+            ArticleOrder = createDto.ArticleOrder,
+            LastWriteTime = DateTime.UtcNow
+        };
+
+        var success = await articleRepository.CreateOrUpdate(articleModel);
+        if (!success)
+        {
+            return Ok(ApiResponse<ArticleVO>.Fail(ErrorCode.OperationFailed, "创建文章失败"));
+        }
+
+        var createdArticle = await articleRepository.GetFromPath(createDto.Path);
+        if (createdArticle == null)
+        {
+            return Ok(ApiResponse<ArticleVO>.Fail(ErrorCode.InternalServerError, "创建文章成功，但获取文章失败"));
+        }
+
+        return CreatedAtAction(nameof(GetArticle), new { path = createDto.Path },
+            ApiResponse<ArticleVO>.Success(createdArticle.Adapt<ArticleVO>(), "文章创建成功"));
     }
 
     /// <summary>
@@ -152,61 +115,49 @@ public class ArticleController(
     [HttpPost("update/{path}")]
     public async Task<ActionResult<ApiResponse>> UpdateArticle(string path, [FromBody] ArticleUpdateDTO updateDto)
     {
-        try
+        if (string.IsNullOrWhiteSpace(path))
         {
-            if (string.IsNullOrWhiteSpace(path))
-            {
-                return Ok(ApiResponse.Fail(ErrorCode.ParameterEmpty, "路径不能为空"));
-            }
-
-            // 验证更新数据
-            var validationResults = new List<ValidationResult>();
-            if (!Validator.TryValidateObject(updateDto, new ValidationContext(updateDto), validationResults, true))
-            {
-                var errorMessage = string.Join(", ", validationResults.Select(v => v.ErrorMessage));
-                return Ok(ApiResponse.Fail(ErrorCode.ParameterValidationFailed, errorMessage));
-            }
-
-            var visibleToDepartment = NormalizeDepartment(updateDto.VisibleToDepartment);
-            if (visibleToDepartment != null &&
-                !await departmentRepository.DepartmentExistsAsync(visibleToDepartment))
-            {
-                return Ok(ApiResponse.Fail(ErrorCode.ResourceNotFound,
-                    $"部门 '{visibleToDepartment}' 不存在"));
-            }
-
-            // 检查文章是否存在
-            var existingArticle = await articleRepository.GetFromPath(path);
-            if (existingArticle == null)
-            {
-                return Ok(ApiResponse.Fail(ErrorCode.ArticleNotFound, $"未找到路径为 '{path}' 的文章"));
-            }
-
-            // 更新文章信息
-            existingArticle.Title = updateDto.Title;
-            existingArticle.Content = updateDto.Content;
-            existingArticle.Identity = updateDto.Identity;
-            existingArticle.VisibleToDepartment = visibleToDepartment;
-            existingArticle.Category = string.IsNullOrEmpty(updateDto.Category)
-                ? null
-                : new CategoryDO() { Name = updateDto.Category };
-            existingArticle.ArticleOrder = updateDto.ArticleOrder;
-            existingArticle.LastWriteTime = DateTime.UtcNow;
-
-            var success = await articleRepository.CreateOrUpdate(existingArticle);
-            return !success
-                ? Ok(ApiResponse.Fail(ErrorCode.OperationFailed, "更新文章失败"))
-                : Ok(ApiResponse.Success("文章更新成功"));
+            return Ok(ApiResponse.Fail(ErrorCode.ParameterEmpty, "路径不能为空"));
         }
-        catch (Exception ex)
+
+        // 验证更新数据
+        var validationResults = new List<ValidationResult>();
+        if (!Validator.TryValidateObject(updateDto, new ValidationContext(updateDto), validationResults, true))
         {
-            if (logger.IsEnabled(LogLevel.Information))
-            {
-                logger.LogInformation(ex, "更新文章时发生错误，路径: {Path}", path);
-            }
-
-            return Ok(ApiResponse.Fail(ErrorCode.InternalServerError, "更新文章失败"));
+            var errorMessage = string.Join(", ", validationResults.Select(v => v.ErrorMessage));
+            return Ok(ApiResponse.Fail(ErrorCode.ParameterValidationFailed, errorMessage));
         }
+
+        var visibleToDepartment = NormalizeDepartment(updateDto.VisibleToDepartment);
+        if (visibleToDepartment != null &&
+            !await departmentRepository.DepartmentExistsAsync(visibleToDepartment))
+        {
+            return Ok(ApiResponse.Fail(ErrorCode.ResourceNotFound,
+                $"部门 '{visibleToDepartment}' 不存在"));
+        }
+
+        // 检查文章是否存在
+        var existingArticle = await articleRepository.GetFromPath(path);
+        if (existingArticle == null)
+        {
+            return Ok(ApiResponse.Fail(ErrorCode.ArticleNotFound, $"未找到路径为 '{path}' 的文章"));
+        }
+
+        // 更新文章信息
+        existingArticle.Title = updateDto.Title;
+        existingArticle.Content = updateDto.Content;
+        existingArticle.Identity = updateDto.Identity;
+        existingArticle.VisibleToDepartment = visibleToDepartment;
+        existingArticle.Category = string.IsNullOrEmpty(updateDto.Category)
+            ? null
+            : new CategoryDO() { Name = updateDto.Category };
+        existingArticle.ArticleOrder = updateDto.ArticleOrder;
+        existingArticle.LastWriteTime = DateTime.UtcNow;
+
+        var success = await articleRepository.CreateOrUpdate(existingArticle);
+        return !success
+            ? Ok(ApiResponse.Fail(ErrorCode.OperationFailed, "更新文章失败"))
+            : Ok(ApiResponse.Success("文章更新成功"));
     }
 
     /// <summary>
@@ -216,37 +167,25 @@ public class ArticleController(
     [HttpPost("delete/{path}")]
     public async Task<ActionResult<ApiResponse>> DeleteArticle(string path)
     {
-        try
+        if (string.IsNullOrWhiteSpace(path))
         {
-            if (string.IsNullOrWhiteSpace(path))
-            {
-                return Ok(ApiResponse.Fail(ErrorCode.ParameterEmpty, "路径不能为空"));
-            }
-
-            // 检查文章是否存在
-            var existingArticle = await articleRepository.GetFromPath(path);
-            if (existingArticle == null)
-            {
-                return Ok(ApiResponse.Fail(ErrorCode.ArticleNotFound, $"未找到路径为 '{path}' 的文章"));
-            }
-
-            var success = await articleRepository.Delete(path);
-            if (!success)
-            {
-                return Ok(ApiResponse.Fail(ErrorCode.OperationFailed, "删除文章失败"));
-            }
-
-            return Ok(ApiResponse.Success("文章删除成功"));
+            return Ok(ApiResponse.Fail(ErrorCode.ParameterEmpty, "路径不能为空"));
         }
-        catch (Exception ex)
+
+        // 检查文章是否存在
+        var existingArticle = await articleRepository.GetFromPath(path);
+        if (existingArticle == null)
         {
-            if (logger.IsEnabled(LogLevel.Information))
-            {
-                logger.LogInformation(ex, "删除文章时发生错误，路径: {Path}", path);
-            }
-
-            return Ok(ApiResponse.Fail(ErrorCode.InternalServerError, "删除文章失败"));
+            return Ok(ApiResponse.Fail(ErrorCode.ArticleNotFound, $"未找到路径为 '{path}' 的文章"));
         }
+
+        var success = await articleRepository.Delete(path);
+        if (!success)
+        {
+            return Ok(ApiResponse.Fail(ErrorCode.OperationFailed, "删除文章失败"));
+        }
+
+        return Ok(ApiResponse.Success("文章删除成功"));
     }
 
     /// <summary>
@@ -261,21 +200,9 @@ public class ArticleController(
             return Ok(ApiResponse<IEnumerable<ArticleSearchResult>>.Fail(ErrorCode.ParameterEmpty, "搜索关键词不能为空"));
         }
 
-        try
-        {
-            var articles = await articleRepository.SearchArticlesWithHighlights(keyword, await GetAccessScope());
-            return Ok(ApiResponse<IEnumerable<ArticleSearchResult>>.Success(
-                articles.OrderByDescending(a => a.LastWriteTime)));
-        }
-        catch (Exception ex)
-        {
-            if (logger.IsEnabled(LogLevel.Information))
-            {
-                logger.LogInformation(ex, "搜索文章时发生错误，关键词: {Keyword}", keyword);
-            }
-
-            return Ok(ApiResponse<IEnumerable<ArticleSearchResult>>.Fail(ErrorCode.InternalServerError, "搜索文章失败"));
-        }
+        var articles = await articleRepository.SearchArticlesWithHighlights(keyword, await GetAccessScope());
+        return Ok(ApiResponse<IEnumerable<ArticleSearchResult>>.Success(
+            articles.OrderByDescending(a => a.LastWriteTime)));
     }
 
     /// <summary>
@@ -284,20 +211,8 @@ public class ArticleController(
     [HttpGet("category")]
     public async Task<ActionResult<ApiResponse<object>>> GetAllCategoryArticles()
     {
-        try
-        {
-            var articles = await articleRepository.GetAllCategoryArticles(await GetAccessScope());
-            return Ok(ApiResponse<object>.Success(articles));
-        }
-        catch (Exception ex)
-        {
-            if (logger.IsEnabled(LogLevel.Information))
-            {
-                logger.LogInformation(ex, "获取文章分类列表时发生错误");
-            }
-
-            return Ok(ApiResponse<object>.Fail(ErrorCode.InternalServerError, "获取文章分类列表失败"));
-        }
+        var articles = await articleRepository.GetAllCategoryArticles(await GetAccessScope());
+        return Ok(ApiResponse<object>.Success(articles));
     }
 
     /// <summary>
@@ -307,30 +222,18 @@ public class ArticleController(
     [HttpPost("update-orders")]
     public async Task<ActionResult<ApiResponse>> UpdateArticleOrders([FromBody] Dictionary<string, int>? articleOrders)
     {
-        try
+        if (articleOrders == null || articleOrders.Count == 0)
         {
-            if (articleOrders == null || articleOrders.Count == 0)
-            {
-                return Ok(ApiResponse.Fail(ErrorCode.ParameterEmpty, "文章顺序字典不能为空"));
-            }
-
-            var success = await articleRepository.UpdateArticleOrders(articleOrders);
-            if (success)
-            {
-                return Ok(ApiResponse.Success("文章顺序更新成功"));
-            }
-
-            return Ok(ApiResponse.Fail(ErrorCode.OperationFailed, "文章顺序更新失败"));
+            return Ok(ApiResponse.Fail(ErrorCode.ParameterEmpty, "文章顺序字典不能为空"));
         }
-        catch (Exception ex)
+
+        var success = await articleRepository.UpdateArticleOrders(articleOrders);
+        if (success)
         {
-            if (logger.IsEnabled(LogLevel.Information))
-            {
-                logger.LogInformation(ex, "批量更新文章顺序时发生错误");
-            }
-
-            return Ok(ApiResponse.Fail(ErrorCode.InternalServerError, "文章顺序更新失败"));
+            return Ok(ApiResponse.Success("文章顺序更新成功"));
         }
+
+        return Ok(ApiResponse.Fail(ErrorCode.OperationFailed, "文章顺序更新失败"));
     }
 
     private async Task<ArticleAccessScope> GetAccessScope()

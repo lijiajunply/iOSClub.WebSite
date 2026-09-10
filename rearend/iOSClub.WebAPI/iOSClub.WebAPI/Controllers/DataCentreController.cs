@@ -23,96 +23,36 @@ public class DataCentreController(
     [HttpGet("year")]
     public async Task<ActionResult<ApiResponse<List<YearCountVO>>>> GetYearData()
     {
-        try
-        {
-            var yearData = await dataCentreService.GetYearDataAsync();
-            return Ok(ApiResponse<List<YearCountVO>>.Success(yearData));
-        }
-        catch (Exception ex)
-        {
-            if (logger.IsEnabled(LogLevel.Information))
-            {
-                logger.LogInformation(ex, "获取年份数据失败");
-            }
-
-            return Ok(ApiResponse<List<YearCountVO>>.Fail(ErrorCode.InternalServerError, "获取年份数据失败"));
-        }
+        var yearData = await dataCentreService.GetYearDataAsync();
+        return Ok(ApiResponse<List<YearCountVO>>.Success(yearData));
     }
 
     [HttpGet("college")]
     public async Task<ActionResult<ApiResponse<List<AcademyCountVO>>>> GetCollegeData()
     {
-        try
-        {
-            var collegeData = await dataCentreService.GetCollegeDataAsync();
-            return Ok(ApiResponse<List<AcademyCountVO>>.Success(collegeData));
-        }
-        catch (Exception ex)
-        {
-            if (logger.IsEnabled(LogLevel.Information))
-            {
-                logger.LogInformation(ex, "获取学院数据失败");
-            }
-
-            return Ok(ApiResponse<List<AcademyCountVO>>.Fail(ErrorCode.InternalServerError, "获取学院数据失败"));
-        }
+        var collegeData = await dataCentreService.GetCollegeDataAsync();
+        return Ok(ApiResponse<List<AcademyCountVO>>.Success(collegeData));
     }
 
     [HttpGet("grade")]
     public async Task<ActionResult<ApiResponse<List<GradeCountVO>>>> GetGradeData()
     {
-        try
-        {
-            var gradeData = await dataCentreService.GetGradeDataAsync();
-            return Ok(ApiResponse<List<GradeCountVO>>.Success(gradeData));
-        }
-        catch (Exception ex)
-        {
-            if (logger.IsEnabled(LogLevel.Information))
-            {
-                logger.LogInformation(ex, "获取年级数据失败");
-            }
-
-            return Ok(ApiResponse<List<GradeCountVO>>.Fail(ErrorCode.InternalServerError, "获取年级数据失败"));
-        }
+        var gradeData = await dataCentreService.GetGradeDataAsync();
+        return Ok(ApiResponse<List<GradeCountVO>>.Success(gradeData));
     }
 
     [HttpGet("landscape")]
     public async Task<ActionResult<ApiResponse<List<LandscapeCountVO>>>> GetLandscapeData()
     {
-        try
-        {
-            var landscapeData = await dataCentreService.GetLandscapeDataAsync();
-            return Ok(ApiResponse<List<LandscapeCountVO>>.Success(landscapeData));
-        }
-        catch (Exception ex)
-        {
-            if (logger.IsEnabled(LogLevel.Information))
-            {
-                logger.LogInformation(ex, "获取景观数据失败");
-            }
-
-            return Ok(ApiResponse<List<LandscapeCountVO>>.Fail(ErrorCode.InternalServerError, "获取景观数据失败"));
-        }
+        var landscapeData = await dataCentreService.GetLandscapeDataAsync();
+        return Ok(ApiResponse<List<LandscapeCountVO>>.Success(landscapeData));
     }
 
     [HttpGet("gender")]
     public async Task<ActionResult<ApiResponse<List<GenderCountVO>>>> GetGenderData()
     {
-        try
-        {
-            var genderData = await dataCentreService.GetGenderDataAsync();
-            return Ok(ApiResponse<List<GenderCountVO>>.Success(genderData));
-        }
-        catch (Exception ex)
-        {
-            if (logger.IsEnabled(LogLevel.Information))
-            {
-                logger.LogInformation(ex, "获取性别数据失败");
-            }
-
-            return Ok(ApiResponse<List<GenderCountVO>>.Fail(ErrorCode.InternalServerError, "获取性别数据失败"));
-        }
+        var genderData = await dataCentreService.GetGenderDataAsync();
+        return Ok(ApiResponse<List<GenderCountVO>>.Success(genderData));
     }
 
 
@@ -197,27 +137,15 @@ public class DataCentreController(
     [HttpGet]
     public async Task<ActionResult<ApiResponse<object>>> GetCentreData()
     {
-        try
+        await using var context = await dbContextFactory.CreateDbContextAsync();
+        var data = new
         {
-            await using var context = await dbContextFactory.CreateDbContextAsync();
-            var data = new
-            {
-                Members = await context.Students.CountAsync(),
-                Departments = await context.Departments.CountAsync(),
-                Staffs = await context.Staffs.Where(staff => staff.Identity != "Founder").CountAsync(),
-                Resources = await context.Resources.CountAsync(),
-            };
-            return Ok(ApiResponse<object>.Success(data));
-        }
-        catch (Exception ex)
-        {
-            if (logger.IsEnabled(LogLevel.Information))
-            {
-                logger.LogInformation(ex, "获取中心数据失败");
-            }
-
-            return Ok(ApiResponse<object>.Fail(ErrorCode.InternalServerError, "获取中心数据失败"));
-        }
+            Members = await context.Students.CountAsync(),
+            Departments = await context.Departments.CountAsync(),
+            Staffs = await context.Staffs.Where(staff => staff.Identity != "Founder").CountAsync(),
+            Resources = await context.Resources.CountAsync(),
+        };
+        return Ok(ApiResponse<object>.Success(data));
     }
 
     [HttpGet("export-json")]

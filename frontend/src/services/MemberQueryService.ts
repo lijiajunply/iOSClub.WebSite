@@ -1,7 +1,8 @@
 import {url} from './Url';
 import {AuthService} from './AuthService';
-import {apiRequest} from './ApiService';
-import type {MemberModel, PaginatedMemberResponse, StudentModel} from '../models'
+import {apiRequest, readApiResponse} from './ApiService';
+import {ErrorCode} from '../constants/ErrorCode';
+import type {MemberVO, PaginatedMemberResponse, StudentVO} from '../models'
 import {GZipService} from "./GZipService";
 
 /**
@@ -10,9 +11,9 @@ import {GZipService} from "./GZipService";
 export class MemberQueryService {
     /**
      * 获取所有成员数据
-     * @returns Promise<MemberModel[]> 成员数据列表
+     * @returns Promise<MemberVO[]> 成员数据列表
      */
-    static async getAllData(): Promise<MemberModel[]> {
+    static async getAllData(): Promise<MemberVO[]> {
         const token = AuthService.getToken();
         if (!token) {
             throw new Error('未登录');
@@ -26,22 +27,18 @@ export class MemberQueryService {
             },
         });
 
-        if (!response.ok) {
-            if (response.status === 401) {
-                AuthService.clearToken();
-                throw new Error('登录已过期，请重新登录');
-            }
-            if (response.status === 403) {
-                throw new Error('权限不足，需要管理员身份');
-            }
-            throw new Error('获取成员数据失败');
+        // 先解析响应体再判成败：401/403 会由信封的 errorCode 体现，
+        // 非 2xx 时直接丢弃 body 会丢掉真正的原因。
+        const apiResponse = await readApiResponse<string>(response);
+
+        if (apiResponse.code === 401 || apiResponse.errorCode === ErrorCode.LoginExpired) {
+            AuthService.clearToken();
+            throw new Error(apiResponse.message || '登录已过期，请重新登录');
         }
-
-        // 注意：后端返回的是压缩后的JSON字符串，需要解压处理
-        const apiResponse = await response.json();
-
-        // 检查API响应状态
-        if (apiResponse.code !== 200) {
+        if (apiResponse.errorCode === ErrorCode.InsufficientPermission) {
+            throw new Error(apiResponse.message || '权限不足，需要管理员身份');
+        }
+        if (apiResponse.errorCode !== ErrorCode.Success) {
             throw new Error(apiResponse.message || '获取成员数据失败');
         }
 
@@ -85,33 +82,29 @@ export class MemberQueryService {
             },
         });
 
-        if (!response.ok) {
-            if (response.status === 401) {
-                AuthService.clearToken();
-                throw new Error('登录已过期，请重新登录');
-            }
-            if (response.status === 403) {
-                throw new Error('权限不足，需要管理员身份');
-            }
-            throw new Error('获取分页成员数据失败');
+        // 同 getAllData：先解析响应体再判成败
+        const apiResponse = await readApiResponse<string>(response);
+
+        if (apiResponse.code === 401 || apiResponse.errorCode === ErrorCode.LoginExpired) {
+            AuthService.clearToken();
+            throw new Error(apiResponse.message || '登录已过期，请重新登录');
         }
-
-        const apiResponse = await response.json();
-
-        // 检查API响应状态
-        if (apiResponse.code !== 200) {
+        if (apiResponse.errorCode === ErrorCode.InsufficientPermission) {
+            throw new Error(apiResponse.message || '权限不足，需要管理员身份');
+        }
+        if (apiResponse.errorCode !== ErrorCode.Success) {
             throw new Error(apiResponse.message || '获取分页成员数据失败');
         }
 
         return JSON.parse(await GZipService.decompressFromString(apiResponse.data));
     }
 
-    public static async search(searchTerm: string, searchCondition: string): Promise<StudentModel[]> {
+    public static async search(searchTerm: string, searchCondition: string): Promise<StudentVO[]> {
         const params = new URLSearchParams();
         params.append('searchTerm', searchTerm);
         params.append('searchCondition', searchCondition);
 
-        return apiRequest<StudentModel[]>({
+        return apiRequest<StudentVO[]>({
             url: `${url}/MemberQuery/all-data/search?${params.toString()}`,
             method: 'GET'
         });

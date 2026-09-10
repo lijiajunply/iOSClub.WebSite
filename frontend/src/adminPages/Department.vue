@@ -309,7 +309,7 @@
         <div>
           <div class="font-medium text-gray-900 dark:text-white">{{ selectedStaff.name }}</div>
           <div class="text-sm text-gray-500">{{ selectedStaff.userId }} | {{
-              selectedStaff.department!.name || '无部门'
+              selectedStaff.departmentName || '无部门'
             }}
           </div>
         </div>
@@ -326,7 +326,7 @@
         <button
             @click="handleChangeDepartment"
             class="apple-btn primary"
-            :disabled="!targetDepartment || targetDepartment === selectedStaff?.department?.name"
+            :disabled="!targetDepartment || targetDepartment === selectedStaff?.departmentName"
         >确认调动
         </button>
       </div>
@@ -351,7 +351,7 @@ import type {DataTableColumns} from 'naive-ui'
 import {Icon} from '@iconify/vue'
 import {DepartmentService} from '../services/DepartmentService'
 import {StaffService} from '../services/StaffService'
-import type {Department, DepartmentModel, MemberModel, StudentModel, StaffModel} from '../models'
+import type {Department, DepartmentModel, MemberVO, StudentVO, StaffModel} from '../models'
 import * as echarts from 'echarts'
 import {MemberQueryService} from "../services/MemberQueryService";
 import {useLayoutStore} from '../stores/LayoutStore';
@@ -360,10 +360,10 @@ const message = useMessage()
 const layoutStore = useLayoutStore()
 
 // --- 数据状态 ---
-const ministers = ref<MemberModel[]>([])
-const members = ref<MemberModel[]>([])
+const ministers = ref<MemberVO[]>([])
+const members = ref<MemberVO[]>([])
 const departments = ref<Department[]>([])
-const staffs = ref<MemberModel[]>([])
+const staffs = ref<MemberVO[]>([])
 const loading = ref(true) // 默认 loading true
 
 const showChangeDepartmentModalRef = ref(false)
@@ -373,7 +373,7 @@ const targetDepartment = ref('')
 const showAddMemberModal = ref(false)
 const showDepartmentModal = ref(false)
 const searchKeyword = ref('')
-const searchResults = ref<StudentModel[]>([])
+const searchResults = ref<StudentVO[]>([])
 const addMemberType = ref('member')
 const departmentFormRef = ref<InstanceType<typeof NForm> | null>(null)
 
@@ -412,7 +412,7 @@ const AppleButton = (props: {
 }
 
 // --- Table Columns Configuration ---
-const memberColumns: DataTableColumns<MemberModel> = [
+const memberColumns: DataTableColumns<MemberVO> = [
   {
     title: '姓名', key: 'userName', width: 100,
     render: (row) => h('span', {class: 'font-medium text-gray-900 dark:text-gray-100'}, row.userName)
@@ -492,7 +492,7 @@ const openDepartment = (department: Department | null = null) => {
 
 const showChangeDepartmentModal = (staff: StaffModel) => {
   selectedStaff.value = staff
-  targetDepartment.value = staff.department?.name || ''
+  targetDepartment.value = staff.departmentName || ''
   showChangeDepartmentModalRef.value = true
 }
 
@@ -587,34 +587,28 @@ const searchMembers = async () => {
   }
 }
 
-const addMember = async (member: StudentModel) => {
+const addMember = async (member: StudentVO) => {
   try {
+    // StaffCreateDTO 只接受 userId / name / identity / departmentName。
+    // 学院、班级、性别、电话、政治面貌属于学生信息（Students 表），不在员工请求里，
+    // 之前传这些字段会被后端静默丢弃。
     const commonData = {
       userId: member.userId,
       name: member.userName,
-      academy: member.academy,
-      className: member.className,
-      gender: member.gender,
-      phoneNum: member.phoneNum,
-      politicalLandscape: member.politicalLandscape,
     }
 
     if (currentDepartment.value) {
       await StaffService.createStaff({
         ...commonData,
         identity: addMemberType.value === 'Minister' ? 'Minister' : 'Department',
-        department: {
-          key: currentDepartment.value.id,
-          name: currentDepartment.value.name,
-          description: currentDepartment.value.description
-        } as DepartmentModel
+        departmentName: currentDepartment.value.name
       } as StaffModel);
       message.success(`已添加至 ${currentDepartment.value.name}`)
     } else {
       await StaffService.createStaff({
         ...commonData,
         identity: 'President',
-        department: null
+        departmentName: null
       } as StaffModel);
       message.success(`已添加至领导层`)
     }

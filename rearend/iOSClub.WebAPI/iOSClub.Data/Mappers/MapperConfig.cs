@@ -35,7 +35,12 @@ public static class MapperConfig
         config.NewConfig<DepartmentDO, DepartmentVO>()
             .Map(dest => dest.Staffs, src => src.Staffs.Adapt<List<StaffVO>>());
 
-        config.NewConfig<ClientApplicationDO, ClientAppVO>();
+        // DO 里回调地址是分号拼接的字符串，VO 暴露为数组（与 ClientAppResultVO 一致）。
+        config.NewConfig<ClientApplicationDO, ClientAppVO>()
+            .Map(dest => dest.RedirectUris,
+                src => src.RedirectUris
+                    .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                    .ToList());
 
         config.NewConfig<ClientApplicationDO, ClientAppResultVO>()
             .Map(dest => dest.RedirectUris,
@@ -49,8 +54,15 @@ public static class MapperConfig
             .Ignore(dest => dest.UserId)
             .Ignore(dest => dest.JoinTime);
 
+        // StaffDO 只有导航属性 Department（没有 DepartmentName 字符串字段），
+        // 所以必须显式把 DTO 的部门名映射成导航对象。之前这里的 .Ignore 会把部门
+        // 整个丢掉，导致 StaffRepository.CreateStaffAsync 判定"会员必须指定部门"而失败。
+        // 真正校验部门是否存在由仓库层按名称查询完成。
         config.NewConfig<DTOs.StaffCreateDTO, StaffDO>()
-            .Ignore(dest => dest.Department);
+            .Map(dest => dest.Department,
+                src => string.IsNullOrWhiteSpace(src.DepartmentName)
+                    ? null
+                    : new DepartmentDO { Name = src.DepartmentName });
 
         config.NewConfig<DTOs.ArticleCreateDTO, ArticleDO>()
             .Ignore(dest => dest.CategoryId)

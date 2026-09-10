@@ -1,6 +1,6 @@
 import {url} from './Url';
 import {apiRequest} from './ApiService';
-import {MemberModel, StudentModel} from "../models";
+import {StudentUpdateDTO} from "../models";
 
 /**
  * 成员管理服务类 - 处理成员的删除、更新等管理功能
@@ -20,10 +20,10 @@ export class MemberManagementService {
 
     /**
      * 批量更新或添加学生成员
-     * @param list 学生列表
-     * @returns Promise<StudentModel[]> 更新后的学生列表
+     * @param list 学生更新请求列表
+     * @returns Promise<boolean> 是否成功
      */
-    static async updateManyMembers(list: StudentModel[]): Promise<boolean> {
+    static async updateManyMembers(list: StudentUpdateDTO[]): Promise<boolean> {
         await apiRequest<void>({
             url: `${url}/MemberManagement/update-many`,
             method: 'POST',
@@ -34,10 +34,10 @@ export class MemberManagementService {
 
     /**
      * 更新单个成员信息
-     * @param model 成员模型
+     * @param model 学生更新请求
      * @returns Promise<void>
      */
-    static async updateMember(model: MemberModel): Promise<void> {
+    static async updateMember(model: StudentUpdateDTO): Promise<void> {
         await apiRequest<void>({
             url: `${url}/MemberManagement/update`,
             method: 'POST',

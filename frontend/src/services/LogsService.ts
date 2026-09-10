@@ -189,9 +189,9 @@ export class LogsService {
     /**
      * 手动清理旧日志
      * @param days 要保留的日志天数，默认为7天
-     * @returns Promise<{ Message: string }> 清理结果
+     * @returns Promise<{ message: string }> 清理结果（后端 data 为 { Message }，序列化后是 camelCase 的 message）
      */
-    static async cleanupOldLogs(days: number = 7): Promise<{ Message: string }> {
+    static async cleanupOldLogs(days: number = 7): Promise<{ message: string }> {
         // 参数验证
         if (days <= 0) {
             throw new Error('天数必须大于0');
@@ -201,7 +201,7 @@ export class LogsService {
         const params = new URLSearchParams();
         params.append('days', days.toString());
 
-        return apiRequest<{ Message: string }>({
+        return apiRequest<{ message: string }>({
             url: `${url}/Logs/cleanup?${params.toString()}`,
             method: 'POST'
         });

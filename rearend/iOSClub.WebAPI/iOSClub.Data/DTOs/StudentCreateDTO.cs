@@ -17,6 +17,15 @@ public class StudentCreateDTO
     [MaxLength(2)] public string Gender { get; set; } = "";
     [MaxLength(20)] public string ClassName { get; set; } = "";
     [MaxLength(14)] public string PhoneNum { get; set; } = "";
-    [MaxLength(256)] public string Password { get; set; } = "";
+
+    /// <summary>
+    /// 明文密码，由 MapperConfig 映射时用 BCrypt 哈希进 StudentDO.PasswordHash。
+    /// 必须在这里就挡住空值：DataTool.StringToHash 对空白输入会抛 ArgumentException，
+    /// 而它是在 Mapster 映射表达式里调用的，一旦放行到映射阶段就只能变成 500。
+    /// </summary>
+    [Required(ErrorMessage = "密码不能为空")]
+    [MaxLength(256)]
+    public string Password { get; set; } = "";
+
     [MaxLength(256)] public string? EMail { get; set; }
 }

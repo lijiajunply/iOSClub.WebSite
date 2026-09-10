@@ -1,14 +1,21 @@
 import {AuthService} from './AuthService';
 import MessageService from './MessageService';
+import {ErrorCode} from '../constants/ErrorCode';
 
 /**
- * 标准化API响应接口
+ * 后端统一响应信封 —— 对应 iOSClub.WebAPI/Common/ApiResponse.cs。
+ *
+ * 契约：HTTP 状态码恒等于 body 里的 `code`，`errorCode === 0` 表示成功。
+ * 所有接口（包括失败）都返回这个形状。
  */
 export interface ApiResponse<T> {
     code: number;
     errorCode: number;
     message: string;
+    detail?: string | null;
     data: T;
+    requestId?: string | null;
+    timestamp?: string | null;
 }
 
 /**
@@ -31,6 +38,111 @@ export interface ApiRequestConfig extends Omit<RequestInit, 'body'> {
 
 // 正在进行的刷新 Promise，用于并发请求去重
 let refreshPromise: Promise<string> | null = null;
+
+/**
+ * 把 HTTP 状态码翻译成业务错误码，仅在响应体不是统一信封时兜底使用。
+ */
+function errorCodeFromHttpStatus(status: number): number {
+    switch (status) {
+        case 401:
+            return ErrorCode.InvalidToken;
+        case 403:
+            return ErrorCode.InsufficientPermission;
+        case 404:
+            return ErrorCode.ResourceNotFound;
+        case 429:
+            return ErrorCode.TooManyRequests;
+        default:
+            return status >= 500 ? ErrorCode.InternalServerError : ErrorCode.ParameterFormatError;
+    }
+}
+
+/**
+ * 解析后端响应。
+ *
+ * 关键点：**无论 HTTP 状态是否为 2xx，都先尝试解析响应体**。
+ * 以前这里在 `!response.ok` 时直接丢弃 body、把 errorCode 伪造成 5000，
+ * 导致后端辛苦返回的 4003/1001/7000 全部丢失，前端只能看到"服务器内部错误"。
+ *
+ * 只有响应体不是统一信封时（代理错误页、OAuth 协议端点、裸字符串响应等）
+ * 才退回按 HTTP 状态合成。
+ */
+export async function readApiResponse<T>(response: Response): Promise<ApiResponse<T>> {
+    let payload: any = null;
+    try {
+        payload = await response.json();
+    } catch {
+        payload = null;
+    }
+
+    if (payload && typeof payload === 'object' && typeof payload.code === 'number') {
+        return payload as ApiResponse<T>;
+    }
+
+    // 不是统一信封：尽量从常见字段里取一句可读的错误说明
+    const message = payload?.message
+        || payload?.error_description
+        || payload?.error
+        || response.statusText
+        || `请求失败 (${response.status})`;
+
+    return {
+        code: response.status,
+        errorCode: errorCodeFromHttpStatus(response.status),
+        message,
+        detail: typeof payload?.error === 'string' ? payload.error : null,
+        data: null as T,
+        requestId: null,
+        timestamp: null
+    };
+}
+
+/**
+ * 把失败响应转成 Error。按错误码区间分类，避免为每个错误码单独写分支。
+ */
+function toError(apiResponse: ApiResponse<unknown>): Error {
+    const {errorCode, message} = apiResponse;
+
+    // 3000-3999：认证/权限类。除"权限不足"外都意味着当前凭证已不可用，清掉本地令牌。
+    // 注意 3001(InsufficientPermission) 只是权限不够——以前把它和 401 混为一谈，
+    // 结果用户撞到权限墙就被登出。
+    if (errorCode >= 3000 && errorCode < 4000) {
+        if (errorCode === ErrorCode.InsufficientPermission) {
+            return new Error(message || '权限不足');
+        }
+        AuthService.clearToken();
+        return new Error(message || '登录已过期，请重新登录');
+    }
+
+    if (errorCode >= 5000 && errorCode < 6000) {
+        return new Error(message || '服务器内部错误');
+    }
+
+    if (errorCode >= 7000 && errorCode < 8000) {
+        return new Error(message || '请求频率过高，请稍后再试');
+    }
+
+    return new Error(message || '请求失败');
+}
+
+/**
+ * 该响应是否值得刷新令牌后重试。
+ * 只有"凭证不可用"才值得：HTTP 401、登录已过期(3002)、无效令牌(3003)。
+ */
+function shouldRefreshToken(apiResponse: ApiResponse<unknown>): boolean {
+    return apiResponse.code === 401
+        || apiResponse.errorCode === ErrorCode.LoginExpired
+        || apiResponse.errorCode === ErrorCode.InvalidToken;
+}
+
+/**
+ * 按配置弹出提示。集中一处调用，避免同一响应同时命中 showMessage 与 showSuccess 时弹两次。
+ */
+function notify<T>(apiResponse: ApiResponse<T>, config: ApiRequestConfig): void {
+    if (config.showMessage || config.showSuccess || config.showError) {
+        MessageService.handleResponse(apiResponse, config);
+    }
+}
 
 /**
  * 确保 Token 有效——如果即将过期则主动刷新。
@@ -100,180 +212,81 @@ export async function apiRequest<T>(config: ApiRequestConfig): Promise<T> {
         requestBody = JSON.stringify(body);
     }
 
-    // 解析响应
     let apiResponse: ApiResponse<T>;
-    let response: Response | null = null;
-    
+
     try {
-        response = await fetch(url, {
+        const response = await fetch(url, {
             headers: requestHeaders,
             body: requestBody,
             ...rest
         });
-
-        // 检查响应是否成功
-        if (!response.ok) {
-            // 如果是401错误，创建相应的错误响应对象
-            apiResponse = {
-                code: response.status,
-                errorCode: response.status === 401 ? 3001 : 5000,
-                message: response.statusText || '请求失败',
-                data: null!
-            };
-        } else {
-            apiResponse = await response.json();
-        }
+        apiResponse = await readApiResponse<T>(response);
     } catch (reason: any) {
-        // 网络错误时检查是否可能是401导致的连接问题
-        const isNetworkError = reason instanceof TypeError && reason.message.includes('fetch');
-        
+        // 网络层失败（连接被拒、DNS、CORS 等），此时没有响应体可解析
         apiResponse = {
-            code: response?.status || reason.code || 0,
-            errorCode: (response?.status === 401 || isNetworkError) ? 3001 : 5000,
-            message: reason.message || '网络连接异常',
-            data: null!
+            code: 0,
+            errorCode: ErrorCode.NetworkError,
+            message: reason?.message || '网络连接异常',
+            data: null as T
         };
     }
 
-        if (config.showMessage || config.showError) {
-            MessageService.handleResponse(apiResponse, config);
-        }
+    if (apiResponse.errorCode === ErrorCode.Success) {
+        notify(apiResponse, config);
+        return apiResponse.data;
+    }
 
-        if (apiResponse.code !== 200) {
-        // 根据HTTP状态码处理特殊情况
-        // 当code为401或者errorCode为3001时触发令牌刷新逻辑
-        if (config.requiresAuth !== false && (apiResponse.code === 401 || apiResponse.errorCode === 3001)) {
-            try {
-                // 使用共享 Promise 刷新令牌，避免并发 401 触发多次刷新
-                if (!refreshPromise) {
-                    refreshPromise = AuthService.refreshToken().finally(() => {
-                        refreshPromise = null;
-                    });
-                }
-                await refreshPromise;
-
-                // 更新请求头中的令牌
-                const newToken = AuthService.getToken();
-                if (newToken) {
-                    requestHeaders['Authorization'] = `Bearer ${newToken}`;
-
-                    // 重新发送请求
-                    let retryResponse = await fetch(url, {
-                        headers: requestHeaders,
-                        body: requestBody,
-                        ...rest
-                    });
-
-                    // 重新解析响应
-                    if (!retryResponse.ok) {
-                        apiResponse = {
-                            code: retryResponse.status,
-                            errorCode: retryResponse.status === 401 ? 3001 : 5000,
-                            message: retryResponse.statusText || '请求失败',
-                            data: null!
-                        };
-                    } else {
-                        apiResponse = await retryResponse.json();
-                    }
-
-            // 如果重新请求成功，返回数据
-            if (apiResponse.code === 200) {
-                if (config.showMessage || config.showSuccess) {
-                    MessageService.handleResponse(apiResponse, config);
-                }
-                return apiResponse.data;
+    // 凭证失效：刷新令牌后重试一次
+    if (config.requiresAuth !== false && shouldRefreshToken(apiResponse)) {
+        try {
+            // 使用共享 Promise 刷新令牌，避免并发 401 触发多次刷新
+            if (!refreshPromise) {
+                refreshPromise = AuthService.refreshToken().finally(() => {
+                    refreshPromise = null;
+                });
             }
-                    
-                    // 如果重新请求还是失败，继续执行下面的错误处理逻辑
-                }
-            } catch (refreshError) {
-                // 公开但按身份过滤的接口可以在刷新失败后匿名重试。
-                if (config.optionalAuth) {
-                    AuthService.clearTokens();
-                    delete requestHeaders['Authorization'];
+            await refreshPromise;
 
-                    const anonymousResponse = await fetch(url, {
-                        headers: requestHeaders,
-                        body: requestBody,
-                        ...rest
-                    });
+            const newToken = AuthService.getToken();
+            if (newToken) {
+                requestHeaders['Authorization'] = `Bearer ${newToken}`;
 
-                    if (!anonymousResponse.ok) {
-                        apiResponse = {
-                            code: anonymousResponse.status,
-                            errorCode: anonymousResponse.status === 401 ? 3001 : 5000,
-                            message: anonymousResponse.statusText || '请求失败',
-                            data: null!
-                        };
-                    } else {
-                        apiResponse = await anonymousResponse.json();
-                    }
+                const retryResponse = await fetch(url, {
+                    headers: requestHeaders,
+                    body: requestBody,
+                    ...rest
+                });
+                apiResponse = await readApiResponse<T>(retryResponse);
 
-                    if (apiResponse.code === 200) {
-                        return apiResponse.data;
-                    }
-                } else {
-                    // 刷新令牌失败，清除令牌并抛出错误
-                    AuthService.clearToken();
-                    throw new Error('登录已过期，请重新登录');
+                if (apiResponse.errorCode === ErrorCode.Success) {
+                    notify(apiResponse, config);
+                    return apiResponse.data;
                 }
             }
-            
-            // 如果令牌刷新成功但重新请求仍然失败，继续执行下面的错误处理逻辑
-        }
+        } catch (refreshError) {
+            // 公开但按身份过滤的接口可以在刷新失败后匿名重试。
+            if (config.optionalAuth) {
+                AuthService.clearTokens();
+                delete requestHeaders['Authorization'];
 
-        // 根据业务错误码处理
-        switch (apiResponse.errorCode) {
-            case 1000: // 参数不能为空
-            case 1001: // 参数格式错误
-            case 1002: // 参数超出范围
-            case 1003: // 参数验证失败
-                throw new Error(apiResponse.message);
-            case 2000: // 资源已存在
-            case 2001: // 操作失败
-            case 2002: // 数据处理失败
-            case 2003: // 状态不允许该操作
-                throw new Error(apiResponse.message);
-            case 3000: // 未授权访问
-            case 3001: // 权限不足
-            case 401: // HTTP 401 未授权
+                const anonymousResponse = await fetch(url, {
+                    headers: requestHeaders,
+                    body: requestBody,
+                    ...rest
+                });
+                apiResponse = await readApiResponse<T>(anonymousResponse);
+
+                if (apiResponse.errorCode === ErrorCode.Success) {
+                    return apiResponse.data;
+                }
+            } else {
+                // 刷新令牌失败，清除令牌并抛出错误
                 AuthService.clearToken();
-                throw new Error(apiResponse.message || '登录已过期，请重新登录');
-            case 3002: // 登录已过期
-                AuthService.clearToken();
-                throw new Error(apiResponse.message);
-            case 3003: // 无效的令牌
-                AuthService.clearToken();
-                throw new Error(apiResponse.message);
-            case 4000: // 资源不存在
-            case 4001: // 文章不存在
-            case 4002: // 分类不存在
-            case 4003: // 用户不存在
-            case 4004: // 项目不存在
-            case 4005: // 文件不存在
-                throw new Error(apiResponse.message);
-            case 5000: // 内部服务器错误
-            case 5001: // 数据库操作失败
-            case 5002: // 缓存操作失败
-            case 5003: // 网络错误
-                throw new Error(apiResponse.message || '服务器内部错误');
-            case 6000: // 外部服务调用失败
-            case 6001: // 外部服务超时
-            case 6002: // 外部服务返回错误
-            case 6003: // 外部服务未配置
-                throw new Error(apiResponse.message);
-            case 7000: // 请求频率过高
-                throw new Error(apiResponse.message || '请求频率过高，请稍后再试');
-            case 7001: // 无效请求
-                throw new Error(apiResponse.message);
-            default:
-                throw new Error(apiResponse.message || '请求失败');
+                throw new Error('登录已过期，请重新登录');
+            }
         }
     }
 
-    if (config.showMessage || config.showSuccess) {
-        MessageService.handleResponse(apiResponse, config);
-    }
-
-    return apiResponse.data;
+    notify(apiResponse, config);
+    throw toError(apiResponse);
 }

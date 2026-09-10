@@ -27,64 +27,52 @@ public class DepartmentController(
     [HttpGet("{name?}")]
     public async Task<ActionResult<ApiResponse<DepartmentVO>>> GetDepartment(string? name)
     {
-        try
+        var userJwt = httpContextAccessor.HttpContext?.User.GetUser();
+        if (userJwt == null)
+            return Ok(ApiResponse<DepartmentVO>.Fail(ErrorCode.Unauthorized, "用户未认证"));
+
+        // 检查用户权限
+        if (!IsAuthorizedUser(userJwt.Identity))
+            return Ok(ApiResponse<DepartmentVO>.Fail(ErrorCode.InsufficientPermission, "权限不足"));
+
+        var staff = await staffRepository.GetStaffByIdAsync(userJwt.UserId);
+        if (staff == null) return Ok(ApiResponse<DepartmentVO>.Fail(ErrorCode.Unauthorized, "用户未找到或权限不足"));
+        // 如果没有指定部门名称，返回用户所在部门
+        if (string.IsNullOrEmpty(name))
         {
-            var userJwt = httpContextAccessor.HttpContext?.User.GetUser();
-            if (userJwt == null)
-                return Ok(ApiResponse<DepartmentVO>.Fail(ErrorCode.Unauthorized, "用户未认证"));
-
-            // 检查用户权限
-            if (!IsAuthorizedUser(userJwt.Identity))
-                return Ok(ApiResponse<DepartmentVO>.Fail(ErrorCode.InsufficientPermission, "权限不足"));
-
-            var staff = await staffRepository.GetStaffByIdAsync(userJwt.UserId);
-            if (staff == null) return Ok(ApiResponse<DepartmentVO>.Fail(ErrorCode.Unauthorized, "用户未找到或权限不足"));
-            // 如果没有指定部门名称，返回用户所在部门
-            if (string.IsNullOrEmpty(name))
-            {
-                var userDepartment = await departmentRepository.GetDepartmentByNameAsync(staff.Department?.Name ?? "");
-                if (userDepartment == null)
-                    return Ok(ApiResponse<DepartmentVO>.Fail(ErrorCode.ResourceNotFound, "用户未分配部门"));
-
-                // 普通用户只能查看自己部门
-                if (!IsAdminUser(userJwt.Identity) && userDepartment.Name != staff.Department?.Name)
-                    return Ok(ApiResponse<DepartmentVO>.Fail(ErrorCode.InsufficientPermission, "只能查看自己部门的信息"));
-
-                return Ok(ApiResponse<DepartmentVO>.Success(userDepartment.Adapt<DepartmentVO>()));
-            }
-
-            // 管理员可以查看任何部门
-            if (IsAdminUser(userJwt.Identity))
-            {
-                var department = await departmentRepository.GetDepartmentByNameAsync(name);
-
-                if (department == null)
-                    return Ok(ApiResponse<DepartmentVO>.Fail(ErrorCode.ResourceNotFound, "部门不存在"));
-
-                return Ok(ApiResponse<DepartmentVO>.Success(department.Adapt<DepartmentVO>()));
-            }
+            var userDepartment = await departmentRepository.GetDepartmentByNameAsync(staff.Department?.Name ?? "");
+            if (userDepartment == null)
+                return Ok(ApiResponse<DepartmentVO>.Fail(ErrorCode.ResourceNotFound, "用户未分配部门"));
 
             // 普通用户只能查看自己部门
-            if (staff.Department == null || staff.Department.Name != name)
+            if (!IsAdminUser(userJwt.Identity) && userDepartment.Name != staff.Department?.Name)
                 return Ok(ApiResponse<DepartmentVO>.Fail(ErrorCode.InsufficientPermission, "只能查看自己部门的信息"));
 
-            var userDept = await departmentRepository.GetDepartmentByNameAsync(name);
-            if (userDept == null)
-            {
-                return NotFound(ApiResponse<DepartmentVO>.Fail(ErrorCode.ResourceNotFound, "部门不存在"));
-            }
-
-            return Ok(ApiResponse<DepartmentVO>.Success(userDept.Adapt<DepartmentVO>()));
+            return Ok(ApiResponse<DepartmentVO>.Success(userDepartment.Adapt<DepartmentVO>()));
         }
-        catch (Exception ex)
+
+        // 管理员可以查看任何部门
+        if (IsAdminUser(userJwt.Identity))
         {
-            if (logger.IsEnabled(LogLevel.Information))
-            {
-                logger.LogInformation(ex, "获取部门信息失败，部门名称: {Name}", name);
-            }
+            var department = await departmentRepository.GetDepartmentByNameAsync(name);
 
-            return Ok(ApiResponse<DepartmentVO>.Fail(ErrorCode.InternalServerError, $"服务器错误: {ex.Message}"));
+            if (department == null)
+                return Ok(ApiResponse<DepartmentVO>.Fail(ErrorCode.ResourceNotFound, "部门不存在"));
+
+            return Ok(ApiResponse<DepartmentVO>.Success(department.Adapt<DepartmentVO>()));
         }
+
+        // 普通用户只能查看自己部门
+        if (staff.Department == null || staff.Department.Name != name)
+            return Ok(ApiResponse<DepartmentVO>.Fail(ErrorCode.InsufficientPermission, "只能查看自己部门的信息"));
+
+        var userDept = await departmentRepository.GetDepartmentByNameAsync(name);
+        if (userDept == null)
+        {
+            return NotFound(ApiResponse<DepartmentVO>.Fail(ErrorCode.ResourceNotFound, "部门不存在"));
+        }
+
+        return Ok(ApiResponse<DepartmentVO>.Success(userDept.Adapt<DepartmentVO>()));
     }
 
     /// <summary>
@@ -94,20 +82,8 @@ public class DepartmentController(
     [Authorize(Roles = "Founder,President,Minister")]
     public async Task<ActionResult<ApiResponse<List<DepartmentVO>>>> GetAllDepartments()
     {
-        try
-        {
-            var departments = await departmentRepository.GetAllDepartmentsAsync();
-            return Ok(ApiResponse<List<DepartmentVO>>.Success(departments.Adapt<List<DepartmentVO>>()));
-        }
-        catch (Exception ex)
-        {
-            if (logger.IsEnabled(LogLevel.Information))
-            {
-                logger.LogInformation(ex, "获取所有部门信息失败");
-            }
-
-            return Ok(ApiResponse<List<DepartmentVO>>.Fail(ErrorCode.InternalServerError, $"服务器错误: {ex.Message}"));
-        }
+        var departments = await departmentRepository.GetAllDepartmentsAsync();
+        return Ok(ApiResponse<List<DepartmentVO>>.Success(departments.Adapt<List<DepartmentVO>>()));
     }
 
     /// <summary>
@@ -117,32 +93,20 @@ public class DepartmentController(
     [Authorize(Roles = "Founder,President,Minister")]
     public async Task<ActionResult<ApiResponse<string>>> UpdateDepartment([FromBody] DepartmentCreateUpdateDTO model)
     {
-        try
-        {
-            var department = await departmentRepository.GetDepartmentByNameAsync(model.Name);
+        var department = await departmentRepository.GetDepartmentByNameAsync(model.Name);
 
-            if (department == null)
-                return Ok(ApiResponse<string>.Fail(ErrorCode.ResourceNotFound, "部门不存在"));
+        if (department == null)
+            return Ok(ApiResponse<string>.Fail(ErrorCode.ResourceNotFound, "部门不存在"));
 
-            // 更新可修改的字段
-            department.Description = model.Description;
-            department.Key = model.Key; // 如果需要更新Key
+        // 更新可修改的字段
+        department.Description = model.Description;
+        department.Key = model.Key; // 如果需要更新Key
 
-            var result = await departmentRepository.UpdateDepartmentAsync(department);
-            if (!result)
-                return Ok(ApiResponse<string>.Fail(ErrorCode.OperationFailed, "更新失败"));
+        var result = await departmentRepository.UpdateDepartmentAsync(department);
+        if (!result)
+            return Ok(ApiResponse<string>.Fail(ErrorCode.OperationFailed, "更新失败"));
 
-            return Ok(ApiResponse<string>.Success("部门信息更新成功"));
-        }
-        catch (Exception ex)
-        {
-            if (logger.IsEnabled(LogLevel.Information))
-            {
-                logger.LogInformation(ex, "更新部门信息失败，部门名称: {Name}", model.Name);
-            }
-
-            return Ok(ApiResponse<string>.Fail(ErrorCode.InternalServerError, $"服务器错误: {ex.Message}"));
-        }
+        return Ok(ApiResponse<string>.Success("部门信息更新成功"));
     }
 
     /// <summary>
@@ -152,30 +116,18 @@ public class DepartmentController(
     [Authorize(Roles = "Founder,President")]
     public async Task<ActionResult<ApiResponse<DepartmentVO>>> CreateDepartment([FromBody] DepartmentCreateUpdateDTO model)
     {
-        try
-        {
-            // 检查部门是否已存在
-            var existingDept = await departmentRepository.GetDepartmentByNameAsync(model.Name);
-            if (existingDept != null)
-                return Ok(ApiResponse<DepartmentVO>.Fail(ErrorCode.ResourceAlreadyExists, "部门已存在"));
+        // 检查部门是否已存在
+        var existingDept = await departmentRepository.GetDepartmentByNameAsync(model.Name);
+        if (existingDept != null)
+            return Ok(ApiResponse<DepartmentVO>.Fail(ErrorCode.ResourceAlreadyExists, "部门已存在"));
 
-            var entity = model.Adapt<DepartmentDO>();
-            var result = await departmentRepository.AddDepartmentAsync(entity);
-            if (!result)
-                return Ok(ApiResponse<DepartmentVO>.Fail(ErrorCode.OperationFailed, "创建失败"));
+        var entity = model.Adapt<DepartmentDO>();
+        var result = await departmentRepository.AddDepartmentAsync(entity);
+        if (!result)
+            return Ok(ApiResponse<DepartmentVO>.Fail(ErrorCode.OperationFailed, "创建失败"));
 
-            return CreatedAtAction(nameof(GetDepartment), new { name = model.Name },
-                ApiResponse<DepartmentVO>.Success(entity.Adapt<DepartmentVO>(), "部门创建成功"));
-        }
-        catch (Exception ex)
-        {
-            if (logger.IsEnabled(LogLevel.Information))
-            {
-                logger.LogInformation(ex, "创建部门失败，部门名称: {Name}", model.Name);
-            }
-
-            return Ok(ApiResponse<DepartmentVO>.Fail(ErrorCode.InternalServerError, $"创建失败: {ex.Message}"));
-        }
+        return CreatedAtAction(nameof(GetDepartment), new { name = model.Name },
+            ApiResponse<DepartmentVO>.Success(entity.Adapt<DepartmentVO>(), "部门创建成功"));
     }
 
     /// <summary>
@@ -185,31 +137,19 @@ public class DepartmentController(
     [Authorize(Roles = "Founder,President")]
     public async Task<ActionResult<ApiResponse<string>>> DeleteDepartment(string name)
     {
-        try
-        {
-            var department = await departmentRepository.GetDepartmentByNameAsync(name);
+        var department = await departmentRepository.GetDepartmentByNameAsync(name);
 
-            if (department == null)
-                return Ok(ApiResponse<string>.Fail(ErrorCode.ResourceNotFound, "部门不存在"));
+        if (department == null)
+            return Ok(ApiResponse<string>.Fail(ErrorCode.ResourceNotFound, "部门不存在"));
 
-            // 包含成员的部门不能直接删除
-            if (department.Staffs.Count != 0)
-                return Ok(ApiResponse<string>.Fail(ErrorCode.InvalidStatusForOperation, "无法删除包含成员的部门"));
+        // 包含成员的部门不能直接删除
+        if (department.Staffs.Count != 0)
+            return Ok(ApiResponse<string>.Fail(ErrorCode.InvalidStatusForOperation, "无法删除包含成员的部门"));
 
-            var result = await departmentRepository.DeleteDepartmentAsync(name);
-            if (!result)
-                return Ok(ApiResponse<string>.Fail(ErrorCode.OperationFailed, "删除失败"));
-            return Ok(ApiResponse<string>.Success("部门删除成功"));
-        }
-        catch (Exception ex)
-        {
-            if (logger.IsEnabled(LogLevel.Information))
-            {
-                logger.LogInformation(ex, "删除部门失败，部门名称: {Name}", name);
-            }
-
-            return Ok(ApiResponse<string>.Fail(ErrorCode.InternalServerError, $"删除失败: {ex.Message}"));
-        }
+        var result = await departmentRepository.DeleteDepartmentAsync(name);
+        if (!result)
+            return Ok(ApiResponse<string>.Fail(ErrorCode.OperationFailed, "删除失败"));
+        return Ok(ApiResponse<string>.Success("部门删除成功"));
     }
 
     /// <summary>

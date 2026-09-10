@@ -62,7 +62,7 @@
                 <div class="flex flex-col gap-1 text-[13px] text-gray-500 dark:text-gray-400/80">
                   <div class="flex items-center gap-1.5">
                     <Icon icon="fluent:folder-20-filled" class="w-3.5 h-3.5 opacity-70" />
-                    <span class="truncate max-w-[150px]">{{ article.category?.name || '未分类' }}</span>
+                    <span class="truncate max-w-[150px]">{{ article.categoryName || '未分类' }}</span>
                   </div>
                   <div class="flex items-center gap-1.5">
                     <Icon icon="tabler:clock-filled" class="w-3.5 h-3.5 opacity-70" />

@@ -1,7 +1,6 @@
 import {url} from './Url';
-import type {StudentModel, LoginModel} from '../models';
-import {apiRequest} from './ApiService';
-import type {ApiResponse} from './ApiService';
+import type {StudentCreateDTO, LoginModel} from '../models';
+import {apiRequest, readApiResponse} from './ApiService';
 
 /**
  * 密码哈希函数
@@ -28,7 +27,8 @@ export class AuthService {
      * @returns Promise<{ accessToken: string, refreshToken: string }> 访问令牌和刷新令牌
      */
     static async login(loginModel: LoginModel, clientId: string | null | undefined = '', scope: string | null | undefined = ''): Promise<{ accessToken: string, refreshToken: string }> {
-        // 直接使用fetch获取完整响应，以便获取响应头中的刷新令牌
+        // 直接使用fetch获取完整响应，以便获取响应头中的刷新令牌；
+        // 响应体解析复用 readApiResponse，与 apiRequest 保持同一套判据。
         const response = await fetch(`${url}/Auth/login?clientId=${clientId}&scope=${scope}`, {
             method: 'POST',
             headers: {
@@ -37,19 +37,17 @@ export class AuthService {
             body: JSON.stringify(loginModel)
         });
 
-        const data = await response.json();
+        const data = await readApiResponse<string>(response);
 
-        if (!response.ok || data.code === 404 || data.errorCode !== 0) {
-            // 处理错误响应
+        if (data.errorCode !== 0 || !data.data) {
             throw new Error(data.message || '登录失败');
         }
-        
-        // 解析响应体
+
         const accessToken = data.data;
-        
+
         // 从响应头中获取刷新令牌
         const refreshToken = response.headers.get('X-Refresh-Token') || '';
-        
+
         this.saveTokens(accessToken, refreshToken);
         return { accessToken, refreshToken };
     }
@@ -59,8 +57,9 @@ export class AuthService {
      * @param model 学生注册信息
      * @returns Promise<{ accessToken: string, refreshToken: string }> 访问令牌和刷新令牌
      */
-    static async signup(model: StudentModel): Promise<{ accessToken: string, refreshToken: string }> {
-        // 直接使用fetch获取完整响应，以便获取响应头中的刷新令牌
+    static async signup(model: StudentCreateDTO): Promise<{ accessToken: string, refreshToken: string }> {
+        // 直接使用fetch获取完整响应，以便获取响应头中的刷新令牌。
+        // 注意：字段名必须与后端 StudentCreateDTO 一致（密码字段是 password）。
         const response = await fetch(`${url}/Auth/signup`, {
             method: 'POST',
             headers: {
@@ -69,18 +68,17 @@ export class AuthService {
             body: JSON.stringify(model)
         });
 
-        const data = await response.json();
-        
-        if (!response.ok || data.code === 404 || data.errorCode !== 0) {
+        const data = await readApiResponse<string>(response);
+
+        if (data.errorCode !== 0 || !data.data) {
             throw new Error(data.message || '注册失败');
         }
-        
-        // 解析响应体
+
         const accessToken = data.data;
-        
+
         // 从响应头中获取刷新令牌
         const refreshToken = response.headers.get('X-Refresh-Token') || '';
-        
+
         this.saveTokens(accessToken, refreshToken);
         return { accessToken, refreshToken };
     }
@@ -98,10 +96,11 @@ export class AuthService {
         }
     }
 
-    static async validate(userId: string, token: string, clientId: string | null | undefined = ''): Promise<boolean> {
+    // 后端 AuthController.ValidateToken 只接受 userId，没有 clientId 参数
+    static async validate(userId: string, token: string): Promise<boolean> {
         try {
             await apiRequest<boolean>({
-                url: `${url}/Auth/validate?userId=${userId}&clientId=${clientId}`,
+                url: `${url}/Auth/validate?userId=${userId}`,
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -166,20 +165,16 @@ export class AuthService {
             }
         })
 
-        if (!res.ok) {
-            throw new Error('刷新令牌失败');
-        }
-
-        const data = await res.json() as ApiResponse<string>;
+        // 先解析响应体再判成败：以前这里先看 res.ok，会把 body 里的具体原因丢掉。
+        const data = await readApiResponse<string>(res);
         const newAccessToken = data.data;
         const newRefreshToken = res.headers.get('X-Refresh-Token');
 
-        // 刷新接口的业务失败当前会返回 HTTP 200；不能将空 data 写入本地存储。
-        if (data.code !== 200 || data.errorCode !== 0 || !newAccessToken || !newRefreshToken) {
+        // 后端轮换了刷新令牌，两个令牌必须同时更新；缺任何一个都不能写入本地存储。
+        if (data.errorCode !== 0 || !newAccessToken || !newRefreshToken) {
             throw new Error(data.message || '刷新令牌失败');
         }
 
-        // 后端轮换了刷新令牌，两个令牌必须同时更新。
         this.saveTokens(newAccessToken, newRefreshToken);
         return newAccessToken;
     }
