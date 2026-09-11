@@ -17,6 +17,7 @@ import {
 import {Icon} from '@iconify/vue'
 import {MemberQueryService} from '../services/MemberQueryService'
 import {MemberManagementService} from '../services/MemberManagementService'
+import {InfoService} from '../services/InfoService'
 import {
   DataCentreService
 } from '../services/DataCentreService'
@@ -90,12 +91,17 @@ const tabs = [
   {label: '政治面貌', value: 'politicalData', icon: 'ion:flag'},
 ]
 
-const academyOptions = [
-  '建筑学院', '城乡规划学院', '环境与市政工程学院', '建筑设备科学与工程学院',
-  '土木工程学院', '交通运输工程学院', '环境工程学院', '材料科学与工程学院',
-  '管理学院', '机电工程学院', '冶金工程学院', '人工智能与机器人学院','计算机和信息工程学院',
-  '艺术学院', '理学院', '文学院', '马克思主义学院', '体育学院', '继续教育学院'
-].map(academy => ({label: academy, value: academy}))
+// 学院列表由后端 /Info/academies 提供，避免与 SignRecord.Academies 校验漂移
+const academyOptions = ref<{ label: string; value: string }[]>([])
+
+const fetchAcademyOptions = async () => {
+  try {
+    const academies = await InfoService.getAcademies()
+    academyOptions.value = academies.map(academy => ({label: academy, value: academy}))
+  } catch (error: any) {
+    message.error(error.message || '获取学院列表失败')
+  }
+}
 
 const politicalLandscapeOptions = ['群众', '共青团员', '中共党员'].map(p => ({label: p, value: p}))
 const genderOptions = ['男', '女']
@@ -578,6 +584,7 @@ const handleResize = () => {
 
 onMounted(() => {
   fetchMembers()
+  fetchAcademyOptions()
   loadChartData()
   window.addEventListener('resize', handleResize)
 

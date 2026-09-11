@@ -335,6 +335,7 @@ import {Icon} from '@iconify/vue';
 import {useAuthorizationStore} from '../stores/Authorization';
 import {UserService} from '../services/UserService';
 import {AuthService} from '../services/AuthService';
+import {InfoService} from '../services/InfoService';
 import type {MemberVO, StudentUpdateDTO} from '../models';
 import {useLayoutStore} from '../stores/LayoutStore';
 
@@ -371,13 +372,16 @@ const getIdentityBadgeClass = (identity: string) => {
 
 const genderOptions = ['男', '女'];
 const politicalLandscapeOptions = ['群众', '共青团员', '中共党员', '中共预备党员'].map(i => ({label: i, value: i}));
-const academyOptions = [
-  '人工智能与机器人学院','计算机和信息工程学院', '理学院', '机电工程学院', '管理学院', '土木工程学院',
-  '环境与市政工程学院', '建筑设备科学与工程学院', '材料科学与工程学院', '冶金工程学院',
-  '资源工程学院', '城市发展与现代交通学院', '文学院', '艺术学院', '建筑学院',
-  '马克思主义学院', '公共管理学院', '化学与化工学院', '体育学院', '安德学院',
-  '未来技术学院', '国际教育学院'
-].map(a => ({label: a, value: a}));
+const academyOptions = ref<{ label: string; value: string }[]>([]);
+
+const fetchAcademyOptions = async () => {
+  try {
+    const academies = await InfoService.getAcademies();
+    academyOptions.value = academies.map(a => ({label: a, value: a}));
+  } catch (error: any) {
+    message.error(error.message || '获取学院列表失败');
+  }
+};
 
 // 密码相关
 const showPasswordModal = ref(false);
@@ -480,6 +484,7 @@ const confirmPasswordChange = async () => {
 
 onMounted(() => {
   fetchUserInfo();
+  fetchAcademyOptions();
   layoutStore.setPageHeader('个人信息', '管理您的个人资料');
   layoutStore.setShowPageActions(false);
 });

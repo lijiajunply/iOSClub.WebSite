@@ -223,12 +223,13 @@
 </template>
 
 <script setup lang="ts">
-import {ref, reactive} from 'vue'
+import {ref, reactive, onMounted} from 'vue'
 import {useRouter} from 'vue-router'
 import {NInput, NForm, NFormItem, NSelect} from 'naive-ui'
 import {Icon} from '@iconify/vue'
 import {useAuthorizationStore} from '../../stores/Authorization'
 import {ios} from '../../services/AuthService'
+import {InfoService} from '../../services/InfoService'
 import {isWeiXin, NavigateTo} from "../../lib/site"
 
 const router = useRouter()
@@ -279,30 +280,8 @@ const politicalOptions = [
   {label: '中共党员', value: '中共党员'},
 ]
 
-const academyOptions = [
-  {label: '人工智能与机器人学院', value: '人工智能与机器人学院'},
-  {label: '计算机和信息工程学院', value: '计算机和信息工程学院'},
-  {label: '理学院', value: '理学院'},
-  {label: '机电工程学院', value: '机电工程学院'},
-  {label: '管理学院', value: '管理学院'},
-  {label: '土木工程学院', value: '土木工程学院'},
-  {label: '环境与市政工程学院', value: '环境与市政工程学院'},
-  {label: '建筑设备科学与工程学院', value: '建筑设备科学与工程学院'},
-  {label: '材料科学与工程学院', value: '材料科学与工程学院'},
-  {label: '冶金工程学院', value: '冶金工程学院'},
-  {label: '资源工程学院', value: '资源工程学院'},
-  {label: '城市发展与现代交通学院', value: '城市发展与现代交通学院'},
-  {label: '文学院', value: '文学院'},
-  {label: '艺术学院', value: '艺术学院'},
-  {label: '建筑学院', value: '建筑学院'},
-  {label: '马克思主义学院', value: '马克思主义学院'},
-  {label: '公共管理学院', value: '公共管理学院'},
-  {label: '化学与化工学院', value: '化学与化工学院'},
-  {label: '体育学院', value: '体育学院'},
-  {label: '安德学院', value: '安德学院'},
-  {label: '未来技术学院', value: '未来技术学院'},
-  {label: '国际教育学院', value: '国际教育学院'},
-]
+// 学院列表由后端 /Info/academies 提供，保持与 SignRecord.Academies 校验一致
+const academyOptions = ref<{ label: string; value: string }[]>([])
 
 // 验证逻辑
 const emailValidator = (_rule: any, value: string) => {
@@ -421,6 +400,16 @@ const submitRegistration = async () => {
     loading.value = false
   }
 }
+
+onMounted(async () => {
+  try {
+    const academies = await InfoService.getAcademies()
+    academyOptions.value = academies.map(a => ({label: a, value: a}))
+  } catch {
+    // 拉不到列表时表单仍有校验兜底，这里只提示，不打断页面渲染
+    errorMsg.value = '学院列表加载失败，请刷新页面重试'
+  }
+})
 </script>
 
 <style scoped>
