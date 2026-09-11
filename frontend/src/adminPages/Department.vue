@@ -65,12 +65,12 @@
             <!-- 数据图表区 -->
             <section>
               <h3 class="section-title mb-4">数据透视</h3>
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div v-for="(chartId, index) in ['departmentChart', 'collegeChart', 'genderChart']"
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div v-for="(chartId, index) in ['collegeChart', 'genderChart']"
                      :key="chartId"
                      class="apple-sub-card p-4 h-[350px] flex flex-col">
                     <span class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2 ml-2">
-                      {{ ['部门分布', '学院分布', '男女比例'][index] }}
+                      {{ ['学院分布', '男女比例'][index] }}
                     </span>
                   <div class="flex-1 rounded-xl overflow-hidden relative">
                     <div :id="chartId" class="w-full h-full"></div>
