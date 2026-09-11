@@ -83,7 +83,7 @@ public class StudentRepositoryTests
     }
 
     [Fact]
-    public async Task UpdateAsync_UpdatesExistingStudent()
+    public async Task UpdateProfileAsync_UpdatesExistingStudent()
     {
         await using var context = await _contextFactory.CreateDbContextAsync();
         // Arrange
@@ -98,7 +98,7 @@ public class StudentRepositoryTests
         student.PhoneNum = "13800138002";
 
         // Act
-        var result = await _studentRepository.UpdateAsync(student);
+        var result = await _studentRepository.UpdateProfileAsync(student);
         var updatedStudent = await _studentRepository.GetByIdAsync(student.UserId);
 
         // Assert
@@ -106,6 +106,94 @@ public class StudentRepositoryTests
         Assert.NotNull(updatedStudent);
         Assert.Equal("Updated Name", updatedStudent.UserName);
         Assert.Equal("13800138002", updatedStudent.PhoneNum);
+    }
+
+    [Fact]
+    public async Task UpdateProfileAsync_DoesNotTouchPasswordHash()
+    {
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        // Arrange：建一条真实密码的记录
+        await context.Database.EnsureDeletedAsync();
+        await context.Database.EnsureCreatedAsync();
+
+        var student = BogusDataGenerator.StudentFaker.Generate();
+        student.PasswordHash = DataTool.StringToHash("MySecretPwd");
+        await context.Students.AddAsync(student);
+        await context.SaveChangesAsync();
+
+        var hashBefore = student.PasswordHash;
+
+        // Act：模拟"档案 DTO 转 DO"—— 对象里没有密码，PasswordHash 是默认空串。
+        // 这正是 /User/profile 与 /MemberManagement/update 送到仓库层的形状。
+        var profileOnly = new StudentDO
+        {
+            UserId = student.UserId,
+            UserName = "只改了名字",
+            PhoneNum = student.PhoneNum
+        };
+        var result = await _studentRepository.UpdateProfileAsync(profileOnly);
+
+        // Assert：档案更新成功，且密码一个字节都没动
+        var updatedStudent = await _studentRepository.GetByIdAsync(student.UserId);
+        Assert.True(result);
+        Assert.NotNull(updatedStudent);
+        Assert.Equal("只改了名字", updatedStudent.UserName);
+        Assert.Equal(hashBefore, updatedStudent.PasswordHash);
+        Assert.True(DataTool.IsOk("MySecretPwd", updatedStudent.PasswordHash));
+    }
+
+    [Fact]
+    public async Task SetPasswordAsync_RotatesPassword()
+    {
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        // Arrange
+        await context.Database.EnsureDeletedAsync();
+        await context.Database.EnsureCreatedAsync();
+
+        var student = BogusDataGenerator.StudentFaker.Generate();
+        student.PasswordHash = DataTool.StringToHash("OldPwd");
+        await context.Students.AddAsync(student);
+        await context.SaveChangesAsync();
+
+        // Act
+        var result = await _studentRepository.SetPasswordAsync(student.UserId, "NewPwd");
+
+        // Assert：新密码可用、旧密码失效
+        var updatedStudent = await _studentRepository.GetByIdAsync(student.UserId);
+        Assert.True(result);
+        Assert.NotNull(updatedStudent);
+        Assert.True(DataTool.IsOk("NewPwd", updatedStudent.PasswordHash));
+        Assert.False(DataTool.IsOk("OldPwd", updatedStudent.PasswordHash));
+        Assert.True(await _studentRepository.Login(student.UserId, "NewPwd"));
+        Assert.False(await _studentRepository.Login(student.UserId, "OldPwd"));
+    }
+
+    [Fact]
+    public async Task SetPasswordAsync_UnknownStudent_ReturnsFalse()
+    {
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        await context.Database.EnsureDeletedAsync();
+        await context.Database.EnsureCreatedAsync();
+
+        Assert.False(await _studentRepository.SetPasswordAsync("9999999999", "NewPwd"));
+    }
+
+    [Fact]
+    public async Task Login_EmptyPasswordHash_RejectsEvenMatchingPhoneNumber()
+    {
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        // Arrange：历史遗留数据，哈希为空但手机号存在
+        await context.Database.EnsureDeletedAsync();
+        await context.Database.EnsureCreatedAsync();
+
+        var student = BogusDataGenerator.StudentFaker.Generate();
+        student.PasswordHash = "";
+        await context.Students.AddAsync(student);
+        await context.SaveChangesAsync();
+
+        // Act & Assert：以前这里会把手机号当密码放行，现在必须直接拒绝
+        Assert.False(await _studentRepository.Login(student.UserId, student.PhoneNum));
+        Assert.Null(await _studentRepository.LoginAndGetStudentAsync(student.UserId, student.PhoneNum));
     }
 
     [Fact]

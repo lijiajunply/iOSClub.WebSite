@@ -130,6 +130,47 @@ public class MapperConfigStaffMappingTests
 }
 
 /// <summary>
+/// StudentUpdateDTO → StudentDO 映射的回归测试。
+/// <para>
+/// 回归背景：MapperConfig 里曾经是 <c>.Ignore(dest =&gt; dest.UserId)</c>，把 DTO 的 UserId 抹成空串。
+/// 而 UserId 在仓库层是**定位键**（UpdateProfileAsync 靠它 FirstOrDefault），于是 /User/profile
+/// 与 /MemberManagement/update 的每个请求都在第一道守卫被拒 —— 这两个接口从未成功过。
+/// 主键本身没有被改的风险：StudentDO.Update 的覆写列表里根本没有 UserId。
+/// </para>
+/// </summary>
+public class MapperConfigStudentUpdateMappingTests
+{
+    public MapperConfigStudentUpdateMappingTests()
+    {
+        MapperConfig.Configure();
+    }
+
+    [Fact]
+    public void StudentUpdateDTO_UserId_SurvivesMapping()
+    {
+        var dto = new StudentUpdateDTO { UserId = "2021000001", UserName = "张三" };
+
+        var student = dto.Adapt<StudentDO>();
+
+        // UserId 必须原样带过去，否则仓库层查不到人，整个更新接口变成 no-op
+        Assert.Equal("2021000001", student.UserId);
+        Assert.Equal("张三", student.UserName);
+    }
+
+    [Fact]
+    public void StudentUpdateDTO_CarriesNoPassword()
+    {
+        var dto = new StudentUpdateDTO { UserId = "2021000001", UserName = "张三" };
+
+        var student = dto.Adapt<StudentDO>();
+
+        // StudentUpdateDTO 刻意不暴露密码字段 —— 配合 UpdateProfileAsync 永不触碰
+        // PasswordHash，这是"改资料不可能顺手改掉密码"的两道闸门。
+        Assert.True(string.IsNullOrEmpty(student.PasswordHash));
+    }
+}
+
+/// <summary>
 /// 注册 DTO 的校验测试。
 /// <para>
 /// 空密码必须在进入 action 之前就被 DataAnnotations 拦下：

@@ -44,7 +44,9 @@ public class UserController(
         if (member == null || member.UserId != dto.UserId)
             return Ok(ApiResponse<object>.Fail(ErrorCode.InsufficientPermission, "权限不足"));
 
-        var result = await studentRepository.UpdateAsync(dto.Adapt<StudentDO>());
+        // 走 UpdateProfileAsync 而不是通用更新：这个接口是用户改自己的资料，
+        // 不该有任何路径能碰到 PasswordHash（改密码在 Auth/change-password）。
+        var result = await studentRepository.UpdateProfileAsync(dto.Adapt<StudentDO>());
         return result
             ? Ok(ApiResponse.Success("更新用户资料成功"))
             : Ok(ApiResponse<object>.Fail(ErrorCode.OperationFailed, "更新用户资料失败"));

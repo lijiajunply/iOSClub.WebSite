@@ -579,11 +579,12 @@ public class LoginService(
         if (student == null)
             return false;
 
-        // 更新密码
-        student.PasswordHash = DataTool.StringToHash(newPassword);
-        var result = await studentRepository.UpdateAsync(student);
+        // 新密码和旧密码相同：没有要改的东西。直接返回 false，而不是白白换一个 BCrypt 哈希
+        // —— BCrypt 每次加盐都不同，否则会"成功"地写回一个语义上完全等价的密码。
+        if (DataTool.IsOk(newPassword, student.PasswordHash))
+            return false;
 
-        return result;
+        return await studentRepository.SetPasswordAsync(userId, newPassword);
     }
 
     public async Task<bool> RequestPasswordResetCode(string userId)
@@ -639,14 +640,8 @@ public class LoginService(
         if (!storedCode.HasValue || storedCode != code)
             return false;
 
-        // 获取用户信息
-        var student = await studentRepository.GetByIdAsync(userId);
-        if (student == null)
-            return false;
-
-        // 更新密码
-        student.PasswordHash = DataTool.StringToHash(newPassword);
-        var result = await studentRepository.UpdateAsync(student);
+        // 密码重置走的是邮箱验证码，用户本来就是忘了密码才来的，所以不校验"新密码是否等于旧密码"。
+        var result = await studentRepository.SetPasswordAsync(userId, newPassword);
 
         // 删除已使用的验证码
         if (result) await _db.KeyDeleteAsync(redisKey);

@@ -84,7 +84,7 @@ public class MemberManagementController(
     [HttpPost("update")]
     public async Task<ActionResult<ApiResponse<object>>> Update([FromBody] StudentUpdateDTO model)
     {
-        var result = await studentRepository.UpdateAsync(model.Adapt<StudentDO>());
+        var result = await studentRepository.UpdateProfileAsync(model.Adapt<StudentDO>());
         if (!result)
         {
             if (logger.IsEnabled(LogLevel.Information))
@@ -117,8 +117,8 @@ public class MemberManagementController(
             return Ok(ApiResponse<object>.Fail(ErrorCode.UserNotFound, "学生不存在"));
         }
 
-        student.PasswordHash = DataTool.StringToHash(data.NewPassword);
-        var result = await studentRepository.UpdateAsync(student);
+        // 明文密码交给仓库层的 SetPasswordAsync 去哈希，控制器不碰哈希细节。
+        var result = await studentRepository.SetPasswordAsync(data.UserId, data.NewPassword);
         if (!result)
         {
             if (logger.IsEnabled(LogLevel.Information))

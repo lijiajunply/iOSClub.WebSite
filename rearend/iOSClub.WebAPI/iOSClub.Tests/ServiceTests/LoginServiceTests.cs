@@ -154,17 +154,15 @@ public class LoginServiceTests
         // ChangePassword 走的是 Login + GetByIdAsync（不是 LoginAndGetStudentAsync）
         _studentRepoMock.Setup(s => s.Login(userId, oldPassword)).ReturnsAsync(true);
         _studentRepoMock.Setup(s => s.GetByIdAsync(userId)).ReturnsAsync(student);
-        _studentRepoMock.Setup(s => s.UpdateAsync(student)).ReturnsAsync(true);
+        _studentRepoMock.Setup(s => s.SetPasswordAsync(userId, newPassword)).ReturnsAsync(true);
 
         // Act
         var result = await _loginService.ChangePassword(userId, oldPassword, newPassword);
 
         // Assert
         Assert.True(result);
-        _studentRepoMock.Verify(s => s.UpdateAsync(student), Times.Once);
-        // BCrypt 每次哈希都用随机盐，同一个明文两次 StringToHash 结果不同，
-        // 必须用 IsOk 反验证而不是比较字符串。
-        Assert.True(DataTool.IsOk(newPassword, student.PasswordHash));
+        // 密码必须经 SetPasswordAsync 写入（哈希由仓库层负责），服务层不再自己改实体再整体保存。
+        _studentRepoMock.Verify(s => s.SetPasswordAsync(userId, newPassword), Times.Once);
     }
 
     [Fact]
@@ -317,5 +315,7 @@ public class LoginServiceTests
 
         // Assert
         Assert.False(result);
+        // 没有要改的东西，不应该产生写库
+        _studentRepoMock.Verify(s => s.SetPasswordAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
     }
 }

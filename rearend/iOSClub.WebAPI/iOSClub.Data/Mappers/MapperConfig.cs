@@ -50,8 +50,12 @@ public static class MapperConfig
         config.NewConfig<DTOs.StudentCreateDTO, StudentDO>()
             .Map(dest => dest.PasswordHash, src => DataTool.StringToHash(src.Password));
 
+        // UserId 必须映射过去：它在仓库层是**定位键**（UpdateProfileAsync 靠它 FirstOrDefault），
+        // 而不是待覆写的字段。以前这里 .Ignore(dest => dest.UserId) 把它抹成空串，
+        // 于是仓库层第一道守卫就把所有更新请求拒了 —— /User/profile 与 /MemberManagement/update
+        // 从未成功过。主键本身没有被改的风险：StudentDO.Update 的覆写列表里根本没有 UserId。
+        // JoinTime 不在 DTO 里，保持忽略即可。
         config.NewConfig<DTOs.StudentUpdateDTO, StudentDO>()
-            .Ignore(dest => dest.UserId)
             .Ignore(dest => dest.JoinTime);
 
         // StaffDO 只有导航属性 Department（没有 DepartmentName 字符串字段），

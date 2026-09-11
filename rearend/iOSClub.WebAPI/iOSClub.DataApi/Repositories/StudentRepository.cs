@@ -33,11 +33,27 @@ public interface IStudentRepository
     public Task<StudentDO?> Create(StudentDO model);
 
     /// <summary>
-    /// 更新学生
+    /// 更新学生档案字段
+    /// <para>
+    /// 永不触碰 PasswordHash —— 与 <see cref="StudentDO.Update"/> 的白名单契约一致，
+    /// 调用方不传哪个字段就不改哪个字段。改密码请走 <see cref="SetPasswordAsync"/>。
+    /// </para>
     /// </summary>
-    /// <param name="model">学生模型</param>
-    /// <returns>是否更新成功</returns>
-    public Task<bool> Update(StudentDO model);
+    /// <param name="model">学生模型，UserId 用作定位键</param>
+    /// <returns>学生不存在或字段校验失败时返回 false</returns>
+    public Task<bool> UpdateProfileAsync(StudentDO model);
+
+    /// <summary>
+    /// 设置学生密码 —— 密码的唯一写入口
+    /// <para>
+    /// 调用方传明文，哈希在这里完成。集中一处是为了让"改密码"成为一个显式的、
+    /// 可审计、可加权限校验的动作，而不是"更新档案"的副作用。
+    /// </para>
+    /// </summary>
+    /// <param name="userId">学生ID</param>
+    /// <param name="newPassword">明文新密码</param>
+    /// <returns>学生不存在或密码为空时返回 false</returns>
+    public Task<bool> SetPasswordAsync(string userId, string newPassword);
 
     /// <summary>
     /// 删除学生
@@ -68,13 +84,6 @@ public interface IStudentRepository
     /// <param name="id">学生ID</param>
     /// <returns>学生模型，如果找不到则返回null</returns>
     public Task<StudentDO?> GetByIdAsync(string id);
-
-    /// <summary>
-    /// 异步更新学生
-    /// </summary>
-    /// <param name="model">学生模型</param>
-    /// <returns>是否更新成功</returns>
-    public Task<bool> UpdateAsync(StudentDO model);
 
     /// <summary>
     /// 异步删除学生
@@ -149,7 +158,7 @@ public class StudentRepository(IDbContextFactory<ClubContext> factory) : IStuden
         return await GetStudentByIdQuery(context, id);
     }
 
-    public async Task<bool> Update(StudentDO model)
+    public async Task<bool> UpdateProfileAsync(StudentDO model)
     {
         // 输入验证
         if (string.IsNullOrWhiteSpace(model.UserId))
@@ -176,10 +185,35 @@ public class StudentRepository(IDbContextFactory<ClubContext> factory) : IStuden
             return false;
         }
 
+        // StudentDO.Update 是白名单式的（不传就不改），所以这里不会误伤任何未提交的字段，
+        // 尤其是 PasswordHash —— 它根本不在 Update 的覆写列表里。
         stu.Update(model);
-        var result = await context.SaveChangesAsync();
 
-        return result == 1;
+        // 保存成功即视为成功。用户点了保存但没改动任何字段时 SaveChanges 返回 0，
+        // 这仍然是"档案现在和你要的一致"，不该报失败。
+        await context.SaveChangesAsync();
+
+        return true;
+    }
+
+    public async Task<bool> SetPasswordAsync(string userId, string newPassword)
+    {
+        if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(newPassword))
+        {
+            return false;
+        }
+
+        await using var context = await factory.CreateDbContextAsync();
+        var stu = await context.Students.FirstOrDefaultAsync(x => x.UserId == userId);
+        if (stu == null)
+        {
+            return false;
+        }
+
+        // BCrypt 每次加盐，即便明文相同也会得到不同的哈希，因此这里总能检测到变更。
+        stu.PasswordHash = DataTool.StringToHash(newPassword);
+
+        return await context.SaveChangesAsync() > 0;
     }
 
     public async Task<StudentDO?> Create(StudentDO model)
@@ -244,9 +278,12 @@ public class StudentRepository(IDbContextFactory<ClubContext> factory) : IStuden
             return false;
         }
 
+        // 密码哈希为空只可能是历史遗留数据（Create 与 SetPasswordAsync 都必然写入哈希）。
+        // 以前这里降级成"比对手机号"，等于把"密码字段被清空"从"登不进来"变成
+        // "知道学号+手机号就能登" —— 不安全失败。现在直接拒绝，让异常状态暴露出来。
         if (string.IsNullOrEmpty(student.PasswordHash))
         {
-            return student.PhoneNum == password;
+            return false;
         }
 
         return DataTool.IsOk(password, student.PasswordHash);
@@ -265,58 +302,13 @@ public class StudentRepository(IDbContextFactory<ClubContext> factory) : IStuden
         var student = await LoginQuery(context, userId);
         if (student == null) return null;
 
+        // 同 Login：哈希为空的历史数据拒绝登录，不再降级为手机号比对。
         if (string.IsNullOrEmpty(student.PasswordHash))
         {
-            return student.PhoneNum == password ? student : null;
+            return null;
         }
 
         return DataTool.IsOk(password, student.PasswordHash) ? student : null;
-    }
-
-
-    public async Task<bool> UpdateAsync(StudentDO model)
-    {
-        // 输入验证
-        if (string.IsNullOrWhiteSpace(model.UserId))
-        {
-            return false;
-        }
-
-        // 验证手机号格式
-        if (!string.IsNullOrWhiteSpace(model.PhoneNum) && !ValidationTool.IsValidPhoneNumber(model.PhoneNum))
-        {
-            return false;
-        }
-
-        // 验证邮箱格式
-        if (!string.IsNullOrEmpty(model.EMail) && !ValidationTool.IsValidEmail(model.EMail))
-        {
-            return false;
-        }
-
-        await using var context = await factory.CreateDbContextAsync();
-        var stu = await context.Students.FirstOrDefaultAsync(x => x.UserId == model.UserId);
-        if (stu == null)
-        {
-            model.Standardization();
-
-            // 确保PhoneNum作为默认密码
-            if (string.IsNullOrWhiteSpace(model.PasswordHash))
-            {
-                model.PasswordHash = DataTool.StringToHash(model.PhoneNum);
-            }
-
-            await context.Students.AddAsync(model);
-        }
-        else
-        {
-            stu.Update(model);
-            stu.PasswordHash = model.PasswordHash;
-        }
-
-        var result = await context.SaveChangesAsync();
-
-        return result > 0;
     }
 
     public async Task<bool> DeleteAsync(string id)
