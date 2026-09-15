@@ -10,6 +10,8 @@ namespace iOSClub.DataApi.Repositories;
 /// </summary>
 public interface IStaffRepository
 {
+    Task<IEnumerable<StaffVO>> GetPermissionMembersAsync();
+    Task<(bool Success, string Error)> UpdateRoleAsync(string userId, string identity, string? departmentName, string operatorId);
     /// <summary>
     /// 获取所有员工
     /// </summary>
@@ -89,6 +91,28 @@ public interface IStaffRepository
 
 public class StaffRepository(IDbContextFactory<ClubContext> factory) : IStaffRepository
 {
+    public async Task<IEnumerable<StaffVO>> GetPermissionMembersAsync()
+    {
+        await using var context = await factory.CreateDbContextAsync();
+        return await context.Staffs.Include(s => s.Department).Select(s => new StaffVO { UserId = s.UserId, Name = s.Name, Identity = s.Identity, DepartmentName = s.Department == null ? null : s.Department.Name }).ToListAsync();
+    }
+
+    public async Task<(bool Success, string Error)> UpdateRoleAsync(string userId, string identity, string? departmentName, string operatorId)
+    {
+        var allowed = new[] { "Member", "Department", "Minister", "President", "Founder" };
+        if (!allowed.Contains(identity)) return (false, "身份标识无效");
+        if (userId == operatorId) return (false, "不能修改自己的权限");
+        await using var context = await factory.CreateDbContextAsync();
+        var staff = await context.Staffs.FirstOrDefaultAsync(s => s.UserId == userId);
+        if (staff == null) return (false, "成员不存在");
+        if ((identity is "Minister" or "Department") && string.IsNullOrWhiteSpace(departmentName)) return (false, "该身份必须指定部门");
+        if (identity == "Founder" && staff.Identity != "Founder" && !string.IsNullOrWhiteSpace(departmentName)) departmentName = null;
+        DepartmentDO? department = null;
+        if (!string.IsNullOrWhiteSpace(departmentName)) { department = await context.Departments.FirstOrDefaultAsync(d => d.Name == departmentName); if (department == null) return (false, "部门不存在"); }
+        if (staff.Identity == "Founder" && identity != "Founder" && await context.Staffs.CountAsync(s => s.Identity == "Founder") <= 1) return (false, "至少需要保留一个 Founder");
+        staff.Identity = identity; staff.Department = department;
+        await context.SaveChangesAsync(); return (true, "");
+    }
     public async Task<IEnumerable<StaffDO>> GetAllStaffAsync()
     {
         await using var context = await factory.CreateDbContextAsync();

@@ -162,6 +162,7 @@ const routes = [
                 meta: { title: "成员数据 - 西建大 iOS Club" },
                 component: () => import('./adminPages/MemberData.vue'),
             },
+            { path: 'FounderPermission', name: 'FounderPermission', meta: { title: '权限管理', requiresAuth: true, founderOnly: true }, component: () => import('./adminPages/FounderPermission.vue') },
             {
                 path: 'Department',
                 name: 'Department',
@@ -241,6 +242,8 @@ router.beforeEach((to, _from, next) => {
     // Check if route requires authentication — also validate JWT expiry
     if (to.meta.requiresAuth && !authorizationStore.isTokenValid) {
         next('/login');
+    } else if (to.meta.founderOnly && authorizationStore.getRole !== 'Founder') {
+        next('/access-denied');
     } else {
         next();
     }
