@@ -784,10 +784,6 @@ onBeforeUnmount(() => {
   background-color: #F1F4F9; /* iCloud light gray */
 }
 
-.apple-modal{
-  max-width: 500px !important;
-}
-
 .apple-card {
   background-color: rgba(255, 255, 255, 0.65);
   backdrop-filter: blur(20px);
@@ -909,23 +905,6 @@ onBeforeUnmount(() => {
   border-bottom: none;
 }
 
-/* Modal Override */
-:deep(.apple-modal.n-modal) {
-  border-radius: 24px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-}
-
-:deep(.apple-modal .n-card-header) {
-  border-bottom: none;
-  padding-top: 28px;
-  padding-left: 28px;
-}
-
-:deep(.apple-modal .n-card-header__main) {
-  font-size: 22px;
-  font-weight: 600;
-}
-
 /* DARK MODE */
 .dark .apple-container {
   background-color: #000000; /* Pure black for heavy contrast */
@@ -987,11 +966,6 @@ onBeforeUnmount(() => {
 .dark :deep(.apple-table .n-data-table-td) {
   border-bottom: 1px solid #2C2C2E;
   color: #D1D1D6;
-}
-
-.dark :deep(.apple-modal.n-card) {
-  background-color: #1C1C1E;
-  border: 1px solid #38383A;
 }
 
 /* Animation Utility */

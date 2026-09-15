@@ -736,24 +736,6 @@ onBeforeUnmount(() => {
   border-radius: 10px !important;
 }
 
-/* 模态框深度定制 */
-.apple-modal .n-card {
-  background-color: rgba(255, 255, 255, 0.85) !important;
-  backdrop-filter: blur(20px) !important;
-}
-
-.dark .apple-modal .n-card {
-  background-color: rgba(30, 30, 30, 0.8) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.apple-modal .n-card-header {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.dark .apple-modal .n-card-header {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
 
 .apple-select .n-base-selection {
   border-radius: 8px !important;
