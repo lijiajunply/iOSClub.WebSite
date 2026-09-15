@@ -41,7 +41,7 @@
             </div>
 
             <!-- Context Menu (Admin) -->
-            <div v-if="authorizationStore.isAdmin" class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            <div v-if="authorizationStore.isAdmin()" class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
               <button @click.stop="editResource(resource)" class="icon-btn text-blue-500 bg-blue-50 dark:bg-blue-500/20 hover:bg-blue-100 dark:hover:bg-blue-500/30">
                 <Icon icon="ion:create-outline" class="w-4 h-4"/>
               </button>

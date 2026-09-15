@@ -24,9 +24,10 @@ public class UserController(
         var member = httpContextAccessor.HttpContext?.User.GetUser();
         if (member == null)
             return Ok(ApiResponse<MemberVO>.Fail(ErrorCode.Unauthorized, "用户未认证"));
-        if (member.Identity == "Founder")
-            return Ok(ApiResponse<MemberVO>.Success(member, "获取用户信息成功"));
 
+        // Founder 也走这里。曾经这里对 Founder 直接返回 GetUser() 的存根，
+        // 但那个 MemberVO 只有 UserId + Identity，于是 Founder 在概览页看不到姓名、
+        // 个人档案页整张表单是空的。
         var student = await studentRepository.GetByIdAsync(member.UserId);
         if (student == null)
             return Ok(ApiResponse<MemberVO>.Fail(ErrorCode.UserNotFound, "用户不存在"));
